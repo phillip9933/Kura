@@ -66,7 +66,14 @@ class MainActivity: FlutterFragmentActivity()
             }
             "pickDirectory" -> {
               pendingResult = result
-              val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+              val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                addFlags(
+                  Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or
+                    Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
+                )
+              }
               startActivityForResult(intent, 1002)
             }
             "writeToUri" -> {
@@ -184,9 +191,12 @@ class MainActivity: FlutterFragmentActivity()
             val uri = data.data
             if (uri != null) {
               try {
+                val takeFlags = data.flags and
+                  (Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                 contentResolver.takePersistableUriPermission(
                   uri,
-                  Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                  takeFlags
                 )
                 pendingResult?.success(uri.toString())
               } catch (e: Exception) {

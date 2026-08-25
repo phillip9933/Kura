@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class SafService {
-  static const _channel = MethodChannel('com.sidhant.wallet/save_file');
+  static const _channel = MethodChannel('app.kura.wallet/save_file');
 
   static Future<String?> pickDirectory() async {
     try {
