@@ -864,10 +864,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: _passGridCellAspectRatio(
-                      context,
-                      settings.gridColumnsFor(WalletSection.payments),
-                    ),
+                    childAspectRatio: 1.586,
                   ),
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final wallet = filteredWallets[index];
@@ -1947,10 +1944,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: _passGridCellAspectRatio(
-                      context,
-                      settings.gridColumnsFor(WalletSection.identity),
-                    ),
+                    childAspectRatio: 1.586,
                   ),
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final card = filteredIdentities[index];
