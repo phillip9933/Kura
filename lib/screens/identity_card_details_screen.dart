@@ -1,0 +1,405 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:kura/services/clipboard_service.dart';
+import 'package:provider/provider.dart';
+import 'package:kura/models/identity_card.dart';
+import 'package:kura/models/theme_provider.dart';
+import 'package:kura/widgets/identity_card_widget.dart';
+import 'package:kura/widgets/encrypted_image_display.dart';
+import 'package:kura/widgets/full_screen_image_viewer.dart';
+import 'package:kura/screens/homescreen.dart';
+import 'package:kura/widgets/identity_card_entry_form.dart';
+import 'package:kura/screens/share_secure_screen.dart';
+import 'package:kura/models/startup_settings_provider.dart';
+
+class IdentityCardDetailScreen extends StatefulWidget {
+  final IdentityCard card;
+
+  const IdentityCardDetailScreen({super.key, required this.card});
+
+  @override
+  State<IdentityCardDetailScreen> createState() =>
+      _IdentityCardDetailScreenState();
+}
+
+class _IdentityCardDetailScreenState extends State<IdentityCardDetailScreen> {
+  late IdentityCard currentCard;
+
+  @override
+  void initState() {
+    super.initState();
+    currentCard = widget.card;
+  }
+
+  bool _isPathValid(String? path) => path != null && path.isNotEmpty;
+
+  Widget _buildImageThumbnail(String imagePath, String label, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                SmoothPageRoute(
+                  page: FullScreenImageViewer(imagePath: imagePath),
+                ),
+              );
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.102)
+                      : Colors.black.withValues(alpha: 0.078),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.302)
+                        : Colors.black.withValues(alpha: 0.078),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: EncryptedImageDisplay(
+                  imagePath: imagePath,
+                  height: 100,
+                  width: 150,
+                  fit: BoxFit.cover,
+                  cacheHeight: 200,
+                  cacheWidth: 300,
+                  errorWidget: Container(
+                    height: 100,
+                    width: 150,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.051)
+                        : Colors.black.withValues(alpha: 0.031),
+                    child: Icon(
+                      Icons.error_outline,
+                      color: isDark ? Colors.white38 : Colors.black38,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: isDark ? Colors.white60 : Colors.black54,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final settings = context.watch<StartupSettingsProvider>();
+    final isDark = themeProvider.isDarkMode;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const SizedBox.shrink(),
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.078)
+                : Colors.black.withValues(alpha: 0.051),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: isDark ? Colors.white : Colors.black,
+              size: 20,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.078)
+                  : Colors.black.withValues(alpha: 0.051),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.share_rounded,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                Navigator.push(
+                  context,
+                  SmoothPageRoute(
+                    page: ShareSecureScreen(identity: currentCard),
+                  ),
+                );
+              },
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.078)
+                  : Colors.black.withValues(alpha: 0.051),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.edit_outlined,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+              onPressed: () async {
+                final navigator = Navigator.of(context);
+                final result = await Navigator.push(
+                  context,
+                  SmoothPageRoute(page: IdentityEditScreen(card: currentCard)),
+                );
+
+                if (result == true && mounted) {
+                  navigator.pop(true);
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          IdentityCardWidget(
+            card: currentCard,
+            onTap: () {
+              ClipboardService.instance.copy(currentCard.value);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('ID Number Copied!')),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+
+          if (_detailEntries(currentCard, settings).isNotEmpty)
+            _LiquidGlassDetailSection(
+              title: "Details",
+              icon: Icons.badge_outlined,
+              isDark: isDark,
+              child: Column(
+                children: _detailEntries(currentCard, settings)
+                    .map((entry) => _buildDetailRow(entry.$1, entry.$2, isDark))
+                    .toList(),
+              ),
+            ),
+          if (_isPathValid(currentCard.frontImagePath) ||
+              _isPathValid(currentCard.backImagePath))
+            _LiquidGlassDetailSection(
+              title: "Identity Images",
+              icon: Icons.photo_library_outlined,
+              isDark: isDark,
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    if (_isPathValid(currentCard.frontImagePath))
+                      _buildImageThumbnail(
+                        currentCard.frontImagePath!,
+                        'Front',
+                        isDark,
+                      ),
+                    if (_isPathValid(currentCard.backImagePath))
+                      _buildImageThumbnail(
+                        currentCard.backImagePath!,
+                        'Back',
+                        isDark,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  List<(String, String)> _detailEntries(
+    IdentityCard card,
+    StartupSettingsProvider settings,
+  ) {
+    final entries = <(String, String)>[];
+    void add(String label, String? value) {
+      final text = value?.trim() ?? '';
+      if (text.isNotEmpty) entries.add((label, text));
+    }
+
+    add('Card Label', card.cardType);
+    add('Full Name', card.name);
+    add('ID Value / Number', card.value);
+    card.customFields?.forEach(add);
+    return entries;
+  }
+
+  Widget _buildDetailRow(String label, String value, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: isDark ? Colors.white54 : Colors.black54,
+              fontSize: 14,
+            ),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Copy $label',
+            icon: const Icon(Icons.copy_outlined, size: 18),
+            onPressed: () {
+              ClipboardService.instance.copy(value);
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('$label copied')));
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LiquidGlassDetailSection extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Widget child;
+  final bool isDark;
+
+  const _LiquidGlassDetailSection({
+    required this.title,
+    required this.icon,
+    required this.child,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12, top: 8),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: isDark ? Colors.white38 : Colors.black38,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title.toUpperCase(),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: isDark ? Colors.white38 : Colors.black38,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.only(bottom: 24),
+          padding: const EdgeInsets.all(16),
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5),
+            border: Border.all(
+              color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8E8E8),
+              width: 0.5,
+            ),
+          ),
+          child: child,
+        ),
+      ],
+    );
+  }
+}
+
+class IdentityEditScreen extends StatefulWidget {
+  final IdentityCard card;
+  const IdentityEditScreen({super.key, required this.card});
+  @override
+  State<IdentityEditScreen> createState() => IdentityEditScreenState();
+}
+
+class IdentityEditScreenState extends State<IdentityEditScreen> {
+  final _formKey = GlobalKey<IdentityCardEntryFormState>();
+  bool _isDark = false;
+
+  @override
+  Widget build(BuildContext context) {
+    _isDark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      appBar: AppBar(
+        title: const SizedBox.shrink(),
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: _isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: _isDark ? Colors.white : Colors.black,
+              size: 20,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.all(8),
+            child: FilledButton(
+              onPressed: () => _formKey.currentState?.save(),
+              style: FilledButton.styleFrom(
+                backgroundColor: _isDark ? Colors.white : Colors.black,
+                foregroundColor: _isDark ? Colors.black : Colors.white,
+              ),
+              child: const Text("SAVE"),
+            ),
+          ),
+        ],
+      ),
+      body: IdentityCardEntryForm(key: _formKey, existingCard: widget.card),
+    );
+  }
+}

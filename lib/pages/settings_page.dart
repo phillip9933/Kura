@@ -1,0 +1,1340 @@
+// ignore_for_file: deprecated_member_use
+
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:kura/models/theme_provider.dart';
+import 'package:kura/models/startup_settings_provider.dart';
+import 'package:kura/pages/section_settings_page.dart';
+import 'package:kura/services/backup_service.dart';
+import 'package:kura/models/provider_helper.dart';
+import 'package:kura/models/db_helper.dart';
+import 'package:kura/models/auto_backup_provider.dart';
+import 'package:kura/services/saf_service.dart';
+
+class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  String? _pendingBackupUri;
+  static const _systemSettingsChannel = MethodChannel(
+    'com.sidhant.wallet/system_settings',
+  );
+
+  Future<void> _setBarcodeBrightnessEnabled(
+    StartupSettingsProvider provider,
+    bool enabled,
+  ) async {
+    await provider.setMaxBrightnessOnBarcodeView(enabled);
+    if (!enabled || !Platform.isAndroid || !mounted) return;
+    try {
+      await _systemSettingsChannel.invokeMethod<void>(
+        'requestWriteSettingsPermission',
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Allow “Modify system settings” to enable barcode brightness.',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      // The setting remains saved; the barcode screen will still work without
+      // brightness enhancement if the platform cannot open this page.
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Future<bool> _authenticateForDestructiveAction() async {
+    if (Platform.isLinux) return true;
+    final auth = LocalAuthentication();
+    final isDeviceSupported = await auth.isDeviceSupported();
+    if (!isDeviceSupported) return true;
+    return await auth.authenticate(
+      localizedReason: 'Authenticate to perform this action',
+      options: const AuthenticationOptions(stickyAuth: true),
+    );
+  }
+
+  String _getThemeDisplayName(ThemePreference preference) {
+    switch (preference) {
+      case ThemePreference.light:
+        return 'Light';
+      case ThemePreference.dark:
+        return 'Dark';
+      case ThemePreference.system:
+        return 'Follow System';
+    }
+  }
+
+  String _getDefaultScreenName(int index) {
+    switch (index) {
+      case 0:
+        return 'Payments';
+      case 1:
+        return 'Passes';
+      case 2:
+        return 'Identity';
+      default:
+        return 'Payments';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final startupProvider = Provider.of<StartupSettingsProvider>(context);
+    final autoBackupProvider = Provider.of<AutoBackupProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Settings'),
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: isDark ? Colors.white : Colors.black,
+              size: 20,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: _buildSettingsSections(
+          context: context,
+          themeProvider: themeProvider,
+          startupProvider: startupProvider,
+          autoBackupProvider: autoBackupProvider,
+          isDark: isDark,
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildSettingsSections({
+    required BuildContext context,
+    required ThemeProvider themeProvider,
+    required StartupSettingsProvider startupProvider,
+    required AutoBackupProvider autoBackupProvider,
+    required bool isDark,
+  }) {
+    final divider = Divider(
+      color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8E8E8),
+      height: 1,
+    );
+
+    return [
+      _LiquidGlassSection(
+        title: 'General & Security',
+        icon: Icons.security_outlined,
+        children: [
+          _LiquidGlassTile(
+            icon: Icons.shield_outlined,
+            title: 'Authentication',
+            subtitle: 'Require biometrics when the app starts',
+            trailing: Switch(
+              value: startupProvider.showAuthenticationScreen,
+              onChanged: (_) => startupProvider.toggleAuthenticationScreen(),
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.home_outlined,
+            title: 'Default Tab on Launch',
+            subtitle: _getDefaultScreenName(startupProvider.defaultScreenIndex),
+            onTap: () => _showDefaultScreenDialog(context, startupProvider),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.payments_outlined,
+            title: 'Default Currency',
+            subtitle:
+                '${startupProvider.selectedCurrencyCode} (${startupProvider.selectedCurrencySymbol})',
+            onTap: () => _showCurrencyDialog(context, startupProvider),
+          ),
+        ],
+      ),
+      _LiquidGlassSection(
+        title: 'Navigation & Sections',
+        icon: Icons.tab_outlined,
+        children: [
+          _LiquidGlassTile(
+            icon: Icons.visibility_outlined,
+            title: 'Visible Tabs',
+            subtitle: 'Choose the sections shown in main navigation',
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildVisibleTabChip(
+                  label: 'Payments',
+                  selected: startupProvider.showPaymentsTab,
+                  onSelected: (selected) =>
+                      startupProvider.setTabVisibility(0, selected),
+                ),
+                _buildVisibleTabChip(
+                  label: 'Passes',
+                  selected: startupProvider.showPassesTab,
+                  onSelected: (selected) =>
+                      startupProvider.setTabVisibility(1, selected),
+                ),
+                _buildVisibleTabChip(
+                  label: 'Identity',
+                  selected: startupProvider.showIdentityTab,
+                  onSelected: (selected) =>
+                      startupProvider.setTabVisibility(2, selected),
+                ),
+              ],
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.credit_card_outlined,
+            title: 'Payments Settings',
+            subtitle: 'Categories and custom fields',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    const SectionSettingsPage(section: WalletSection.payments),
+              ),
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.confirmation_number_outlined,
+            title: 'Passes Settings',
+            subtitle: 'Categories and custom fields',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    const SectionSettingsPage(section: WalletSection.passes),
+              ),
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.badge_outlined,
+            title: 'Identity Settings',
+            subtitle: 'Categories and custom fields',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    const SectionSettingsPage(section: WalletSection.identity),
+              ),
+            ),
+          ),
+        ],
+      ),
+      _LiquidGlassSection(
+        title: 'UI & Layout',
+        icon: Icons.palette_outlined,
+        children: [
+          _LiquidGlassTile(
+            icon: Icons.brightness_6_outlined,
+            title: 'App Theme',
+            subtitle: _getThemeDisplayName(themeProvider.themePreference),
+            onTap: () => _showThemeDialog(context, themeProvider),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.search_rounded,
+            title: 'Global Search Bar',
+            subtitle: 'Show search controls across your wallet',
+            trailing: Switch(
+              value: startupProvider.isPassSearchEnabled,
+              onChanged: startupProvider.setPassSearchEnabled,
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.manage_search_rounded,
+            title: 'Global Search Bar Style',
+            subtitle: _getSearchStyleDisplayName(
+              startupProvider.passSearchStyle,
+            ),
+            onTap: startupProvider.isPassSearchEnabled
+                ? () => _showSearchStyleDialog(context, startupProvider)
+                : null,
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.qr_code_scanner_rounded,
+            title: 'QR Import Scanner',
+            subtitle: 'Show the scanner button in section controls',
+            trailing: Switch(
+              value: startupProvider.isQrImportScannerEnabled,
+              onChanged: startupProvider.setQrImportScannerEnabled,
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.brightness_high_outlined,
+            title: 'Max Brightness on Barcode View',
+            subtitle: 'Temporarily maximize brightness for fullscreen barcodes',
+            trailing: Switch(
+              value: startupProvider.maxBrightnessOnBarcodeView,
+              onChanged: (enabled) =>
+                  _setBarcodeBrightnessEnabled(startupProvider, enabled),
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.screen_rotation_outlined,
+            title: 'Default Barcode Orientation',
+            subtitle:
+                startupProvider.defaultBarcodeOrientation ==
+                    BarcodeOrientation.flipped
+                ? 'Flipped'
+                : 'Default',
+            onTap: () =>
+                _showBarcodeOrientationDialog(context, startupProvider),
+          ),
+        ],
+      ),
+      _LiquidGlassSection(
+        title: 'Data Management',
+        icon: Icons.storage_outlined,
+        children: [
+          _LiquidGlassTile(
+            icon: Icons.backup_outlined,
+            title: 'Auto-backup',
+            subtitle: _getAutoBackupSubtitle(autoBackupProvider),
+            trailing: Switch(
+              value: autoBackupProvider.isEnabled,
+              onChanged: (value) async {
+                if (value) {
+                  await _showEnableAutoBackupDialog(autoBackupProvider);
+                } else {
+                  await autoBackupProvider.setEnabled(false);
+                }
+              },
+            ),
+          ),
+          if (autoBackupProvider.isEnabled) ...[
+            divider,
+            _LiquidGlassTile(
+              icon: Icons.folder_outlined,
+              title: 'Backup Location',
+              subtitle: _getShortPath(autoBackupProvider.backupPath),
+              onTap: () => _pickAutoBackupPath(autoBackupProvider),
+            ),
+            divider,
+            _LiquidGlassTile(
+              icon: Icons.lock_outline_rounded,
+              title: 'Change Backup Password',
+              subtitle: 'Update the auto-backup encryption password',
+              onTap: () =>
+                  _showChangeAutoBackupPasswordDialog(autoBackupProvider),
+            ),
+          ],
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.backup_outlined,
+            title: 'Create Backup',
+            subtitle: 'Save an encrypted copy of your data',
+            onTap: () => _showBackupDialog(themeProvider),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.restore_outlined,
+            title: 'Restore Backup',
+            subtitle: 'Replace current data from a backup file',
+            onTap: () => _showRestoreDialog(themeProvider),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.delete_forever_outlined,
+            title: 'Delete All Data',
+            subtitle: 'Permanently erase all data from this device',
+            onTap: () => _showDeleteAllDataDialog(themeProvider),
+          ),
+        ],
+      ),
+      _LiquidGlassSection(
+        title: 'About',
+        icon: Icons.info_outline_rounded,
+        children: [
+          _LiquidGlassTile(
+            icon: Icons.info_outline_rounded,
+            title: 'App Version & Trademark Notice',
+            subtitle: 'Wallet v1.0.41 - View trademark information',
+            onTap: () => _showTrademarkNotice(isDark),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.code_rounded,
+            title: 'GitHub & Issue Tracker',
+            subtitle: 'View the source code or report an issue',
+            onTap: () => _launchExternalUrl(
+              'https://github.com/phillip9933/Wallet/issues',
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 30),
+    ];
+  }
+
+  Widget _buildVisibleTabChip({
+    required String label,
+    required bool selected,
+    required ValueChanged<bool> onSelected,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return FilterChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          color: selected ? colorScheme.onPrimary : colorScheme.onSurface,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      selected: selected,
+      onSelected: onSelected,
+      selectedColor: colorScheme.primary,
+      backgroundColor: colorScheme.surfaceContainerHighest,
+      checkmarkColor: colorScheme.onPrimary,
+    );
+  }
+
+  String _getSearchStyleDisplayName(PassSearchStyle style) {
+    return switch (style) {
+      PassSearchStyle.alwaysOn => 'Always On',
+      PassSearchStyle.icon => 'Icon',
+    };
+  }
+
+  void _showBarcodeOrientationDialog(
+    BuildContext context,
+    StartupSettingsProvider provider,
+  ) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Default Barcode Orientation'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<BarcodeOrientation>(
+              title: const Text('Default'),
+              value: BarcodeOrientation.defaultOrientation,
+              groupValue: provider.defaultBarcodeOrientation,
+              onChanged: (value) {
+                if (value == null) return;
+                provider.setDefaultBarcodeOrientation(value);
+                Navigator.pop(dialogContext);
+              },
+            ),
+            RadioListTile<BarcodeOrientation>(
+              title: const Text('Flipped'),
+              value: BarcodeOrientation.flipped,
+              groupValue: provider.defaultBarcodeOrientation,
+              onChanged: (value) {
+                if (value == null) return;
+                provider.setDefaultBarcodeOrientation(value);
+                Navigator.pop(dialogContext);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSearchStyleDialog(
+    BuildContext context,
+    StartupSettingsProvider provider,
+  ) {
+    final isDark = context.read<ThemeProvider>().isDarkMode;
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        title: const Text('Global Search Bar Style'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<PassSearchStyle>(
+              title: const Text('Always On'),
+              value: PassSearchStyle.alwaysOn,
+              groupValue: provider.passSearchStyle,
+              onChanged: (value) {
+                if (value == null) return;
+                provider.setPassSearchStyle(value);
+                Navigator.pop(dialogContext);
+              },
+            ),
+            RadioListTile<PassSearchStyle>(
+              title: const Text('Icon'),
+              value: PassSearchStyle.icon,
+              groupValue: provider.passSearchStyle,
+              onChanged: (value) {
+                if (value == null) return;
+                provider.setPassSearchStyle(value);
+                Navigator.pop(dialogContext);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _launchExternalUrl(String url) async {
+    HapticFeedback.mediumImpact();
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  void _showTrademarkNotice(bool isDark) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        title: const Text(
+          'Trademark Fair Use Notice',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const SingleChildScrollView(
+          child: Text(
+            'The Visa, Mastercard, RuPay, American Express, and Discover logos displayed in this application are registered trademarks of their respective owners.\n\n'
+            'These logos are used solely for identifying the card network. This usage constitutes nominative fair use.\n\n'
+            'This application is not affiliated with, endorsed by, or sponsored by any of these companies.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCurrencyDialog(
+    BuildContext context,
+    StartupSettingsProvider provider,
+  ) {
+    final isDark = Provider.of<ThemeProvider>(
+      context,
+      listen: false,
+    ).isDarkMode;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        title: const Text(
+          'Choose Currency',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: StartupSettingsProvider.majorCurrencies.length,
+            itemBuilder: (context, index) {
+              final currency = StartupSettingsProvider.majorCurrencies[index];
+              return RadioListTile<String>(
+                title: Text('${currency['name']} (${currency['symbol']})'),
+                value: currency['code']!,
+                groupValue: provider.selectedCurrencyCode,
+                onChanged: (val) {
+                  if (val != null) {
+                    provider.setCurrency(val, currency['symbol']!);
+                    Navigator.pop(context);
+                  }
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDefaultScreenDialog(
+    BuildContext context,
+    StartupSettingsProvider provider,
+  ) {
+    final isDark = Provider.of<ThemeProvider>(
+      context,
+      listen: false,
+    ).isDarkMode;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        title: const Text(
+          'Default Screen',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (provider.showPaymentsTab)
+              _buildRadioOption('Payments', 0, provider.defaultScreenIndex, (
+                v,
+              ) {
+                provider.setDefaultScreen(v);
+                Navigator.pop(context);
+              }, isDark),
+            if (provider.showPassesTab)
+              _buildRadioOption('Passes', 1, provider.defaultScreenIndex, (v) {
+                provider.setDefaultScreen(v);
+                Navigator.pop(context);
+              }, isDark),
+            if (provider.showIdentityTab)
+              _buildRadioOption('Identity', 2, provider.defaultScreenIndex, (
+                v,
+              ) {
+                provider.setDefaultScreen(v);
+                Navigator.pop(context);
+              }, isDark),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRadioOption(
+    String label,
+    int value,
+    int groupValue,
+    Function(int) onChanged,
+    bool isDark,
+  ) {
+    return RadioListTile<int>(
+      title: Text(label),
+      value: value,
+      groupValue: groupValue,
+      onChanged: (val) {
+        if (val != null) onChanged(val);
+      },
+    );
+  }
+
+  void _showThemeDialog(BuildContext context, ThemeProvider themeProvider) {
+    final isDark = themeProvider.isDarkMode;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        title: const Text(
+          'Choose Theme',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: ThemePreference.values
+              .map(
+                (p) => RadioListTile<ThemePreference>(
+                  title: Text(_getThemeDisplayName(p)),
+                  value: p,
+                  groupValue: themeProvider.themePreference,
+                  onChanged: (v) {
+                    if (v != null) {
+                      themeProvider.setThemePreference(v);
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+  }
+
+  String _getAutoBackupSubtitle(AutoBackupProvider provider) {
+    if (!provider.isEnabled) return 'Automatically backup on changes';
+    final path = provider.displayPath;
+    if (path.isEmpty) return 'Configure backup location';
+    return 'Active - ${_getShortPath(path)}';
+  }
+
+  String _getShortPath(String path) {
+    if (path.isEmpty) return 'Not set';
+    final parts = path.split('/');
+    if (parts.length <= 3) return path;
+    return '.../${parts.sublist(parts.length - 2).join('/')}';
+  }
+
+  Future<void> _showEnableAutoBackupDialog(AutoBackupProvider provider) async {
+    final isDark = Provider.of<ThemeProvider>(
+      context,
+      listen: false,
+    ).isDarkMode;
+    final pathController = TextEditingController();
+    final passwordController = TextEditingController();
+    bool obscure = true;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+          title: const Text(
+            'Enable Auto Backup',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'A backup will be created automatically whenever you add or remove cards, passes, or identity cards.',
+                  style: TextStyle(
+                    color: isDark ? Colors.white70 : Colors.black87,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Backup Location',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: () async {
+                    final result = await SafService.pickDirectory();
+                    if (result != null) {
+                      final segments = Uri.parse(result).pathSegments;
+                      final displayPath = segments.isNotEmpty
+                          ? segments.last
+                          : result;
+                      setDialogState(() {
+                        pathController.text = displayPath;
+                      });
+                      _pendingBackupUri = result;
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: isDark
+                            ? const Color(0xFF2A2A2A)
+                            : const Color(0xFFE0E0E0),
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.folder_outlined,
+                          color: isDark ? Colors.white54 : Colors.black54,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            pathController.text.isEmpty
+                                ? 'Select directory...'
+                                : pathController.text,
+                            style: TextStyle(
+                              color: pathController.text.isEmpty
+                                  ? (isDark ? Colors.white38 : Colors.black38)
+                                  : (isDark ? Colors.white : Colors.black),
+                              fontSize: 13,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Backup Password',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: passwordController,
+                  obscureText: obscure,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                  decoration: InputDecoration(
+                    hintText: 'Enter password',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscure ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () => setDialogState(() {
+                        obscure = !obscure;
+                      }),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                if (pathController.text.isEmpty) return;
+                if (passwordController.text.length < 8) return;
+                if (_pendingBackupUri == null) return;
+
+                await provider.setBackupUri(_pendingBackupUri!);
+                await provider.setBackupPath(pathController.text);
+                await provider.setBackupPassword(passwordController.text);
+                await provider.setEnabled(true);
+
+                _pendingBackupUri = null;
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+              },
+              child: const Text('Enable'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _pickAutoBackupPath(AutoBackupProvider provider) async {
+    final result = await SafService.pickDirectory();
+    if (result != null) {
+      await provider.setBackupUri(result);
+      final segments = Uri.parse(result).pathSegments;
+      final displayPath = segments.isNotEmpty ? segments.last : result;
+      await provider.setBackupPath(displayPath);
+    }
+  }
+
+  void _showChangeAutoBackupPasswordDialog(AutoBackupProvider provider) {
+    final isDark = Provider.of<ThemeProvider>(
+      context,
+      listen: false,
+    ).isDarkMode;
+    final passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        title: const Text(
+          'Change Backup Password',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: TextField(
+          controller: passwordController,
+          obscureText: true,
+          style: TextStyle(color: isDark ? Colors.white : Colors.black),
+          decoration: const InputDecoration(
+            hintText: 'Enter new password (min 8 characters)',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (passwordController.text.length < 8) return;
+              await provider.setBackupPassword(passwordController.text);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBackupDialog(ThemeProvider themeProvider) async {
+    final authenticated = await _authenticateForDestructiveAction();
+    if (!authenticated || !mounted) return;
+    final isDark = themeProvider.isDarkMode;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => _LiquidGlassPasswordDialog(
+        title: 'Create Backup',
+        content: 'Enter a strong password to encrypt your backup file.',
+        buttonText: 'Create Backup',
+        isDark: isDark,
+        onConfirm: (password) async {
+          try {
+            await BackupService.createBackup(password);
+            if (!mounted) return;
+            if (dialogContext.mounted) {
+              Navigator.pop(dialogContext);
+            }
+          } catch (_) {
+            if (!mounted) return;
+            if (dialogContext.mounted) {
+              Navigator.pop(dialogContext);
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  void _showRestoreDialog(ThemeProvider themeProvider) async {
+    final authenticated = await _authenticateForDestructiveAction();
+    if (!authenticated || !mounted) return;
+    final isDark = themeProvider.isDarkMode;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => _LiquidGlassPasswordDialog(
+        title: 'Restore Backup',
+        content:
+            'Enter the password for the backup file. This will replace all current data.',
+        buttonText: 'Restore',
+        isDestructive: true,
+        isDark: isDark,
+        validatePassword: false,
+        onConfirm: (password) async {
+          try {
+            final walletProvider = context.read<WalletProvider>();
+            final passProvider = context.read<PassProvider>();
+            final identityProvider = context.read<IdentityProvider>();
+            final tProvider = context.read<ThemeProvider>();
+            final sProvider = context.read<StartupSettingsProvider>();
+
+            await BackupService.restoreBackup(password, context: dialogContext);
+
+            if (dialogContext.mounted) {
+              Navigator.pop(dialogContext);
+            }
+
+            if (!mounted) return;
+
+            // Reload all providers to reflect restored data and settings
+            walletProvider.fetchWallets();
+            passProvider.fetchPasses();
+            identityProvider.fetchIdentities();
+            await tProvider.init();
+            await sProvider.loadStartupSettings();
+
+            if (!mounted) return;
+          } catch (_) {
+            if (dialogContext.mounted) {
+              Navigator.pop(dialogContext);
+            }
+            if (!mounted) return;
+          }
+        },
+      ),
+    );
+  }
+
+  void _showDeleteAllDataDialog(ThemeProvider themeProvider) async {
+    final authenticated = await _authenticateForDestructiveAction();
+    if (!authenticated || !mounted) return;
+    final isDark = themeProvider.isDarkMode;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        title: const Text('Delete All Data?'),
+        content: const Text(
+          'This will permanently delete all wallets, passes, and images.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              await _performDeleteAllData();
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete Everything'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _performDeleteAllData() async {
+    final walletProvider = context.read<WalletProvider>();
+    final passProvider = context.read<PassProvider>();
+    final identityProvider = context.read<IdentityProvider>();
+
+    try {
+      // Bulk delete wallets
+      final wallets = await DatabaseHelper.instance.getWallets();
+      if (wallets.isNotEmpty) {
+        final db = await DatabaseHelper.instance.database;
+        final batch = db.batch();
+        for (var w in wallets) {
+          if (w.id != null) {
+            batch.delete('wallets', where: 'id = ?', whereArgs: [w.id]);
+          }
+        }
+        await batch.commit(noResult: true);
+        // Delete image files
+        for (var w in wallets) {
+          await DatabaseHelper.deleteImageFile(w.frontImagePath);
+          await DatabaseHelper.deleteImageFile(w.backImagePath);
+        }
+      }
+
+      // Bulk delete passes
+      final passes = await PassDatabaseHelper.instance.getAllPasses();
+      if (passes.isNotEmpty) {
+        final db = await PassDatabaseHelper.instance.database;
+        final batch = db.batch();
+        for (var p in passes) {
+          if (p.id != null) {
+            batch.delete('passes', where: 'id = ?', whereArgs: [p.id]);
+          }
+        }
+        await batch.commit(noResult: true);
+        for (var p in passes) {
+          await DatabaseHelper.deleteImageFile(p.frontImagePath);
+          await DatabaseHelper.deleteImageFile(p.backImagePath);
+          await DatabaseHelper.deleteImageFile(p.stripImagePath);
+          await DatabaseHelper.deleteImageFile(p.thumbnailImagePath);
+        }
+      }
+
+      // Bulk delete identities
+      final identities = await IdentityDatabaseHelper.instance
+          .getAllIdentities();
+      if (identities.isNotEmpty) {
+        final db = await IdentityDatabaseHelper.instance.database;
+        final batch = db.batch();
+        for (var i in identities) {
+          if (i.id != null) {
+            batch.delete('identities', where: 'id = ?', whereArgs: [i.id]);
+          }
+        }
+        await batch.commit(noResult: true);
+        for (var i in identities) {
+          await DatabaseHelper.deleteImageFile(i.frontImagePath);
+          await DatabaseHelper.deleteImageFile(i.backImagePath);
+        }
+      }
+
+      final directory = await getApplicationDocumentsDirectory();
+      final dir = Directory(directory.path);
+      if (await dir.exists()) {
+        final deleteFutures = <Future>[];
+        for (var f in dir.listSync()) {
+          if (f is File) {
+            final basename = f.path.split(Platform.pathSeparator).last;
+            final isTimestampImage = RegExp(
+              r'^\d{16,}\.(png|jpg)$',
+            ).hasMatch(basename);
+            if (basename.endsWith('.enc') || isTimestampImage) {
+              deleteFutures.add(f.delete());
+            }
+          }
+        }
+        if (deleteFutures.isNotEmpty) {
+          await Future.wait(deleteFutures);
+        }
+      }
+
+      if (!mounted) return;
+
+      walletProvider.fetchWallets();
+      passProvider.fetchPasses();
+      identityProvider.fetchIdentities();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('All data deleted.')));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Delete failed. Please try again.')),
+      );
+    }
+  }
+}
+
+class _LiquidGlassSection extends StatelessWidget {
+  final String title;
+  final IconData? icon;
+  final List<Widget> children;
+  const _LiquidGlassSection({
+    required this.title,
+    this.icon,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
+    final color = isDark ? Colors.white38 : Colors.black38;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8, top: 12),
+          child: Row(
+            children: [
+              if (icon != null) Icon(icon, size: 14, color: color),
+              const SizedBox(width: 8),
+              Text(
+                title.toUpperCase(),
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Material(
+            color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF2A2A2A)
+                      : const Color(0xFFE8E8E8),
+                  width: 0.5,
+                ),
+              ),
+              child: Column(children: children),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
+class _LiquidGlassTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  const _LiquidGlassTile({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
+    final textColor = isDark ? Colors.white : Colors.black;
+    return ListTile(
+      onTap: onTap,
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFEEEEEE),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: textColor, size: 20),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: textColor,
+          fontWeight: FontWeight.w500,
+          fontSize: 14,
+        ),
+      ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle!,
+              style: TextStyle(
+                color: isDark ? Colors.white54 : Colors.black54,
+                fontSize: 12,
+              ),
+            )
+          : null,
+      trailing:
+          trailing ??
+          (onTap != null
+              ? Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: isDark ? Colors.white30 : Colors.black26,
+                )
+              : null),
+    );
+  }
+}
+
+class _LiquidGlassPasswordDialog extends StatefulWidget {
+  final String title;
+  final String content;
+  final String buttonText;
+  final bool isDestructive;
+  final bool isDark;
+  final bool validatePassword;
+  final Future<void> Function(String) onConfirm;
+  const _LiquidGlassPasswordDialog({
+    required this.title,
+    required this.content,
+    required this.buttonText,
+    this.isDestructive = false,
+    required this.isDark,
+    this.validatePassword = true,
+    required this.onConfirm,
+  });
+
+  @override
+  State<_LiquidGlassPasswordDialog> createState() =>
+      _LiquidGlassPasswordDialogState();
+}
+
+class _LiquidGlassPasswordDialogState
+    extends State<_LiquidGlassPasswordDialog> {
+  late final TextEditingController _passwordController;
+  bool _isLoading = false;
+  bool _obscure = true;
+  String? _passwordError;
+
+  static const int _minPasswordLength = 8;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _validateAndConfirm() {
+    final password = _passwordController.text;
+    if (widget.validatePassword && password.length < _minPasswordLength) {
+      setState(() {
+        _passwordError =
+            'Password must be at least $_minPasswordLength characters';
+      });
+      return;
+    }
+    setState(() {
+      _passwordError = null;
+      _isLoading = true;
+    });
+    widget.onConfirm(password).then((_) {
+      if (mounted) setState(() => _isLoading = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: widget.isDark ? const Color(0xFF0A0A0A) : Colors.white,
+      title: Text(
+        widget.title,
+        style: TextStyle(
+          color: widget.isDark ? Colors.white : Colors.black,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            widget.content,
+            style: TextStyle(
+              color: widget.isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _passwordController,
+            obscureText: _obscure,
+            style: TextStyle(
+              color: widget.isDark ? Colors.white : Colors.black,
+            ),
+            onChanged: (_) {
+              if (_passwordError != null) {
+                setState(() => _passwordError = null);
+              }
+            },
+            decoration: InputDecoration(
+              labelText: 'Password',
+              errorText: _passwordError,
+              suffixIcon: IconButton(
+                icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                onPressed: () => setState(() => _obscure = !_obscure),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _isLoading ? null : _validateAndConfirm,
+          style: FilledButton.styleFrom(
+            backgroundColor: widget.isDestructive
+                ? Colors.red
+                : (widget.isDark ? Colors.white : Colors.black),
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(widget.buttonText),
+        ),
+      ],
+    );
+  }
+}
