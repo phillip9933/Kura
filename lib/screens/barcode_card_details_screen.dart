@@ -232,6 +232,7 @@ class _BarcodeCardDetailScreenState extends State<BarcodeCardDetailScreen> {
     add('Logo Text', pass.logoText);
     add('Barcode Value', pass.barcodeValue);
     add('Transit Type', pass.transitType);
+    add('Expiry Date', pass.expiryDate);
     final customFields = pass.fields?['customFields'];
     if (customFields is Map) {
       customFields.forEach(

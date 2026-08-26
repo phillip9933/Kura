@@ -250,6 +250,7 @@ class _IdentityCardDetailScreenState extends State<IdentityCardDetailScreen> {
     add('Card Label', card.cardType);
     add('Full Name', card.name);
     add('ID Value / Number', card.value);
+    add('Expiry Date', card.expiryDate);
     card.customFields?.forEach(add);
     return entries;
   }
