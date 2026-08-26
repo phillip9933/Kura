@@ -35,6 +35,7 @@ class WalletProvider with ChangeNotifier {
 
     await DatabaseHelper.instance.updateWalletsOrder(wallets);
     notifyListeners();
+    AutoBackupService.triggerBackup();
   }
 }
 
@@ -67,6 +68,7 @@ class PassProvider with ChangeNotifier {
 
     await PassDatabaseHelper.instance.updatePassesOrder(passes);
     notifyListeners();
+    AutoBackupService.triggerBackup();
   }
 
   /// Deep search through all pass fields
@@ -145,6 +147,7 @@ class IdentityProvider with ChangeNotifier {
 
     await IdentityDatabaseHelper.instance.updateIdentitiesOrder(identities);
     notifyListeners();
+    AutoBackupService.triggerBackup();
   }
 
   List<IdentityCard> searchIdentities(String query) {

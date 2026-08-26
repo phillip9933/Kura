@@ -19,6 +19,7 @@ import '../models/theme_provider.dart';
 import '../pages/walletdetails.dart';
 import 'package:kura/widgets/identity_card_widget.dart';
 import 'package:kura/screens/identity_card_details_screen.dart';
+import 'package:kura/screens/reorder_items_screen.dart';
 import 'package:kura/services/auto_backup_service.dart';
 import 'package:kura/widgets/pass_grid_card.dart';
 import 'package:kura/widgets/encrypted_image_display.dart';
@@ -1608,6 +1609,14 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Wrap(
             children: [
               ListTile(
+                leading: const Icon(Icons.reorder_rounded),
+                title: const Text('Reorder items'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openReorderMode(WalletSection.passes);
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.edit_outlined, color: Colors.blue),
                 title: const Text('Edit'),
                 onTap: () async {
@@ -1669,6 +1678,14 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (sheetContext) => SafeArea(
         child: Wrap(
           children: [
+            ListTile(
+              leading: const Icon(Icons.reorder_rounded),
+              title: const Text('Reorder items'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _openReorderMode(WalletSection.payments);
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.edit_outlined),
               title: const Text('Edit'),
@@ -1739,6 +1756,14 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Wrap(
           children: [
             ListTile(
+              leading: const Icon(Icons.reorder_rounded),
+              title: const Text('Reorder items'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _openReorderMode(WalletSection.identity);
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.edit_outlined),
               title: const Text('Edit'),
               onTap: () async {
@@ -1777,6 +1802,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _openReorderMode(WalletSection section) async {
+    await Navigator.push<void>(
+      context,
+      SmoothPageRoute(page: ReorderItemsScreen(section: section)),
     );
   }
 
