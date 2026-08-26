@@ -31,6 +31,7 @@ class CreditCardEntryFormState extends State<CreditCardEntryForm> {
   final _numberController = TextEditingController();
   final _expiryController = TextEditingController();
   final _issuerController = TextEditingController();
+  DateTime? _selectedExpiryDate;
   String _network = "visa";
   String _selectedColor = 'default';
   File? _frontImageFile;
@@ -50,6 +51,7 @@ class CreditCardEntryFormState extends State<CreditCardEntryForm> {
       _nameController.text = wallet.name;
       _numberController.text = wallet.number;
       _expiryController.text = _ExpiryDateFormatter.normalize(wallet.expiry);
+      _selectedExpiryDate = _parseExpiryDate(wallet.expiry);
       _issuerController.text = wallet.issuer ?? '';
       _network = wallet.network ?? _network;
       _selectedColor = wallet.color ?? _selectedColor;
@@ -84,6 +86,87 @@ class CreditCardEntryFormState extends State<CreditCardEntryForm> {
       setState(() {});
     }
   }
+
+  DateTime? _parseExpiryDate(String value) {
+    final isoDate = DateTime.tryParse(value);
+    if (isoDate != null) return isoDate;
+    final match = RegExp(r'^(\d{2})/(\d{2})$').firstMatch(value);
+    if (match == null) return null;
+    final month = int.tryParse(match.group(1)!);
+    final year = int.tryParse(match.group(2)!);
+    if (month == null || year == null || month < 1 || month > 12) return null;
+    return DateTime(2000 + year, month + 1, 0);
+  }
+
+  Future<void> _selectExpiryDate() async {
+    final now = DateTime.now();
+    var selectedMonth = _selectedExpiryDate?.month ?? now.month;
+    var selectedYear = _selectedExpiryDate?.year ?? now.year;
+    final selected = await showDialog<DateTime>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Select Expiry Month'),
+          content: Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  initialValue: selectedMonth,
+                  decoration: const InputDecoration(labelText: 'Month'),
+                  items: List.generate(
+                    12,
+                    (index) => DropdownMenuItem(
+                      value: index + 1,
+                      child: Text('${index + 1}'.padLeft(2, '0')),
+                    ),
+                  ),
+                  onChanged: (value) =>
+                      setDialogState(() => selectedMonth = value!),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  initialValue: selectedYear,
+                  decoration: const InputDecoration(labelText: 'Year'),
+                  items: List.generate(
+                    101,
+                    (index) => DropdownMenuItem(
+                      value: now.year + index,
+                      child: Text('${now.year + index}'),
+                    ),
+                  ),
+                  onChanged: (value) =>
+                      setDialogState(() => selectedYear = value!),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(
+                dialogContext,
+                DateTime(selectedYear, selectedMonth),
+              ),
+              child: const Text('Select'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      _selectedExpiryDate = selected;
+      _expiryController.text = _toExpiryMonthYear(selected);
+    });
+  }
+
+  String _toExpiryMonthYear(DateTime date) =>
+      '${date.month.toString().padLeft(2, '0')}/${(date.year % 100).toString().padLeft(2, '0')}';
 
   String? _configuredPaymentCategory(String? detectedNetwork) {
     if (detectedNetwork == null) return null;
@@ -293,21 +376,35 @@ class CreditCardEntryFormState extends State<CreditCardEntryForm> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _expiryController,
-                decoration: const InputDecoration(labelText: 'Expiry (MM/YY)'),
-                keyboardType: TextInputType.number,
-                inputFormatters: [_ExpiryDateFormatter()],
-                validator: (value) {
-                  final expiry = value?.trim() ?? '';
-                  if (!RegExp(r'^\d{2}/\d{2}$').hasMatch(expiry)) {
-                    return 'Use MM/YY format';
-                  }
-                  final month = int.parse(expiry.substring(0, 2));
-                  return month >= 1 && month <= 12
-                      ? null
-                      : 'Enter a valid month';
-                },
+              InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Expiry Date (Optional)',
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _selectedExpiryDate == null
+                            ? 'No expiry date'
+                            : _toExpiryMonthYear(_selectedExpiryDate!),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Select expiry date',
+                      icon: const Icon(Icons.calendar_month_outlined),
+                      onPressed: _selectExpiryDate,
+                    ),
+                    if (_selectedExpiryDate != null)
+                      IconButton(
+                        tooltip: 'Clear expiry date',
+                        icon: const Icon(Icons.clear_rounded),
+                        onPressed: () => setState(() {
+                          _selectedExpiryDate = null;
+                          _expiryController.clear();
+                        }),
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(

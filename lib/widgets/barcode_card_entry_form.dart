@@ -48,6 +48,7 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
   String? _frontImagePath;
   String? _backImagePath;
   String? _iconImagePath;
+  DateTime? _expiryDate;
 
   final Map<String, List<Map<String, dynamic>>> _dynamicFields = {
     'primaryFields': [],
@@ -75,6 +76,7 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
       _frontImagePath = p.frontImagePath;
       _backImagePath = p.backImagePath;
       _iconImagePath = p.iconImagePath;
+      _expiryDate = _parseExpiryDate(p.expiryDate);
 
       // Deep copy fields if they exist
       if (p.fields != null) {
@@ -128,6 +130,86 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
     super.dispose();
   }
 
+  Future<void> _selectExpiryDate() async {
+    final now = DateTime.now();
+    var selectedMonth = _expiryDate?.month ?? now.month;
+    var selectedYear = _expiryDate?.year ?? now.year;
+    final selected = await showDialog<DateTime>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Select Expiry Month'),
+          content: Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  initialValue: selectedMonth,
+                  decoration: const InputDecoration(labelText: 'Month'),
+                  items: List.generate(
+                    12,
+                    (index) => DropdownMenuItem(
+                      value: index + 1,
+                      child: Text('${index + 1}'.padLeft(2, '0')),
+                    ),
+                  ),
+                  onChanged: (value) =>
+                      setDialogState(() => selectedMonth = value!),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  initialValue: selectedYear,
+                  decoration: const InputDecoration(labelText: 'Year'),
+                  items: List.generate(
+                    101,
+                    (index) => DropdownMenuItem(
+                      value: now.year + index,
+                      child: Text('${now.year + index}'),
+                    ),
+                  ),
+                  onChanged: (value) =>
+                      setDialogState(() => selectedYear = value!),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(
+                dialogContext,
+                DateTime(selectedYear, selectedMonth),
+              ),
+              child: const Text('Select'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (selected == null || !mounted) return;
+    setState(() => _expiryDate = selected);
+  }
+
+  DateTime? _parseExpiryDate(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final isoDate = DateTime.tryParse(value);
+    if (isoDate != null) return isoDate;
+    final match = RegExp(r'^(\d{2})/(\d{2})$').firstMatch(value);
+    if (match == null) return null;
+    final month = int.tryParse(match.group(1)!);
+    final year = int.tryParse(match.group(2)!);
+    if (month == null || year == null || month < 1 || month > 12) return null;
+    return DateTime(2000 + year, month);
+  }
+
+  String? get _expiryDateValue => _expiryDate == null
+      ? null
+      : '${_expiryDate!.month.toString().padLeft(2, '0')}/${(_expiryDate!.year % 100).toString().padLeft(2, '0')}';
+
   void _addData() async {
     final org = _organizationController.text.trim();
     final value = _barcodeValueController.text.trim();
@@ -173,6 +255,7 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
           _selectedBarcodeFormat,
         ),
         transitType: _transitType,
+        expiryDate: _expiryDateValue,
         frontImagePath: _frontImagePath,
         backImagePath: _backImagePath,
         iconImagePath: _iconImagePath,
@@ -515,6 +598,8 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
           decoration: const InputDecoration(labelText: 'Account #'),
         ),
         const SizedBox(height: 24),
+        _buildExpiryDateField(),
+        const SizedBox(height: 24),
         ConfiguredCustomFields(
           schemas: settings.customFieldsFor(WalletSection.passes),
           controllers: _customFieldControllers,
@@ -586,6 +671,32 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
         ],
         const SizedBox(height: 24),
       ],
+    );
+  }
+
+  Widget _buildExpiryDateField() {
+    return InputDecorator(
+      decoration: const InputDecoration(labelText: 'Expiry Date (Optional)'),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              _expiryDate == null ? 'No expiry date' : _expiryDateValue!,
+            ),
+          ),
+          IconButton(
+            tooltip: 'Select expiry date',
+            icon: const Icon(Icons.calendar_month_outlined),
+            onPressed: _selectExpiryDate,
+          ),
+          if (_expiryDate != null)
+            IconButton(
+              tooltip: 'Clear expiry date',
+              icon: const Icon(Icons.clear_rounded),
+              onPressed: () => setState(() => _expiryDate = null),
+            ),
+        ],
+      ),
     );
   }
 
