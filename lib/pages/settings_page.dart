@@ -340,6 +340,31 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           divider,
           _LiquidGlassTile(
+            icon: Icons.swap_vert_rounded,
+            title: 'Search Position',
+            subtitle: _getSearchPositionDisplayName(
+              startupProvider.searchBarPosition,
+            ),
+            trailing: TextButton(
+              onPressed:
+                  startupProvider.isPassSearchEnabled &&
+                      startupProvider.passSearchStyle ==
+                          PassSearchStyle.alwaysOn
+                  ? () => startupProvider.setSearchBarPosition(
+                      startupProvider.searchBarPosition == SearchBarPosition.top
+                          ? SearchBarPosition.bottom
+                          : SearchBarPosition.top,
+                    )
+                  : null,
+              child: Text(
+                _getSearchPositionDisplayName(
+                  startupProvider.searchBarPosition,
+                ),
+              ),
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
             icon: Icons.qr_code_scanner_rounded,
             title: 'QR Import Scanner',
             subtitle: 'Show the scanner button in section controls',
@@ -492,6 +517,13 @@ class _SettingsPageState extends State<SettingsPage> {
     return switch (style) {
       PassSearchStyle.alwaysOn => 'Search Bar',
       PassSearchStyle.icon => 'Search Button',
+    };
+  }
+
+  String _getSearchPositionDisplayName(SearchBarPosition position) {
+    return switch (position) {
+      SearchBarPosition.top => 'Top',
+      SearchBarPosition.bottom => 'Bottom',
     };
   }
 

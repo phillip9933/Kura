@@ -4,6 +4,8 @@ import 'dart:convert';
 
 enum PassSearchStyle { alwaysOn, icon }
 
+enum SearchBarPosition { top, bottom }
+
 enum PassGridDisplayMode { front, back, virtualCards }
 
 enum BarcodeOrientation { defaultOrientation, flipped }
@@ -47,6 +49,7 @@ class StartupSettingsProvider with ChangeNotifier {
   BarcodeOrientation _defaultBarcodeOrientation =
       BarcodeOrientation.defaultOrientation;
   PassSearchStyle _passSearchStyle = PassSearchStyle.alwaysOn;
+  SearchBarPosition _searchBarPosition = SearchBarPosition.top;
   PassGridDisplayMode _passGridDisplayMode = PassGridDisplayMode.front;
   int _passGridColumns = 1;
   final Map<WalletSection, int> _sectionGridColumns = {
@@ -133,6 +136,7 @@ class StartupSettingsProvider with ChangeNotifier {
   static const String _showPassQrButtonKey = 'showPassQrButton';
   static const String _isPassSearchEnabledKey = 'isPassSearchEnabled';
   static const String _passSearchStyleKey = 'passSearchStyle';
+  static const String _searchBarPositionKey = 'searchBarPosition';
   static const String _passGridDisplayModeKey = 'passGridDisplayMode';
   static const String _passGridColumnsKey = 'passGridColumns';
   static const String _maxBrightnessOnBarcodeViewKey =
@@ -155,6 +159,7 @@ class StartupSettingsProvider with ChangeNotifier {
   BarcodeOrientation get defaultBarcodeOrientation =>
       _defaultBarcodeOrientation;
   PassSearchStyle get passSearchStyle => _passSearchStyle;
+  SearchBarPosition get searchBarPosition => _searchBarPosition;
   PassGridDisplayMode get passGridDisplayMode => _passGridDisplayMode;
   int get passGridColumns => _passGridColumns;
 
@@ -218,6 +223,10 @@ class StartupSettingsProvider with ChangeNotifier {
     _passSearchStyle = PassSearchStyle.values.firstWhere(
       (style) => style.name == savedSearchStyle,
       orElse: () => PassSearchStyle.alwaysOn,
+    );
+    _searchBarPosition = SearchBarPosition.values.firstWhere(
+      (position) => position.name == prefs.getString(_searchBarPositionKey),
+      orElse: () => SearchBarPosition.top,
     );
     final savedGridDisplayMode = prefs.getString(_passGridDisplayModeKey);
     _passGridDisplayMode = PassGridDisplayMode.values.firstWhere(
@@ -399,6 +408,13 @@ class StartupSettingsProvider with ChangeNotifier {
     _passSearchStyle = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_passSearchStyleKey, value.name);
+    notifyListeners();
+  }
+
+  Future<void> setSearchBarPosition(SearchBarPosition value) async {
+    _searchBarPosition = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_searchBarPositionKey, value.name);
     notifyListeners();
   }
 

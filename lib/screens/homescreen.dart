@@ -628,112 +628,145 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
     final selectedNavigationIndex = visibleTabs.indexOf(effectiveIndex);
+    final showBottomSearch = _isSearchBarAtBottom(startupProvider);
+    final showBottomNavigation =
+        startupProvider.showBottomNavigationBar &&
+        startupProvider.hasMultipleVisibleTabs;
 
     return Scaffold(
       appBar: null,
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.12)
-                  : Colors.black.withValues(alpha: 0.2),
-              blurRadius: 30,
-              offset: const Offset(0, 12),
-              spreadRadius: -2,
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: () async {
-            HapticFeedback.mediumImpact();
-            final walletProvider = context.read<WalletProvider>();
-            final passProvider = context.read<PassProvider>();
-            final identityProvider = context.read<IdentityProvider>();
-            final result = await Navigator.push(
-              context,
-              SmoothPageRoute(
-                page: AddCardScreen(initialTabIndex: effectiveIndex),
+      resizeToAvoidBottomInset: true,
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: showBottomSearch ? 68 : 0),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : Colors.black.withValues(alpha: 0.2),
+                blurRadius: 30,
+                offset: const Offset(0, 12),
+                spreadRadius: -2,
               ),
-            );
-            if (result == true && mounted) {
-              await walletProvider.fetchWallets();
-              await passProvider.fetchPasses();
-              await identityProvider.fetchIdentities();
-            }
-          },
-          child: const Icon(Icons.add_rounded),
+            ],
+          ),
+          child: FloatingActionButton(
+            onPressed: () async {
+              HapticFeedback.mediumImpact();
+              final walletProvider = context.read<WalletProvider>();
+              final passProvider = context.read<PassProvider>();
+              final identityProvider = context.read<IdentityProvider>();
+              final result = await Navigator.push(
+                context,
+                SmoothPageRoute(
+                  page: AddCardScreen(initialTabIndex: effectiveIndex),
+                ),
+              );
+              if (result == true && mounted) {
+                await walletProvider.fetchWallets();
+                await passProvider.fetchPasses();
+                await identityProvider.fetchIdentities();
+              }
+            },
+            child: const Icon(Icons.add_rounded),
+          ),
         ),
       ),
-      body: PageView(
-        controller: _tabPageController,
-        physics: const PageScrollPhysics(parent: ClampingScrollPhysics()),
-        onPageChanged: (page) => _onItemTapped(visibleTabs[page]),
+      body: Stack(
         children: [
-          if (startupProvider.showPaymentsTab)
+          PageView(
+            controller: _tabPageController,
+            physics: const PageScrollPhysics(parent: ClampingScrollPhysics()),
+            onPageChanged: (page) => _onItemTapped(visibleTabs[page]),
+            children: [
+              if (startupProvider.showPaymentsTab)
+                SafeArea(
+                  top: true,
+                  bottom: false,
+                  child: _buildPaymentsTab(context),
+                ),
+              if (startupProvider.showPassesTab)
+                SafeArea(
+                  top: true,
+                  bottom: false,
+                  child: _buildPassesTab(context),
+                ),
+              if (startupProvider.showIdentityTab)
+                SafeArea(
+                  top: true,
+                  bottom: false,
+                  child: _buildIdentitiesTab(context),
+                ),
+            ],
+          ),
+          if (showBottomSearch)
             SafeArea(
-              top: true,
-              bottom: false,
-              child: _buildPaymentsTab(context),
-            ),
-          if (startupProvider.showPassesTab)
-            SafeArea(top: true, bottom: false, child: _buildPassesTab(context)),
-          if (startupProvider.showIdentityTab)
-            SafeArea(
-              top: true,
-              bottom: false,
-              child: _buildIdentitiesTab(context),
-            ),
-        ],
-      ),
-      bottomNavigationBar:
-          !startupProvider.showBottomNavigationBar ||
-              !startupProvider.hasMultipleVisibleTabs
-          ? null
-          : Container(
-              decoration: BoxDecoration(
-                color: isDark ? Colors.black : Colors.white,
-                border: Border(
-                  top: BorderSide(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.078)
-                        : Colors.black.withValues(alpha: 0.051),
+              top: false,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: _buildSearchField(
+                    isDark,
+                    _searchHintForSection(effectiveIndex),
                   ),
                 ),
               ),
-              child: NavigationBar(
-                selectedIndex: selectedNavigationIndex,
-                onDestinationSelected: (index) {
-                  _tabPageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOutCubic,
-                  );
-                },
-                animationDuration: Duration.zero,
-                elevation: 0,
-                destinations: <Widget>[
-                  if (startupProvider.showPaymentsTab)
-                    const NavigationDestination(
-                      icon: Icon(Icons.credit_card_outlined),
-                      selectedIcon: Icon(Icons.credit_card),
-                      label: 'Payments',
+            ),
+        ],
+      ),
+      bottomNavigationBar: !showBottomNavigation
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.black : Colors.white,
+                    border: Border(
+                      top: BorderSide(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.078)
+                            : Colors.black.withValues(alpha: 0.051),
+                      ),
                     ),
-                  if (startupProvider.showPassesTab)
-                    const NavigationDestination(
-                      icon: Icon(Icons.confirmation_number_outlined),
-                      selectedIcon: Icon(Icons.confirmation_number),
-                      label: 'Passes',
-                    ),
-                  if (startupProvider.showIdentityTab)
-                    const NavigationDestination(
-                      icon: Icon(Icons.badge_outlined),
-                      selectedIcon: Icon(Icons.badge),
-                      label: 'Identity',
-                    ),
-                ],
-              ),
+                  ),
+                  child: NavigationBar(
+                    selectedIndex: selectedNavigationIndex,
+                    onDestinationSelected: (index) {
+                      _tabPageController.animateToPage(
+                        index,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOutCubic,
+                      );
+                    },
+                    animationDuration: Duration.zero,
+                    elevation: 0,
+                    destinations: <Widget>[
+                      if (startupProvider.showPaymentsTab)
+                        const NavigationDestination(
+                          icon: Icon(Icons.credit_card_outlined),
+                          selectedIcon: Icon(Icons.credit_card),
+                          label: 'Payments',
+                        ),
+                      if (startupProvider.showPassesTab)
+                        const NavigationDestination(
+                          icon: Icon(Icons.confirmation_number_outlined),
+                          selectedIcon: Icon(Icons.confirmation_number),
+                          label: 'Passes',
+                        ),
+                      if (startupProvider.showIdentityTab)
+                        const NavigationDestination(
+                          icon: Icon(Icons.badge_outlined),
+                          selectedIcon: Icon(Icons.badge),
+                          label: 'Identity',
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
     );
   }
@@ -801,8 +834,7 @@ class _HomeScreenState extends State<HomeScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           slivers: [
-            if (settings.isPassSearchEnabled &&
-                settings.passSearchStyle == PassSearchStyle.alwaysOn)
+            if (_isSearchBarAtTop(settings))
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -813,10 +845,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   16,
-                  settings.isPassSearchEnabled &&
-                          settings.passSearchStyle == PassSearchStyle.alwaysOn
-                      ? 0
-                      : 16,
+                  _isSearchBarAtTop(settings) ? 0 : 16,
                   16,
                   8,
                 ),
@@ -903,6 +932,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildPassSearchField(bool isDark) {
     return _buildSearchField(isDark, 'Search passes...');
+  }
+
+  String _searchHintForSection(int section) => switch (section) {
+    0 => 'Search cards...',
+    1 => 'Search passes...',
+    2 => 'Search identities...',
+    _ => 'Search...',
+  };
+
+  bool _isSearchBarAtTop(StartupSettingsProvider settings) {
+    return settings.isPassSearchEnabled &&
+        settings.passSearchStyle == PassSearchStyle.alwaysOn &&
+        settings.searchBarPosition == SearchBarPosition.top;
+  }
+
+  bool _isSearchBarAtBottom(StartupSettingsProvider settings) {
+    return settings.isPassSearchEnabled &&
+        settings.passSearchStyle == PassSearchStyle.alwaysOn &&
+        settings.searchBarPosition == SearchBarPosition.bottom;
   }
 
   Widget _buildSearchField(bool isDark, String hintText) {
@@ -1386,23 +1434,18 @@ class _HomeScreenState extends State<HomeScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           slivers: [
-            if (settings.isPassSearchEnabled &&
-                settings.passSearchStyle == PassSearchStyle.alwaysOn)
+            if (_isSearchBarAtTop(settings))
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: _buildPassSearchField(isDark),
                 ),
               ),
-
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   16,
-                  settings.isPassSearchEnabled &&
-                          settings.passSearchStyle == PassSearchStyle.alwaysOn
-                      ? 0
-                      : 16,
+                  _isSearchBarAtTop(settings) ? 0 : 16,
                   16,
                   8,
                 ),
@@ -1933,8 +1976,7 @@ class _HomeScreenState extends State<HomeScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           slivers: [
-            if (settings.isPassSearchEnabled &&
-                settings.passSearchStyle == PassSearchStyle.alwaysOn)
+            if (_isSearchBarAtTop(settings))
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -1945,10 +1987,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   16,
-                  settings.isPassSearchEnabled &&
-                          settings.passSearchStyle == PassSearchStyle.alwaysOn
-                      ? 0
-                      : 16,
+                  _isSearchBarAtTop(settings) ? 0 : 16,
                   16,
                   8,
                 ),
