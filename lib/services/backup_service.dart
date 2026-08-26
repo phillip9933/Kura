@@ -550,7 +550,7 @@ class BackupService {
         password,
       );
 
-      const fileName = 'wallet_autobackup.wbk';
+      const fileName = 'Kura_autobackup.wbk';
       await SafService.writeToUri(directoryUri, fileName, encryptedData);
     } catch (_) {
       rethrow;
