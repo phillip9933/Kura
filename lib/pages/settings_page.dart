@@ -47,7 +47,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Allow â€œModify system settingsâ€ to enable barcode brightness.',
+              'Allow “Modify system settings” to enable barcode brightness.',
             ),
           ),
         );
@@ -86,7 +86,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   String get _appVersionSubtitle {
-    if (_isAppVersionLoading) return 'Loading versionâ€¦';
+    if (_isAppVersionLoading) return 'Loading version…';
     if (_appVersion == null) return 'Version unavailable';
     return 'Kura v${_appVersion!.split('+').first}';
   }
@@ -426,7 +426,7 @@ class _SettingsPageState extends State<SettingsPage> {
             title: 'GitHub & Issue Tracker',
             subtitle: 'View the source code or report an issue',
             onTap: () =>
-                _launchExternalUrl('https://github.com/phillip9933/Wallet/issues'),
+                _launchExternalUrl('https://github.com/phillip9933/Kura'),
           ),
         ],
       ),
