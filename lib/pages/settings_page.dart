@@ -298,8 +298,9 @@ class _SettingsPageState extends State<SettingsPage> {
           divider,
           _LiquidGlassTile(
             icon: Icons.search_rounded,
-            title: 'Global Search Bar',
-            subtitle: 'Show search controls across your wallet',
+            title: 'Show Search',
+            subtitle:
+                'Show or hide the search bar on Payments, Passes, and Identity',
             trailing: Switch(
               value: startupProvider.isPassSearchEnabled,
               onChanged: startupProvider.setPassSearchEnabled,
@@ -308,13 +309,23 @@ class _SettingsPageState extends State<SettingsPage> {
           divider,
           _LiquidGlassTile(
             icon: Icons.manage_search_rounded,
-            title: 'Global Search Bar Style',
+            title: 'Search Style',
             subtitle: _getSearchStyleDisplayName(
               startupProvider.passSearchStyle,
             ),
-            onTap: startupProvider.isPassSearchEnabled
-                ? () => _showSearchStyleDialog(context, startupProvider)
-                : null,
+            trailing: TextButton(
+              onPressed: startupProvider.isPassSearchEnabled
+                  ? () => startupProvider.setPassSearchStyle(
+                      startupProvider.passSearchStyle ==
+                              PassSearchStyle.alwaysOn
+                          ? PassSearchStyle.icon
+                          : PassSearchStyle.alwaysOn,
+                    )
+                  : null,
+              child: Text(
+                _getSearchStyleDisplayName(startupProvider.passSearchStyle),
+              ),
+            ),
           ),
           divider,
           _LiquidGlassTile(
@@ -458,8 +469,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
   String _getSearchStyleDisplayName(PassSearchStyle style) {
     return switch (style) {
-      PassSearchStyle.alwaysOn => 'Always On',
-      PassSearchStyle.icon => 'Icon',
+      PassSearchStyle.alwaysOn => 'Search Bar',
+      PassSearchStyle.icon => 'Search Button',
     };
   }
 
@@ -491,45 +502,6 @@ class _SettingsPageState extends State<SettingsPage> {
               onChanged: (value) {
                 if (value == null) return;
                 provider.setDefaultBarcodeOrientation(value);
-                Navigator.pop(dialogContext);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showSearchStyleDialog(
-    BuildContext context,
-    StartupSettingsProvider provider,
-  ) {
-    final isDark = context.read<ThemeProvider>().isDarkMode;
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
-        title: const Text('Global Search Bar Style'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<PassSearchStyle>(
-              title: const Text('Always On'),
-              value: PassSearchStyle.alwaysOn,
-              groupValue: provider.passSearchStyle,
-              onChanged: (value) {
-                if (value == null) return;
-                provider.setPassSearchStyle(value);
-                Navigator.pop(dialogContext);
-              },
-            ),
-            RadioListTile<PassSearchStyle>(
-              title: const Text('Icon'),
-              value: PassSearchStyle.icon,
-              groupValue: provider.passSearchStyle,
-              onChanged: (value) {
-                if (value == null) return;
-                provider.setPassSearchStyle(value);
                 Navigator.pop(dialogContext);
               },
             ),
