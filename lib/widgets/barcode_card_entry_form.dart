@@ -19,11 +19,13 @@ import 'package:kura/widgets/full_screen_image_viewer.dart';
 class BarcodeCardEntryForm extends StatefulWidget {
   final Pass? existingPass;
   final String? initialSharedImagePath;
+  final Widget? footer;
 
   const BarcodeCardEntryForm({
     super.key,
     this.existingPass,
     this.initialSharedImagePath,
+    this.footer,
   });
 
   @override
@@ -578,6 +580,10 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
                     ),
             ),
           ),
+        if (widget.footer != null) ...[
+          const SizedBox(height: 24),
+          widget.footer!,
+        ],
         const SizedBox(height: 24),
       ],
     );

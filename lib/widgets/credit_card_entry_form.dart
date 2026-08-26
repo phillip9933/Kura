@@ -16,9 +16,10 @@ import 'package:kura/widgets/configured_custom_fields.dart';
 import 'package:kura/widgets/encrypted_image_display.dart';
 
 class CreditCardEntryForm extends StatefulWidget {
-  const CreditCardEntryForm({super.key, this.existingWallet});
+  const CreditCardEntryForm({super.key, this.existingWallet, this.footer});
 
   final Wallet? existingWallet;
+  final Widget? footer;
 
   @override
   State<CreditCardEntryForm> createState() => CreditCardEntryFormState();
@@ -394,6 +395,10 @@ class CreditCardEntryFormState extends State<CreditCardEntryForm> {
                       ),
               ),
             ),
+          ],
+          if (widget.footer != null) ...[
+            const SizedBox(height: 24),
+            widget.footer!,
           ],
           const SizedBox(height: 16),
         ],

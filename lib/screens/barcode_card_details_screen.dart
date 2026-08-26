@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:kura/models/db_helper.dart';
+import 'package:kura/models/provider_helper.dart';
 import 'package:kura/models/theme_provider.dart';
 import 'package:kura/widgets/barcode_card_entry_form.dart';
 import 'package:kura/screens/homescreen.dart';
@@ -379,6 +380,45 @@ class PassEditScreenState extends State<PassEditScreen> {
   final _formKey = GlobalKey<BarcodeCardEntryFormState>();
   bool _isDark = false;
 
+  Future<void> _managePass({required bool archive}) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(archive ? 'Archive Pass?' : 'Delete Pass?'),
+        content: Text(
+          archive
+              ? 'This pass will move to Archive. You can restore it later.'
+              : 'This permanently deletes "${widget.pass.organizationName}". This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: archive
+                ? null
+                : FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(archive ? 'Archive' : 'Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    HapticFeedback.mediumImpact();
+    final provider = context.read<PassProvider>();
+    if (archive) {
+      await provider.archivePass(widget.pass.id!);
+    } else {
+      await provider.deletePass(widget.pass.id!);
+    }
+    if (mounted) Navigator.pop(context, true);
+  }
+
   @override
   Widget build(BuildContext context) {
     _isDark = Theme.of(context).brightness == Brightness.dark;
@@ -416,7 +456,36 @@ class PassEditScreenState extends State<PassEditScreen> {
           ),
         ],
       ),
-      body: BarcodeCardEntryForm(key: _formKey, existingPass: widget.pass),
+      body: BarcodeCardEntryForm(
+        key: _formKey,
+        existingPass: widget.pass,
+        footer: _buildManagementActions(),
+      ),
+    );
+  }
+
+  Widget _buildManagementActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _managePass(archive: true),
+            icon: const Icon(Icons.archive_outlined),
+            label: const Text('Archive'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: () => _managePass(archive: false),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Delete'),
+          ),
+        ),
+      ],
     );
   }
 }

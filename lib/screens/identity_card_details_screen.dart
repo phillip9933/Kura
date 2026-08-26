@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:kura/services/clipboard_service.dart';
 import 'package:provider/provider.dart';
 import 'package:kura/models/identity_card.dart';
+import 'package:kura/models/provider_helper.dart';
 import 'package:kura/models/theme_provider.dart';
 import 'package:kura/widgets/identity_card_widget.dart';
 import 'package:kura/widgets/encrypted_image_display.dart';
@@ -362,6 +363,47 @@ class IdentityEditScreenState extends State<IdentityEditScreen> {
   final _formKey = GlobalKey<IdentityCardEntryFormState>();
   bool _isDark = false;
 
+  Future<void> _manageIdentity({required bool archive}) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          archive ? 'Archive Identity Card?' : 'Delete Identity Card?',
+        ),
+        content: Text(
+          archive
+              ? 'This identity card will move to Archive. You can restore it later.'
+              : 'This permanently deletes "${widget.card.name}". This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: archive
+                ? null
+                : FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(archive ? 'Archive' : 'Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    HapticFeedback.mediumImpact();
+    final provider = context.read<IdentityProvider>();
+    if (archive) {
+      await provider.archiveIdentity(widget.card.id!);
+    } else {
+      await provider.deleteIdentity(widget.card.id!);
+    }
+    if (mounted) Navigator.pop(context, true);
+  }
+
   @override
   Widget build(BuildContext context) {
     _isDark = Theme.of(context).brightness == Brightness.dark;
@@ -399,7 +441,36 @@ class IdentityEditScreenState extends State<IdentityEditScreen> {
           ),
         ],
       ),
-      body: IdentityCardEntryForm(key: _formKey, existingCard: widget.card),
+      body: IdentityCardEntryForm(
+        key: _formKey,
+        existingCard: widget.card,
+        footer: _buildManagementActions(),
+      ),
+    );
+  }
+
+  Widget _buildManagementActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _manageIdentity(archive: true),
+            icon: const Icon(Icons.archive_outlined),
+            label: const Text('Archive'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: () => _manageIdentity(archive: false),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Delete'),
+          ),
+        ),
+      ],
     );
   }
 }

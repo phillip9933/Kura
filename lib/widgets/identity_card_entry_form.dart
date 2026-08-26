@@ -10,8 +10,10 @@ import 'package:kura/models/startup_settings_provider.dart';
 import 'package:kura/widgets/configured_custom_fields.dart';
 
 class IdentityCardEntryForm extends StatefulWidget {
+  const IdentityCardEntryForm({super.key, this.existingCard, this.footer});
+
   final IdentityCard? existingCard;
-  const IdentityCardEntryForm({super.key, this.existingCard});
+  final Widget? footer;
 
   @override
   State<IdentityCardEntryForm> createState() => IdentityCardEntryFormState();
@@ -286,6 +288,11 @@ class IdentityCardEntryFormState extends State<IdentityCardEntryForm> {
                     ),
             ),
           ),
+        if (widget.footer != null) ...[
+          const SizedBox(height: 24),
+          widget.footer!,
+        ],
+        const SizedBox(height: 24),
       ],
     );
   }
