@@ -39,6 +39,7 @@ class StartupSettingsProvider with ChangeNotifier {
   bool _showPaymentsTab = true;
   bool _showPassesTab = true;
   bool _showIdentityTab = true;
+  bool _showBottomNavigationBar = true;
   bool _isQrImportScannerEnabled = true;
   bool _showPassQrButton = true;
   bool _isPassSearchEnabled = true;
@@ -127,6 +128,7 @@ class StartupSettingsProvider with ChangeNotifier {
   static const String _showPaymentsTabKey = 'showPaymentsTab';
   static const String _showPassesTabKey = 'showPassesTab';
   static const String _showIdentityTabKey = 'showIdentityTab';
+  static const String _showBottomNavigationBarKey = 'showBottomNavigationBar';
   static const String _isQrImportScannerEnabledKey = 'isQrImportScannerEnabled';
   static const String _showPassQrButtonKey = 'showPassQrButton';
   static const String _isPassSearchEnabledKey = 'isPassSearchEnabled';
@@ -145,6 +147,7 @@ class StartupSettingsProvider with ChangeNotifier {
   bool get showPaymentsTab => _showPaymentsTab;
   bool get showPassesTab => _showPassesTab;
   bool get showIdentityTab => _showIdentityTab;
+  bool get showBottomNavigationBar => _showBottomNavigationBar;
   bool get isQrImportScannerEnabled => _isQrImportScannerEnabled;
   bool get showPassQrButton => _showPassQrButton;
   bool get isPassSearchEnabled => _isPassSearchEnabled;
@@ -190,6 +193,8 @@ class StartupSettingsProvider with ChangeNotifier {
     _showPaymentsTab = prefs.getBool(_showPaymentsTabKey) ?? true;
     _showPassesTab = prefs.getBool(_showPassesTabKey) ?? true;
     _showIdentityTab = prefs.getBool(_showIdentityTabKey) ?? true;
+    _showBottomNavigationBar =
+        prefs.getBool(_showBottomNavigationBarKey) ?? true;
     _isQrImportScannerEnabled =
         prefs.getBool(_isQrImportScannerEnabledKey) ?? true;
     if (!_showPaymentsTab && !_showPassesTab && !_showIdentityTab) {
@@ -334,6 +339,13 @@ class StartupSettingsProvider with ChangeNotifier {
     await prefs.setBool(_showPassesTabKey, _showPassesTab);
     await prefs.setBool(_showIdentityTabKey, _showIdentityTab);
     await prefs.setInt(_defaultScreenKey, _defaultScreenIndex);
+    notifyListeners();
+  }
+
+  Future<void> setShowBottomNavigationBar(bool value) async {
+    _showBottomNavigationBar = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_showBottomNavigationBarKey, value);
     notifyListeners();
   }
 

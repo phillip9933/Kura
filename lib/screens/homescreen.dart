@@ -687,7 +687,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
-      bottomNavigationBar: !startupProvider.hasMultipleVisibleTabs
+      bottomNavigationBar:
+          !startupProvider.showBottomNavigationBar ||
+              !startupProvider.hasMultipleVisibleTabs
           ? null
           : Container(
               decoration: BoxDecoration(

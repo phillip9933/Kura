@@ -247,6 +247,16 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           divider,
           _LiquidGlassTile(
+            icon: Icons.navigation_outlined,
+            title: 'Show Bottom Navigation',
+            subtitle: 'Show or hide the Payments, Passes, and Identity bar',
+            trailing: Switch(
+              value: startupProvider.showBottomNavigationBar,
+              onChanged: startupProvider.setShowBottomNavigationBar,
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
             icon: Icons.credit_card_outlined,
             title: 'Payments Settings',
             subtitle: 'Categories and custom fields',
