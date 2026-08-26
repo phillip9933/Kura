@@ -11,6 +11,7 @@ class IdentityCard {
   final String? color;
   final Map<String, String>? customFields;
   int orderIndex;
+  bool isArchived;
 
   IdentityCard({
     this.id,
@@ -22,6 +23,7 @@ class IdentityCard {
     this.color,
     this.customFields,
     this.orderIndex = 0,
+    this.isArchived = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -35,6 +37,7 @@ class IdentityCard {
       'color': color,
       'customFields': customFields == null ? null : jsonEncode(customFields),
       'orderIndex': orderIndex,
+      'isArchived': isArchived,
     };
   }
 
@@ -52,6 +55,7 @@ class IdentityCard {
           ? null
           : enc.encryptJson(customFields!.cast<String, dynamic>()),
       'orderIndex': orderIndex,
+      'isArchived': isArchived,
     };
   }
 
@@ -68,6 +72,7 @@ class IdentityCard {
           ? null
           : Map<String, String>.from(jsonDecode(map['customFields'])),
       orderIndex: map['orderIndex'] ?? 0,
+      isArchived: map['isArchived'] == 1 || map['isArchived'] == true,
     );
   }
 
@@ -85,6 +90,7 @@ class IdentityCard {
           ? null
           : enc.decryptJsonToStringMap(map['customFields']),
       orderIndex: map['orderIndex'] ?? 0,
+      isArchived: map['isArchived'] == 1 || map['isArchived'] == true,
     );
   }
 }

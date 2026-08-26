@@ -22,6 +22,7 @@ class Pass {
   final String? iconImagePath;
   final Map<String, dynamic>? fields;
   int orderIndex;
+  bool isArchived;
 
   Pass({
     this.id,
@@ -44,6 +45,7 @@ class Pass {
     this.iconImagePath,
     this.fields,
     this.orderIndex = 0,
+    this.isArchived = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -68,6 +70,7 @@ class Pass {
       'iconImagePath': iconImagePath,
       'fields': fields != null ? jsonEncode(fields) : null,
       'orderIndex': orderIndex,
+      'isArchived': isArchived,
     };
   }
 
@@ -94,6 +97,7 @@ class Pass {
       'iconImagePath': iconImagePath,
       'fields': fields != null ? enc.encryptJson(fields!) : null,
       'orderIndex': orderIndex,
+      'isArchived': isArchived,
     };
   }
 
@@ -119,6 +123,7 @@ class Pass {
       iconImagePath: map['iconImagePath'],
       fields: map['fields'] != null ? jsonDecode(map['fields']) : null,
       orderIndex: map['orderIndex'] ?? 0,
+      isArchived: map['isArchived'] == 1 || map['isArchived'] == true,
     );
   }
 
@@ -147,6 +152,7 @@ class Pass {
           ? enc.decryptJsonToDynamicMap(map['fields'])
           : null,
       orderIndex: map['orderIndex'] ?? 0,
+      isArchived: map['isArchived'] == 1 || map['isArchived'] == true,
     );
   }
 }

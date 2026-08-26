@@ -1617,6 +1617,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               ListTile(
+                leading: const Icon(Icons.archive_outlined),
+                title: const Text('Archive'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await context.read<PassProvider>().archivePass(pass.id!);
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.edit_outlined, color: Colors.blue),
                 title: const Text('Edit'),
                 onTap: () async {
@@ -1684,6 +1692,14 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.pop(sheetContext);
                 _openReorderMode(WalletSection.payments);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.archive_outlined),
+              title: const Text('Archive'),
+              onTap: () async {
+                Navigator.pop(sheetContext);
+                await context.read<WalletProvider>().archiveWallet(wallet.id!);
               },
             ),
             ListTile(
@@ -1761,6 +1777,16 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.pop(sheetContext);
                 _openReorderMode(WalletSection.identity);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.archive_outlined),
+              title: const Text('Archive'),
+              onTap: () async {
+                Navigator.pop(sheetContext);
+                await context.read<IdentityProvider>().archiveIdentity(
+                  card.id!,
+                );
               },
             ),
             ListTile(

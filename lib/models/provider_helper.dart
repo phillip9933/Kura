@@ -21,6 +21,18 @@ class WalletProvider with ChangeNotifier {
     AutoBackupService.triggerBackup();
   }
 
+  Future<void> archiveWallet(int id) async {
+    await DatabaseHelper.instance.setWalletArchived(id, true);
+    await fetchWallets();
+    AutoBackupService.triggerBackup();
+  }
+
+  Future<void> restoreWallet(int id) async {
+    await DatabaseHelper.instance.setWalletArchived(id, false);
+    await fetchWallets();
+    AutoBackupService.triggerBackup();
+  }
+
   Future<void> reorderWallets(int oldIndex, int newIndex) async {
     if (newIndex > oldIndex) {
       newIndex -= 1;
@@ -43,7 +55,7 @@ class PassProvider with ChangeNotifier {
   List<Pass> passes = [];
 
   Future<void> fetchPasses() async {
-    passes = await PassDatabaseHelper.instance.getAllPasses();
+    passes = await PassDatabaseHelper.instance.getActivePasses();
     notifyListeners();
   }
 
@@ -51,6 +63,18 @@ class PassProvider with ChangeNotifier {
     await PassDatabaseHelper.instance.deletePass(id);
     passes.removeWhere((p) => p.id == id);
     notifyListeners();
+    AutoBackupService.triggerBackup();
+  }
+
+  Future<void> archivePass(int id) async {
+    await PassDatabaseHelper.instance.setPassArchived(id, true);
+    await fetchPasses();
+    AutoBackupService.triggerBackup();
+  }
+
+  Future<void> restorePass(int id) async {
+    await PassDatabaseHelper.instance.setPassArchived(id, false);
+    await fetchPasses();
     AutoBackupService.triggerBackup();
   }
 
@@ -123,7 +147,7 @@ class IdentityProvider with ChangeNotifier {
   List<IdentityCard> identities = [];
 
   Future<void> fetchIdentities() async {
-    identities = await IdentityDatabaseHelper.instance.getAllIdentities();
+    identities = await IdentityDatabaseHelper.instance.getActiveIdentities();
     notifyListeners();
   }
 
@@ -131,6 +155,18 @@ class IdentityProvider with ChangeNotifier {
     await IdentityDatabaseHelper.instance.deleteIdentity(id);
     identities.removeWhere((i) => i.id == id);
     notifyListeners();
+    AutoBackupService.triggerBackup();
+  }
+
+  Future<void> archiveIdentity(int id) async {
+    await IdentityDatabaseHelper.instance.setIdentityArchived(id, true);
+    await fetchIdentities();
+    AutoBackupService.triggerBackup();
+  }
+
+  Future<void> restoreIdentity(int id) async {
+    await IdentityDatabaseHelper.instance.setIdentityArchived(id, false);
+    await fetchIdentities();
     AutoBackupService.triggerBackup();
   }
 

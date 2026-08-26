@@ -15,6 +15,7 @@ import 'package:kura/services/backup_service.dart';
 import 'package:kura/models/provider_helper.dart';
 import 'package:kura/models/db_helper.dart';
 import 'package:kura/models/auto_backup_provider.dart';
+import 'package:kura/screens/archive_screen.dart';
 import 'package:kura/services/saf_service.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -398,6 +399,16 @@ class _SettingsPageState extends State<SettingsPage> {
                   _showChangeAutoBackupPasswordDialog(autoBackupProvider),
             ),
           ],
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.inventory_2_outlined,
+            title: 'Archive',
+            subtitle: 'Restore or permanently delete archived items',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ArchiveScreen()),
+            ),
+          ),
           divider,
           _LiquidGlassTile(
             icon: Icons.backup_outlined,

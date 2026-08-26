@@ -20,6 +20,7 @@ class Wallet {
   final String? frontImagePath;
   final String? backImagePath;
   int orderIndex;
+  bool isArchived;
 
   Wallet({
     this.id,
@@ -40,6 +41,7 @@ class Wallet {
     this.frontImagePath,
     this.backImagePath,
     this.orderIndex = 0,
+    this.isArchived = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -62,6 +64,7 @@ class Wallet {
       'frontImagePath': frontImagePath,
       'backImagePath': backImagePath,
       'orderIndex': orderIndex,
+      'isArchived': isArchived,
     };
   }
 
@@ -88,6 +91,7 @@ class Wallet {
       'frontImagePath': frontImagePath,
       'backImagePath': backImagePath,
       'orderIndex': orderIndex,
+      'isArchived': isArchived,
     };
   }
 
@@ -113,6 +117,7 @@ class Wallet {
       frontImagePath: map['frontImagePath'],
       backImagePath: map['backImagePath'],
       orderIndex: map['orderIndex'] ?? 0,
+      isArchived: map['isArchived'] == 1 || map['isArchived'] == true,
     );
   }
 
@@ -139,6 +144,7 @@ class Wallet {
       frontImagePath: map['frontImagePath'],
       backImagePath: map['backImagePath'],
       orderIndex: map['orderIndex'] ?? 0,
+      isArchived: map['isArchived'] == 1 || map['isArchived'] == true,
     );
   }
 
@@ -161,6 +167,7 @@ class Wallet {
       frontImagePath: map['frontImagePath'],
       backImagePath: map['backImagePath'],
       orderIndex: map['orderIndex'] ?? 0,
+      isArchived: map['isArchived'] == 1 || map['isArchived'] == true,
     );
   }
 }
