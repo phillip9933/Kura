@@ -453,6 +453,18 @@ class _SettingsPageState extends State<SettingsPage> {
               onTap: () =>
                   _showChangeAutoBackupPasswordDialog(autoBackupProvider),
             ),
+            divider,
+            _LiquidGlassTile(
+              icon: Icons.history_rounded,
+              title: 'Backup Retention',
+              subtitle:
+                  'Keep the latest ${autoBackupProvider.retentionCount} auto-backups',
+              trailing: TextButton(
+                onPressed: () =>
+                    _showAutoBackupRetentionDialog(autoBackupProvider),
+                child: Text('${autoBackupProvider.retentionCount}'),
+              ),
+            ),
           ],
           divider,
           _LiquidGlassTile(
@@ -761,6 +773,60 @@ class _SettingsPageState extends State<SettingsPage> {
     final path = provider.displayPath;
     if (path.isEmpty) return 'Configure backup location';
     return 'Active - ${_getShortPath(path)}';
+  }
+
+  void _showAutoBackupRetentionDialog(AutoBackupProvider provider) {
+    final isDark = Provider.of<ThemeProvider>(
+      context,
+      listen: false,
+    ).isDarkMode;
+    final controller = TextEditingController(
+      text: provider.retentionCount.toString(),
+    );
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        title: const Text(
+          'Backup Retention',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Only the newest number of Kura auto-backups will be kept. Manually created backups are never affected.',
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                labelText: 'Number of backups to keep',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final count = int.tryParse(controller.text.trim());
+              if (count == null || count < 1) return;
+              await provider.setRetentionCount(count);
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   String _getShortPath(String path) {

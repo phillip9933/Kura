@@ -465,8 +465,9 @@ class BackupService {
 
   static Future<void> createAutoBackup(
     String password,
-    String directoryUri,
-  ) async {
+    String directoryUri, {
+    int retentionCount = 5,
+  }) async {
     try {
       final wallets = await DatabaseHelper.instance.getWallets();
       final passes = await PassDatabaseHelper.instance.getAllPasses();
@@ -484,7 +485,8 @@ class BackupService {
             key == 'autoBackupEnabled' ||
             key == 'autoBackupPath' ||
             key == 'autoBackupPassword' ||
-            key == 'autoBackupUri') {
+            key == 'autoBackupUri' ||
+            key == 'autoBackupRetentionCount') {
           continue;
         }
         settings[key] = prefs.get(key);
@@ -550,11 +552,68 @@ class BackupService {
         password,
       );
 
-      const fileName = 'Kura_autobackup.wbk';
-      await SafService.writeToUri(directoryUri, fileName, encryptedData);
+      final existingFileNames = await SafService.listFileNames(directoryUri);
+      if (existingFileNames == null) {
+        throw Exception('Unable to list existing auto-backups.');
+      }
+      final autoBackupFileNames = _autoBackupFileNames(existingFileNames);
+      final fileName = _nextAutoBackupFileName(autoBackupFileNames);
+      final wasWritten = await SafService.writeToUri(
+        directoryUri,
+        fileName,
+        encryptedData,
+      );
+      if (!wasWritten) throw Exception('Unable to write auto-backup file.');
+
+      final filesToDelete = [...autoBackupFileNames, fileName]
+        ..sort(_compareAutoBackupFileNames);
+      while (filesToDelete.length > retentionCount) {
+        final oldestFileName = filesToDelete.removeAt(0);
+        final wasDeleted = await SafService.deleteFromUri(
+          directoryUri,
+          oldestFileName,
+        );
+        if (!wasDeleted) {
+          throw Exception('Unable to remove old auto-backup: $oldestFileName');
+        }
+      }
     } catch (_) {
       rethrow;
     }
+  }
+
+  static final RegExp _autoBackupFileNamePattern = RegExp(
+    r'^Kura_autobackup_(\d+)\.wbk$',
+  );
+
+  static List<String> _autoBackupFileNames(Iterable<String> fileNames) {
+    return fileNames
+        .where((fileName) => _autoBackupFileNamePattern.hasMatch(fileName))
+        .toList();
+  }
+
+  static String _nextAutoBackupFileName(Iterable<String> fileNames) {
+    var highestIndex = 0;
+    for (final fileName in fileNames) {
+      final match = _autoBackupFileNamePattern.firstMatch(fileName);
+      final index = int.tryParse(match?.group(1) ?? '') ?? 0;
+      if (index > highestIndex) highestIndex = index;
+    }
+    return 'Kura_autobackup_${(highestIndex + 1).toString().padLeft(4, '0')}.wbk';
+  }
+
+  static int _compareAutoBackupFileNames(String first, String second) {
+    final firstIndex =
+        int.tryParse(
+          _autoBackupFileNamePattern.firstMatch(first)?.group(1) ?? '',
+        ) ??
+        0;
+    final secondIndex =
+        int.tryParse(
+          _autoBackupFileNamePattern.firstMatch(second)?.group(1) ?? '',
+        ) ??
+        0;
+    return firstIndex.compareTo(secondIndex);
   }
 
   static Future<void> _clearAllData() async {

@@ -146,14 +146,49 @@ class MainActivity: FlutterFragmentActivity()
               if (uriString != null && filename != null) {
                 try {
                   val treeUri = Uri.parse(uriString)
-                  val docUri = buildChildUri(treeUri, filename)
-                  contentResolver.delete(docUri, null, null)
-                  result.success(true)
+                  val documentUri = findChildUriByName(treeUri, filename)
+                  if (documentUri == null) {
+                    result.success(false)
+                  } else {
+                    result.success(DocumentsContract.deleteDocument(contentResolver, documentUri))
+                  }
                 } catch (e: Exception) {
                   result.success(false)
                 }
               } else {
                 result.error("INVALID_ARGUMENTS", "Missing uri or filename", null)
+              }
+            }
+            "listFileNames" -> {
+              val uriString = call.argument<String>("uri")
+              if (uriString != null) {
+                try {
+                  val treeUri = Uri.parse(uriString)
+                  val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
+                    treeUri,
+                    DocumentsContract.getTreeDocumentId(treeUri)
+                  )
+                  val names = mutableListOf<String>()
+                  contentResolver.query(
+                    childrenUri,
+                    arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME),
+                    null,
+                    null,
+                    null
+                  )?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(
+                      DocumentsContract.Document.COLUMN_DISPLAY_NAME
+                    )
+                    while (cursor.moveToNext() && nameIndex >= 0) {
+                      names.add(cursor.getString(nameIndex))
+                    }
+                  }
+                  result.success(names)
+                } catch (e: Exception) {
+                  result.error("LIST_FAILED", e.message, null)
+                }
+              } else {
+                result.error("INVALID_ARGUMENTS", "Missing uri", null)
               }
             }
             else -> result.notImplemented()
@@ -165,6 +200,35 @@ class MainActivity: FlutterFragmentActivity()
       val treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri)
       val childDocumentId = "$treeDocumentId/$filename"
       return DocumentsContract.buildDocumentUriUsingTree(treeUri, childDocumentId)
+    }
+
+    private fun findChildUriByName(treeUri: Uri, filename: String): Uri? {
+      val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
+        treeUri,
+        DocumentsContract.getTreeDocumentId(treeUri)
+      )
+      return contentResolver.query(
+        childrenUri,
+        arrayOf(
+          DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+          DocumentsContract.Document.COLUMN_DISPLAY_NAME
+        ),
+        null,
+        null,
+        null
+      )?.use { cursor ->
+        val idIndex = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
+        val nameIndex = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+        while (cursor.moveToNext() && idIndex >= 0 && nameIndex >= 0) {
+          if (cursor.getString(nameIndex) == filename) {
+            return@use DocumentsContract.buildDocumentUriUsingTree(
+              treeUri,
+              cursor.getString(idIndex)
+            )
+          }
+        }
+        null
+      }
     }
 
     private fun documentExists(uri: Uri): Boolean {
