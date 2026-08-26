@@ -47,6 +47,8 @@ class StartupSettingsProvider with ChangeNotifier {
   bool _isQrImportScannerEnabled = true;
   bool _showPassQrButton = true;
   bool _isPassSearchEnabled = true;
+  bool _isExpiryNotificationEnabled = true;
+  int _expiryNotificationLeadMonths = 2;
   bool _maxBrightnessOnBarcodeView = false;
   BarcodeOrientation _defaultBarcodeOrientation =
       BarcodeOrientation.defaultOrientation;
@@ -138,6 +140,10 @@ class StartupSettingsProvider with ChangeNotifier {
   static const String _isQrImportScannerEnabledKey = 'isQrImportScannerEnabled';
   static const String _showPassQrButtonKey = 'showPassQrButton';
   static const String _isPassSearchEnabledKey = 'isPassSearchEnabled';
+  static const String _isExpiryNotificationEnabledKey =
+      'isExpiryNotificationEnabled';
+  static const String _expiryNotificationLeadMonthsKey =
+      'expiryNotificationLeadMonths';
   static const String _passSearchStyleKey = 'passSearchStyle';
   static const String _searchBarPositionKey = 'searchBarPosition';
   static const String _controlRowPositionKey = 'controlRowPosition';
@@ -159,6 +165,8 @@ class StartupSettingsProvider with ChangeNotifier {
   bool get isQrImportScannerEnabled => _isQrImportScannerEnabled;
   bool get showPassQrButton => _showPassQrButton;
   bool get isPassSearchEnabled => _isPassSearchEnabled;
+  bool get isExpiryNotificationEnabled => _isExpiryNotificationEnabled;
+  int get expiryNotificationLeadMonths => _expiryNotificationLeadMonths;
   bool get maxBrightnessOnBarcodeView => _maxBrightnessOnBarcodeView;
   BarcodeOrientation get defaultBarcodeOrientation =>
       _defaultBarcodeOrientation;
@@ -217,6 +225,10 @@ class StartupSettingsProvider with ChangeNotifier {
     }
     _showPassQrButton = prefs.getBool(_showPassQrButtonKey) ?? true;
     _isPassSearchEnabled = prefs.getBool(_isPassSearchEnabledKey) ?? true;
+    _isExpiryNotificationEnabled =
+        prefs.getBool(_isExpiryNotificationEnabledKey) ?? true;
+    _expiryNotificationLeadMonths =
+        prefs.getInt(_expiryNotificationLeadMonthsKey) ?? 2;
     _maxBrightnessOnBarcodeView =
         prefs.getBool(_maxBrightnessOnBarcodeViewKey) ?? false;
     _defaultBarcodeOrientation = BarcodeOrientation.values.firstWhere(
@@ -394,6 +406,21 @@ class StartupSettingsProvider with ChangeNotifier {
     _isPassSearchEnabled = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_isPassSearchEnabledKey, value);
+    notifyListeners();
+  }
+
+  Future<void> setExpiryNotificationEnabled(bool value) async {
+    _isExpiryNotificationEnabled = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_isExpiryNotificationEnabledKey, value);
+    notifyListeners();
+  }
+
+  Future<void> setExpiryNotificationLeadMonths(int value) async {
+    if (value < 1) return;
+    _expiryNotificationLeadMonths = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_expiryNotificationLeadMonthsKey, value);
     notifyListeners();
   }
 
