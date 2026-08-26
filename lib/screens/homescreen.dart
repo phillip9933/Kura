@@ -25,6 +25,8 @@ import 'package:kura/widgets/pass_grid_card.dart';
 import 'package:kura/widgets/encrypted_image_display.dart';
 import 'package:kura/models/pass_types.dart';
 
+enum _ExpiryStatus { expired, expiringSoon }
+
 /// Smooth route builder Ã¢â‚¬â€ used across the app for premium transitions
 class SmoothPageRoute<T> extends PageRouteBuilder<T> {
   final Widget page;
@@ -1490,6 +1492,65 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _hasImage(String? imagePath) =>
       imagePath != null && imagePath.isNotEmpty;
 
+  _ExpiryStatus? _expiryStatus(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final match = RegExp(r'^(\d{2})/(\d{2})$').firstMatch(value.trim());
+    if (match == null) return null;
+    final month = int.tryParse(match.group(1)!);
+    final year = int.tryParse(match.group(2)!);
+    if (month == null || year == null || month < 1 || month > 12) return null;
+
+    final expiryDate = DateTime(2000 + year, month + 1, 0);
+    final today = DateTime.now();
+    final startOfToday = DateTime(today.year, today.month, today.day);
+    if (expiryDate.isBefore(startOfToday)) return _ExpiryStatus.expired;
+    if (expiryDate.difference(startOfToday).inDays <= 7) {
+      return _ExpiryStatus.expiringSoon;
+    }
+    return null;
+  }
+
+  Widget _buildExpiryIndicator({
+    required String? expiry,
+    required Widget child,
+  }) {
+    final status = _expiryStatus(expiry);
+    if (status == null) return child;
+
+    final isExpired = status == _ExpiryStatus.expired;
+    final color = isExpired ? Colors.red.shade700 : Colors.orange.shade800;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        child,
+        Positioned(
+          top: 8,
+          right: 8,
+          child: IgnorePointer(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black26, blurRadius: 4),
+                ],
+              ),
+              child: Text(
+                isExpired ? 'Expired' : 'Expires soon',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildWalletGridTile({
     required Wallet wallet,
     required PassGridDisplayMode displayMode,
@@ -1501,20 +1562,23 @@ class _HomeScreenState extends State<HomeScreen> {
       PassGridDisplayMode.back => wallet.backImagePath,
       PassGridDisplayMode.virtualCards => null,
     };
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(15),
-        child: _hasImage(imagePath)
-            ? EncryptedImageDisplay(imagePath: imagePath!, fit: BoxFit.cover)
-            : _buildScaledVirtualCard(
-                child: GlassCreditCard(
-                  wallet: wallet,
-                  isMasked: true,
-                  onCardTap: onTap,
+    return _buildExpiryIndicator(
+      expiry: wallet.expiry,
+      child: GestureDetector(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(15),
+          child: _hasImage(imagePath)
+              ? EncryptedImageDisplay(imagePath: imagePath!, fit: BoxFit.cover)
+              : _buildScaledVirtualCard(
+                  child: GlassCreditCard(
+                    wallet: wallet,
+                    isMasked: true,
+                    onCardTap: onTap,
+                  ),
                 ),
-              ),
+        ),
       ),
     );
   }
@@ -1530,16 +1594,19 @@ class _HomeScreenState extends State<HomeScreen> {
       PassGridDisplayMode.back => card.backImagePath,
       PassGridDisplayMode.virtualCards => null,
     };
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: _hasImage(imagePath)
-            ? EncryptedImageDisplay(imagePath: imagePath!, fit: BoxFit.cover)
-            : _buildScaledVirtualCard(
-                child: IdentityCardWidget(card: card, onTap: onTap),
-              ),
+    return _buildExpiryIndicator(
+      expiry: card.expiryDate,
+      child: GestureDetector(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: _hasImage(imagePath)
+              ? EncryptedImageDisplay(imagePath: imagePath!, fit: BoxFit.cover)
+              : _buildScaledVirtualCard(
+                  child: IdentityCardWidget(card: card, onTap: onTap),
+                ),
+        ),
       ),
     );
   }
@@ -1763,33 +1830,36 @@ class _HomeScreenState extends State<HomeScreen> {
                       PassGridDisplayMode.virtualCards => PassDisplayMode.card,
                     };
 
-                    return PassGridCard(
-                      pass: pass,
-                      displayMode: gridMode,
-                      showLabels:
-                          settings.gridColumnsFor(WalletSection.passes) != 1,
-                      truncateOrganizationName:
-                          settings.gridColumnsFor(WalletSection.passes) != 1,
-                      onCardLongPress: () {
-                        HapticFeedback.mediumImpact();
-                        _showGridContextMenu(context, pass);
-                      },
-                      onCardTap: () async {
-                        HapticFeedback.selectionClick();
-                        final passProvider = Provider.of<PassProvider>(
-                          context,
-                          listen: false,
-                        );
-                        final result = await Navigator.push(
-                          context,
-                          SmoothPageRoute(
-                            page: BarcodeCardDetailScreen(pass: pass),
-                          ),
-                        );
-                        if (result == true && mounted) {
-                          await passProvider.fetchPasses();
-                        }
-                      },
+                    return _buildExpiryIndicator(
+                      expiry: pass.expiryDate,
+                      child: PassGridCard(
+                        pass: pass,
+                        displayMode: gridMode,
+                        showLabels:
+                            settings.gridColumnsFor(WalletSection.passes) != 1,
+                        truncateOrganizationName:
+                            settings.gridColumnsFor(WalletSection.passes) != 1,
+                        onCardLongPress: () {
+                          HapticFeedback.mediumImpact();
+                          _showGridContextMenu(context, pass);
+                        },
+                        onCardTap: () async {
+                          HapticFeedback.selectionClick();
+                          final passProvider = Provider.of<PassProvider>(
+                            context,
+                            listen: false,
+                          );
+                          final result = await Navigator.push(
+                            context,
+                            SmoothPageRoute(
+                              page: BarcodeCardDetailScreen(pass: pass),
+                            ),
+                          );
+                          if (result == true && mounted) {
+                            await passProvider.fetchPasses();
+                          }
+                        },
+                      ),
                     );
                   },
                 ),
