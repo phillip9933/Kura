@@ -9,6 +9,7 @@ class IdentityCard {
   final String? frontImagePath;
   final String? backImagePath;
   final String? color;
+  final String? expiryDate;
   final Map<String, String>? customFields;
   int orderIndex;
   bool isArchived;
@@ -21,6 +22,7 @@ class IdentityCard {
     this.frontImagePath,
     this.backImagePath,
     this.color,
+    this.expiryDate,
     this.customFields,
     this.orderIndex = 0,
     this.isArchived = false,
@@ -35,6 +37,7 @@ class IdentityCard {
       'frontImagePath': frontImagePath,
       'backImagePath': backImagePath,
       'color': color,
+      'expiry_date': expiryDate,
       'customFields': customFields == null ? null : jsonEncode(customFields),
       'orderIndex': orderIndex,
       'isArchived': isArchived,
@@ -51,6 +54,7 @@ class IdentityCard {
       'frontImagePath': frontImagePath,
       'backImagePath': backImagePath,
       'color': color,
+      'expiry_date': enc.encryptText(expiryDate),
       'customFields': customFields == null
           ? null
           : enc.encryptJson(customFields!.cast<String, dynamic>()),
@@ -68,6 +72,7 @@ class IdentityCard {
       frontImagePath: map['frontImagePath'],
       backImagePath: map['backImagePath'],
       color: map['color'],
+      expiryDate: map['expiry_date'],
       customFields: map['customFields'] == null
           ? null
           : Map<String, String>.from(jsonDecode(map['customFields'])),
@@ -86,6 +91,7 @@ class IdentityCard {
       frontImagePath: map['frontImagePath'],
       backImagePath: map['backImagePath'],
       color: map['color'],
+      expiryDate: enc.decryptText(map['expiry_date']),
       customFields: map['customFields'] == null
           ? null
           : enc.decryptJsonToStringMap(map['customFields']),

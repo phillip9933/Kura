@@ -287,7 +287,7 @@ class PassDatabaseHelper {
     return openDatabase(
       path,
       password: EncryptionService.instance.databasePassword,
-      version: 4,
+      version: 5,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE passes(
@@ -304,6 +304,7 @@ class PassDatabaseHelper {
             barcodeAltText TEXT,
             transitType TEXT,
             relevantDate TEXT,
+            expiry_date TEXT,
             frontImagePath TEXT,
             backImagePath TEXT,
             stripImagePath TEXT,
@@ -331,6 +332,9 @@ class PassDatabaseHelper {
           await db.execute(
             'ALTER TABLE passes ADD COLUMN isArchived INTEGER NOT NULL DEFAULT 0;',
           );
+        }
+        if (oldVersion < 5) {
+          await db.execute('ALTER TABLE passes ADD COLUMN expiry_date TEXT;');
         }
       },
     );
@@ -472,7 +476,7 @@ class IdentityDatabaseHelper {
     return openDatabase(
       path,
       password: EncryptionService.instance.databasePassword,
-      version: 5,
+      version: 6,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE identities(
@@ -483,6 +487,7 @@ class IdentityDatabaseHelper {
             frontImagePath TEXT,
             backImagePath TEXT,
             color TEXT,
+            expiry_date TEXT,
             customFields TEXT,
             orderIndex INTEGER DEFAULT 0,
             isArchived INTEGER NOT NULL DEFAULT 0
@@ -507,6 +512,11 @@ class IdentityDatabaseHelper {
         if (oldVersion < 5) {
           await db.execute(
             'ALTER TABLE identities ADD COLUMN isArchived INTEGER NOT NULL DEFAULT 0;',
+          );
+        }
+        if (oldVersion < 6) {
+          await db.execute(
+            'ALTER TABLE identities ADD COLUMN expiry_date TEXT;',
           );
         }
       },

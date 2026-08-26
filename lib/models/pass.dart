@@ -15,6 +15,7 @@ class Pass {
   final String? barcodeAltText;
   final String? transitType;
   final String? relevantDate;
+  final String? expiryDate;
   final String? frontImagePath;
   final String? backImagePath;
   final String? stripImagePath;
@@ -38,6 +39,7 @@ class Pass {
     this.barcodeAltText,
     this.transitType,
     this.relevantDate,
+    this.expiryDate,
     this.frontImagePath,
     this.backImagePath,
     this.stripImagePath,
@@ -63,6 +65,7 @@ class Pass {
       'barcodeAltText': barcodeAltText,
       'transitType': transitType,
       'relevantDate': relevantDate,
+      'expiry_date': expiryDate,
       'frontImagePath': frontImagePath,
       'backImagePath': backImagePath,
       'stripImagePath': stripImagePath,
@@ -90,6 +93,7 @@ class Pass {
       'barcodeAltText': enc.encryptText(barcodeAltText),
       'transitType': transitType,
       'relevantDate': enc.encryptText(relevantDate),
+      'expiry_date': enc.encryptText(expiryDate),
       'frontImagePath': frontImagePath,
       'backImagePath': backImagePath,
       'stripImagePath': stripImagePath,
@@ -116,6 +120,7 @@ class Pass {
       barcodeAltText: map['barcodeAltText'],
       transitType: map['transitType'],
       relevantDate: map['relevantDate'],
+      expiryDate: map['expiry_date'],
       frontImagePath: map['frontImagePath'],
       backImagePath: map['backImagePath'],
       stripImagePath: map['stripImagePath'],
@@ -143,6 +148,7 @@ class Pass {
       barcodeAltText: enc.decryptText(map['barcodeAltText']),
       transitType: map['transitType'],
       relevantDate: enc.decryptText(map['relevantDate']),
+      expiryDate: enc.decryptText(map['expiry_date']),
       frontImagePath: map['frontImagePath'],
       backImagePath: map['backImagePath'],
       stripImagePath: map['stripImagePath'],
