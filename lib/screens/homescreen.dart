@@ -629,6 +629,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     final selectedNavigationIndex = visibleTabs.indexOf(effectiveIndex);
     final showBottomSearch = _isSearchBarAtBottom(startupProvider);
+    final showBottomControlRow =
+        startupProvider.controlRowPosition == ControlRowPosition.bottom;
     final showBottomNavigation =
         startupProvider.showBottomNavigationBar &&
         startupProvider.hasMultipleVisibleTabs;
@@ -637,7 +639,9 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: null,
       resizeToAvoidBottomInset: true,
       floatingActionButton: Padding(
-        padding: EdgeInsets.only(bottom: showBottomSearch ? 68 : 0),
+        padding: EdgeInsets.only(
+          bottom: (showBottomSearch ? 68 : 0) + (showBottomControlRow ? 56 : 0),
+        ),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
@@ -711,6 +715,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: _buildSearchField(
                     isDark,
                     _searchHintForSection(effectiveIndex),
+                  ),
+                ),
+              ),
+            ),
+          if (showBottomControlRow)
+            SafeArea(
+              top: false,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    8,
+                    16,
+                    showBottomSearch ? 68 : 8,
+                  ),
+                  child: _buildBottomControlRow(
+                    effectiveIndex,
+                    isDark,
+                    startupProvider,
                   ),
                 ),
               ),
@@ -841,33 +865,40 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: _buildSearchField(isDark, 'Search cards...'),
                 ),
               ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  _isSearchBarAtTop(settings) ? 0 : 16,
-                  16,
-                  8,
-                ),
-                child: _buildPaymentsActionsRow(
-                  isDark: isDark,
-                  settings: settings,
-                  searchHint: 'Search cards...',
-                  isGridView: true,
-                  onViewToggle: () {
-                    HapticFeedback.selectionClick();
-                    final columns = settings.gridColumnsFor(
-                      WalletSection.payments,
-                    );
-                    settings.setGridColumns(
-                      WalletSection.payments,
-                      columns == 3 ? 1 : columns + 1,
-                    );
-                  },
+            if (settings.controlRowPosition == ControlRowPosition.top)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    _isSearchBarAtTop(settings) ? 0 : 16,
+                    16,
+                    8,
+                  ),
+                  child: _buildPaymentsActionsRow(
+                    isDark: isDark,
+                    settings: settings,
+                    searchHint: 'Search cards...',
+                    isGridView: true,
+                    onViewToggle: () {
+                      HapticFeedback.selectionClick();
+                      final columns = settings.gridColumnsFor(
+                        WalletSection.payments,
+                      );
+                      settings.setGridColumns(
+                        WalletSection.payments,
+                        columns == 3 ? 1 : columns + 1,
+                      );
+                    },
+                  ),
                 ),
               ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: settings.controlRowPosition == ControlRowPosition.bottom
+                    ? 68
+                    : 12,
+              ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
             // Cards list
             if (filteredWallets.isEmpty)
               SliverToBoxAdapter(
@@ -932,6 +963,128 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildPassSearchField(bool isDark) {
     return _buildSearchField(isDark, 'Search passes...');
+  }
+
+  Widget _buildBottomControlRow(
+    int section,
+    bool isDark,
+    StartupSettingsProvider settings,
+  ) {
+    switch (section) {
+      case 0:
+        return _buildPaymentsActionsRow(
+          isDark: isDark,
+          settings: settings,
+          searchHint: 'Search cards...',
+          isGridView: true,
+          onViewToggle: () {
+            HapticFeedback.selectionClick();
+            final columns = settings.gridColumnsFor(WalletSection.payments);
+            settings.setGridColumns(
+              WalletSection.payments,
+              columns == 3 ? 1 : columns + 1,
+            );
+          },
+        );
+      case 1:
+        final categories = settings.categoriesFor(WalletSection.passes);
+        return _buildPassesActionsRow(
+          isDark: isDark,
+          settings: settings,
+          categories: categories,
+          value: categories.contains(_selectedPassFilter)
+              ? _selectedPassFilter
+              : 'all',
+        );
+      case 2:
+        final categories = settings.categoriesFor(WalletSection.identity);
+        return _buildUnifiedActionsRow(
+          isDark: isDark,
+          settings: settings,
+          searchHint: 'Search identities...',
+          categorySelector: _buildIdentityCategorySelector(
+            isDark: isDark,
+            categories: categories,
+            value: categories.contains(_selectedIdentityFilter)
+                ? _selectedIdentityFilter
+                : 'all',
+          ),
+          isGridView: true,
+          onViewToggle: () {
+            HapticFeedback.selectionClick();
+            final columns = settings.gridColumnsFor(WalletSection.identity);
+            settings.setGridColumns(
+              WalletSection.identity,
+              columns == 3 ? 1 : columns + 1,
+            );
+          },
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildPassesActionsRow({
+    required bool isDark,
+    required StartupSettingsProvider settings,
+    required List<String> categories,
+    required String value,
+  }) {
+    return _buildUnifiedActionsRow(
+      isDark: isDark,
+      settings: settings,
+      searchHint: 'Search passes...',
+      categorySelector: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: value,
+            isExpanded: true,
+            icon: Icon(
+              Icons.keyboard_arrow_down,
+              color: isDark ? Colors.white54 : Colors.black54,
+            ),
+            dropdownColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+            onChanged: (newValue) {
+              if (newValue == null) return;
+              HapticFeedback.selectionClick();
+              setState(() => _selectedPassFilter = newValue);
+            },
+            items: [
+              const DropdownMenuItem(
+                value: 'all',
+                child: Text('All Categories'),
+              ),
+              ...categories.map(
+                (category) =>
+                    DropdownMenuItem(value: category, child: Text(category)),
+              ),
+            ],
+          ),
+        ),
+      ),
+      isGridView: true,
+      onViewToggle: () {
+        HapticFeedback.selectionClick();
+        final columns = settings.gridColumnsFor(WalletSection.passes);
+        settings.setGridColumns(
+          WalletSection.passes,
+          columns == 3 ? 1 : columns + 1,
+        );
+      },
+    );
   }
 
   String _searchHintForSection(int section) => switch (section) {
@@ -1441,121 +1594,130 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: _buildPassSearchField(isDark),
                 ),
               ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  _isSearchBarAtTop(settings) ? 0 : 16,
-                  16,
-                  8,
-                ),
-                child: Row(
-                  children: [
-                    // Improved Category Selector
-                    Expanded(
-                      child: Container(
-                        height: 40,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : Colors.black.withValues(alpha: 0.03),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedPassFilter,
-                            isExpanded: true,
-                            icon: Icon(
-                              Icons.keyboard_arrow_down,
-                              color: isDark ? Colors.white54 : Colors.black54,
-                            ),
-                            dropdownColor: isDark
-                                ? const Color(0xFF1E1E1E)
-                                : Colors.white,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : Colors.black87,
-                            ),
-                            onChanged: (String? newValue) {
-                              if (newValue != null) {
-                                HapticFeedback.selectionClick();
-                                setState(() => _selectedPassFilter = newValue);
-                              }
-                            },
-                            items: [
-                              const DropdownMenuItem(
-                                value: 'all',
-                                child: Text('All Categories'),
+            if (settings.controlRowPosition == ControlRowPosition.top)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    _isSearchBarAtTop(settings) ? 0 : 16,
+                    16,
+                    8,
+                  ),
+                  child: Row(
+                    children: [
+                      // Improved Category Selector
+                      Expanded(
+                        child: Container(
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.black.withValues(alpha: 0.03),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedPassFilter,
+                              isExpanded: true,
+                              icon: Icon(
+                                Icons.keyboard_arrow_down,
+                                color: isDark ? Colors.white54 : Colors.black54,
                               ),
-                              ...passCategories.map(
-                                (category) => DropdownMenuItem(
-                                  value: category,
-                                  child: Text(category),
+                              dropdownColor: isDark
+                                  ? const Color(0xFF1E1E1E)
+                                  : Colors.white,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                              onChanged: (String? newValue) {
+                                if (newValue != null) {
+                                  HapticFeedback.selectionClick();
+                                  setState(
+                                    () => _selectedPassFilter = newValue,
+                                  );
+                                }
+                              },
+                              items: [
+                                const DropdownMenuItem(
+                                  value: 'all',
+                                  child: Text('All Categories'),
                                 ),
-                              ),
-                            ],
+                                ...passCategories.map(
+                                  (category) => DropdownMenuItem(
+                                    value: category,
+                                    child: Text(category),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    if (settings.isPassSearchEnabled &&
-                        settings.passSearchStyle == PassSearchStyle.icon) ...[
+                      if (settings.isPassSearchEnabled &&
+                          settings.passSearchStyle == PassSearchStyle.icon) ...[
+                        const SizedBox(width: 8),
+                        _buildPassControlButton(
+                          isDark: isDark,
+                          icon: Icons.search_rounded,
+                          tooltip: 'Search passes',
+                          onPressed: _showPassSearchDialog,
+                        ),
+                      ],
                       const SizedBox(width: 8),
                       _buildPassControlButton(
                         isDark: isDark,
-                        icon: Icons.search_rounded,
-                        tooltip: 'Search passes',
-                        onPressed: _showPassSearchDialog,
-                      ),
-                    ],
-                    const SizedBox(width: 8),
-                    _buildPassControlButton(
-                      isDark: isDark,
-                      icon: Icons.grid_view_rounded,
-                      tooltip: 'Change grid columns',
-                      onPressed: () {
-                        HapticFeedback.selectionClick();
-                        final columns = settings.gridColumnsFor(
-                          WalletSection.passes,
-                        );
-                        settings.setGridColumns(
-                          WalletSection.passes,
-                          columns == 3 ? 1 : columns + 1,
-                        );
-                      },
-                    ),
-                    if (settings.isQrImportScannerEnabled) ...[
-                      const SizedBox(width: 8),
-                      _buildPassControlButton(
-                        isDark: isDark,
-                        icon: Icons.qr_code_scanner_rounded,
-                        tooltip: 'Scan to Import',
+                        icon: Icons.grid_view_rounded,
+                        tooltip: 'Change grid columns',
                         onPressed: () {
-                          HapticFeedback.mediumImpact();
-                          _scanAndImport();
+                          HapticFeedback.selectionClick();
+                          final columns = settings.gridColumnsFor(
+                            WalletSection.passes,
+                          );
+                          settings.setGridColumns(
+                            WalletSection.passes,
+                            columns == 3 ? 1 : columns + 1,
+                          );
+                        },
+                      ),
+                      if (settings.isQrImportScannerEnabled) ...[
+                        const SizedBox(width: 8),
+                        _buildPassControlButton(
+                          isDark: isDark,
+                          icon: Icons.qr_code_scanner_rounded,
+                          tooltip: 'Scan to Import',
+                          onPressed: () {
+                            HapticFeedback.mediumImpact();
+                            _scanAndImport();
+                          },
+                        ),
+                      ],
+                      const SizedBox(width: 8),
+                      _buildPassControlButton(
+                        isDark: isDark,
+                        icon: Icons.settings_outlined,
+                        tooltip: 'Settings',
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.push(
+                            context,
+                            SmoothPageRoute(page: const SettingsPage()),
+                          );
                         },
                       ),
                     ],
-                    const SizedBox(width: 8),
-                    _buildPassControlButton(
-                      isDark: isDark,
-                      icon: Icons.settings_outlined,
-                      tooltip: 'Settings',
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        Navigator.push(
-                          context,
-                          SmoothPageRoute(page: const SettingsPage()),
-                        );
-                      },
-                    ),
-                  ],
+                  ),
                 ),
               ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: settings.controlRowPosition == ControlRowPosition.bottom
+                    ? 68
+                    : 12,
+              ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
             if (filteredPasses.isEmpty)
               SliverToBoxAdapter(
@@ -1983,38 +2145,46 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: _buildSearchField(isDark, 'Search identities...'),
                 ),
               ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  _isSearchBarAtTop(settings) ? 0 : 16,
-                  16,
-                  8,
-                ),
-                child: _buildUnifiedActionsRow(
-                  isDark: isDark,
-                  settings: settings,
-                  searchHint: 'Search identities...',
-                  categorySelector: _buildIdentityCategorySelector(
-                    isDark: isDark,
-                    categories: identityCategories,
-                    value: activeIdentityFilter,
+            if (settings.controlRowPosition == ControlRowPosition.top)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    _isSearchBarAtTop(settings) ? 0 : 16,
+                    16,
+                    8,
                   ),
-                  isGridView: true,
-                  onViewToggle: () {
-                    HapticFeedback.selectionClick();
-                    final columns = settings.gridColumnsFor(
-                      WalletSection.identity,
-                    );
-                    settings.setGridColumns(
-                      WalletSection.identity,
-                      columns == 3 ? 1 : columns + 1,
-                    );
-                  },
+                  child: _buildUnifiedActionsRow(
+                    isDark: isDark,
+                    settings: settings,
+                    searchHint: 'Search identities...',
+                    categorySelector: _buildIdentityCategorySelector(
+                      isDark: isDark,
+                      categories: identityCategories,
+                      value: activeIdentityFilter,
+                    ),
+                    isGridView: true,
+                    onViewToggle: () {
+                      HapticFeedback.selectionClick();
+                      final columns = settings.gridColumnsFor(
+                        WalletSection.identity,
+                      );
+                      settings.setGridColumns(
+                        WalletSection.identity,
+                        columns == 3 ? 1 : columns + 1,
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
 
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: settings.controlRowPosition == ControlRowPosition.bottom
+                    ? 68
+                    : 12,
+              ),
+            ),
             if (filteredIdentities.isEmpty)
               SliverToBoxAdapter(
                 child: Padding(

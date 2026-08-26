@@ -6,6 +6,8 @@ enum PassSearchStyle { alwaysOn, icon }
 
 enum SearchBarPosition { top, bottom }
 
+enum ControlRowPosition { top, bottom }
+
 enum PassGridDisplayMode { front, back, virtualCards }
 
 enum BarcodeOrientation { defaultOrientation, flipped }
@@ -50,6 +52,7 @@ class StartupSettingsProvider with ChangeNotifier {
       BarcodeOrientation.defaultOrientation;
   PassSearchStyle _passSearchStyle = PassSearchStyle.alwaysOn;
   SearchBarPosition _searchBarPosition = SearchBarPosition.top;
+  ControlRowPosition _controlRowPosition = ControlRowPosition.top;
   PassGridDisplayMode _passGridDisplayMode = PassGridDisplayMode.front;
   int _passGridColumns = 1;
   final Map<WalletSection, int> _sectionGridColumns = {
@@ -137,6 +140,7 @@ class StartupSettingsProvider with ChangeNotifier {
   static const String _isPassSearchEnabledKey = 'isPassSearchEnabled';
   static const String _passSearchStyleKey = 'passSearchStyle';
   static const String _searchBarPositionKey = 'searchBarPosition';
+  static const String _controlRowPositionKey = 'controlRowPosition';
   static const String _passGridDisplayModeKey = 'passGridDisplayMode';
   static const String _passGridColumnsKey = 'passGridColumns';
   static const String _maxBrightnessOnBarcodeViewKey =
@@ -160,6 +164,7 @@ class StartupSettingsProvider with ChangeNotifier {
       _defaultBarcodeOrientation;
   PassSearchStyle get passSearchStyle => _passSearchStyle;
   SearchBarPosition get searchBarPosition => _searchBarPosition;
+  ControlRowPosition get controlRowPosition => _controlRowPosition;
   PassGridDisplayMode get passGridDisplayMode => _passGridDisplayMode;
   int get passGridColumns => _passGridColumns;
 
@@ -227,6 +232,10 @@ class StartupSettingsProvider with ChangeNotifier {
     _searchBarPosition = SearchBarPosition.values.firstWhere(
       (position) => position.name == prefs.getString(_searchBarPositionKey),
       orElse: () => SearchBarPosition.top,
+    );
+    _controlRowPosition = ControlRowPosition.values.firstWhere(
+      (position) => position.name == prefs.getString(_controlRowPositionKey),
+      orElse: () => ControlRowPosition.top,
     );
     final savedGridDisplayMode = prefs.getString(_passGridDisplayModeKey);
     _passGridDisplayMode = PassGridDisplayMode.values.firstWhere(
@@ -415,6 +424,13 @@ class StartupSettingsProvider with ChangeNotifier {
     _searchBarPosition = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_searchBarPositionKey, value.name);
+    notifyListeners();
+  }
+
+  Future<void> setControlRowPosition(ControlRowPosition value) async {
+    _controlRowPosition = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_controlRowPositionKey, value.name);
     notifyListeners();
   }
 

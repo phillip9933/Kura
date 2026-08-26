@@ -365,6 +365,26 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           divider,
           _LiquidGlassTile(
+            icon: Icons.vertical_align_bottom_rounded,
+            title: 'Control Row Position',
+            subtitle: _getControlRowPositionDisplayName(
+              startupProvider.controlRowPosition,
+            ),
+            trailing: TextButton(
+              onPressed: () => startupProvider.setControlRowPosition(
+                startupProvider.controlRowPosition == ControlRowPosition.top
+                    ? ControlRowPosition.bottom
+                    : ControlRowPosition.top,
+              ),
+              child: Text(
+                _getControlRowPositionDisplayName(
+                  startupProvider.controlRowPosition,
+                ),
+              ),
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
             icon: Icons.qr_code_scanner_rounded,
             title: 'QR Import Scanner',
             subtitle: 'Show the scanner button in section controls',
@@ -525,6 +545,10 @@ class _SettingsPageState extends State<SettingsPage> {
       SearchBarPosition.top => 'Top',
       SearchBarPosition.bottom => 'Bottom',
     };
+  }
+
+  String _getControlRowPositionDisplayName(ControlRowPosition position) {
+    return position == ControlRowPosition.top ? 'Top' : 'Bottom';
   }
 
   void _showBarcodeOrientationDialog(
