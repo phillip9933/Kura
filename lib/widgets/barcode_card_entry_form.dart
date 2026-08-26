@@ -202,6 +202,8 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
       if (result.type == ResultType.Barcode) {
         setState(() {
           _barcodeValueController.text = result.rawContent;
+          final format = BarcodeUtils.getLabelFromScannerFormat(result.format);
+          if (format != null) _selectedBarcodeFormat = format;
         });
       }
     } catch (_) {}
