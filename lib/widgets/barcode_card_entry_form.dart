@@ -200,11 +200,20 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
     try {
       final result = await BarcodeScanner.scan();
       if (result.type == ResultType.Barcode) {
+        final format = BarcodeUtils.getLabelFromScannerFormat(result.format);
         setState(() {
           _barcodeValueController.text = result.rawContent;
-          final format = BarcodeUtils.getLabelFromScannerFormat(result.format);
           if (format != null) _selectedBarcodeFormat = format;
         });
+        if (format == null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Barcode scanned, but its type could not be determined. Select a barcode format manually.',
+              ),
+            ),
+          );
+        }
       }
     } catch (_) {}
   }
@@ -215,18 +224,21 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
         File(filePath),
       );
       if (scanResult != null && scanResult.text.isNotEmpty) {
+        final format = scanResult.format;
+        final isKnownFormat =
+            format != null && BarcodeUtils.supportedFormats.containsKey(format);
+        final detectedFormat = isKnownFormat ? format : null;
         setState(() {
           _barcodeValueController.text = scanResult.text;
-          if (scanResult.format != null &&
-              BarcodeUtils.supportedFormats.containsKey(scanResult.format)) {
-            _selectedBarcodeFormat = scanResult.format!;
-          }
+          if (detectedFormat != null) _selectedBarcodeFormat = detectedFormat;
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Scanned ${scanResult.format ?? 'Barcode'}: ${scanResult.text}',
+                isKnownFormat
+                    ? 'Scanned $format: ${scanResult.text}'
+                    : 'Barcode scanned, but its type could not be determined. Select a barcode format manually.',
               ),
             ),
           );
