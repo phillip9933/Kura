@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -25,9 +26,12 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   String? _pendingBackupUri;
+  String? _appVersion;
+  bool _isAppVersionLoading = true;
   static const _systemSettingsChannel = MethodChannel(
     'com.sidhant.wallet/system_settings',
   );
+  static const _appInfoChannel = MethodChannel('app.kura.wallet/app_info');
 
   Future<void> _setBarcodeBrightnessEnabled(
     StartupSettingsProvider provider,
@@ -43,7 +47,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Allow “Modify system settings” to enable barcode brightness.',
+              'Allow â€œModify system settingsâ€ to enable barcode brightness.',
             ),
           ),
         );
@@ -57,6 +61,34 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final version = await _appInfoChannel.invokeMethod<String>('getVersion');
+      if (!mounted) return;
+      setState(() {
+        _appVersion = version;
+        _isAppVersionLoading = false;
+      });
+    } on PlatformException catch (error) {
+      if (kDebugMode) {
+        debugPrint('SettingsPage: unable to load app version: $error');
+      }
+      if (mounted) setState(() => _isAppVersionLoading = false);
+    } on MissingPluginException catch (error) {
+      if (kDebugMode) {
+        debugPrint('SettingsPage: app version channel is unavailable: $error');
+      }
+      if (mounted) setState(() => _isAppVersionLoading = false);
+    }
+  }
+
+  String get _appVersionSubtitle {
+    if (_isAppVersionLoading) return 'Loading versionâ€¦';
+    if (_appVersion == null) return 'Version unavailable';
+    return 'Kura v${_appVersion!.split('+').first}';
   }
 
   Future<bool> _authenticateForDestructiveAction() async {
@@ -385,7 +417,7 @@ class _SettingsPageState extends State<SettingsPage> {
           _LiquidGlassTile(
             icon: Icons.info_outline_rounded,
             title: 'App Version & Trademark Notice',
-            subtitle: 'Wallet v1.0.41 - View trademark information',
+            subtitle: '$_appVersionSubtitle - View trademark information',
             onTap: () => _showTrademarkNotice(isDark),
           ),
           divider,
@@ -393,9 +425,8 @@ class _SettingsPageState extends State<SettingsPage> {
             icon: Icons.code_rounded,
             title: 'GitHub & Issue Tracker',
             subtitle: 'View the source code or report an issue',
-            onTap: () => _launchExternalUrl(
-              'https://github.com/phillip9933/Wallet/issues',
-            ),
+            onTap: () =>
+                _launchExternalUrl('https://github.com/phillip9933/Wallet/issues'),
           ),
         ],
       ),

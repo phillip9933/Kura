@@ -18,6 +18,7 @@ class MainActivity: FlutterFragmentActivity()
   {
     private val CHANNEL = "app.kura.wallet/save_file"
     private val SYSTEM_SETTINGS_CHANNEL = "app.kura.wallet/system_settings"
+    private val APP_INFO_CHANNEL = "app.kura.wallet/app_info"
     private var pendingBytes: ByteArray? = null
     private var pendingResult: MethodChannel.Result? = null
     private var pendingFilename: String? = null
@@ -42,6 +43,20 @@ class MainActivity: FlutterFragmentActivity()
               }
               startActivity(intent)
               result.success(null)
+            }
+            else -> result.notImplemented()
+          }
+        }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, APP_INFO_CHANNEL).setMethodCallHandler { call, result ->
+          when (call.method) {
+            "getVersion" -> {
+              try {
+                result.success(
+                  "${BuildConfig.VERSION_NAME}+${BuildConfig.FLUTTER_BUILD_NUMBER}"
+                )
+              } catch (e: Exception) {
+                result.error("VERSION_UNAVAILABLE", e.message, null)
+              }
             }
             else -> result.notImplemented()
           }
