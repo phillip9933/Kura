@@ -11,7 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:kura/models/theme_provider.dart';
 import 'package:kura/models/startup_settings_provider.dart';
 import 'package:kura/pages/section_settings_page.dart';
-import 'package:kura/pages/auto_backup_configuration_page.dart';
+import 'package:kura/pages/backup_storage_page.dart';
 import 'package:kura/pages/barcode_scanning_page.dart';
 import 'package:kura/pages/navigation_search_layout_page.dart';
 import 'package:kura/services/backup_service.dart';
@@ -228,35 +228,19 @@ class _SettingsPageState extends State<SettingsPage> {
           divider,
           _LiquidGlassTile(
             icon: Icons.backup_outlined,
-            title: 'Auto-Backup Configuration',
+            title: 'Backup & Storage',
             subtitle: _getAutoBackupSubtitle(autoBackupProvider),
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => const AutoBackupConfigurationPage(),
+                builder: (_) => BackupStoragePage(
+                  onCreateBackup: () => _showBackupDialog(themeProvider),
+                  onRestoreBackup: () => _showRestoreDialog(themeProvider),
+                  onDeleteAllData: () =>
+                      _showDeleteAllDataDialog(themeProvider),
+                ),
               ),
             ),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.backup_outlined,
-            title: 'Create Backup',
-            subtitle: 'Save an encrypted copy of your data',
-            onTap: () => _showBackupDialog(themeProvider),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.restore_outlined,
-            title: 'Restore Backup',
-            subtitle: 'Replace current data from a backup file',
-            onTap: () => _showRestoreDialog(themeProvider),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.delete_forever_outlined,
-            title: 'Delete All Data',
-            subtitle: 'Permanently erase all data from this device',
-            onTap: () => _showDeleteAllDataDialog(themeProvider),
           ),
         ],
       ),

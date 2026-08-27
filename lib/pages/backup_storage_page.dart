@@ -5,16 +5,23 @@ import 'package:kura/models/theme_provider.dart';
 import 'package:kura/services/saf_service.dart';
 import 'package:provider/provider.dart';
 
-class AutoBackupConfigurationPage extends StatefulWidget {
-  const AutoBackupConfigurationPage({super.key});
+class BackupStoragePage extends StatefulWidget {
+  const BackupStoragePage({
+    super.key,
+    required this.onCreateBackup,
+    required this.onRestoreBackup,
+    required this.onDeleteAllData,
+  });
+
+  final VoidCallback onCreateBackup;
+  final VoidCallback onRestoreBackup;
+  final VoidCallback onDeleteAllData;
 
   @override
-  State<AutoBackupConfigurationPage> createState() =>
-      _AutoBackupConfigurationPageState();
+  State<BackupStoragePage> createState() => _BackupStoragePageState();
 }
 
-class _AutoBackupConfigurationPageState
-    extends State<AutoBackupConfigurationPage> {
+class _BackupStoragePageState extends State<BackupStoragePage> {
   String? _pendingBackupUri;
 
   @override
@@ -28,7 +35,7 @@ class _AutoBackupConfigurationPageState
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Auto-Backup Configuration')),
+      appBar: AppBar(title: const Text('Backup & Storage')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -82,6 +89,34 @@ class _AutoBackupConfigurationPageState
                     ),
                   ),
                 ],
+                divider,
+                ListTile(
+                  leading: const Icon(Icons.backup_outlined),
+                  title: const Text('Create Backup'),
+                  subtitle: const Text('Save an encrypted copy of your data'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: widget.onCreateBackup,
+                ),
+                divider,
+                ListTile(
+                  leading: const Icon(Icons.restore_outlined),
+                  title: const Text('Restore Backup'),
+                  subtitle: const Text(
+                    'Replace current data from a backup file',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: widget.onRestoreBackup,
+                ),
+                divider,
+                ListTile(
+                  leading: const Icon(Icons.delete_forever_outlined),
+                  title: const Text('Delete All Data'),
+                  subtitle: const Text(
+                    'Permanently erase all data from this device',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: widget.onDeleteAllData,
+                ),
               ],
             ),
           ),
