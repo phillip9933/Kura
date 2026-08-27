@@ -15,7 +15,7 @@ import 'package:kura/pages/backup_storage_page.dart';
 import 'package:kura/pages/barcode_scanning_page.dart';
 import 'package:kura/pages/expiry_alerts_page.dart';
 import 'package:kura/pages/general_display_page.dart';
-import 'package:kura/pages/navigation_search_layout_page.dart';
+import 'package:kura/pages/navigation_layout_page.dart';
 import 'package:kura/services/backup_service.dart';
 import 'package:kura/models/provider_helper.dart';
 import 'package:kura/models/db_helper.dart';
@@ -208,13 +208,11 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           _LiquidGlassTile(
             icon: Icons.visibility_outlined,
-            title: 'Navigation & Search Layout',
+            title: 'Navigation & Layout',
             subtitle: 'Configure tabs, navigation, controls, and search',
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => const NavigationSearchLayoutPage(),
-              ),
+              MaterialPageRoute(builder: (_) => const NavigationLayoutPage()),
             ),
           ),
           divider,

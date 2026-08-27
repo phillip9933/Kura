@@ -3,8 +3,8 @@ import 'package:kura/models/startup_settings_provider.dart';
 import 'package:kura/models/theme_provider.dart';
 import 'package:provider/provider.dart';
 
-class NavigationSearchLayoutPage extends StatelessWidget {
-  const NavigationSearchLayoutPage({super.key});
+class NavigationLayoutPage extends StatelessWidget {
+  const NavigationLayoutPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +16,7 @@ class NavigationSearchLayoutPage extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Navigation & Search Layout')),
+      appBar: AppBar(title: const Text('Navigation & Layout')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
