@@ -71,6 +71,18 @@ class NavigationLayoutPage extends StatelessWidget {
                 ),
                 divider,
                 ListTile(
+                  leading: const Icon(Icons.swipe_rounded),
+                  title: const Text('Gesture Navigation'),
+                  subtitle: const Text(
+                    'Swipe horizontally between visible sections',
+                  ),
+                  trailing: Switch(
+                    value: provider.gestureNavigationEnabled,
+                    onChanged: provider.setGestureNavigationEnabled,
+                  ),
+                ),
+                divider,
+                ListTile(
                   leading: const Icon(Icons.vertical_align_bottom_rounded),
                   title: const Text('Control Row Position'),
                   subtitle: const Text(

@@ -923,7 +923,9 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           PageView(
             controller: _tabPageController,
-            physics: const PageScrollPhysics(parent: ClampingScrollPhysics()),
+            physics: startupProvider.gestureNavigationEnabled
+                ? const PageScrollPhysics(parent: ClampingScrollPhysics())
+                : const NeverScrollableScrollPhysics(),
             onPageChanged: (page) => _onItemTapped(visibleTabs[page]),
             children: [
               if (startupProvider.showPaymentsTab)

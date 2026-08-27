@@ -44,6 +44,7 @@ class StartupSettingsProvider with ChangeNotifier {
   bool _showPassesTab = true;
   bool _showIdentityTab = true;
   bool _showBottomNavigationBar = true;
+  bool _gestureNavigationEnabled = true;
   bool _showPassQrButton = true;
   bool _isPassSearchEnabled = true;
   bool _isExpiryNotificationEnabled = true;
@@ -67,13 +68,7 @@ class StartupSettingsProvider with ChangeNotifier {
     WalletSection.identity: PassGridDisplayMode.front,
   };
   final Map<WalletSection, List<String>> _sectionCategories = {
-    WalletSection.payments: [
-      'Credit',
-      'Debit',
-      'Prepaid',
-      'Gift Card',
-      'Cash',
-    ],
+    WalletSection.payments: ['Credit', 'Debit', 'Prepaid', 'Gift Card', 'Cash'],
     WalletSection.passes: [
       'Transit',
       'Membership',
@@ -91,13 +86,7 @@ class StartupSettingsProvider with ChangeNotifier {
     ],
   };
   static const Map<WalletSection, List<String>> _defaultSectionCategories = {
-    WalletSection.payments: [
-      'Credit',
-      'Debit',
-      'Prepaid',
-      'Gift Card',
-      'Cash',
-    ],
+    WalletSection.payments: ['Credit', 'Debit', 'Prepaid', 'Gift Card', 'Cash'],
     WalletSection.passes: [
       'Transit',
       'Membership',
@@ -160,6 +149,7 @@ class StartupSettingsProvider with ChangeNotifier {
   static const String _showPassesTabKey = 'showPassesTab';
   static const String _showIdentityTabKey = 'showIdentityTab';
   static const String _showBottomNavigationBarKey = 'showBottomNavigationBar';
+  static const String _gestureNavigationEnabledKey = 'gestureNavigationEnabled';
   static const String _showPassQrButtonKey = 'showPassQrButton';
   static const String _isPassSearchEnabledKey = 'isPassSearchEnabled';
   static const String _isExpiryNotificationEnabledKey =
@@ -184,6 +174,7 @@ class StartupSettingsProvider with ChangeNotifier {
   bool get showPassesTab => _showPassesTab;
   bool get showIdentityTab => _showIdentityTab;
   bool get showBottomNavigationBar => _showBottomNavigationBar;
+  bool get gestureNavigationEnabled => _gestureNavigationEnabled;
   bool get showPassQrButton => _showPassQrButton;
   bool get isPassSearchEnabled => _isPassSearchEnabled;
   bool get isExpiryNotificationEnabled => _isExpiryNotificationEnabled;
@@ -234,6 +225,8 @@ class StartupSettingsProvider with ChangeNotifier {
     _showIdentityTab = prefs.getBool(_showIdentityTabKey) ?? true;
     _showBottomNavigationBar =
         prefs.getBool(_showBottomNavigationBarKey) ?? true;
+    _gestureNavigationEnabled =
+        prefs.getBool(_gestureNavigationEnabledKey) ?? true;
     if (!_showPaymentsTab && !_showPassesTab && !_showIdentityTab) {
       _showPaymentsTab = true;
       await prefs.setBool(_showPaymentsTabKey, true);
@@ -395,6 +388,13 @@ class StartupSettingsProvider with ChangeNotifier {
     _showBottomNavigationBar = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_showBottomNavigationBarKey, value);
+    notifyListeners();
+  }
+
+  Future<void> setGestureNavigationEnabled(bool value) async {
+    _gestureNavigationEnabled = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_gestureNavigationEnabledKey, value);
     notifyListeners();
   }
 
