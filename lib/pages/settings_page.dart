@@ -167,10 +167,10 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           divider,
           _LiquidGlassTile(
-            icon: Icons.home_outlined,
-            title: 'Default Tab on Launch',
-            subtitle: _getDefaultScreenName(startupProvider.defaultScreenIndex),
-            onTap: () => _showDefaultScreenDialog(context, startupProvider),
+            icon: Icons.brightness_6_outlined,
+            title: 'App Theme',
+            subtitle: _getThemeDisplayName(themeProvider.themePreference),
+            onTap: () => _showThemeDialog(context, themeProvider),
           ),
           divider,
           _LiquidGlassTile(
@@ -183,9 +183,94 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
       _LiquidGlassSection(
-        title: 'Navigation & Sections',
-        icon: Icons.tab_outlined,
+        title: 'Notifications',
+        icon: Icons.notifications_outlined,
         children: [
+          _LiquidGlassTile(
+            icon: Icons.notifications_active_outlined,
+            title: 'Startup Expiry Alerts',
+            subtitle: 'Show expired and upcoming expiry alerts when Kura opens',
+            trailing: Switch(
+              value: startupProvider.isExpiryNotificationEnabled,
+              onChanged: startupProvider.setExpiryNotificationEnabled,
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.calendar_month_outlined,
+            title: 'Alert Lead Time',
+            subtitle:
+                'Alert for items expiring within ${startupProvider.expiryNotificationLeadMonths} months',
+            trailing: TextButton(
+              onPressed: startupProvider.isExpiryNotificationEnabled
+                  ? () => _showExpiryNotificationLeadTimeDialog(startupProvider)
+                  : null,
+              child: Text(
+                '${startupProvider.expiryNotificationLeadMonths} months',
+              ),
+            ),
+          ),
+        ],
+      ),
+      _LiquidGlassSection(
+        title: 'Data & Backup',
+        icon: Icons.storage_outlined,
+        children: [
+          _LiquidGlassTile(
+            icon: Icons.inventory_2_outlined,
+            title: 'Archive',
+            subtitle: 'Restore or permanently delete archived items',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ArchiveScreen()),
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.backup_outlined,
+            title: 'Auto-Backup Configuration',
+            subtitle: _getAutoBackupSubtitle(autoBackupProvider),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const AutoBackupConfigurationPage(),
+              ),
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.backup_outlined,
+            title: 'Create Backup',
+            subtitle: 'Save an encrypted copy of your data',
+            onTap: () => _showBackupDialog(themeProvider),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.restore_outlined,
+            title: 'Restore Backup',
+            subtitle: 'Replace current data from a backup file',
+            onTap: () => _showRestoreDialog(themeProvider),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.delete_forever_outlined,
+            title: 'Delete All Data',
+            subtitle: 'Permanently erase all data from this device',
+            onTap: () => _showDeleteAllDataDialog(themeProvider),
+          ),
+        ],
+      ),
+      _LiquidGlassSection(
+        title: 'Interface & Layout',
+        icon: Icons.palette_outlined,
+        children: [
+          _LiquidGlassTile(
+            icon: Icons.home_outlined,
+            title: 'Default Tab on Launch',
+            subtitle: _getDefaultScreenName(startupProvider.defaultScreenIndex),
+            onTap: () => _showDefaultScreenDialog(context, startupProvider),
+          ),
+          divider,
           _LiquidGlassTile(
             icon: Icons.visibility_outlined,
             title: 'Navigation & Search Layout',
@@ -198,6 +283,21 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           divider,
+          _LiquidGlassTile(
+            icon: Icons.screen_rotation_outlined,
+            title: 'Barcode & Scanning',
+            subtitle: 'Configure barcode display and QR import scanning',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const BarcodeScanningPage()),
+            ),
+          ),
+        ],
+      ),
+      _LiquidGlassSection(
+        title: 'Section Configuration',
+        icon: Icons.tab_outlined,
+        children: [
           _LiquidGlassTile(
             icon: Icons.credit_card_outlined,
             title: 'Payments Settings',
@@ -235,106 +335,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SectionSettingsPage(section: WalletSection.identity),
               ),
             ),
-          ),
-        ],
-      ),
-      _LiquidGlassSection(
-        title: 'Expiry Notifications',
-        icon: Icons.event_note_outlined,
-        children: [
-          _LiquidGlassTile(
-            icon: Icons.notifications_active_outlined,
-            title: 'Startup Expiry Alerts',
-            subtitle: 'Show expired and upcoming expiry alerts when Kura opens',
-            trailing: Switch(
-              value: startupProvider.isExpiryNotificationEnabled,
-              onChanged: startupProvider.setExpiryNotificationEnabled,
-            ),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.calendar_month_outlined,
-            title: 'Alert Lead Time',
-            subtitle:
-                'Alert for items expiring within ${startupProvider.expiryNotificationLeadMonths} months',
-            trailing: TextButton(
-              onPressed: startupProvider.isExpiryNotificationEnabled
-                  ? () => _showExpiryNotificationLeadTimeDialog(startupProvider)
-                  : null,
-              child: Text(
-                '${startupProvider.expiryNotificationLeadMonths} months',
-              ),
-            ),
-          ),
-        ],
-      ),
-      _LiquidGlassSection(
-        title: 'UI & Layout',
-        icon: Icons.palette_outlined,
-        children: [
-          _LiquidGlassTile(
-            icon: Icons.brightness_6_outlined,
-            title: 'App Theme',
-            subtitle: _getThemeDisplayName(themeProvider.themePreference),
-            onTap: () => _showThemeDialog(context, themeProvider),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.screen_rotation_outlined,
-            title: 'Barcode & Scanning',
-            subtitle: 'Configure barcode display and QR import scanning',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const BarcodeScanningPage()),
-            ),
-          ),
-        ],
-      ),
-      _LiquidGlassSection(
-        title: 'Data Management',
-        icon: Icons.storage_outlined,
-        children: [
-          _LiquidGlassTile(
-            icon: Icons.backup_outlined,
-            title: 'Auto-Backup Configuration',
-            subtitle: _getAutoBackupSubtitle(autoBackupProvider),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const AutoBackupConfigurationPage(),
-              ),
-            ),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.inventory_2_outlined,
-            title: 'Archive',
-            subtitle: 'Restore or permanently delete archived items',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ArchiveScreen()),
-            ),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.backup_outlined,
-            title: 'Create Backup',
-            subtitle: 'Save an encrypted copy of your data',
-            onTap: () => _showBackupDialog(themeProvider),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.restore_outlined,
-            title: 'Restore Backup',
-            subtitle: 'Replace current data from a backup file',
-            onTap: () => _showRestoreDialog(themeProvider),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.delete_forever_outlined,
-            title: 'Delete All Data',
-            subtitle: 'Permanently erase all data from this device',
-            onTap: () => _showDeleteAllDataDialog(themeProvider),
           ),
         ],
       ),
