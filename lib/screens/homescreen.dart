@@ -27,6 +27,20 @@ import 'package:kura/models/pass_types.dart';
 
 enum _ExpiryStatus { expired, expiringSoon }
 
+class _ExpiryAlertItem {
+  const _ExpiryAlertItem({
+    required this.title,
+    required this.type,
+    required this.expiry,
+    required this.status,
+  });
+
+  final String title;
+  final String type;
+  final String expiry;
+  final _ExpiryStatus status;
+}
+
 /// Smooth route builder Ã¢â‚¬â€ used across the app for premium transitions
 class SmoothPageRoute<T> extends PageRouteBuilder<T> {
   final Widget page;
@@ -65,6 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _expectedTotalChunks = 0;
 
   StreamSubscription? _intentDataStreamSubscription;
+  bool _hasCheckedStartupExpiryAlerts = false;
 
   @override
   void initState() {
@@ -72,10 +87,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchController = TextEditingController();
     _tabPageController = PageController(initialPage: _selectedIndex);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<WalletProvider>().fetchWallets();
-      context.read<PassProvider>().fetchPasses();
-      context.read<IdentityProvider>().fetchIdentities();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.wait([
+        context.read<WalletProvider>().fetchWallets(),
+        context.read<PassProvider>().fetchPasses(),
+        context.read<IdentityProvider>().fetchIdentities(),
+      ]);
+      if (!mounted) return;
 
       // Initialize selected index from startup settings
       final startupProvider = context.read<StartupSettingsProvider>();
@@ -88,6 +106,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ];
       _tabPageController.jumpToPage(visibleTabs.indexOf(initialIndex));
 
+      await _showStartupExpiryAlerts();
+      if (!mounted) return;
       _initSharingIntent();
     });
 
@@ -118,6 +138,148 @@ class _HomeScreenState extends State<HomeScreen> {
       _handleSharedMedia(value);
       ReceiveSharingIntent.instance.reset();
     });
+  }
+
+  Future<void> _showStartupExpiryAlerts() async {
+    if (_hasCheckedStartupExpiryAlerts) return;
+    _hasCheckedStartupExpiryAlerts = true;
+
+    final settings = context.read<StartupSettingsProvider>();
+    if (!settings.isExpiryNotificationEnabled) return;
+
+    final possibleAlerts = <_ExpiryAlertItem?>[
+      ...context.read<WalletProvider>().wallets.map<_ExpiryAlertItem?>(
+        (wallet) => _expiryAlertItem(
+          title: wallet.name,
+          type: 'Payment',
+          expiry: wallet.expiry,
+          leadMonths: settings.expiryNotificationLeadMonths,
+        ),
+      ),
+      ...context.read<PassProvider>().passes.map<_ExpiryAlertItem?>(
+        (pass) => _expiryAlertItem(
+          title: pass.organizationName,
+          type: 'Pass',
+          expiry: pass.expiryDate,
+          leadMonths: settings.expiryNotificationLeadMonths,
+        ),
+      ),
+      ...context.read<IdentityProvider>().identities.map<_ExpiryAlertItem?>(
+        (card) => _expiryAlertItem(
+          title: card.name,
+          type: 'Identity',
+          expiry: card.expiryDate,
+          leadMonths: settings.expiryNotificationLeadMonths,
+        ),
+      ),
+    ];
+    final alerts = possibleAlerts.whereType<_ExpiryAlertItem>().toList();
+    if (alerts.isEmpty || !mounted) return;
+
+    final expired = alerts
+        .where((item) => item.status == _ExpiryStatus.expired)
+        .toList();
+    final expiringSoon = alerts
+        .where((item) => item.status == _ExpiryStatus.expiringSoon)
+        .toList();
+    final isDark = context.read<ThemeProvider>().isDarkMode;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        title: const Text(
+          'Expiry Alerts',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 360),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (expired.isNotEmpty) ...[
+                  const Text(
+                    'EXPIRED',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...expired.map(_buildExpiryAlertItem),
+                ],
+                if (expired.isNotEmpty && expiringSoon.isNotEmpty)
+                  const SizedBox(height: 16),
+                if (expiringSoon.isNotEmpty) ...[
+                  const Text(
+                    'EXPIRING SOON',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...expiringSoon.map(_buildExpiryAlertItem),
+                ],
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _ExpiryAlertItem? _expiryAlertItem({
+    required String title,
+    required String type,
+    required String? expiry,
+    required int leadMonths,
+  }) {
+    final status = _startupExpiryStatus(expiry, leadMonths);
+    if (status == null) return null;
+    return _ExpiryAlertItem(
+      title: title.trim().isEmpty ? type : title,
+      type: type,
+      expiry: expiry!.trim(),
+      status: status,
+    );
+  }
+
+  _ExpiryStatus? _startupExpiryStatus(String? value, int leadMonths) {
+    if (value == null || value.trim().isEmpty) return null;
+    final match = RegExp(r'^(\d{2})/(\d{2})$').firstMatch(value.trim());
+    if (match == null) return null;
+    final month = int.tryParse(match.group(1)!);
+    final year = int.tryParse(match.group(2)!);
+    if (month == null || year == null || month < 1 || month > 12) return null;
+
+    final now = DateTime.now();
+    final currentMonth = now.year * 12 + now.month;
+    final expiryMonth = (2000 + year) * 12 + month;
+    if (expiryMonth < currentMonth) return _ExpiryStatus.expired;
+    if (expiryMonth <= currentMonth + leadMonths) {
+      return _ExpiryStatus.expiringSoon;
+    }
+    return null;
+  }
+
+  Widget _buildExpiryAlertItem(_ExpiryAlertItem item) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Text('${item.title} (${item.type}) — ${item.expiry}'),
+    );
   }
 
   void _handleSharedMedia(List<SharedMediaFile> value) {
@@ -1500,11 +1662,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final year = int.tryParse(match.group(2)!);
     if (month == null || year == null || month < 1 || month > 12) return null;
 
-    final expiryDate = DateTime(2000 + year, month + 1, 0);
-    final today = DateTime.now();
-    final startOfToday = DateTime(today.year, today.month, today.day);
-    if (expiryDate.isBefore(startOfToday)) return _ExpiryStatus.expired;
-    if (expiryDate.difference(startOfToday).inDays <= 7) {
+    final now = DateTime.now();
+    final currentMonth = now.year * 12 + now.month;
+    final expiryMonth = (2000 + year) * 12 + month;
+    if (expiryMonth < currentMonth) return _ExpiryStatus.expired;
+    final leadMonths = context
+        .read<StartupSettingsProvider>()
+        .expiryNotificationLeadMonths;
+    if (expiryMonth <= currentMonth + leadMonths) {
       return _ExpiryStatus.expiringSoon;
     }
     return null;
