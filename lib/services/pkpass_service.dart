@@ -336,8 +336,9 @@ class PkpassService {
       await temporaryFile.writeAsBytes(imageFile.content as List<int>);
       return await saveImageToAppDirectory(temporaryFile);
     } catch (_) {
-      if (await temporaryFile.exists()) await temporaryFile.delete();
       return null;
+    } finally {
+      if (await temporaryFile.exists()) await temporaryFile.delete();
     }
   }
 

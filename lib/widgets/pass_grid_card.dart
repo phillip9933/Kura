@@ -404,7 +404,7 @@ class PassGridCard extends StatelessWidget {
     required bool prominent,
   }) {
     final primary = _fields('primaryFields');
-    if (primary.length < 2)
+    if (primary.length < 2) {
       return _pkpassFieldRow(
         primary,
         label,
@@ -413,6 +413,7 @@ class PassGridCard extends StatelessWidget {
         primary: true,
         maxFields: prominent ? null : 1,
       );
+    }
     return SizedBox(
       height: prominent ? 48 * scale : null,
       child: Row(

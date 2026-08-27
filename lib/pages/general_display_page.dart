@@ -92,24 +92,29 @@ class GeneralDisplayPage extends StatelessWidget {
           'Choose Currency',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: StartupSettingsProvider.majorCurrencies.length,
-            itemBuilder: (context, index) {
-              final currency = StartupSettingsProvider.majorCurrencies[index];
-              return RadioListTile<String>(
-                title: Text('${currency['name']} (${currency['symbol']})'),
-                value: currency['code']!,
-                groupValue: provider.selectedCurrencyCode,
-                onChanged: (value) {
-                  if (value == null) return;
-                  provider.setCurrency(value, currency['symbol']!);
-                  Navigator.pop(dialogContext);
-                },
-              );
-            },
+        content: RadioGroup<String>(
+          groupValue: provider.selectedCurrencyCode,
+          onChanged: (value) {
+            if (value == null) return;
+            final currency = StartupSettingsProvider.majorCurrencies.firstWhere(
+              (currency) => currency['code'] == value,
+            );
+            provider.setCurrency(value, currency['symbol']!);
+            Navigator.pop(dialogContext);
+          },
+          child: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: StartupSettingsProvider.majorCurrencies.length,
+              itemBuilder: (context, index) {
+                final currency = StartupSettingsProvider.majorCurrencies[index];
+                return RadioListTile<String>(
+                  title: Text('${currency['name']} (${currency['symbol']})'),
+                  value: currency['code']!,
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -129,50 +134,28 @@ class GeneralDisplayPage extends StatelessWidget {
           'Default Screen',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (provider.showPaymentsTab)
-              _buildRadioOption('Payments', 0, provider.defaultScreenIndex, (
-                value,
-              ) {
-                provider.setDefaultScreen(value);
-                Navigator.pop(dialogContext);
-              }),
-            if (provider.showPassesTab)
-              _buildRadioOption('Passes', 1, provider.defaultScreenIndex, (
-                value,
-              ) {
-                provider.setDefaultScreen(value);
-                Navigator.pop(dialogContext);
-              }),
-            if (provider.showIdentityTab)
-              _buildRadioOption('Identity', 2, provider.defaultScreenIndex, (
-                value,
-              ) {
-                provider.setDefaultScreen(value);
-                Navigator.pop(dialogContext);
-              }),
-          ],
+        content: RadioGroup<int>(
+          groupValue: provider.defaultScreenIndex,
+          onChanged: (value) {
+            if (value == null) return;
+            provider.setDefaultScreen(value);
+            Navigator.pop(dialogContext);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (provider.showPaymentsTab) _buildRadioOption('Payments', 0),
+              if (provider.showPassesTab) _buildRadioOption('Passes', 1),
+              if (provider.showIdentityTab) _buildRadioOption('Identity', 2),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildRadioOption(
-    String label,
-    int value,
-    int groupValue,
-    ValueChanged<int> onChanged,
-  ) {
-    return RadioListTile<int>(
-      title: Text(label),
-      value: value,
-      groupValue: groupValue,
-      onChanged: (selected) {
-        if (selected != null) onChanged(selected);
-      },
-    );
+  Widget _buildRadioOption(String label, int value) {
+    return RadioListTile<int>(title: Text(label), value: value);
   }
 
   void _showThemeDialog(BuildContext context, ThemeProvider themeProvider) {
@@ -185,22 +168,24 @@ class GeneralDisplayPage extends StatelessWidget {
           'Choose Theme',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: ThemePreference.values
-              .map(
-                (preference) => RadioListTile<ThemePreference>(
-                  title: Text(_getThemeDisplayName(preference)),
-                  value: preference,
-                  groupValue: themeProvider.themePreference,
-                  onChanged: (value) {
-                    if (value == null) return;
-                    themeProvider.setThemePreference(value);
-                    Navigator.pop(dialogContext);
-                  },
-                ),
-              )
-              .toList(),
+        content: RadioGroup<ThemePreference>(
+          groupValue: themeProvider.themePreference,
+          onChanged: (value) {
+            if (value == null) return;
+            themeProvider.setThemePreference(value);
+            Navigator.pop(dialogContext);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: ThemePreference.values
+                .map(
+                  (preference) => RadioListTile<ThemePreference>(
+                    title: Text(_getThemeDisplayName(preference)),
+                    value: preference,
+                  ),
+                )
+                .toList(),
+          ),
         ),
       ),
     );

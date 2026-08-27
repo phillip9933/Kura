@@ -98,30 +98,26 @@ class _BarcodeScanningPageState extends State<BarcodeScanningPage> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Default Barcode Orientation'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<BarcodeOrientation>(
-              title: const Text('Default'),
-              value: BarcodeOrientation.defaultOrientation,
-              groupValue: provider.defaultBarcodeOrientation,
-              onChanged: (value) {
-                if (value == null) return;
-                provider.setDefaultBarcodeOrientation(value);
-                Navigator.pop(dialogContext);
-              },
-            ),
-            RadioListTile<BarcodeOrientation>(
-              title: const Text('Flipped'),
-              value: BarcodeOrientation.flipped,
-              groupValue: provider.defaultBarcodeOrientation,
-              onChanged: (value) {
-                if (value == null) return;
-                provider.setDefaultBarcodeOrientation(value);
-                Navigator.pop(dialogContext);
-              },
-            ),
-          ],
+        content: RadioGroup<BarcodeOrientation>(
+          groupValue: provider.defaultBarcodeOrientation,
+          onChanged: (value) {
+            if (value == null) return;
+            provider.setDefaultBarcodeOrientation(value);
+            Navigator.pop(dialogContext);
+          },
+          child: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<BarcodeOrientation>(
+                title: Text('Default'),
+                value: BarcodeOrientation.defaultOrientation,
+              ),
+              RadioListTile<BarcodeOrientation>(
+                title: Text('Flipped'),
+                value: BarcodeOrientation.flipped,
+              ),
+            ],
+          ),
         ),
       ),
     );

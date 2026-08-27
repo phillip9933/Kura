@@ -172,15 +172,15 @@ class _WalletDetailScreenState extends State<WalletDetailScreen> {
                   ),
                 );
 
-                if (result == true && mounted) {
-                  final updatedWallet = await walletProvider.getWalletDetails(
-                    currentWallet.id!,
-                  );
-                  if (updatedWallet != null && mounted) {
-                    setState(() => currentWallet = updatedWallet);
-                  } else if (mounted) {
-                    Navigator.pop(context, true);
-                  }
+                if (!mounted || result != true) return;
+                final updatedWallet = await walletProvider.getWalletDetails(
+                  currentWallet.id!,
+                );
+                if (!mounted) return;
+                if (updatedWallet != null) {
+                  setState(() => currentWallet = updatedWallet);
+                } else {
+                  Navigator.pop(this.context, true);
                 }
               },
             ),
