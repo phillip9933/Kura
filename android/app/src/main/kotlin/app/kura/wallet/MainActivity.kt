@@ -18,6 +18,7 @@ class MainActivity: FlutterFragmentActivity()
   {
     private val CHANNEL = "app.kura.wallet/save_file"
     private val SYSTEM_SETTINGS_CHANNEL = "app.kura.wallet/system_settings"
+    private val APP_INFO_CHANNEL = "app.kura.wallet/app_info"
     private var pendingBytes: ByteArray? = null
     private var pendingResult: MethodChannel.Result? = null
     private var pendingFilename: String? = null
@@ -46,6 +47,20 @@ class MainActivity: FlutterFragmentActivity()
             else -> result.notImplemented()
           }
         }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, APP_INFO_CHANNEL).setMethodCallHandler { call, result ->
+          when (call.method) {
+            "getVersion" -> {
+              try {
+                result.success(
+                  "${BuildConfig.VERSION_NAME}+${BuildConfig.FLUTTER_BUILD_NUMBER}"
+                )
+              } catch (e: Exception) {
+                result.error("VERSION_UNAVAILABLE", e.message, null)
+              }
+            }
+            else -> result.notImplemented()
+          }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
           when (call.method) {
             "savePkpass" -> {
@@ -66,7 +81,14 @@ class MainActivity: FlutterFragmentActivity()
             }
             "pickDirectory" -> {
               pendingResult = result
-              val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+              val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                addFlags(
+                  Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or
+                    Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
+                )
+              }
               startActivityForResult(intent, 1002)
             }
             "writeToUri" -> {
@@ -124,14 +146,49 @@ class MainActivity: FlutterFragmentActivity()
               if (uriString != null && filename != null) {
                 try {
                   val treeUri = Uri.parse(uriString)
-                  val docUri = buildChildUri(treeUri, filename)
-                  contentResolver.delete(docUri, null, null)
-                  result.success(true)
+                  val documentUri = findChildUriByName(treeUri, filename)
+                  if (documentUri == null) {
+                    result.success(false)
+                  } else {
+                    result.success(DocumentsContract.deleteDocument(contentResolver, documentUri))
+                  }
                 } catch (e: Exception) {
                   result.success(false)
                 }
               } else {
                 result.error("INVALID_ARGUMENTS", "Missing uri or filename", null)
+              }
+            }
+            "listFileNames" -> {
+              val uriString = call.argument<String>("uri")
+              if (uriString != null) {
+                try {
+                  val treeUri = Uri.parse(uriString)
+                  val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
+                    treeUri,
+                    DocumentsContract.getTreeDocumentId(treeUri)
+                  )
+                  val names = mutableListOf<String>()
+                  contentResolver.query(
+                    childrenUri,
+                    arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME),
+                    null,
+                    null,
+                    null
+                  )?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(
+                      DocumentsContract.Document.COLUMN_DISPLAY_NAME
+                    )
+                    while (cursor.moveToNext() && nameIndex >= 0) {
+                      names.add(cursor.getString(nameIndex))
+                    }
+                  }
+                  result.success(names)
+                } catch (e: Exception) {
+                  result.error("LIST_FAILED", e.message, null)
+                }
+              } else {
+                result.error("INVALID_ARGUMENTS", "Missing uri", null)
               }
             }
             else -> result.notImplemented()
@@ -143,6 +200,35 @@ class MainActivity: FlutterFragmentActivity()
       val treeDocumentId = DocumentsContract.getTreeDocumentId(treeUri)
       val childDocumentId = "$treeDocumentId/$filename"
       return DocumentsContract.buildDocumentUriUsingTree(treeUri, childDocumentId)
+    }
+
+    private fun findChildUriByName(treeUri: Uri, filename: String): Uri? {
+      val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
+        treeUri,
+        DocumentsContract.getTreeDocumentId(treeUri)
+      )
+      return contentResolver.query(
+        childrenUri,
+        arrayOf(
+          DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+          DocumentsContract.Document.COLUMN_DISPLAY_NAME
+        ),
+        null,
+        null,
+        null
+      )?.use { cursor ->
+        val idIndex = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
+        val nameIndex = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+        while (cursor.moveToNext() && idIndex >= 0 && nameIndex >= 0) {
+          if (cursor.getString(nameIndex) == filename) {
+            return@use DocumentsContract.buildDocumentUriUsingTree(
+              treeUri,
+              cursor.getString(idIndex)
+            )
+          }
+        }
+        null
+      }
     }
 
     private fun documentExists(uri: Uri): Boolean {
@@ -184,9 +270,12 @@ class MainActivity: FlutterFragmentActivity()
             val uri = data.data
             if (uri != null) {
               try {
+                val takeFlags = data.flags and
+                  (Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                 contentResolver.takePersistableUriPermission(
                   uri,
-                  Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                  takeFlags
                 )
                 pendingResult?.success(uri.toString())
               } catch (e: Exception) {

@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kura/services/clipboard_service.dart';
+import 'package:kura/services/barcode_utils.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:barcode_scan2/barcode_scan2.dart';
 import 'package:provider/provider.dart';
@@ -19,10 +21,28 @@ import '../models/theme_provider.dart';
 import '../pages/walletdetails.dart';
 import 'package:kura/widgets/identity_card_widget.dart';
 import 'package:kura/screens/identity_card_details_screen.dart';
+import 'package:kura/screens/reorder_items_screen.dart';
 import 'package:kura/services/auto_backup_service.dart';
 import 'package:kura/widgets/pass_grid_card.dart';
 import 'package:kura/widgets/encrypted_image_display.dart';
 import 'package:kura/models/pass_types.dart';
+import 'package:kura/services/pkpass_service.dart';
+
+enum _ExpiryStatus { expired, expiringSoon }
+
+class _ExpiryAlertItem {
+  const _ExpiryAlertItem({
+    required this.title,
+    required this.type,
+    required this.expiry,
+    required this.status,
+  });
+
+  final String title;
+  final String type;
+  final String expiry;
+  final _ExpiryStatus status;
+}
 
 /// Smooth route builder Ã¢â‚¬â€ used across the app for premium transitions
 class SmoothPageRoute<T> extends PageRouteBuilder<T> {
@@ -62,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _expectedTotalChunks = 0;
 
   StreamSubscription? _intentDataStreamSubscription;
+  bool _hasCheckedStartupExpiryAlerts = false;
 
   @override
   void initState() {
@@ -69,10 +90,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchController = TextEditingController();
     _tabPageController = PageController(initialPage: _selectedIndex);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<WalletProvider>().fetchWallets();
-      context.read<PassProvider>().fetchPasses();
-      context.read<IdentityProvider>().fetchIdentities();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.wait([
+        context.read<WalletProvider>().fetchWallets(),
+        context.read<PassProvider>().fetchPasses(),
+        context.read<IdentityProvider>().fetchIdentities(),
+      ]);
+      if (!mounted) return;
 
       // Initialize selected index from startup settings
       final startupProvider = context.read<StartupSettingsProvider>();
@@ -85,6 +109,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ];
       _tabPageController.jumpToPage(visibleTabs.indexOf(initialIndex));
 
+      await _showStartupExpiryAlerts();
+      if (!mounted) return;
       _initSharingIntent();
     });
 
@@ -110,28 +136,184 @@ class _HomeScreenState extends State<HomeScreen> {
           _handleSharedMedia(value);
         }, onError: (_) {});
 
-    // For sharing images when app was closed/opened via intent
-    ReceiveSharingIntent.instance.getInitialMedia().then((value) {
-      _handleSharedMedia(value);
-      ReceiveSharingIntent.instance.reset();
+    // For sharing media when app was closed/opened via intent.
+    ReceiveSharingIntent.instance.getInitialMedia().then((value) async {
+      await _handleSharedMedia(value);
+      await ReceiveSharingIntent.instance.reset();
     });
   }
 
-  void _handleSharedMedia(List<SharedMediaFile> value) {
-    if (value.isNotEmpty && mounted) {
-      final imagePath = value.first.path;
-      if (imagePath.isNotEmpty) {
-        Navigator.push(
-          context,
-          SmoothPageRoute(
-            page: AddCardScreen(
-              initialTabIndex: 1,
-              initialSharedImagePath: imagePath,
+  Future<void> _showStartupExpiryAlerts() async {
+    if (_hasCheckedStartupExpiryAlerts) return;
+    _hasCheckedStartupExpiryAlerts = true;
+
+    final settings = context.read<StartupSettingsProvider>();
+    if (!settings.isExpiryNotificationEnabled) return;
+
+    final possibleAlerts = <_ExpiryAlertItem?>[
+      ...context.read<WalletProvider>().wallets.map<_ExpiryAlertItem?>(
+        (wallet) => _expiryAlertItem(
+          title: wallet.name,
+          type: 'Payment',
+          expiry: wallet.expiry,
+          leadMonths: settings.expiryNotificationLeadMonths,
+        ),
+      ),
+      ...context.read<PassProvider>().passes.map<_ExpiryAlertItem?>(
+        (pass) => _expiryAlertItem(
+          title: pass.organizationName,
+          type: 'Pass',
+          expiry: pass.expiryDate,
+          leadMonths: settings.expiryNotificationLeadMonths,
+        ),
+      ),
+      ...context.read<IdentityProvider>().identities.map<_ExpiryAlertItem?>(
+        (card) => _expiryAlertItem(
+          title: card.name,
+          type: 'Identity',
+          expiry: card.expiryDate,
+          leadMonths: settings.expiryNotificationLeadMonths,
+        ),
+      ),
+    ];
+    final alerts = possibleAlerts.whereType<_ExpiryAlertItem>().toList();
+    if (alerts.isEmpty || !mounted) return;
+
+    final expired = alerts
+        .where((item) => item.status == _ExpiryStatus.expired)
+        .toList();
+    final expiringSoon = alerts
+        .where((item) => item.status == _ExpiryStatus.expiringSoon)
+        .toList();
+    final isDark = context.read<ThemeProvider>().isDarkMode;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        title: const Text(
+          'Expiry Alerts',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 360),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (expired.isNotEmpty) ...[
+                  const Text(
+                    'EXPIRED',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...expired.map(_buildExpiryAlertItem),
+                ],
+                if (expired.isNotEmpty && expiringSoon.isNotEmpty)
+                  const SizedBox(height: 16),
+                if (expiringSoon.isNotEmpty) ...[
+                  const Text(
+                    'EXPIRING SOON',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...expiringSoon.map(_buildExpiryAlertItem),
+                ],
+              ],
             ),
           ),
-        );
-      }
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _ExpiryAlertItem? _expiryAlertItem({
+    required String title,
+    required String type,
+    required String? expiry,
+    required int leadMonths,
+  }) {
+    final status = _startupExpiryStatus(expiry, leadMonths);
+    if (status == null) return null;
+    return _ExpiryAlertItem(
+      title: title.trim().isEmpty ? type : title,
+      type: type,
+      expiry: expiry!.trim(),
+      status: status,
+    );
+  }
+
+  _ExpiryStatus? _startupExpiryStatus(String? value, int leadMonths) {
+    if (value == null || value.trim().isEmpty) return null;
+    final match = RegExp(r'^(\d{2})/(\d{2})$').firstMatch(value.trim());
+    if (match == null) return null;
+    final month = int.tryParse(match.group(1)!);
+    final year = int.tryParse(match.group(2)!);
+    if (month == null || year == null || month < 1 || month > 12) return null;
+
+    final now = DateTime.now();
+    final currentMonth = now.year * 12 + now.month;
+    final expiryMonth = (2000 + year) * 12 + month;
+    if (expiryMonth < currentMonth) return _ExpiryStatus.expired;
+    if (expiryMonth <= currentMonth + leadMonths) {
+      return _ExpiryStatus.expiringSoon;
     }
+    return null;
+  }
+
+  Widget _buildExpiryAlertItem(_ExpiryAlertItem item) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Text('${item.title} (${item.type}) — ${item.expiry}'),
+    );
+  }
+
+  Future<void> _handleSharedMedia(List<SharedMediaFile> files) async {
+    if (files.isEmpty || !mounted) return;
+    final file = files.first;
+    if (file.path.isEmpty) return;
+
+    if (_isPkpassFile(file)) {
+      await _importPassFileFromPath(file.path);
+      return;
+    }
+
+    Navigator.push(
+      context,
+      SmoothPageRoute(
+        page: AddCardScreen(
+          initialTabIndex: 1,
+          initialSharedImagePath: file.path,
+        ),
+      ),
+    );
+  }
+
+  bool _isPkpassFile(SharedMediaFile file) {
+    final path = file.path.toLowerCase();
+    final mimeType = file.mimeType?.toLowerCase();
+    return path.endsWith('.pkpass') ||
+        (path.endsWith('.zip') &&
+            (mimeType == 'application/vnd.apple.pkpass' ||
+                mimeType == 'application/zip')) ||
+        mimeType == 'application/vnd.apple.pkpass';
   }
 
   @override
@@ -150,9 +332,135 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _showAddOptions(int initialTabIndex) async {
+    HapticFeedback.mediumImpact();
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.qr_code_scanner_rounded),
+                title: const Text('Scan for Sharing or Import'),
+                subtitle: const Text(
+                  'Import shared data or add a scanned barcode',
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _scanAndImport();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.file_upload_outlined),
+                title: const Text('Import File'),
+                subtitle: const Text('Import a .pkpass or .zip pass file'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _importPassFile();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('Manual Input'),
+                subtitle: const Text('Create an item in the current section'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _openManualInput(initialTabIndex);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openManualInput(int initialTabIndex) async {
+    final result = await Navigator.push<bool>(
+      context,
+      SmoothPageRoute(page: AddCardScreen(initialTabIndex: initialTabIndex)),
+    );
+    if (result == true && mounted) {
+      await Future.wait([
+        context.read<WalletProvider>().fetchWallets(),
+        context.read<PassProvider>().fetchPasses(),
+        context.read<IdentityProvider>().fetchIdentities(),
+      ]);
+    }
+  }
+
+  Future<void> _importPassFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pkpass', 'zip'],
+      );
+      final path = result?.files.single.path;
+      if (path == null) return;
+      await _importPassFileFromPath(path);
+    } catch (_) {
+      _showImportError('Failed to import pass. Please try again.');
+    }
+  }
+
+  Future<void> _importPassFileFromPath(String path) async {
+    try {
+      final pass = await PkpassService.instance.parsePkpass(path);
+      if (pass == null) {
+        _showImportError('Failed to parse .pkpass file.');
+        return;
+      }
+
+      if (!mounted) return;
+      final confirm = await _showImportConfirmation(
+        pass.organizationName,
+        'Pass',
+      );
+      if (confirm != true) return;
+
+      await PassDatabaseHelper.instance.insertPass(pass);
+      AutoBackupService.triggerBackup();
+      if (!mounted) return;
+      await context.read<PassProvider>().fetchPasses();
+      _selectPassesTab();
+      _showSuccessSnackBar('Pass imported successfully!');
+    } catch (_) {
+      _showImportError('Failed to import pass. Please try again.');
+    }
+  }
+
+  void _selectPassesTab() {
+    final settings = context.read<StartupSettingsProvider>();
+    if (!settings.showPassesTab) return;
+
+    final visibleTabs = <int>[
+      if (settings.showPaymentsTab) 0,
+      if (settings.showPassesTab) 1,
+      if (settings.showIdentityTab) 2,
+    ];
+    final passesPageIndex = visibleTabs.indexOf(1);
+    if (passesPageIndex < 0) return;
+
+    if (_tabPageController.hasClients) {
+      _tabPageController.animateToPage(
+        passesPageIndex,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+    } else {
+      setState(() => _selectedIndex = 1);
+    }
+  }
+
   Future<void> _scanAndImport() async {
+    ScanResult? scannedResult;
     try {
       final scanResult = await BarcodeScanner.scan();
+      scannedResult = scanResult;
       if (scanResult.type != ResultType.Barcode) return;
 
       final rawData = scanResult.rawContent;
@@ -168,11 +476,7 @@ class _HomeScreenState extends State<HomeScreen> {
           .decryptFromTransfer(rawData);
 
       if (decryptedJson == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid or corrupted sharing code.')),
-          );
-        }
+        await _openScannedBarcodeEntry(scanResult);
         return;
       }
 
@@ -181,11 +485,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final data = payload['data'] as Map<String, dynamic>?;
 
       if (type == null || data == null || !_isValidImportType(type)) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid sharing code format.')),
-          );
-        }
+        await _openScannedBarcodeEntry(scanResult);
         return;
       }
 
@@ -250,16 +550,33 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         }
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Failed to import. The sharing code may be corrupted.',
-            ),
-          ),
-        );
+    } catch (_) {
+      if (scannedResult != null) {
+        await _openScannedBarcodeEntry(scannedResult);
+      } else if (mounted) {
+        _showImportError('Failed to scan barcode. Please try again.');
       }
+    }
+  }
+
+  Future<void> _openScannedBarcodeEntry(ScanResult scanResult) async {
+    final barcodeValue = scanResult.rawContent.trim();
+    if (barcodeValue.isEmpty || !mounted) return;
+    final barcodeFormat = BarcodeUtils.getLabelFromScannerFormat(
+      scanResult.format,
+    );
+    final result = await Navigator.push<bool>(
+      context,
+      SmoothPageRoute(
+        page: AddCardScreen(
+          initialTabIndex: 1,
+          initialBarcodeValue: barcodeValue,
+          initialBarcodeFormat: barcodeFormat,
+        ),
+      ),
+    );
+    if (result == true && mounted) {
+      await context.read<PassProvider>().fetchPasses();
     }
   }
 
@@ -627,110 +944,155 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
     final selectedNavigationIndex = visibleTabs.indexOf(effectiveIndex);
+    final showBottomSearch = _isSearchBarAtBottom(startupProvider);
+    final showBottomControlRow =
+        startupProvider.controlRowPosition == ControlRowPosition.bottom;
+    final showBottomNavigation =
+        startupProvider.showBottomNavigationBar &&
+        startupProvider.hasMultipleVisibleTabs;
 
     return Scaffold(
       appBar: null,
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.12)
-                  : Colors.black.withValues(alpha: 0.2),
-              blurRadius: 30,
-              offset: const Offset(0, 12),
-              spreadRadius: -2,
-            ),
-          ],
+      resizeToAvoidBottomInset: true,
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(
+          bottom: (showBottomSearch ? 68 : 0) + (showBottomControlRow ? 56 : 0),
         ),
-        child: FloatingActionButton(
-          onPressed: () async {
-            HapticFeedback.mediumImpact();
-            final walletProvider = context.read<WalletProvider>();
-            final passProvider = context.read<PassProvider>();
-            final identityProvider = context.read<IdentityProvider>();
-            final result = await Navigator.push(
-              context,
-              SmoothPageRoute(
-                page: AddCardScreen(initialTabIndex: effectiveIndex),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : Colors.black.withValues(alpha: 0.2),
+                blurRadius: 30,
+                offset: const Offset(0, 12),
+                spreadRadius: -2,
               ),
-            );
-            if (result == true && mounted) {
-              await walletProvider.fetchWallets();
-              await passProvider.fetchPasses();
-              await identityProvider.fetchIdentities();
-            }
-          },
-          child: const Icon(Icons.add_rounded),
+            ],
+          ),
+          child: FloatingActionButton(
+            onPressed: () => _showAddOptions(effectiveIndex),
+            child: const Icon(Icons.add_rounded),
+          ),
         ),
       ),
-      body: PageView(
-        controller: _tabPageController,
-        physics: const PageScrollPhysics(parent: ClampingScrollPhysics()),
-        onPageChanged: (page) => _onItemTapped(visibleTabs[page]),
+      body: Stack(
         children: [
-          if (startupProvider.showPaymentsTab)
+          PageView(
+            controller: _tabPageController,
+            physics: startupProvider.gestureNavigationEnabled
+                ? const PageScrollPhysics(parent: ClampingScrollPhysics())
+                : const NeverScrollableScrollPhysics(),
+            onPageChanged: (page) => _onItemTapped(visibleTabs[page]),
+            children: [
+              if (startupProvider.showPaymentsTab)
+                SafeArea(
+                  top: true,
+                  bottom: false,
+                  child: _buildPaymentsTab(context),
+                ),
+              if (startupProvider.showPassesTab)
+                SafeArea(
+                  top: true,
+                  bottom: false,
+                  child: _buildPassesTab(context),
+                ),
+              if (startupProvider.showIdentityTab)
+                SafeArea(
+                  top: true,
+                  bottom: false,
+                  child: _buildIdentitiesTab(context),
+                ),
+            ],
+          ),
+          if (showBottomSearch)
             SafeArea(
-              top: true,
-              bottom: false,
-              child: _buildPaymentsTab(context),
-            ),
-          if (startupProvider.showPassesTab)
-            SafeArea(top: true, bottom: false, child: _buildPassesTab(context)),
-          if (startupProvider.showIdentityTab)
-            SafeArea(
-              top: true,
-              bottom: false,
-              child: _buildIdentitiesTab(context),
-            ),
-        ],
-      ),
-      bottomNavigationBar: !startupProvider.hasMultipleVisibleTabs
-          ? null
-          : Container(
-              decoration: BoxDecoration(
-                color: isDark ? Colors.black : Colors.white,
-                border: Border(
-                  top: BorderSide(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.078)
-                        : Colors.black.withValues(alpha: 0.051),
+              top: false,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: _buildSearchField(
+                    isDark,
+                    _searchHintForSection(effectiveIndex),
                   ),
                 ),
               ),
-              child: NavigationBar(
-                selectedIndex: selectedNavigationIndex,
-                onDestinationSelected: (index) {
-                  _tabPageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOutCubic,
-                  );
-                },
-                animationDuration: Duration.zero,
-                elevation: 0,
-                destinations: <Widget>[
-                  if (startupProvider.showPaymentsTab)
-                    const NavigationDestination(
-                      icon: Icon(Icons.credit_card_outlined),
-                      selectedIcon: Icon(Icons.credit_card),
-                      label: 'Payments',
-                    ),
-                  if (startupProvider.showPassesTab)
-                    const NavigationDestination(
-                      icon: Icon(Icons.confirmation_number_outlined),
-                      selectedIcon: Icon(Icons.confirmation_number),
-                      label: 'Passes',
-                    ),
-                  if (startupProvider.showIdentityTab)
-                    const NavigationDestination(
-                      icon: Icon(Icons.badge_outlined),
-                      selectedIcon: Icon(Icons.badge),
-                      label: 'Identity',
-                    ),
-                ],
+            ),
+          if (showBottomControlRow)
+            SafeArea(
+              top: false,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    8,
+                    16,
+                    showBottomSearch ? 68 : 8,
+                  ),
+                  child: _buildBottomControlRow(
+                    effectiveIndex,
+                    isDark,
+                    startupProvider,
+                  ),
+                ),
               ),
+            ),
+        ],
+      ),
+      bottomNavigationBar: !showBottomNavigation
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.black : Colors.white,
+                    border: Border(
+                      top: BorderSide(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.078)
+                            : Colors.black.withValues(alpha: 0.051),
+                      ),
+                    ),
+                  ),
+                  child: NavigationBar(
+                    selectedIndex: selectedNavigationIndex,
+                    onDestinationSelected: (index) {
+                      _tabPageController.animateToPage(
+                        index,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOutCubic,
+                      );
+                    },
+                    animationDuration: Duration.zero,
+                    elevation: 0,
+                    destinations: <Widget>[
+                      if (startupProvider.showPaymentsTab)
+                        const NavigationDestination(
+                          icon: Icon(Icons.credit_card_outlined),
+                          selectedIcon: Icon(Icons.credit_card),
+                          label: 'Payments',
+                        ),
+                      if (startupProvider.showPassesTab)
+                        const NavigationDestination(
+                          icon: Icon(Icons.confirmation_number_outlined),
+                          selectedIcon: Icon(Icons.confirmation_number),
+                          label: 'Passes',
+                        ),
+                      if (startupProvider.showIdentityTab)
+                        const NavigationDestination(
+                          icon: Icon(Icons.badge_outlined),
+                          selectedIcon: Icon(Icons.badge),
+                          label: 'Identity',
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
     );
   }
@@ -798,44 +1160,47 @@ class _HomeScreenState extends State<HomeScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           slivers: [
-            if (settings.isPassSearchEnabled &&
-                settings.passSearchStyle == PassSearchStyle.alwaysOn)
+            if (_isSearchBarAtTop(settings))
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: _buildSearchField(isDark, 'Search cards...'),
                 ),
               ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  settings.isPassSearchEnabled &&
-                          settings.passSearchStyle == PassSearchStyle.alwaysOn
-                      ? 0
-                      : 16,
-                  16,
-                  8,
-                ),
-                child: _buildPaymentsActionsRow(
-                  isDark: isDark,
-                  settings: settings,
-                  searchHint: 'Search cards...',
-                  isGridView: true,
-                  onViewToggle: () {
-                    HapticFeedback.selectionClick();
-                    final columns = settings.gridColumnsFor(
-                      WalletSection.payments,
-                    );
-                    settings.setGridColumns(
-                      WalletSection.payments,
-                      columns == 3 ? 1 : columns + 1,
-                    );
-                  },
+            if (settings.controlRowPosition == ControlRowPosition.top)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    _isSearchBarAtTop(settings) ? 0 : 16,
+                    16,
+                    8,
+                  ),
+                  child: _buildPaymentsActionsRow(
+                    isDark: isDark,
+                    settings: settings,
+                    searchHint: 'Search cards...',
+                    isGridView: true,
+                    onViewToggle: () {
+                      HapticFeedback.selectionClick();
+                      final columns = settings.gridColumnsFor(
+                        WalletSection.payments,
+                      );
+                      settings.setGridColumns(
+                        WalletSection.payments,
+                        columns == 3 ? 1 : columns + 1,
+                      );
+                    },
+                  ),
                 ),
               ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: settings.controlRowPosition == ControlRowPosition.bottom
+                    ? 68
+                    : 12,
+              ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
             // Cards list
             if (filteredWallets.isEmpty)
               SliverToBoxAdapter(
@@ -864,10 +1229,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: _passGridCellAspectRatio(
-                      context,
-                      settings.gridColumnsFor(WalletSection.payments),
-                    ),
+                    childAspectRatio: 1.586,
                   ),
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final wallet = filteredWallets[index];
@@ -903,6 +1265,147 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildPassSearchField(bool isDark) {
     return _buildSearchField(isDark, 'Search passes...');
+  }
+
+  Widget _buildBottomControlRow(
+    int section,
+    bool isDark,
+    StartupSettingsProvider settings,
+  ) {
+    switch (section) {
+      case 0:
+        return _buildPaymentsActionsRow(
+          isDark: isDark,
+          settings: settings,
+          searchHint: 'Search cards...',
+          isGridView: true,
+          onViewToggle: () {
+            HapticFeedback.selectionClick();
+            final columns = settings.gridColumnsFor(WalletSection.payments);
+            settings.setGridColumns(
+              WalletSection.payments,
+              columns == 3 ? 1 : columns + 1,
+            );
+          },
+        );
+      case 1:
+        final categories = settings.categoriesFor(WalletSection.passes);
+        return _buildPassesActionsRow(
+          isDark: isDark,
+          settings: settings,
+          categories: categories,
+          value: categories.contains(_selectedPassFilter)
+              ? _selectedPassFilter
+              : 'all',
+        );
+      case 2:
+        final categories = settings.categoriesFor(WalletSection.identity);
+        return _buildUnifiedActionsRow(
+          isDark: isDark,
+          settings: settings,
+          searchHint: 'Search identities...',
+          categorySelector: _buildIdentityCategorySelector(
+            isDark: isDark,
+            categories: categories,
+            value: categories.contains(_selectedIdentityFilter)
+                ? _selectedIdentityFilter
+                : 'all',
+          ),
+          isGridView: true,
+          onViewToggle: () {
+            HapticFeedback.selectionClick();
+            final columns = settings.gridColumnsFor(WalletSection.identity);
+            settings.setGridColumns(
+              WalletSection.identity,
+              columns == 3 ? 1 : columns + 1,
+            );
+          },
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildPassesActionsRow({
+    required bool isDark,
+    required StartupSettingsProvider settings,
+    required List<String> categories,
+    required String value,
+  }) {
+    return _buildUnifiedActionsRow(
+      isDark: isDark,
+      settings: settings,
+      searchHint: 'Search passes...',
+      categorySelector: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: value,
+            isExpanded: true,
+            icon: Icon(
+              Icons.keyboard_arrow_down,
+              color: isDark ? Colors.white54 : Colors.black54,
+            ),
+            dropdownColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+            onChanged: (newValue) {
+              if (newValue == null) return;
+              HapticFeedback.selectionClick();
+              setState(() => _selectedPassFilter = newValue);
+            },
+            items: [
+              const DropdownMenuItem(
+                value: 'all',
+                child: Text('All Categories'),
+              ),
+              ...categories.map(
+                (category) =>
+                    DropdownMenuItem(value: category, child: Text(category)),
+              ),
+            ],
+          ),
+        ),
+      ),
+      isGridView: true,
+      onViewToggle: () {
+        HapticFeedback.selectionClick();
+        final columns = settings.gridColumnsFor(WalletSection.passes);
+        settings.setGridColumns(
+          WalletSection.passes,
+          columns == 3 ? 1 : columns + 1,
+        );
+      },
+    );
+  }
+
+  String _searchHintForSection(int section) => switch (section) {
+    0 => 'Search cards...',
+    1 => 'Search passes...',
+    2 => 'Search identities...',
+    _ => 'Search...',
+  };
+
+  bool _isSearchBarAtTop(StartupSettingsProvider settings) {
+    return settings.isPassSearchEnabled &&
+        settings.passSearchStyle == PassSearchStyle.alwaysOn &&
+        settings.searchBarPosition == SearchBarPosition.top;
+  }
+
+  bool _isSearchBarAtBottom(StartupSettingsProvider settings) {
+    return settings.isPassSearchEnabled &&
+        settings.passSearchStyle == PassSearchStyle.alwaysOn &&
+        settings.searchBarPosition == SearchBarPosition.bottom;
   }
 
   Widget _buildSearchField(bool isDark, String hintText) {
@@ -1048,18 +1551,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 8),
         ],
-        if (settings.isQrImportScannerEnabled) ...[
-          _buildPassControlButton(
-            isDark: isDark,
-            icon: Icons.qr_code_scanner_rounded,
-            tooltip: 'Scan to Import',
-            onPressed: () {
-              HapticFeedback.mediumImpact();
-              _scanAndImport();
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
         _buildPassControlButton(
           isDark: isDark,
           icon: Icons.settings_outlined,
@@ -1177,18 +1668,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(width: 8),
       ],
-      if (settings.isQrImportScannerEnabled) ...[
-        _buildPassControlButton(
-          isDark: isDark,
-          icon: Icons.qr_code_scanner_rounded,
-          tooltip: 'Scan to Import',
-          onPressed: () {
-            HapticFeedback.mediumImpact();
-            _scanAndImport();
-          },
-        ),
-        const SizedBox(width: 8),
-      ],
       _buildPassControlButton(
         isDark: isDark,
         icon: Icons.settings_outlined,
@@ -1281,12 +1760,75 @@ class _HomeScreenState extends State<HomeScreen> {
         horizontalPadding -
         ((columns - 1) * crossAxisSpacing);
     final cardWidth = usableWidth / columns;
-    final cellHeight = (cardWidth / cardAspectRatio) + labelHeight;
+    final cellHeight =
+        (cardWidth / cardAspectRatio) + (columns == 1 ? 0 : labelHeight);
     return cardWidth / cellHeight;
   }
 
   bool _hasImage(String? imagePath) =>
       imagePath != null && imagePath.isNotEmpty;
+
+  _ExpiryStatus? _expiryStatus(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final match = RegExp(r'^(\d{2})/(\d{2})$').firstMatch(value.trim());
+    if (match == null) return null;
+    final month = int.tryParse(match.group(1)!);
+    final year = int.tryParse(match.group(2)!);
+    if (month == null || year == null || month < 1 || month > 12) return null;
+
+    final now = DateTime.now();
+    final currentMonth = now.year * 12 + now.month;
+    final expiryMonth = (2000 + year) * 12 + month;
+    if (expiryMonth < currentMonth) return _ExpiryStatus.expired;
+    final leadMonths = context
+        .read<StartupSettingsProvider>()
+        .expiryNotificationLeadMonths;
+    if (expiryMonth <= currentMonth + leadMonths) {
+      return _ExpiryStatus.expiringSoon;
+    }
+    return null;
+  }
+
+  Widget _buildExpiryIndicator({
+    required String? expiry,
+    required Widget child,
+  }) {
+    final status = _expiryStatus(expiry);
+    if (status == null) return child;
+
+    final isExpired = status == _ExpiryStatus.expired;
+    final color = isExpired ? Colors.red.shade700 : Colors.orange.shade800;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        child,
+        Positioned(
+          top: 8,
+          right: 8,
+          child: IgnorePointer(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black26, blurRadius: 4),
+                ],
+              ),
+              child: Text(
+                isExpired ? 'Expired' : 'Expires soon',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildWalletGridTile({
     required Wallet wallet,
@@ -1299,20 +1841,23 @@ class _HomeScreenState extends State<HomeScreen> {
       PassGridDisplayMode.back => wallet.backImagePath,
       PassGridDisplayMode.virtualCards => null,
     };
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(15),
-        child: _hasImage(imagePath)
-            ? EncryptedImageDisplay(imagePath: imagePath!, fit: BoxFit.cover)
-            : _buildScaledVirtualCard(
-                child: GlassCreditCard(
-                  wallet: wallet,
-                  isMasked: true,
-                  onCardTap: onTap,
+    return _buildExpiryIndicator(
+      expiry: wallet.expiry,
+      child: GestureDetector(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(15),
+          child: _hasImage(imagePath)
+              ? EncryptedImageDisplay(imagePath: imagePath!, fit: BoxFit.cover)
+              : _buildScaledVirtualCard(
+                  child: GlassCreditCard(
+                    wallet: wallet,
+                    isMasked: true,
+                    onCardTap: onTap,
+                  ),
                 ),
-              ),
+        ),
       ),
     );
   }
@@ -1328,16 +1873,19 @@ class _HomeScreenState extends State<HomeScreen> {
       PassGridDisplayMode.back => card.backImagePath,
       PassGridDisplayMode.virtualCards => null,
     };
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: _hasImage(imagePath)
-            ? EncryptedImageDisplay(imagePath: imagePath!, fit: BoxFit.cover)
-            : _buildScaledVirtualCard(
-                child: IdentityCardWidget(card: card, onTap: onTap),
-              ),
+    return _buildExpiryIndicator(
+      expiry: card.expiryDate,
+      child: GestureDetector(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: _hasImage(imagePath)
+              ? EncryptedImageDisplay(imagePath: imagePath!, fit: BoxFit.cover)
+              : _buildScaledVirtualCard(
+                  child: IdentityCardWidget(card: card, onTap: onTap),
+                ),
+        ),
       ),
     );
   }
@@ -1385,133 +1933,125 @@ class _HomeScreenState extends State<HomeScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           slivers: [
-            if (settings.isPassSearchEnabled &&
-                settings.passSearchStyle == PassSearchStyle.alwaysOn)
+            if (_isSearchBarAtTop(settings))
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: _buildPassSearchField(isDark),
                 ),
               ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  settings.isPassSearchEnabled &&
-                          settings.passSearchStyle == PassSearchStyle.alwaysOn
-                      ? 0
-                      : 16,
-                  16,
-                  8,
-                ),
-                child: Row(
-                  children: [
-                    // Improved Category Selector
-                    Expanded(
-                      child: Container(
-                        height: 40,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : Colors.black.withValues(alpha: 0.03),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedPassFilter,
-                            isExpanded: true,
-                            icon: Icon(
-                              Icons.keyboard_arrow_down,
-                              color: isDark ? Colors.white54 : Colors.black54,
-                            ),
-                            dropdownColor: isDark
-                                ? const Color(0xFF1E1E1E)
-                                : Colors.white,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : Colors.black87,
-                            ),
-                            onChanged: (String? newValue) {
-                              if (newValue != null) {
-                                HapticFeedback.selectionClick();
-                                setState(() => _selectedPassFilter = newValue);
-                              }
-                            },
-                            items: [
-                              const DropdownMenuItem(
-                                value: 'all',
-                                child: Text('All Categories'),
+            if (settings.controlRowPosition == ControlRowPosition.top)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    _isSearchBarAtTop(settings) ? 0 : 16,
+                    16,
+                    8,
+                  ),
+                  child: Row(
+                    children: [
+                      // Improved Category Selector
+                      Expanded(
+                        child: Container(
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.black.withValues(alpha: 0.03),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedPassFilter,
+                              isExpanded: true,
+                              icon: Icon(
+                                Icons.keyboard_arrow_down,
+                                color: isDark ? Colors.white54 : Colors.black54,
                               ),
-                              ...passCategories.map(
-                                (category) => DropdownMenuItem(
-                                  value: category,
-                                  child: Text(category),
+                              dropdownColor: isDark
+                                  ? const Color(0xFF1E1E1E)
+                                  : Colors.white,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                              onChanged: (String? newValue) {
+                                if (newValue != null) {
+                                  HapticFeedback.selectionClick();
+                                  setState(
+                                    () => _selectedPassFilter = newValue,
+                                  );
+                                }
+                              },
+                              items: [
+                                const DropdownMenuItem(
+                                  value: 'all',
+                                  child: Text('All Categories'),
                                 ),
-                              ),
-                            ],
+                                ...passCategories.map(
+                                  (category) => DropdownMenuItem(
+                                    value: category,
+                                    child: Text(category),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    if (settings.isPassSearchEnabled &&
-                        settings.passSearchStyle == PassSearchStyle.icon) ...[
+                      if (settings.isPassSearchEnabled &&
+                          settings.passSearchStyle == PassSearchStyle.icon) ...[
+                        const SizedBox(width: 8),
+                        _buildPassControlButton(
+                          isDark: isDark,
+                          icon: Icons.search_rounded,
+                          tooltip: 'Search passes',
+                          onPressed: _showPassSearchDialog,
+                        ),
+                      ],
                       const SizedBox(width: 8),
                       _buildPassControlButton(
                         isDark: isDark,
-                        icon: Icons.search_rounded,
-                        tooltip: 'Search passes',
-                        onPressed: _showPassSearchDialog,
-                      ),
-                    ],
-                    const SizedBox(width: 8),
-                    _buildPassControlButton(
-                      isDark: isDark,
-                      icon: Icons.grid_view_rounded,
-                      tooltip: 'Change grid columns',
-                      onPressed: () {
-                        HapticFeedback.selectionClick();
-                        final columns = settings.gridColumnsFor(
-                          WalletSection.passes,
-                        );
-                        settings.setGridColumns(
-                          WalletSection.passes,
-                          columns == 3 ? 1 : columns + 1,
-                        );
-                      },
-                    ),
-                    if (settings.isQrImportScannerEnabled) ...[
-                      const SizedBox(width: 8),
-                      _buildPassControlButton(
-                        isDark: isDark,
-                        icon: Icons.qr_code_scanner_rounded,
-                        tooltip: 'Scan to Import',
+                        icon: Icons.grid_view_rounded,
+                        tooltip: 'Change grid columns',
                         onPressed: () {
-                          HapticFeedback.mediumImpact();
-                          _scanAndImport();
+                          HapticFeedback.selectionClick();
+                          final columns = settings.gridColumnsFor(
+                            WalletSection.passes,
+                          );
+                          settings.setGridColumns(
+                            WalletSection.passes,
+                            columns == 3 ? 1 : columns + 1,
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      _buildPassControlButton(
+                        isDark: isDark,
+                        icon: Icons.settings_outlined,
+                        tooltip: 'Settings',
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.push(
+                            context,
+                            SmoothPageRoute(page: const SettingsPage()),
+                          );
                         },
                       ),
                     ],
-                    const SizedBox(width: 8),
-                    _buildPassControlButton(
-                      isDark: isDark,
-                      icon: Icons.settings_outlined,
-                      tooltip: 'Settings',
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        Navigator.push(
-                          context,
-                          SmoothPageRoute(page: const SettingsPage()),
-                        );
-                      },
-                    ),
-                  ],
+                  ),
                 ),
               ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: settings.controlRowPosition == ControlRowPosition.bottom
+                    ? 68
+                    : 12,
+              ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
             if (filteredPasses.isEmpty)
               SliverToBoxAdapter(
@@ -1553,37 +2093,40 @@ class _HomeScreenState extends State<HomeScreen> {
                       WalletSection.passes,
                     )) {
                       PassGridDisplayMode.front => PassDisplayMode.front,
-                      PassGridDisplayMode.back => PassDisplayMode.back,
+                      PassGridDisplayMode.back => PassDisplayMode.front,
                       PassGridDisplayMode.virtualCards => PassDisplayMode.card,
                     };
 
-                    return PassGridCard(
-                      pass: pass,
-                      displayMode: gridMode,
-                      showLabels:
-                          settings.gridColumnsFor(WalletSection.passes) != 1,
-                      truncateOrganizationName:
-                          settings.gridColumnsFor(WalletSection.passes) != 1,
-                      onCardLongPress: () {
-                        HapticFeedback.mediumImpact();
-                        _showGridContextMenu(context, pass);
-                      },
-                      onCardTap: () async {
-                        HapticFeedback.selectionClick();
-                        final passProvider = Provider.of<PassProvider>(
-                          context,
-                          listen: false,
-                        );
-                        final result = await Navigator.push(
-                          context,
-                          SmoothPageRoute(
-                            page: BarcodeCardDetailScreen(pass: pass),
-                          ),
-                        );
-                        if (result == true && mounted) {
-                          await passProvider.fetchPasses();
-                        }
-                      },
+                    return _buildExpiryIndicator(
+                      expiry: pass.expiryDate,
+                      child: PassGridCard(
+                        pass: pass,
+                        displayMode: gridMode,
+                        showLabels:
+                            settings.gridColumnsFor(WalletSection.passes) != 1,
+                        truncateOrganizationName:
+                            settings.gridColumnsFor(WalletSection.passes) != 1,
+                        onCardLongPress: () {
+                          HapticFeedback.mediumImpact();
+                          _showGridContextMenu(context, pass);
+                        },
+                        onCardTap: () async {
+                          HapticFeedback.selectionClick();
+                          final passProvider = Provider.of<PassProvider>(
+                            context,
+                            listen: false,
+                          );
+                          final result = await Navigator.push(
+                            context,
+                            SmoothPageRoute(
+                              page: BarcodeCardDetailScreen(pass: pass),
+                            ),
+                          );
+                          if (result == true && mounted) {
+                            await passProvider.fetchPasses();
+                          }
+                        },
+                      ),
                     );
                   },
                 ),
@@ -1609,6 +2152,22 @@ class _HomeScreenState extends State<HomeScreen> {
         return SafeArea(
           child: Wrap(
             children: [
+              ListTile(
+                leading: const Icon(Icons.reorder_rounded),
+                title: const Text('Reorder items'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openReorderMode(WalletSection.passes);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.archive_outlined),
+                title: const Text('Archive'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await context.read<PassProvider>().archivePass(pass.id!);
+                },
+              ),
               ListTile(
                 leading: const Icon(Icons.edit_outlined, color: Colors.blue),
                 title: const Text('Edit'),
@@ -1671,6 +2230,22 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (sheetContext) => SafeArea(
         child: Wrap(
           children: [
+            ListTile(
+              leading: const Icon(Icons.reorder_rounded),
+              title: const Text('Reorder items'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _openReorderMode(WalletSection.payments);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.archive_outlined),
+              title: const Text('Archive'),
+              onTap: () async {
+                Navigator.pop(sheetContext);
+                await context.read<WalletProvider>().archiveWallet(wallet.id!);
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.edit_outlined),
               title: const Text('Edit'),
@@ -1741,6 +2316,24 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Wrap(
           children: [
             ListTile(
+              leading: const Icon(Icons.reorder_rounded),
+              title: const Text('Reorder items'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _openReorderMode(WalletSection.identity);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.archive_outlined),
+              title: const Text('Archive'),
+              onTap: () async {
+                Navigator.pop(sheetContext);
+                await context.read<IdentityProvider>().archiveIdentity(
+                  card.id!,
+                );
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.edit_outlined),
               title: const Text('Edit'),
               onTap: () async {
@@ -1779,6 +2372,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _openReorderMode(WalletSection section) async {
+    await Navigator.push<void>(
+      context,
+      SmoothPageRoute(page: ReorderItemsScreen(section: section)),
     );
   }
 
@@ -1875,49 +2475,53 @@ class _HomeScreenState extends State<HomeScreen> {
             parent: AlwaysScrollableScrollPhysics(),
           ),
           slivers: [
-            if (settings.isPassSearchEnabled &&
-                settings.passSearchStyle == PassSearchStyle.alwaysOn)
+            if (_isSearchBarAtTop(settings))
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: _buildSearchField(isDark, 'Search identities...'),
                 ),
               ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  settings.isPassSearchEnabled &&
-                          settings.passSearchStyle == PassSearchStyle.alwaysOn
-                      ? 0
-                      : 16,
-                  16,
-                  8,
-                ),
-                child: _buildUnifiedActionsRow(
-                  isDark: isDark,
-                  settings: settings,
-                  searchHint: 'Search identities...',
-                  categorySelector: _buildIdentityCategorySelector(
-                    isDark: isDark,
-                    categories: identityCategories,
-                    value: activeIdentityFilter,
+            if (settings.controlRowPosition == ControlRowPosition.top)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    _isSearchBarAtTop(settings) ? 0 : 16,
+                    16,
+                    8,
                   ),
-                  isGridView: true,
-                  onViewToggle: () {
-                    HapticFeedback.selectionClick();
-                    final columns = settings.gridColumnsFor(
-                      WalletSection.identity,
-                    );
-                    settings.setGridColumns(
-                      WalletSection.identity,
-                      columns == 3 ? 1 : columns + 1,
-                    );
-                  },
+                  child: _buildUnifiedActionsRow(
+                    isDark: isDark,
+                    settings: settings,
+                    searchHint: 'Search identities...',
+                    categorySelector: _buildIdentityCategorySelector(
+                      isDark: isDark,
+                      categories: identityCategories,
+                      value: activeIdentityFilter,
+                    ),
+                    isGridView: true,
+                    onViewToggle: () {
+                      HapticFeedback.selectionClick();
+                      final columns = settings.gridColumnsFor(
+                        WalletSection.identity,
+                      );
+                      settings.setGridColumns(
+                        WalletSection.identity,
+                        columns == 3 ? 1 : columns + 1,
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
 
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: settings.controlRowPosition == ControlRowPosition.bottom
+                    ? 68
+                    : 12,
+              ),
+            ),
             if (filteredIdentities.isEmpty)
               SliverToBoxAdapter(
                 child: Padding(
@@ -1947,10 +2551,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: _passGridCellAspectRatio(
-                      context,
-                      settings.gridColumnsFor(WalletSection.identity),
-                    ),
+                    childAspectRatio: 1.586,
                   ),
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final card = filteredIdentities[index];

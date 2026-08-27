@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:kura/models/db_helper.dart';
+import 'package:kura/models/provider_helper.dart';
 import 'package:kura/models/theme_provider.dart';
 import 'package:kura/widgets/barcode_card_entry_form.dart';
 import 'package:kura/screens/homescreen.dart';
@@ -9,6 +10,7 @@ import 'package:kura/widgets/display_barcode_screen.dart';
 import 'package:kura/widgets/encrypted_image_display.dart';
 import 'package:kura/widgets/full_screen_image_viewer.dart';
 import 'package:kura/widgets/barcode_card.dart';
+import 'package:kura/widgets/pkpass_detail_view.dart';
 import 'share_secure_screen.dart';
 import 'package:kura/models/startup_settings_provider.dart';
 import 'package:kura/services/clipboard_service.dart';
@@ -141,55 +143,75 @@ class _BarcodeCardDetailScreenState extends State<BarcodeCardDetailScreen> {
               },
             ),
           ),
-          Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: Icon(
-                Icons.edit,
-                color: isDark ? Colors.white : Colors.black,
-                size: 20,
+          if (p.sourceType != 'pkpass')
+            Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF1A1A1A)
+                    : const Color(0xFFF0F0F0),
+                borderRadius: BorderRadius.circular(12),
               ),
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                _navigateToEditScreen(context);
-              },
+              child: IconButton(
+                icon: Icon(
+                  Icons.edit,
+                  color: isDark ? Colors.white : Colors.black,
+                  size: 20,
+                ),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  _navigateToEditScreen(context);
+                },
+              ),
             ),
-          ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          BarcodeCard(
-            pass: p,
-            minimal: true,
-            onCardTap: () {
-              if (p.barcodeValue.isNotEmpty) {
-                HapticFeedback.mediumImpact();
-                Navigator.push(
-                  context,
-                  SmoothPageRoute(
-                    page: DisplayBarcodeScreen(
-                      barcodeData: p.barcodeValue,
-                      barcodeFormat: p.barcodeFormat,
-                      cardName: p.organizationName,
-                    ),
-                  ),
-                );
-              }
-            },
-          ),
-          const SizedBox(height: 24),
+      body: p.sourceType == 'pkpass'
+          ? PkpassDetailView(pass: p, onBarcodeTap: () => _showBarcode(p))
+          : ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: [
+                BarcodeCard(
+                  pass: p,
+                  minimal: true,
+                  onCardTap: () {
+                    if (p.barcodeValue.isNotEmpty) {
+                      HapticFeedback.mediumImpact();
+                      Navigator.push(
+                        context,
+                        SmoothPageRoute(
+                          page: DisplayBarcodeScreen(
+                            barcodeData: p.barcodeValue,
+                            barcodeFormat: p.barcodeFormat,
+                            cardName: p.organizationName,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: 24),
 
-          _buildDetailsSection(p, isDark),
+                _buildDetailsSection(p, isDark),
 
-          if (_hasPassImages(p)) _buildPassImagesSection(p, isDark),
-          const SizedBox(height: 32),
-        ],
+                if (_hasPassImages(p)) _buildPassImagesSection(p, isDark),
+                const SizedBox(height: 32),
+              ],
+            ),
+    );
+  }
+
+  void _showBarcode(Pass pass) {
+    if (pass.barcodeValue.isEmpty) return;
+    HapticFeedback.mediumImpact();
+    Navigator.push(
+      context,
+      SmoothPageRoute(
+        page: DisplayBarcodeScreen(
+          barcodeData: pass.barcodeValue,
+          barcodeFormat: pass.barcodeFormat,
+          cardName: pass.organizationName,
+        ),
       ),
     );
   }
@@ -231,6 +253,7 @@ class _BarcodeCardDetailScreenState extends State<BarcodeCardDetailScreen> {
     add('Logo Text', pass.logoText);
     add('Barcode Value', pass.barcodeValue);
     add('Transit Type', pass.transitType);
+    add('Expiry Date', pass.expiryDate);
     final customFields = pass.fields?['customFields'];
     if (customFields is Map) {
       customFields.forEach(
@@ -260,7 +283,6 @@ class _BarcodeCardDetailScreenState extends State<BarcodeCardDetailScreen> {
 
   bool _hasPassImages(Pass pass) {
     return _isPathValid(pass.frontImagePath) ||
-        _isPathValid(pass.backImagePath) ||
         _isPathValid(pass.stripImagePath) ||
         _isPathValid(pass.thumbnailImagePath);
   }
@@ -281,15 +303,6 @@ class _BarcodeCardDetailScreenState extends State<BarcodeCardDetailScreen> {
                 child: _buildImageThumbnail(
                   pass.frontImagePath!,
                   'Front',
-                  isDark,
-                ),
-              ),
-            if (_isPathValid(pass.backImagePath))
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: _buildImageThumbnail(
-                  pass.backImagePath!,
-                  'Back',
                   isDark,
                 ),
               ),
@@ -379,6 +392,45 @@ class PassEditScreenState extends State<PassEditScreen> {
   final _formKey = GlobalKey<BarcodeCardEntryFormState>();
   bool _isDark = false;
 
+  Future<void> _managePass({required bool archive}) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(archive ? 'Archive Pass?' : 'Delete Pass?'),
+        content: Text(
+          archive
+              ? 'This pass will move to Archive. You can restore it later.'
+              : 'This permanently deletes "${widget.pass.organizationName}". This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: archive
+                ? null
+                : FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(archive ? 'Archive' : 'Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    HapticFeedback.mediumImpact();
+    final provider = context.read<PassProvider>();
+    if (archive) {
+      await provider.archivePass(widget.pass.id!);
+    } else {
+      await provider.deletePass(widget.pass.id!);
+    }
+    if (mounted) Navigator.pop(context, true);
+  }
+
   @override
   Widget build(BuildContext context) {
     _isDark = Theme.of(context).brightness == Brightness.dark;
@@ -416,7 +468,36 @@ class PassEditScreenState extends State<PassEditScreen> {
           ),
         ],
       ),
-      body: BarcodeCardEntryForm(key: _formKey, existingPass: widget.pass),
+      body: BarcodeCardEntryForm(
+        key: _formKey,
+        existingPass: widget.pass,
+        footer: _buildManagementActions(),
+      ),
+    );
+  }
+
+  Widget _buildManagementActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _managePass(archive: true),
+            icon: const Icon(Icons.archive_outlined),
+            label: const Text('Archive'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: () => _managePass(archive: false),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Delete'),
+          ),
+        ),
+      ],
     );
   }
 }

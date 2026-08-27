@@ -37,7 +37,7 @@ class DatabaseHelper {
     return openDatabase(
       path,
       password: EncryptionService.instance.databasePassword,
-      version: 7,
+      version: 8,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE wallets(
@@ -58,7 +58,8 @@ class DatabaseHelper {
             color TEXT,
             frontImagePath TEXT,
             backImagePath TEXT,
-            orderIndex INTEGER DEFAULT 0
+            orderIndex INTEGER DEFAULT 0,
+            isArchived INTEGER NOT NULL DEFAULT 0
           )
           ''');
         await db.execute(
@@ -101,6 +102,11 @@ class DatabaseHelper {
         if (oldVersion < 7) {
           await db.execute(
             'CREATE INDEX idx_wallets_order ON wallets(orderIndex);',
+          );
+        }
+        if (oldVersion < 8) {
+          await db.execute(
+            'ALTER TABLE wallets ADD COLUMN isArchived INTEGER NOT NULL DEFAULT 0;',
           );
         }
       },
@@ -153,7 +159,9 @@ class DatabaseHelper {
         'frontImagePath',
         'backImagePath',
         'orderIndex',
+        'isArchived',
       ],
+      where: 'isArchived = 0',
       orderBy: 'orderIndex ASC',
     );
     return List.generate(
@@ -173,6 +181,26 @@ class DatabaseHelper {
     );
     if (maps.isEmpty) return null;
     return Wallet.fromEncryptedMap(maps[0]);
+  }
+
+  Future<List<Wallet>> getArchivedWallets() async {
+    final db = await database;
+    final maps = await db.query(
+      'wallets',
+      where: 'isArchived = 1',
+      orderBy: 'orderIndex ASC',
+    );
+    return maps.map(Wallet.fromEncryptedMap).toList();
+  }
+
+  Future<void> setWalletArchived(int id, bool isArchived) async {
+    final db = await database;
+    await db.update(
+      'wallets',
+      {'isArchived': isArchived ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<int> deleteWallet(int id) async {
@@ -259,7 +287,7 @@ class PassDatabaseHelper {
     return openDatabase(
       path,
       password: EncryptionService.instance.databasePassword,
-      version: 3,
+      version: 7,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE passes(
@@ -276,13 +304,18 @@ class PassDatabaseHelper {
             barcodeAltText TEXT,
             transitType TEXT,
             relevantDate TEXT,
+            expiry_date TEXT,
             frontImagePath TEXT,
             backImagePath TEXT,
             stripImagePath TEXT,
             thumbnailImagePath TEXT,
             iconImagePath TEXT,
+            logoImagePath TEXT,
+            footerImagePath TEXT,
+            sourceType TEXT,
             fields TEXT,
-            orderIndex INTEGER DEFAULT 0
+            orderIndex INTEGER DEFAULT 0,
+            isArchived INTEGER NOT NULL DEFAULT 0
           )
         ''');
         await db.execute(
@@ -297,6 +330,23 @@ class PassDatabaseHelper {
         }
         if (oldVersion < 3) {
           await db.execute('ALTER TABLE passes ADD COLUMN iconImagePath TEXT;');
+        }
+        if (oldVersion < 4) {
+          await db.execute(
+            'ALTER TABLE passes ADD COLUMN isArchived INTEGER NOT NULL DEFAULT 0;',
+          );
+        }
+        if (oldVersion < 5) {
+          await db.execute('ALTER TABLE passes ADD COLUMN expiry_date TEXT;');
+        }
+        if (oldVersion < 6) {
+          await db.execute('ALTER TABLE passes ADD COLUMN sourceType TEXT;');
+        }
+        if (oldVersion < 7) {
+          await db.execute('ALTER TABLE passes ADD COLUMN logoImagePath TEXT;');
+          await db.execute(
+            'ALTER TABLE passes ADD COLUMN footerImagePath TEXT;',
+          );
         }
       },
     );
@@ -313,6 +363,36 @@ class PassDatabaseHelper {
     return result.map((e) => Pass.fromEncryptedMap(e)).toList();
   }
 
+  Future<List<Pass>> getActivePasses() async {
+    final db = await database;
+    final result = await db.query(
+      'passes',
+      where: 'isArchived = 0',
+      orderBy: 'orderIndex ASC',
+    );
+    return result.map((e) => Pass.fromEncryptedMap(e)).toList();
+  }
+
+  Future<List<Pass>> getArchivedPasses() async {
+    final db = await database;
+    final result = await db.query(
+      'passes',
+      where: 'isArchived = 1',
+      orderBy: 'orderIndex ASC',
+    );
+    return result.map(Pass.fromEncryptedMap).toList();
+  }
+
+  Future<void> setPassArchived(int id, bool isArchived) async {
+    final db = await database;
+    await db.update(
+      'passes',
+      {'isArchived': isArchived ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<void> deletePass(int id) async {
     final db = await database;
     final result = await db.query(
@@ -323,6 +403,8 @@ class PassDatabaseHelper {
         'stripImagePath',
         'thumbnailImagePath',
         'iconImagePath',
+        'logoImagePath',
+        'footerImagePath',
       ],
       where: 'id = ?',
       whereArgs: [id],
@@ -340,6 +422,10 @@ class PassDatabaseHelper {
       result[0]['thumbnailImagePath'] as String?,
     );
     await DatabaseHelper.deleteImageFile(result[0]['iconImagePath'] as String?);
+    await DatabaseHelper.deleteImageFile(result[0]['logoImagePath'] as String?);
+    await DatabaseHelper.deleteImageFile(
+      result[0]['footerImagePath'] as String?,
+    );
 
     await db.delete('passes', where: 'id = ?', whereArgs: [id]);
   }
@@ -408,7 +494,7 @@ class IdentityDatabaseHelper {
     return openDatabase(
       path,
       password: EncryptionService.instance.databasePassword,
-      version: 4,
+      version: 6,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE identities(
@@ -419,8 +505,10 @@ class IdentityDatabaseHelper {
             frontImagePath TEXT,
             backImagePath TEXT,
             color TEXT,
+            expiry_date TEXT,
             customFields TEXT,
-            orderIndex INTEGER DEFAULT 0
+            orderIndex INTEGER DEFAULT 0,
+            isArchived INTEGER NOT NULL DEFAULT 0
           )
         ''');
         await db.execute(
@@ -439,6 +527,16 @@ class IdentityDatabaseHelper {
             'ALTER TABLE identities ADD COLUMN customFields TEXT;',
           );
         }
+        if (oldVersion < 5) {
+          await db.execute(
+            'ALTER TABLE identities ADD COLUMN isArchived INTEGER NOT NULL DEFAULT 0;',
+          );
+        }
+        if (oldVersion < 6) {
+          await db.execute(
+            'ALTER TABLE identities ADD COLUMN expiry_date TEXT;',
+          );
+        }
       },
     );
   }
@@ -452,6 +550,36 @@ class IdentityDatabaseHelper {
     final db = await database;
     final result = await db.query('identities', orderBy: 'orderIndex ASC');
     return result.map((e) => IdentityCard.fromEncryptedMap(e)).toList();
+  }
+
+  Future<List<IdentityCard>> getActiveIdentities() async {
+    final db = await database;
+    final result = await db.query(
+      'identities',
+      where: 'isArchived = 0',
+      orderBy: 'orderIndex ASC',
+    );
+    return result.map((e) => IdentityCard.fromEncryptedMap(e)).toList();
+  }
+
+  Future<List<IdentityCard>> getArchivedIdentities() async {
+    final db = await database;
+    final result = await db.query(
+      'identities',
+      where: 'isArchived = 1',
+      orderBy: 'orderIndex ASC',
+    );
+    return result.map(IdentityCard.fromEncryptedMap).toList();
+  }
+
+  Future<void> setIdentityArchived(int id, bool isArchived) async {
+    final db = await database;
+    await db.update(
+      'identities',
+      {'isArchived': isArchived ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<void> deleteIdentity(int id) async {

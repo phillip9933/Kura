@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class SafService {
-  static const _channel = MethodChannel('com.sidhant.wallet/save_file');
+  static const _channel = MethodChannel('app.kura.wallet/save_file');
 
   static Future<String?> pickDirectory() async {
     try {
@@ -47,14 +47,25 @@ class SafService {
 
   static Future<bool> deleteFromUri(String uri, String filename) async {
     try {
-      await _channel.invokeMethod('deleteFromUri', {
-        'uri': uri,
-        'filename': filename,
-      });
-      return true;
+      return await _channel.invokeMethod<bool>('deleteFromUri', {
+            'uri': uri,
+            'filename': filename,
+          }) ??
+          false;
     } catch (e) {
       if (kDebugMode) debugPrint('SafService.deleteFromUri failed: $e');
       return false;
+    }
+  }
+
+  static Future<List<String>?> listFileNames(String uri) async {
+    try {
+      return await _channel.invokeListMethod<String>('listFileNames', {
+        'uri': uri,
+      });
+    } catch (e) {
+      if (kDebugMode) debugPrint('SafService.listFileNames failed: $e');
+      return null;
     }
   }
 }

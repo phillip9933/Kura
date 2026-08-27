@@ -4,6 +4,10 @@ import 'dart:convert';
 
 enum PassSearchStyle { alwaysOn, icon }
 
+enum SearchBarPosition { top, bottom }
+
+enum ControlRowPosition { top, bottom }
+
 enum PassGridDisplayMode { front, back, virtualCards }
 
 enum BarcodeOrientation { defaultOrientation, flipped }
@@ -39,13 +43,18 @@ class StartupSettingsProvider with ChangeNotifier {
   bool _showPaymentsTab = true;
   bool _showPassesTab = true;
   bool _showIdentityTab = true;
-  bool _isQrImportScannerEnabled = true;
+  bool _showBottomNavigationBar = true;
+  bool _gestureNavigationEnabled = true;
   bool _showPassQrButton = true;
   bool _isPassSearchEnabled = true;
+  bool _isExpiryNotificationEnabled = true;
+  int _expiryNotificationLeadMonths = 2;
   bool _maxBrightnessOnBarcodeView = false;
   BarcodeOrientation _defaultBarcodeOrientation =
       BarcodeOrientation.defaultOrientation;
   PassSearchStyle _passSearchStyle = PassSearchStyle.alwaysOn;
+  SearchBarPosition _searchBarPosition = SearchBarPosition.top;
+  ControlRowPosition _controlRowPosition = ControlRowPosition.top;
   PassGridDisplayMode _passGridDisplayMode = PassGridDisplayMode.front;
   int _passGridColumns = 1;
   final Map<WalletSection, int> _sectionGridColumns = {
@@ -59,30 +68,42 @@ class StartupSettingsProvider with ChangeNotifier {
     WalletSection.identity: PassGridDisplayMode.front,
   };
   final Map<WalletSection, List<String>> _sectionCategories = {
-    WalletSection.payments: [
-      'Visa',
-      'Mastercard',
-      'RuPay',
-      'American Express',
-      'Discover',
-    ],
+    WalletSection.payments: ['Credit', 'Debit', 'Prepaid', 'Gift Card', 'Cash'],
     WalletSection.passes: [
-      'Retail',
-      'Tickets & Transit',
-      'Access',
-      'Health',
-      'Identity',
-      'Generic',
+      'Transit',
+      'Membership',
+      'Loyalty',
+      'Ticket',
+      'Boarding Pass',
+      'Event',
     ],
     WalletSection.identity: [
       'Passport',
-      'Driver License',
+      "Driver's License",
       'National ID',
-      'Health Card',
-      'Other',
+      'Health Insurance',
+      'Student ID',
     ],
   };
   static const Map<WalletSection, List<String>> _defaultSectionCategories = {
+    WalletSection.payments: ['Credit', 'Debit', 'Prepaid', 'Gift Card', 'Cash'],
+    WalletSection.passes: [
+      'Transit',
+      'Membership',
+      'Loyalty',
+      'Ticket',
+      'Boarding Pass',
+      'Event',
+    ],
+    WalletSection.identity: [
+      'Passport',
+      "Driver's License",
+      'National ID',
+      'Health Insurance',
+      'Student ID',
+    ],
+  };
+  static const Map<WalletSection, List<String>> _previousDefaultCategories = {
     WalletSection.payments: [
       'Visa',
       'Mastercard',
@@ -127,10 +148,17 @@ class StartupSettingsProvider with ChangeNotifier {
   static const String _showPaymentsTabKey = 'showPaymentsTab';
   static const String _showPassesTabKey = 'showPassesTab';
   static const String _showIdentityTabKey = 'showIdentityTab';
-  static const String _isQrImportScannerEnabledKey = 'isQrImportScannerEnabled';
+  static const String _showBottomNavigationBarKey = 'showBottomNavigationBar';
+  static const String _gestureNavigationEnabledKey = 'gestureNavigationEnabled';
   static const String _showPassQrButtonKey = 'showPassQrButton';
   static const String _isPassSearchEnabledKey = 'isPassSearchEnabled';
+  static const String _isExpiryNotificationEnabledKey =
+      'isExpiryNotificationEnabled';
+  static const String _expiryNotificationLeadMonthsKey =
+      'expiryNotificationLeadMonths';
   static const String _passSearchStyleKey = 'passSearchStyle';
+  static const String _searchBarPositionKey = 'searchBarPosition';
+  static const String _controlRowPositionKey = 'controlRowPosition';
   static const String _passGridDisplayModeKey = 'passGridDisplayMode';
   static const String _passGridColumnsKey = 'passGridColumns';
   static const String _maxBrightnessOnBarcodeViewKey =
@@ -145,13 +173,18 @@ class StartupSettingsProvider with ChangeNotifier {
   bool get showPaymentsTab => _showPaymentsTab;
   bool get showPassesTab => _showPassesTab;
   bool get showIdentityTab => _showIdentityTab;
-  bool get isQrImportScannerEnabled => _isQrImportScannerEnabled;
+  bool get showBottomNavigationBar => _showBottomNavigationBar;
+  bool get gestureNavigationEnabled => _gestureNavigationEnabled;
   bool get showPassQrButton => _showPassQrButton;
   bool get isPassSearchEnabled => _isPassSearchEnabled;
+  bool get isExpiryNotificationEnabled => _isExpiryNotificationEnabled;
+  int get expiryNotificationLeadMonths => _expiryNotificationLeadMonths;
   bool get maxBrightnessOnBarcodeView => _maxBrightnessOnBarcodeView;
   BarcodeOrientation get defaultBarcodeOrientation =>
       _defaultBarcodeOrientation;
   PassSearchStyle get passSearchStyle => _passSearchStyle;
+  SearchBarPosition get searchBarPosition => _searchBarPosition;
+  ControlRowPosition get controlRowPosition => _controlRowPosition;
   PassGridDisplayMode get passGridDisplayMode => _passGridDisplayMode;
   int get passGridColumns => _passGridColumns;
 
@@ -190,8 +223,10 @@ class StartupSettingsProvider with ChangeNotifier {
     _showPaymentsTab = prefs.getBool(_showPaymentsTabKey) ?? true;
     _showPassesTab = prefs.getBool(_showPassesTabKey) ?? true;
     _showIdentityTab = prefs.getBool(_showIdentityTabKey) ?? true;
-    _isQrImportScannerEnabled =
-        prefs.getBool(_isQrImportScannerEnabledKey) ?? true;
+    _showBottomNavigationBar =
+        prefs.getBool(_showBottomNavigationBarKey) ?? true;
+    _gestureNavigationEnabled =
+        prefs.getBool(_gestureNavigationEnabledKey) ?? true;
     if (!_showPaymentsTab && !_showPassesTab && !_showIdentityTab) {
       _showPaymentsTab = true;
       await prefs.setBool(_showPaymentsTabKey, true);
@@ -202,6 +237,10 @@ class StartupSettingsProvider with ChangeNotifier {
     }
     _showPassQrButton = prefs.getBool(_showPassQrButtonKey) ?? true;
     _isPassSearchEnabled = prefs.getBool(_isPassSearchEnabledKey) ?? true;
+    _isExpiryNotificationEnabled =
+        prefs.getBool(_isExpiryNotificationEnabledKey) ?? true;
+    _expiryNotificationLeadMonths =
+        prefs.getInt(_expiryNotificationLeadMonthsKey) ?? 2;
     _maxBrightnessOnBarcodeView =
         prefs.getBool(_maxBrightnessOnBarcodeViewKey) ?? false;
     _defaultBarcodeOrientation = BarcodeOrientation.values.firstWhere(
@@ -214,11 +253,26 @@ class StartupSettingsProvider with ChangeNotifier {
       (style) => style.name == savedSearchStyle,
       orElse: () => PassSearchStyle.alwaysOn,
     );
+    _searchBarPosition = SearchBarPosition.values.firstWhere(
+      (position) => position.name == prefs.getString(_searchBarPositionKey),
+      orElse: () => SearchBarPosition.top,
+    );
+    _controlRowPosition = ControlRowPosition.values.firstWhere(
+      (position) => position.name == prefs.getString(_controlRowPositionKey),
+      orElse: () => ControlRowPosition.top,
+    );
     final savedGridDisplayMode = prefs.getString(_passGridDisplayModeKey);
     _passGridDisplayMode = PassGridDisplayMode.values.firstWhere(
       (mode) => mode.name == savedGridDisplayMode,
       orElse: () => PassGridDisplayMode.front,
     );
+    if (savedGridDisplayMode == 'back') {
+      _passGridDisplayMode = PassGridDisplayMode.front;
+      await prefs.setString(
+        _passGridDisplayModeKey,
+        PassGridDisplayMode.front.name,
+      );
+    }
     final savedGridColumns = prefs.getInt(_passGridColumnsKey) ?? 1;
     for (final section in WalletSection.values) {
       final savedColumns = prefs.getInt(_sectionGridColumnsKey(section));
@@ -237,17 +291,24 @@ class StartupSettingsProvider with ChangeNotifier {
             ? _passGridDisplayMode
             : PassGridDisplayMode.front,
       );
+      if (section == WalletSection.passes && savedDisplayMode == 'back') {
+        _sectionGridDisplayModes[section] = PassGridDisplayMode.front;
+        await prefs.setString(
+          _sectionGridDisplayModeKey(section),
+          PassGridDisplayMode.front.name,
+        );
+      }
       final savedCategories = prefs.getStringList(
         _sectionCategoriesKey(section),
       );
       if (savedCategories != null && savedCategories.isNotEmpty) {
-        final shouldMigratePassCategories =
-            section == WalletSection.passes &&
-            _listsEqual(savedCategories, _legacyPassCategorySeed);
-        _sectionCategories[section] = shouldMigratePassCategories
-            ? List.of(_defaultSectionCategories[WalletSection.passes]!)
+        final shouldMigrateCategories =
+            _listsEqual(savedCategories, _legacyPassCategorySeed) ||
+            _listsEqual(savedCategories, _previousDefaultCategories[section]!);
+        _sectionCategories[section] = shouldMigrateCategories
+            ? List.of(_defaultSectionCategories[section]!)
             : savedCategories;
-        if (shouldMigratePassCategories) {
+        if (shouldMigrateCategories) {
           await prefs.setStringList(
             _sectionCategoriesKey(section),
             _sectionCategories[section]!,
@@ -337,19 +398,26 @@ class StartupSettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setShowBottomNavigationBar(bool value) async {
+    _showBottomNavigationBar = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_showBottomNavigationBarKey, value);
+    notifyListeners();
+  }
+
+  Future<void> setGestureNavigationEnabled(bool value) async {
+    _gestureNavigationEnabled = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_gestureNavigationEnabledKey, value);
+    notifyListeners();
+  }
+
   Future<void> setCurrency(String code, String symbol) async {
     _selectedCurrencyCode = code;
     _selectedCurrencySymbol = symbol;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_currencyCodeKey, _selectedCurrencyCode);
     await prefs.setString(_currencySymbolKey, _selectedCurrencySymbol);
-    notifyListeners();
-  }
-
-  Future<void> setQrImportScannerEnabled(bool value) async {
-    _isQrImportScannerEnabled = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_isQrImportScannerEnabledKey, value);
     notifyListeners();
   }
 
@@ -364,6 +432,21 @@ class StartupSettingsProvider with ChangeNotifier {
     _isPassSearchEnabled = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_isPassSearchEnabledKey, value);
+    notifyListeners();
+  }
+
+  Future<void> setExpiryNotificationEnabled(bool value) async {
+    _isExpiryNotificationEnabled = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_isExpiryNotificationEnabledKey, value);
+    notifyListeners();
+  }
+
+  Future<void> setExpiryNotificationLeadMonths(int value) async {
+    if (value < 1) return;
+    _expiryNotificationLeadMonths = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_expiryNotificationLeadMonthsKey, value);
     notifyListeners();
   }
 
@@ -387,6 +470,20 @@ class StartupSettingsProvider with ChangeNotifier {
     _passSearchStyle = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_passSearchStyleKey, value.name);
+    notifyListeners();
+  }
+
+  Future<void> setSearchBarPosition(SearchBarPosition value) async {
+    _searchBarPosition = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_searchBarPositionKey, value.name);
+    notifyListeners();
+  }
+
+  Future<void> setControlRowPosition(ControlRowPosition value) async {
+    _controlRowPosition = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_controlRowPositionKey, value.name);
     notifyListeners();
   }
 

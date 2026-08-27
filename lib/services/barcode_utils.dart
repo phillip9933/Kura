@@ -1,4 +1,5 @@
 import 'package:barcode_widget/barcode_widget.dart';
+import 'package:barcode_scan2/barcode_scan2.dart';
 import 'package:flutter/material.dart';
 
 class BarcodeUtils {
@@ -70,6 +71,24 @@ class BarcodeUtils {
       default:
         return format;
     }
+  }
+
+  static String? getLabelFromScannerFormat(BarcodeFormat format) {
+    return switch (format) {
+      BarcodeFormat.qr => 'QR Code',
+      BarcodeFormat.aztec => 'Aztec',
+      BarcodeFormat.code39 => 'Code 39',
+      BarcodeFormat.code93 => 'Code 93',
+      BarcodeFormat.ean8 => 'EAN-8',
+      BarcodeFormat.ean13 => 'EAN-13',
+      BarcodeFormat.code128 => 'Code 128',
+      BarcodeFormat.dataMatrix => 'Data Matrix',
+      BarcodeFormat.interleaved2of5 => 'ITF',
+      BarcodeFormat.upce => 'UPC-E',
+      BarcodeFormat.pdf417 => 'PDF417',
+      BarcodeFormat.unknown => null,
+      _ => null,
+    };
   }
 
   static Barcode getBarcodeFromFormat(String? format) {

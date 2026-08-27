@@ -10,8 +10,10 @@ import 'package:kura/models/startup_settings_provider.dart';
 import 'package:kura/widgets/configured_custom_fields.dart';
 
 class IdentityCardEntryForm extends StatefulWidget {
+  const IdentityCardEntryForm({super.key, this.existingCard, this.footer});
+
   final IdentityCard? existingCard;
-  const IdentityCardEntryForm({super.key, this.existingCard});
+  final Widget? footer;
 
   @override
   State<IdentityCardEntryForm> createState() => IdentityCardEntryFormState();
@@ -26,6 +28,7 @@ class IdentityCardEntryFormState extends State<IdentityCardEntryForm> {
   String? _frontImagePath;
   String? _backImagePath;
   String _selectedColor = 'obsidian';
+  DateTime? _expiryDate;
   bool _isSaving = false;
 
   @override
@@ -38,6 +41,7 @@ class IdentityCardEntryFormState extends State<IdentityCardEntryForm> {
       _frontImagePath = widget.existingCard!.frontImagePath;
       _backImagePath = widget.existingCard!.backImagePath;
       _selectedColor = widget.existingCard!.color ?? 'obsidian';
+      _expiryDate = _parseExpiryDate(widget.existingCard!.expiryDate);
       for (final entry
           in widget.existingCard!.customFields?.entries ??
               <MapEntry<String, String>>[]) {
@@ -89,6 +93,86 @@ class IdentityCardEntryFormState extends State<IdentityCardEntryForm> {
     }
   }
 
+  Future<void> _selectExpiryDate() async {
+    final now = DateTime.now();
+    var selectedMonth = _expiryDate?.month ?? now.month;
+    var selectedYear = _expiryDate?.year ?? now.year;
+    final selected = await showDialog<DateTime>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Select Expiry Month'),
+          content: Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  initialValue: selectedMonth,
+                  decoration: const InputDecoration(labelText: 'Month'),
+                  items: List.generate(
+                    12,
+                    (index) => DropdownMenuItem(
+                      value: index + 1,
+                      child: Text('${index + 1}'.padLeft(2, '0')),
+                    ),
+                  ),
+                  onChanged: (value) =>
+                      setDialogState(() => selectedMonth = value!),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  initialValue: selectedYear,
+                  decoration: const InputDecoration(labelText: 'Year'),
+                  items: List.generate(
+                    101,
+                    (index) => DropdownMenuItem(
+                      value: now.year + index,
+                      child: Text('${now.year + index}'),
+                    ),
+                  ),
+                  onChanged: (value) =>
+                      setDialogState(() => selectedYear = value!),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(
+                dialogContext,
+                DateTime(selectedYear, selectedMonth),
+              ),
+              child: const Text('Select'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (selected == null || !mounted) return;
+    setState(() => _expiryDate = selected);
+  }
+
+  DateTime? _parseExpiryDate(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final isoDate = DateTime.tryParse(value);
+    if (isoDate != null) return isoDate;
+    final match = RegExp(r'^(\d{2})/(\d{2})$').firstMatch(value);
+    if (match == null) return null;
+    final month = int.tryParse(match.group(1)!);
+    final year = int.tryParse(match.group(2)!);
+    if (month == null || year == null || month < 1 || month > 12) return null;
+    return DateTime(2000 + year, month);
+  }
+
+  String? get _expiryDateValue => _expiryDate == null
+      ? null
+      : '${_expiryDate!.month.toString().padLeft(2, '0')}/${(_expiryDate!.year % 100).toString().padLeft(2, '0')}';
+
   Future<void> _saveData() async {
     final settings = context.read<StartupSettingsProvider>();
     final name = _nameController.text.trim();
@@ -114,6 +198,7 @@ class IdentityCardEntryFormState extends State<IdentityCardEntryForm> {
         frontImagePath: _frontImagePath,
         backImagePath: _backImagePath,
         color: _selectedColor,
+        expiryDate: _expiryDateValue,
         customFields: {
           for (final entry in _customFieldControllers.entries)
             if (entry.value.text.trim().isNotEmpty)
@@ -218,6 +303,8 @@ class IdentityCardEntryFormState extends State<IdentityCardEntryForm> {
           ),
         ),
         const SizedBox(height: 24),
+        _buildExpiryDateField(),
+        const SizedBox(height: 24),
         ConfiguredCustomFields(
           schemas: settings.customFieldsFor(WalletSection.identity),
           controllers: _customFieldControllers,
@@ -286,7 +373,38 @@ class IdentityCardEntryFormState extends State<IdentityCardEntryForm> {
                     ),
             ),
           ),
+        if (widget.footer != null) ...[
+          const SizedBox(height: 24),
+          widget.footer!,
+        ],
+        const SizedBox(height: 24),
       ],
+    );
+  }
+
+  Widget _buildExpiryDateField() {
+    return InputDecorator(
+      decoration: const InputDecoration(labelText: 'Expiry Date (Optional)'),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              _expiryDate == null ? 'No expiry date' : _expiryDateValue!,
+            ),
+          ),
+          IconButton(
+            tooltip: 'Select expiry date',
+            icon: const Icon(Icons.calendar_month_outlined),
+            onPressed: _selectExpiryDate,
+          ),
+          if (_expiryDate != null)
+            IconButton(
+              tooltip: 'Clear expiry date',
+              icon: const Icon(Icons.clear_rounded),
+              onPressed: () => setState(() => _expiryDate = null),
+            ),
+        ],
+      ),
     );
   }
 

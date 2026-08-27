@@ -26,6 +26,17 @@ class PassGridCard extends StatelessWidget {
 
   Color? _parseColor(String? hexString) {
     if (hexString == null || hexString.isEmpty) return null;
+    final rgb = RegExp(
+      r'^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$',
+    ).firstMatch(hexString);
+    if (rgb != null) {
+      return Color.fromARGB(
+        255,
+        int.parse(rgb.group(1)!),
+        int.parse(rgb.group(2)!),
+        int.parse(rgb.group(3)!),
+      );
+    }
     final buffer = StringBuffer();
     if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
     buffer.write(hexString.replaceFirst('#', ''));
@@ -103,6 +114,10 @@ class PassGridCard extends StatelessWidget {
   }
 
   Widget _buildCardContent(BuildContext context, bool isDark) {
+    if (pass.sourceType == 'pkpass') {
+      return _buildPkpassCard(context, isDark);
+    }
+
     // Mode 1: Front Image (with fallback to digital card)
     if (displayMode == PassDisplayMode.front &&
         pass.frontImagePath != null &&
@@ -113,17 +128,7 @@ class PassGridCard extends StatelessWidget {
       );
     }
 
-    // Mode 2: Back Image (with fallback to digital card)
-    if (displayMode == PassDisplayMode.back &&
-        pass.backImagePath != null &&
-        pass.backImagePath!.isNotEmpty) {
-      return EncryptedImageDisplay(
-        imagePath: pass.backImagePath!,
-        fit: BoxFit.cover,
-      );
-    }
-
-    // Mode 3: Styled Digital "Fake Card" View
+    // Styled Digital "Fake Card" View
     final customBgColor = _parseColor(pass.backgroundColor);
     final customFgColor =
         _parseColor(pass.foregroundColor) ??
@@ -132,8 +137,7 @@ class PassGridCard extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 160;
-        final scale =
-            (constraints.maxWidth / 220).clamp(0.8, 1.55).toDouble();
+        final scale = (constraints.maxWidth / 220).clamp(0.8, 1.55).toDouble();
         final padding = (isCompact ? 5.0 : 10.0) * scale;
         final iconSize = (constraints.maxWidth * 0.16).clamp(18.0, 42.0);
         final accountNumber = _accountNumber;
@@ -255,6 +259,291 @@ class PassGridCard extends StatelessWidget {
       },
     );
   }
+
+  Widget _buildPkpassCard(BuildContext context, bool isDark) {
+    final background =
+        _parseColor(pass.backgroundColor) ??
+        (isDark ? const Color(0xFF242424) : Colors.grey.shade100);
+    final foreground =
+        _parseColor(pass.foregroundColor) ??
+        (isDark ? Colors.white : Colors.black87);
+    final label =
+        _parseColor(pass.labelColor) ?? foreground.withValues(alpha: 0.72);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = (constraints.maxWidth / 220).clamp(0.48, 1.0).toDouble();
+        final isNarrow = constraints.maxWidth < 145;
+        final isCompact = !isNarrow && constraints.maxWidth < 200;
+        final padding =
+            (isNarrow
+                ? 6.0
+                : isCompact
+                ? 8.0
+                : 10.0) *
+            scale;
+        final hasStrip =
+            displayMode == PassDisplayMode.front &&
+            pass.stripImagePath?.isNotEmpty == true;
+        final showsCompactStrip =
+            isCompact && pass.type != 'boardingPass' && hasStrip;
+        final header = _fields('headerFields');
+        final secondary = _fields('secondaryFields');
+        final auxiliary = _fields('auxiliaryFields');
+        return Container(
+          color: background,
+          padding: EdgeInsets.all(padding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _buildPkpassBrand(30 * scale, foreground),
+                  SizedBox(width: 7 * scale),
+                  Expanded(
+                    child: Text(
+                      pass.logoText ?? pass.organizationName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: foreground,
+                        fontSize: 12 * scale,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  if (!isNarrow && header.isNotEmpty)
+                    SizedBox(
+                      width: (isCompact ? 58 : 76) * scale,
+                      child: _pkpassFieldRow(
+                        header,
+                        label,
+                        foreground,
+                        scale,
+                        alignEnd: true,
+                        maxFields: 1,
+                      ),
+                    ),
+                ],
+              ),
+              SizedBox(height: (isNarrow ? 3 : 5) * scale),
+              if (pass.type == 'boardingPass')
+                _boardingFields(
+                  label,
+                  foreground,
+                  scale,
+                  prominent: !isCompact && !isNarrow,
+                )
+              else
+                _pkpassFieldRow(
+                  _fields('primaryFields'),
+                  label,
+                  foreground,
+                  scale,
+                  primary: true,
+                  maxFields: isNarrow ? 1 : 2,
+                ),
+              if (!isNarrow && !showsCompactStrip && secondary.isNotEmpty) ...[
+                SizedBox(height: (isCompact ? 3 : 5) * scale),
+                _pkpassFieldRow(
+                  secondary,
+                  label,
+                  foreground,
+                  scale,
+                  maxFields: isCompact ? 2 : null,
+                ),
+              ],
+              if (!isCompact && auxiliary.isNotEmpty) ...[
+                SizedBox(height: 5 * scale),
+                _pkpassFieldRow(auxiliary, label, foreground, scale),
+              ],
+              if (hasStrip) ...[
+                SizedBox(height: 5 * scale),
+                if (showsCompactStrip)
+                  SizedBox(
+                    height: 26 * scale,
+                    width: double.infinity,
+                    child: EncryptedImageDisplay(
+                      imagePath: pass.stripImagePath!,
+                      fit: BoxFit.contain,
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: EncryptedImageDisplay(
+                      imagePath: pass.stripImagePath!,
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+              ] else
+                const Spacer(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPkpassBrand(double size, Color foreground) =>
+      pass.logoImagePath?.isNotEmpty == true
+      ? SizedBox(
+          width: size * 1.8,
+          height: size,
+          child: EncryptedImageDisplay(
+            imagePath: pass.logoImagePath!,
+            fit: BoxFit.contain,
+            errorWidget: _buildPassIcon(size, foreground),
+          ),
+        )
+      : _buildPassIcon(size, foreground);
+  Widget _boardingFields(
+    Color label,
+    Color foreground,
+    double scale, {
+    required bool prominent,
+  }) {
+    final primary = _fields('primaryFields');
+    if (primary.length < 2) {
+      return _pkpassFieldRow(
+        primary,
+        label,
+        foreground,
+        scale,
+        primary: true,
+        maxFields: prominent ? null : 1,
+      );
+    }
+    return SizedBox(
+      height: prominent ? 48 * scale : null,
+      child: Row(
+        children: [
+          Expanded(
+            child: _pkpassField(
+              primary.first,
+              label,
+              foreground,
+              scale,
+              primary: true,
+              prominent: prominent,
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 5 * scale),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              color: foreground,
+              size: (prominent ? 20 : 16) * scale,
+            ),
+          ),
+          Expanded(
+            child: _pkpassField(
+              primary[1],
+              label,
+              foreground,
+              scale,
+              primary: true,
+              prominent: prominent,
+              alignEnd: true,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pkpassFieldRow(
+    List<Map<String, dynamic>> fields,
+    Color label,
+    Color foreground,
+    double scale, {
+    bool primary = false,
+    bool alignEnd = false,
+    int? maxFields,
+  }) {
+    var populated = fields.where((field) => _value(field).isNotEmpty).toList();
+    if (maxFields != null) populated = populated.take(maxFields).toList();
+    if (populated.isEmpty) return const SizedBox.shrink();
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: populated
+          .map(
+            (field) => Expanded(
+              child: _pkpassField(
+                field,
+                label,
+                foreground,
+                scale,
+                primary: primary,
+                alignEnd: alignEnd,
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _pkpassField(
+    Map<String, dynamic> field,
+    Color label,
+    Color foreground,
+    double scale, {
+    bool primary = false,
+    bool prominent = false,
+    bool alignEnd = false,
+  }) => Column(
+    crossAxisAlignment: alignEnd
+        ? CrossAxisAlignment.end
+        : CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if ((field['label']?.toString() ?? '').isNotEmpty)
+        Text(
+          field['label'].toString().toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: alignEnd ? TextAlign.end : TextAlign.start,
+          style: TextStyle(
+            color: label,
+            fontSize:
+                (prominent
+                    ? 9
+                    : primary
+                    ? 8
+                    : 7) *
+                scale,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      Text(
+        _value(field),
+        maxLines: primary ? 2 : 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: alignEnd ? TextAlign.end : TextAlign.start,
+        style: TextStyle(
+          color: foreground,
+          fontSize:
+              (prominent
+                  ? 22
+                  : primary
+                  ? 18
+                  : 10) *
+              scale,
+          fontWeight: primary ? FontWeight.w800 : FontWeight.w600,
+        ),
+      ),
+    ],
+  );
+  List<Map<String, dynamic>> _fields(String section) {
+    final sectionFields = pass.fields?[section];
+    if (sectionFields is! List) return const [];
+    return sectionFields
+        .whereType<Map>()
+        .map((field) => Map<String, dynamic>.from(field))
+        .toList();
+  }
+
+  String _value(Map<String, dynamic> field) => field['value']?.toString() ?? '';
 
   String get _accountNumber {
     final customFields = pass.fields?['customFields'];

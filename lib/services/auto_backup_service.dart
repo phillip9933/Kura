@@ -21,6 +21,7 @@ class AutoBackupService {
         await BackupService.createAutoBackup(
           provider.backupPassword,
           provider.backupUri,
+          retentionCount: provider.retentionCount,
         );
       } catch (e) {
         if (kDebugMode) {

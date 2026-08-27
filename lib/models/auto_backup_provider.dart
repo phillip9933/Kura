@@ -6,16 +6,19 @@ class AutoBackupProvider with ChangeNotifier {
   String _backupPath = '';
   String _backupPassword = '';
   String _backupUri = '';
+  int _retentionCount = 5;
 
   bool get isEnabled => _isEnabled;
   String get backupPath => _backupPath;
   String get backupPassword => _backupPassword;
   String get backupUri => _backupUri;
+  int get retentionCount => _retentionCount;
 
   static const String _keyEnabled = 'autoBackupEnabled';
   static const String _keyPath = 'autoBackupPath';
   static const String _keyPassword = 'autoBackupPassword';
   static const String _keyUri = 'autoBackupUri';
+  static const String _keyRetentionCount = 'autoBackupRetentionCount';
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -23,6 +26,7 @@ class AutoBackupProvider with ChangeNotifier {
     _backupPath = prefs.getString(_keyPath) ?? '';
     _backupPassword = prefs.getString(_keyPassword) ?? '';
     _backupUri = prefs.getString(_keyUri) ?? '';
+    _retentionCount = prefs.getInt(_keyRetentionCount) ?? 5;
     notifyListeners();
   }
 
@@ -51,6 +55,14 @@ class AutoBackupProvider with ChangeNotifier {
     _backupPassword = password;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyPassword, password);
+    notifyListeners();
+  }
+
+  Future<void> setRetentionCount(int value) async {
+    if (value < 1) return;
+    _retentionCount = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyRetentionCount, value);
     notifyListeners();
   }
 

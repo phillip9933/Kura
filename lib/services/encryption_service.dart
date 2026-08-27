@@ -321,6 +321,7 @@ class EncryptionService {
   }
 
   static const int _transferChunkSize = 1500;
+  static const int _maxTransferChunks = 100;
 
   /// Encrypt data for secure local transfer (QR share) using a password-derived key.
   /// Uses Argon2id for key derivation (memory-hard, 150x more expensive to brute-force).
@@ -386,9 +387,8 @@ class EncryptionService {
           );
         }
 
-        if (chunks.isEmpty) return null;
+        if (!_hasValidTransferChunks(chunks)) return null;
         chunks.sort((a, b) => a.index.compareTo(b.index));
-        if (chunks.length != chunks[0].totalChunks) return null;
 
         final cipherB64 = chunks.map((c) => c.ciphertext).join();
         final salt = chunks[0].salt;
@@ -425,10 +425,8 @@ class EncryptionService {
           );
         }
 
-        if (chunks.isEmpty) return null;
+        if (!_hasValidTransferChunks(chunks)) return null;
         chunks.sort((a, b) => a.index.compareTo(b.index));
-
-        if (chunks.length != chunks[0].totalChunks) return null;
 
         final cipherB64 = chunks.map((c) => c.ciphertext).join();
         final salt = chunks[0].salt;
@@ -453,6 +451,41 @@ class EncryptionService {
     } catch (_) {
       return null;
     }
+  }
+
+  bool _hasValidTransferChunks(List<_TransferChunk> chunks) {
+    if (chunks.isEmpty) return false;
+    final first = chunks.first;
+    if (first.totalChunks < 1 || first.totalChunks > _maxTransferChunks) {
+      return false;
+    }
+    if (chunks.length != first.totalChunks ||
+        first.salt.length < 16 ||
+        first.iv.bytes.length != _gcmIvLength) {
+      return false;
+    }
+
+    final seenIndices = <int>{};
+    for (final chunk in chunks) {
+      if (chunk.totalChunks != first.totalChunks ||
+          chunk.index < 0 ||
+          chunk.index >= first.totalChunks ||
+          !seenIndices.add(chunk.index) ||
+          !_bytesEqual(chunk.salt, first.salt) ||
+          !_bytesEqual(chunk.iv.bytes, first.iv.bytes) ||
+          chunk.ciphertext.isEmpty) {
+        return false;
+      }
+    }
+    return seenIndices.length == first.totalChunks;
+  }
+
+  bool _bytesEqual(List<int> first, List<int> second) {
+    if (first.length != second.length) return false;
+    for (var index = 0; index < first.length; index++) {
+      if (first[index] != second[index]) return false;
+    }
+    return true;
   }
 
   /// Derive a 256-bit key using PBKDF2-HMAC-SHA256 with 600,000 iterations.

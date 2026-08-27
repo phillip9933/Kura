@@ -172,13 +172,15 @@ class _WalletDetailScreenState extends State<WalletDetailScreen> {
                   ),
                 );
 
-                if (result == true && mounted) {
-                  final updatedWallet = await walletProvider.getWalletDetails(
-                    currentWallet.id!,
-                  );
-                  if (updatedWallet != null && mounted) {
-                    setState(() => currentWallet = updatedWallet);
-                  }
+                if (!mounted || result != true) return;
+                final updatedWallet = await walletProvider.getWalletDetails(
+                  currentWallet.id!,
+                );
+                if (!mounted) return;
+                if (updatedWallet != null) {
+                  setState(() => currentWallet = updatedWallet);
+                } else {
+                  Navigator.pop(this.context, true);
                 }
               },
             ),
@@ -278,6 +280,45 @@ class WalletEditScreen extends StatefulWidget {
 class _WalletEditScreenState extends State<WalletEditScreen> {
   final _formKey = GlobalKey<CreditCardEntryFormState>();
 
+  Future<void> _manageWallet({required bool archive}) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(archive ? 'Archive Card?' : 'Delete Card?'),
+        content: Text(
+          archive
+              ? 'This card will move to Archive. You can restore it later.'
+              : 'This permanently deletes "${widget.wallet.name}". This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: archive
+                ? null
+                : FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(archive ? 'Archive' : 'Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    HapticFeedback.mediumImpact();
+    final provider = context.read<WalletProvider>();
+    if (archive) {
+      await provider.archiveWallet(widget.wallet.id!);
+    } else {
+      await provider.deleteWallet(widget.wallet.id!);
+    }
+    if (mounted) Navigator.pop(context, true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -315,7 +356,36 @@ class _WalletEditScreenState extends State<WalletEditScreen> {
           ),
         ],
       ),
-      body: CreditCardEntryForm(key: _formKey, existingWallet: widget.wallet),
+      body: CreditCardEntryForm(
+        key: _formKey,
+        existingWallet: widget.wallet,
+        footer: _buildManagementActions(),
+      ),
+    );
+  }
+
+  Widget _buildManagementActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => _manageWallet(archive: true),
+            icon: const Icon(Icons.archive_outlined),
+            label: const Text('Archive'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: () => _manageWallet(archive: false),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Delete'),
+          ),
+        ),
+      ],
     );
   }
 }

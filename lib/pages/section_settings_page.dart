@@ -100,6 +100,11 @@ class SectionSettingsPage extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: PassGridDisplayMode.values
+                .where(
+                  (mode) =>
+                      section != WalletSection.passes ||
+                      mode != PassGridDisplayMode.back,
+                )
                 .map(
                   (mode) => RadioListTile<PassGridDisplayMode>(
                     title: Text(_displayModeLabel(mode)),

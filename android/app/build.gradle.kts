@@ -43,6 +43,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        buildConfigField("String", "FLUTTER_BUILD_NUMBER", "\"${flutter.versionCode}\"")
     }
 
     signingConfigs {
@@ -64,18 +65,6 @@ android {
         }
     }
 
-    applicationVariants.all {
-        val variant = this
-        variant.outputs.all {
-            val output = this as com.android.build.gradle.internal.api.ApkVariantOutputImpl
-            val abiCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 3)
-            val abiName = output.getFilter(com.android.build.OutputFile.ABI)
-            val abiCode = abiCodes[abiName]
-            if (abiCode != null) {
-                output.versionCodeOverride = (variant.versionCode) * 100 + abiCode
-            }
-        }
-    }
 }
 
 kotlin {

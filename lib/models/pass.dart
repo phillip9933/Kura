@@ -15,13 +15,18 @@ class Pass {
   final String? barcodeAltText;
   final String? transitType;
   final String? relevantDate;
+  final String? expiryDate;
   final String? frontImagePath;
   final String? backImagePath;
   final String? stripImagePath;
   final String? thumbnailImagePath;
   final String? iconImagePath;
+  final String? logoImagePath;
+  final String? footerImagePath;
+  final String? sourceType;
   final Map<String, dynamic>? fields;
   int orderIndex;
+  bool isArchived;
 
   Pass({
     this.id,
@@ -37,13 +42,18 @@ class Pass {
     this.barcodeAltText,
     this.transitType,
     this.relevantDate,
+    this.expiryDate,
     this.frontImagePath,
     this.backImagePath,
     this.stripImagePath,
     this.thumbnailImagePath,
     this.iconImagePath,
+    this.logoImagePath,
+    this.footerImagePath,
+    this.sourceType,
     this.fields,
     this.orderIndex = 0,
+    this.isArchived = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -61,13 +71,18 @@ class Pass {
       'barcodeAltText': barcodeAltText,
       'transitType': transitType,
       'relevantDate': relevantDate,
+      'expiry_date': expiryDate,
       'frontImagePath': frontImagePath,
       'backImagePath': backImagePath,
       'stripImagePath': stripImagePath,
       'thumbnailImagePath': thumbnailImagePath,
       'iconImagePath': iconImagePath,
+      'logoImagePath': logoImagePath,
+      'footerImagePath': footerImagePath,
+      'sourceType': sourceType,
       'fields': fields != null ? jsonEncode(fields) : null,
       'orderIndex': orderIndex,
+      'isArchived': isArchived,
     };
   }
 
@@ -87,13 +102,18 @@ class Pass {
       'barcodeAltText': enc.encryptText(barcodeAltText),
       'transitType': transitType,
       'relevantDate': enc.encryptText(relevantDate),
+      'expiry_date': enc.encryptText(expiryDate),
       'frontImagePath': frontImagePath,
       'backImagePath': backImagePath,
       'stripImagePath': stripImagePath,
       'thumbnailImagePath': thumbnailImagePath,
       'iconImagePath': iconImagePath,
+      'logoImagePath': logoImagePath,
+      'footerImagePath': footerImagePath,
+      'sourceType': sourceType,
       'fields': fields != null ? enc.encryptJson(fields!) : null,
       'orderIndex': orderIndex,
+      'isArchived': isArchived,
     };
   }
 
@@ -112,13 +132,18 @@ class Pass {
       barcodeAltText: map['barcodeAltText'],
       transitType: map['transitType'],
       relevantDate: map['relevantDate'],
+      expiryDate: map['expiry_date'],
       frontImagePath: map['frontImagePath'],
       backImagePath: map['backImagePath'],
       stripImagePath: map['stripImagePath'],
       thumbnailImagePath: map['thumbnailImagePath'],
       iconImagePath: map['iconImagePath'],
+      logoImagePath: map['logoImagePath'],
+      footerImagePath: map['footerImagePath'],
+      sourceType: map['sourceType'],
       fields: map['fields'] != null ? jsonDecode(map['fields']) : null,
       orderIndex: map['orderIndex'] ?? 0,
+      isArchived: map['isArchived'] == 1 || map['isArchived'] == true,
     );
   }
 
@@ -138,15 +163,20 @@ class Pass {
       barcodeAltText: enc.decryptText(map['barcodeAltText']),
       transitType: map['transitType'],
       relevantDate: enc.decryptText(map['relevantDate']),
+      expiryDate: enc.decryptText(map['expiry_date']),
       frontImagePath: map['frontImagePath'],
       backImagePath: map['backImagePath'],
       stripImagePath: map['stripImagePath'],
       thumbnailImagePath: map['thumbnailImagePath'],
       iconImagePath: map['iconImagePath'],
+      logoImagePath: map['logoImagePath'],
+      footerImagePath: map['footerImagePath'],
+      sourceType: map['sourceType'],
       fields: map['fields'] != null
           ? enc.decryptJsonToDynamicMap(map['fields'])
           : null,
       orderIndex: map['orderIndex'] ?? 0,
+      isArchived: map['isArchived'] == 1 || map['isArchived'] == true,
     );
   }
 }
