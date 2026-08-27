@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kura/services/clipboard_service.dart';
@@ -24,6 +25,7 @@ import 'package:kura/services/auto_backup_service.dart';
 import 'package:kura/widgets/pass_grid_card.dart';
 import 'package:kura/widgets/encrypted_image_display.dart';
 import 'package:kura/models/pass_types.dart';
+import 'package:kura/services/pkpass_service.dart';
 
 enum _ExpiryStatus { expired, expiringSoon }
 
@@ -313,6 +315,97 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  Future<void> _showAddOptions(int initialTabIndex) async {
+    HapticFeedback.mediumImpact();
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.qr_code_scanner_rounded),
+                title: const Text('Scan Barcode'),
+                subtitle: const Text('Scan a barcode to import shared data'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _scanAndImport();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.file_upload_outlined),
+                title: const Text('Import File'),
+                subtitle: const Text('Import a .pkpass or .zip pass file'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _importPassFile();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('Manual Input'),
+                subtitle: const Text('Create an item in the current section'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _openManualInput(initialTabIndex);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openManualInput(int initialTabIndex) async {
+    final result = await Navigator.push<bool>(
+      context,
+      SmoothPageRoute(page: AddCardScreen(initialTabIndex: initialTabIndex)),
+    );
+    if (result == true && mounted) {
+      await Future.wait([
+        context.read<WalletProvider>().fetchWallets(),
+        context.read<PassProvider>().fetchPasses(),
+        context.read<IdentityProvider>().fetchIdentities(),
+      ]);
+    }
+  }
+
+  Future<void> _importPassFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pkpass', 'zip'],
+      );
+      final path = result?.files.single.path;
+      if (path == null) return;
+
+      final pass = await PkpassService.instance.parsePkpass(path);
+      if (pass == null) {
+        _showImportError('Failed to parse .pkpass file.');
+        return;
+      }
+
+      if (!mounted) return;
+      final confirm = await _showImportConfirmation(
+        pass.organizationName,
+        'Pass',
+      );
+      if (confirm != true) return;
+
+      await PassDatabaseHelper.instance.insertPass(pass);
+      AutoBackupService.triggerBackup();
+      if (!mounted) return;
+      await context.read<PassProvider>().fetchPasses();
+      _showSuccessSnackBar('Pass imported successfully!');
+    } catch (_) {
+      _showImportError('Failed to import pass. Please try again.');
+    }
   }
 
   Future<void> _scanAndImport() async {
@@ -821,23 +914,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           child: FloatingActionButton(
-            onPressed: () async {
-              HapticFeedback.mediumImpact();
-              final walletProvider = context.read<WalletProvider>();
-              final passProvider = context.read<PassProvider>();
-              final identityProvider = context.read<IdentityProvider>();
-              final result = await Navigator.push(
-                context,
-                SmoothPageRoute(
-                  page: AddCardScreen(initialTabIndex: effectiveIndex),
-                ),
-              );
-              if (result == true && mounted) {
-                await walletProvider.fetchWallets();
-                await passProvider.fetchPasses();
-                await identityProvider.fetchIdentities();
-              }
-            },
+            onPressed: () => _showAddOptions(effectiveIndex),
             child: const Icon(Icons.add_rounded),
           ),
         ),
@@ -1413,18 +1490,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 8),
         ],
-        if (settings.isQrImportScannerEnabled) ...[
-          _buildPassControlButton(
-            isDark: isDark,
-            icon: Icons.qr_code_scanner_rounded,
-            tooltip: 'Scan to Import',
-            onPressed: () {
-              HapticFeedback.mediumImpact();
-              _scanAndImport();
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
         _buildPassControlButton(
           isDark: isDark,
           icon: Icons.settings_outlined,
@@ -1539,18 +1604,6 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: Icons.grid_view_rounded,
           tooltip: 'Change grid columns',
           onPressed: onViewToggle,
-        ),
-        const SizedBox(width: 8),
-      ],
-      if (settings.isQrImportScannerEnabled) ...[
-        _buildPassControlButton(
-          isDark: isDark,
-          icon: Icons.qr_code_scanner_rounded,
-          tooltip: 'Scan to Import',
-          onPressed: () {
-            HapticFeedback.mediumImpact();
-            _scanAndImport();
-          },
         ),
         const SizedBox(width: 8),
       ],
@@ -1914,18 +1967,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                       ),
-                      if (settings.isQrImportScannerEnabled) ...[
-                        const SizedBox(width: 8),
-                        _buildPassControlButton(
-                          isDark: isDark,
-                          icon: Icons.qr_code_scanner_rounded,
-                          tooltip: 'Scan to Import',
-                          onPressed: () {
-                            HapticFeedback.mediumImpact();
-                            _scanAndImport();
-                          },
-                        ),
-                      ],
                       const SizedBox(width: 8),
                       _buildPassControlButton(
                         isDark: isDark,

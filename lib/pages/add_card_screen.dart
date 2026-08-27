@@ -1,11 +1,6 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:kura/models/db_helper.dart';
-import 'package:kura/models/provider_helper.dart';
 import 'package:kura/models/theme_provider.dart';
-import 'package:kura/services/pkpass_service.dart';
-import 'package:kura/services/auto_backup_service.dart';
 import 'package:kura/widgets/credit_card_entry_form.dart';
 import 'package:kura/widgets/barcode_card_entry_form.dart';
 import 'package:kura/widgets/identity_card_entry_form.dart';
@@ -25,70 +20,6 @@ class AddCardScreen extends StatefulWidget {
 }
 
 class _AddCardScreenState extends State<AddCardScreen> {
-  Future<void> _importPkpass() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pkpass', 'zip'],
-      );
-
-      if (result != null && result.files.single.path != null) {
-        final pass = await PkpassService.instance.parsePkpass(
-          result.files.single.path!,
-        );
-        if (pass != null) {
-          if (mounted) {
-            final confirm = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Import Pass'),
-                content: Text(
-                  'Do you want to import "${pass.organizationName}"?',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: const Text('Import'),
-                  ),
-                ],
-              ),
-            );
-
-            if (confirm == true) {
-              await PassDatabaseHelper.instance.insertPass(pass);
-              AutoBackupService.triggerBackup();
-              if (mounted) {
-                context.read<PassProvider>().fetchPasses();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Pass imported successfully!')),
-                );
-                Navigator.pop(context, true);
-              }
-            }
-          }
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to parse .pkpass file.')),
-            );
-          }
-        }
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to import pass. Please try again.'),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
@@ -131,34 +62,6 @@ class _AddCardScreenState extends State<AddCardScreen> {
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        actions: [
-          if (effectiveIndex == 1)
-            Container(
-              margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF1A1A1A)
-                    : const Color(0xFFF0F0F0),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TextButton.icon(
-                icon: Icon(
-                  Icons.file_download_outlined,
-                  color: textColor,
-                  size: 18,
-                ),
-                label: Text(
-                  'Import pkpass',
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                onPressed: _importPkpass,
-              ),
-            ),
-        ],
       ),
       body: form,
     );

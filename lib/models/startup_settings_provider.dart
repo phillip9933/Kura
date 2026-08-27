@@ -44,7 +44,6 @@ class StartupSettingsProvider with ChangeNotifier {
   bool _showPassesTab = true;
   bool _showIdentityTab = true;
   bool _showBottomNavigationBar = true;
-  bool _isQrImportScannerEnabled = true;
   bool _showPassQrButton = true;
   bool _isPassSearchEnabled = true;
   bool _isExpiryNotificationEnabled = true;
@@ -137,7 +136,6 @@ class StartupSettingsProvider with ChangeNotifier {
   static const String _showPassesTabKey = 'showPassesTab';
   static const String _showIdentityTabKey = 'showIdentityTab';
   static const String _showBottomNavigationBarKey = 'showBottomNavigationBar';
-  static const String _isQrImportScannerEnabledKey = 'isQrImportScannerEnabled';
   static const String _showPassQrButtonKey = 'showPassQrButton';
   static const String _isPassSearchEnabledKey = 'isPassSearchEnabled';
   static const String _isExpiryNotificationEnabledKey =
@@ -162,7 +160,6 @@ class StartupSettingsProvider with ChangeNotifier {
   bool get showPassesTab => _showPassesTab;
   bool get showIdentityTab => _showIdentityTab;
   bool get showBottomNavigationBar => _showBottomNavigationBar;
-  bool get isQrImportScannerEnabled => _isQrImportScannerEnabled;
   bool get showPassQrButton => _showPassQrButton;
   bool get isPassSearchEnabled => _isPassSearchEnabled;
   bool get isExpiryNotificationEnabled => _isExpiryNotificationEnabled;
@@ -213,8 +210,6 @@ class StartupSettingsProvider with ChangeNotifier {
     _showIdentityTab = prefs.getBool(_showIdentityTabKey) ?? true;
     _showBottomNavigationBar =
         prefs.getBool(_showBottomNavigationBarKey) ?? true;
-    _isQrImportScannerEnabled =
-        prefs.getBool(_isQrImportScannerEnabledKey) ?? true;
     if (!_showPaymentsTab && !_showPassesTab && !_showIdentityTab) {
       _showPaymentsTab = true;
       await prefs.setBool(_showPaymentsTabKey, true);
@@ -385,13 +380,6 @@ class StartupSettingsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_currencyCodeKey, _selectedCurrencyCode);
     await prefs.setString(_currencySymbolKey, _selectedCurrencySymbol);
-    notifyListeners();
-  }
-
-  Future<void> setQrImportScannerEnabled(bool value) async {
-    _isQrImportScannerEnabled = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_isQrImportScannerEnabledKey, value);
     notifyListeners();
   }
 

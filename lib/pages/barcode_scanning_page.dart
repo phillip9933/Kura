@@ -60,18 +60,6 @@ class _BarcodeScanningPageState extends State<BarcodeScanningPage> {
                         _setBarcodeBrightnessEnabled(provider, enabled),
                   ),
                 ),
-                divider,
-                ListTile(
-                  leading: const Icon(Icons.qr_code_scanner_rounded),
-                  title: const Text('QR Import Scanner'),
-                  subtitle: const Text(
-                    'Show the scanner button in section controls',
-                  ),
-                  trailing: Switch(
-                    value: provider.isQrImportScannerEnabled,
-                    onChanged: provider.setQrImportScannerEnabled,
-                  ),
-                ),
               ],
             ),
           ),
