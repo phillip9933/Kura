@@ -12,6 +12,7 @@ import 'package:kura/models/theme_provider.dart';
 import 'package:kura/models/startup_settings_provider.dart';
 import 'package:kura/pages/section_settings_page.dart';
 import 'package:kura/pages/auto_backup_configuration_page.dart';
+import 'package:kura/pages/barcode_scanning_page.dart';
 import 'package:kura/pages/navigation_search_layout_page.dart';
 import 'package:kura/services/backup_service.dart';
 import 'package:kura/models/provider_helper.dart';
@@ -29,35 +30,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   String? _appVersion;
   bool _isAppVersionLoading = true;
-  static const _systemSettingsChannel = MethodChannel(
-    'com.sidhant.wallet/system_settings',
-  );
   static const _appInfoChannel = MethodChannel('app.kura.wallet/app_info');
-
-  Future<void> _setBarcodeBrightnessEnabled(
-    StartupSettingsProvider provider,
-    bool enabled,
-  ) async {
-    await provider.setMaxBrightnessOnBarcodeView(enabled);
-    if (!enabled || !Platform.isAndroid || !mounted) return;
-    try {
-      await _systemSettingsChannel.invokeMethod<void>(
-        'requestWriteSettingsPermission',
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Allow “Modify system settings” to enable barcode brightness.',
-            ),
-          ),
-        );
-      }
-    } catch (_) {
-      // The setting remains saved; the barcode screen will still work without
-      // brightness enhancement if the platform cannot open this page.
-    }
-  }
 
   @override
   void initState() {
@@ -307,36 +280,13 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           divider,
           _LiquidGlassTile(
-            icon: Icons.qr_code_scanner_rounded,
-            title: 'QR Import Scanner',
-            subtitle: 'Show the scanner button in section controls',
-            trailing: Switch(
-              value: startupProvider.isQrImportScannerEnabled,
-              onChanged: startupProvider.setQrImportScannerEnabled,
-            ),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.brightness_high_outlined,
-            title: 'Max Brightness on Barcode View',
-            subtitle: 'Temporarily maximize brightness for fullscreen barcodes',
-            trailing: Switch(
-              value: startupProvider.maxBrightnessOnBarcodeView,
-              onChanged: (enabled) =>
-                  _setBarcodeBrightnessEnabled(startupProvider, enabled),
-            ),
-          ),
-          divider,
-          _LiquidGlassTile(
             icon: Icons.screen_rotation_outlined,
-            title: 'Default Barcode Orientation',
-            subtitle:
-                startupProvider.defaultBarcodeOrientation ==
-                    BarcodeOrientation.flipped
-                ? 'Flipped'
-                : 'Default',
-            onTap: () =>
-                _showBarcodeOrientationDialog(context, startupProvider),
+            title: 'Barcode & Scanning',
+            subtitle: 'Configure barcode display and QR import scanning',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const BarcodeScanningPage()),
+            ),
           ),
         ],
       ),
@@ -410,43 +360,6 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       const SizedBox(height: 30),
     ];
-  }
-
-  void _showBarcodeOrientationDialog(
-    BuildContext context,
-    StartupSettingsProvider provider,
-  ) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Default Barcode Orientation'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<BarcodeOrientation>(
-              title: const Text('Default'),
-              value: BarcodeOrientation.defaultOrientation,
-              groupValue: provider.defaultBarcodeOrientation,
-              onChanged: (value) {
-                if (value == null) return;
-                provider.setDefaultBarcodeOrientation(value);
-                Navigator.pop(dialogContext);
-              },
-            ),
-            RadioListTile<BarcodeOrientation>(
-              title: const Text('Flipped'),
-              value: BarcodeOrientation.flipped,
-              groupValue: provider.defaultBarcodeOrientation,
-              onChanged: (value) {
-                if (value == null) return;
-                provider.setDefaultBarcodeOrientation(value);
-                Navigator.pop(dialogContext);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _launchExternalUrl(String url) async {

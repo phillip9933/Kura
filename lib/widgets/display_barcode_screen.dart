@@ -30,7 +30,6 @@ class _DisplayBarcodeScreenState extends State<DisplayBarcodeScreen> {
   late final List<_BarcodeFormat> _formats;
   int _selectedIndex = 0;
   bool _isFlipped = false;
-  double? _previousBrightness;
   bool _brightnessWasChanged = false;
 
   @override
@@ -70,9 +69,7 @@ class _DisplayBarcodeScreenState extends State<DisplayBarcodeScreen> {
 
   Future<void> _enableMaximumBrightness() async {
     try {
-      if (!await ScreenBrightness.instance.canChangeSystemBrightness) return;
-      _previousBrightness = await ScreenBrightness.instance.system;
-      await ScreenBrightness.instance.setSystemScreenBrightness(1.0);
+      await ScreenBrightness.instance.setApplicationScreenBrightness(1.0);
       _brightnessWasChanged = true;
     } catch (_) {
       // Brightness is an enhancement; barcode viewing must remain usable when
@@ -84,11 +81,7 @@ class _DisplayBarcodeScreenState extends State<DisplayBarcodeScreen> {
     if (!_brightnessWasChanged) return;
     _brightnessWasChanged = false;
     try {
-      if (_previousBrightness != null) {
-        await ScreenBrightness.instance.setSystemScreenBrightness(
-          _previousBrightness!,
-        );
-      }
+      await ScreenBrightness.instance.resetApplicationScreenBrightness();
     } catch (_) {}
   }
 
