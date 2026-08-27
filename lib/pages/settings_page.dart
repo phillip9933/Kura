@@ -13,6 +13,7 @@ import 'package:kura/models/startup_settings_provider.dart';
 import 'package:kura/pages/section_settings_page.dart';
 import 'package:kura/pages/backup_storage_page.dart';
 import 'package:kura/pages/barcode_scanning_page.dart';
+import 'package:kura/pages/expiry_alerts_page.dart';
 import 'package:kura/pages/general_display_page.dart';
 import 'package:kura/pages/navigation_search_layout_page.dart';
 import 'package:kura/services/backup_service.dart';
@@ -160,26 +161,11 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           _LiquidGlassTile(
             icon: Icons.notifications_active_outlined,
-            title: 'Startup Expiry Alerts',
-            subtitle: 'Show expired and upcoming expiry alerts when Kura opens',
-            trailing: Switch(
-              value: startupProvider.isExpiryNotificationEnabled,
-              onChanged: startupProvider.setExpiryNotificationEnabled,
-            ),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.calendar_month_outlined,
-            title: 'Alert Lead Time',
-            subtitle:
-                'Alert for items expiring within ${startupProvider.expiryNotificationLeadMonths} months',
-            trailing: TextButton(
-              onPressed: startupProvider.isExpiryNotificationEnabled
-                  ? () => _showExpiryNotificationLeadTimeDialog(startupProvider)
-                  : null,
-              child: Text(
-                '${startupProvider.expiryNotificationLeadMonths} months',
-              ),
+            title: 'Expiry Alerts',
+            subtitle: 'Configure startup expiry alerts and lead time',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ExpiryAlertsPage()),
             ),
           ),
         ],
@@ -350,70 +336,6 @@ class _SettingsPageState extends State<SettingsPage> {
     final path = provider.displayPath;
     if (path.isEmpty) return 'Configure backup location';
     return 'Active - ${_getShortPath(path)}';
-  }
-
-  void _showExpiryNotificationLeadTimeDialog(StartupSettingsProvider provider) {
-    final isDark = Provider.of<ThemeProvider>(
-      context,
-      listen: false,
-    ).isDarkMode;
-    final controller = TextEditingController(
-      text: provider.expiryNotificationLeadMonths.toString(),
-    );
-    var showValidationError = false;
-    showDialog(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
-          title: const Text(
-            'Alert Lead Time',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Show startup alerts for items expiring within this number of months.',
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  labelText: 'Months before expiry',
-                  suffixText: 'months',
-                  errorText: showValidationError
-                      ? 'Enter at least 1 month'
-                      : null,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                final months = int.tryParse(controller.text.trim());
-                if (months == null || months < 1) {
-                  setDialogState(() => showValidationError = true);
-                  return;
-                }
-                await provider.setExpiryNotificationLeadMonths(months);
-                if (dialogContext.mounted) Navigator.pop(dialogContext);
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   String _getShortPath(String path) {
