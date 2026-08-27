@@ -4,6 +4,25 @@ import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kura/models/db_helper.dart';
+import 'package:kura/services/image_service.dart';
+
+class _PassImagePaths {
+  const _PassImagePaths({
+    this.icon,
+    this.logo,
+    this.strip,
+    this.thumbnail,
+    this.background,
+    this.footer,
+  });
+
+  final String? icon;
+  final String? logo;
+  final String? strip;
+  final String? thumbnail;
+  final String? background;
+  final String? footer;
+}
 
 class PkpassService {
   static final PkpassService instance = PkpassService._();
@@ -76,7 +95,11 @@ class PkpassService {
       } catch (_) {
         passJsonStr = latin1.decode(passJsonBytes);
       }
-      final passJson = jsonDecode(passJsonStr);
+      final passJson = Map<String, dynamic>.from(
+        jsonDecode(passJsonStr) as Map,
+      );
+      final localizedStrings = _localizedStrings(archive);
+      _resolveLocalizedValues(passJson, localizedStrings);
 
       String name =
           passJson['organizationName'] ??
@@ -136,7 +159,7 @@ class PkpassService {
       String? foregroundColor = passJson['foregroundColor'];
       String? labelColor = passJson['labelColor'];
 
-      // Images extraction disabled as per instructions
+      final imagePaths = await _extractPassImages(archive);
 
       return Pass(
         type: passType,
@@ -151,13 +174,158 @@ class PkpassService {
         barcodeAltText: barcodeAltText,
         transitType: transitType,
         relevantDate: passJson['relevantDate']?.toString(),
-        frontImagePath: null,
+        frontImagePath: imagePaths.background,
         backImagePath: null,
-        stripImagePath: null,
-        thumbnailImagePath: null,
+        stripImagePath: imagePaths.strip,
+        thumbnailImagePath: imagePaths.thumbnail,
+        iconImagePath: imagePaths.icon,
+        logoImagePath: imagePaths.logo,
+        footerImagePath: imagePaths.footer,
+        sourceType: 'pkpass',
         fields: fields,
       );
     } catch (_) {
+      return null;
+    }
+  }
+
+  Map<String, String> _localizedStrings(Archive archive) {
+    final files = archive.files.where((file) => file.isFile).toList();
+    ArchiveFile? stringsFile;
+    for (final preferredDirectory in ['en.lproj', 'Base.lproj']) {
+      stringsFile = files.cast<ArchiveFile?>().firstWhere(
+        (file) =>
+            file?.name.endsWith('$preferredDirectory/pass.strings') ?? false,
+        orElse: () => null,
+      );
+      if (stringsFile != null) break;
+    }
+    stringsFile ??= files.cast<ArchiveFile?>().firstWhere(
+      (file) => file?.name.endsWith('.lproj/pass.strings') ?? false,
+      orElse: () => null,
+    );
+    if (stringsFile == null) return const {};
+
+    try {
+      final bytes = stringsFile.content as List<int>;
+      final content = _decodeStringsFile(bytes);
+      final strings = <String, String>{};
+      for (final match in RegExp(
+        r'"((?:\\.|[^"\\])*)"\s*=\s*"((?:\\.|[^"\\])*)"\s*;',
+      ).allMatches(content)) {
+        strings[_unescapeString(match.group(1)!)] = _unescapeString(
+          match.group(2)!,
+        );
+      }
+      return strings;
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  String _decodeStringsFile(List<int> bytes) {
+    if (bytes.length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE) {
+      return String.fromCharCodes([
+        for (var index = 2; index + 1 < bytes.length; index += 2)
+          bytes[index] | (bytes[index + 1] << 8),
+      ]);
+    }
+    if (bytes.length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF) {
+      return String.fromCharCodes([
+        for (var index = 2; index + 1 < bytes.length; index += 2)
+          (bytes[index] << 8) | bytes[index + 1],
+      ]);
+    }
+    try {
+      return utf8.decode(bytes);
+    } catch (_) {
+      return latin1.decode(bytes);
+    }
+  }
+
+  String _unescapeString(String value) => value
+      .replaceAll(r'\"', '"')
+      .replaceAll(r'\n', '\n')
+      .replaceAll(r'\\', r'\');
+
+  void _resolveLocalizedValues(dynamic value, Map<String, String> strings) {
+    if (value is Map) {
+      for (final entry in value.entries.toList()) {
+        final child = entry.value;
+        if (child is String && strings.containsKey(child)) {
+          value[entry.key] = strings[child];
+        } else {
+          _resolveLocalizedValues(child, strings);
+        }
+      }
+    } else if (value is List) {
+      for (final child in value) {
+        _resolveLocalizedValues(child, strings);
+      }
+    }
+  }
+
+  Future<_PassImagePaths> _extractPassImages(Archive archive) async {
+    final files = archive.files.where((file) => file.isFile).toList();
+    return _PassImagePaths(
+      icon: await _saveArchiveImage(files, [
+        'icon@3x.png',
+        'icon@2x.png',
+        'icon.png',
+      ]),
+      logo: await _saveArchiveImage(files, [
+        'logo@3x.png',
+        'logo@2x.png',
+        'logo.png',
+      ]),
+      strip: await _saveArchiveImage(files, [
+        'strip@3x.png',
+        'strip@2x.png',
+        'strip.png',
+      ]),
+      thumbnail: await _saveArchiveImage(files, [
+        'thumbnail@3x.png',
+        'thumbnail@2x.png',
+        'thumbnail.png',
+      ]),
+      background: await _saveArchiveImage(files, [
+        'background@3x.png',
+        'background@2x.png',
+        'background.png',
+      ]),
+      footer: await _saveArchiveImage(files, [
+        'footer@3x.png',
+        'footer@2x.png',
+        'footer.png',
+      ]),
+    );
+  }
+
+  Future<String?> _saveArchiveImage(
+    List<ArchiveFile> files,
+    List<String> names,
+  ) async {
+    ArchiveFile? imageFile;
+    for (final name in names) {
+      for (final file in files) {
+        if (file.name == name || file.name.endsWith('/$name')) {
+          imageFile = file;
+          break;
+        }
+      }
+      if (imageFile != null) break;
+    }
+    if (imageFile == null || imageFile.size <= 0) return null;
+
+    final extension = imageFile.name.endsWith('.jpg') ? '.jpg' : '.png';
+    final temporaryFile = File(
+      '${Directory.systemTemp.path}/kura_pkpass_${DateTime.now().microsecondsSinceEpoch}$extension',
+    );
+    try {
+      await temporaryFile.writeAsBytes(imageFile.content as List<int>);
+      return await saveImageToAppDirectory(temporaryFile);
+    } catch (_) {
+      if (await temporaryFile.exists()) await temporaryFile.delete();
       return null;
     }
   }

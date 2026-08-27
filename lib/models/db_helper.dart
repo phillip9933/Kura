@@ -287,7 +287,7 @@ class PassDatabaseHelper {
     return openDatabase(
       path,
       password: EncryptionService.instance.databasePassword,
-      version: 5,
+      version: 7,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE passes(
@@ -310,6 +310,9 @@ class PassDatabaseHelper {
             stripImagePath TEXT,
             thumbnailImagePath TEXT,
             iconImagePath TEXT,
+            logoImagePath TEXT,
+            footerImagePath TEXT,
+            sourceType TEXT,
             fields TEXT,
             orderIndex INTEGER DEFAULT 0,
             isArchived INTEGER NOT NULL DEFAULT 0
@@ -335,6 +338,15 @@ class PassDatabaseHelper {
         }
         if (oldVersion < 5) {
           await db.execute('ALTER TABLE passes ADD COLUMN expiry_date TEXT;');
+        }
+        if (oldVersion < 6) {
+          await db.execute('ALTER TABLE passes ADD COLUMN sourceType TEXT;');
+        }
+        if (oldVersion < 7) {
+          await db.execute('ALTER TABLE passes ADD COLUMN logoImagePath TEXT;');
+          await db.execute(
+            'ALTER TABLE passes ADD COLUMN footerImagePath TEXT;',
+          );
         }
       },
     );
@@ -391,6 +403,8 @@ class PassDatabaseHelper {
         'stripImagePath',
         'thumbnailImagePath',
         'iconImagePath',
+        'logoImagePath',
+        'footerImagePath',
       ],
       where: 'id = ?',
       whereArgs: [id],
@@ -408,6 +422,10 @@ class PassDatabaseHelper {
       result[0]['thumbnailImagePath'] as String?,
     );
     await DatabaseHelper.deleteImageFile(result[0]['iconImagePath'] as String?);
+    await DatabaseHelper.deleteImageFile(result[0]['logoImagePath'] as String?);
+    await DatabaseHelper.deleteImageFile(
+      result[0]['footerImagePath'] as String?,
+    );
 
     await db.delete('passes', where: 'id = ?', whereArgs: [id]);
   }

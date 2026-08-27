@@ -1740,7 +1740,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const horizontalPadding = 32.0;
     const crossAxisSpacing = 12.0;
     const cardAspectRatio = 1.586;
-    const labelHeight = 32.0;
+    const labelHeight = 44.0;
     final usableWidth =
         MediaQuery.sizeOf(context).width -
         horizontalPadding -

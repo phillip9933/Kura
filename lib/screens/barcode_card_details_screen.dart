@@ -10,6 +10,7 @@ import 'package:kura/widgets/display_barcode_screen.dart';
 import 'package:kura/widgets/encrypted_image_display.dart';
 import 'package:kura/widgets/full_screen_image_viewer.dart';
 import 'package:kura/widgets/barcode_card.dart';
+import 'package:kura/widgets/pkpass_detail_view.dart';
 import 'share_secure_screen.dart';
 import 'package:kura/models/startup_settings_provider.dart';
 import 'package:kura/services/clipboard_service.dart';
@@ -142,55 +143,75 @@ class _BarcodeCardDetailScreenState extends State<BarcodeCardDetailScreen> {
               },
             ),
           ),
-          Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF0F0F0),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: Icon(
-                Icons.edit,
-                color: isDark ? Colors.white : Colors.black,
-                size: 20,
+          if (p.sourceType != 'pkpass')
+            Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? const Color(0xFF1A1A1A)
+                    : const Color(0xFFF0F0F0),
+                borderRadius: BorderRadius.circular(12),
               ),
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                _navigateToEditScreen(context);
-              },
+              child: IconButton(
+                icon: Icon(
+                  Icons.edit,
+                  color: isDark ? Colors.white : Colors.black,
+                  size: 20,
+                ),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  _navigateToEditScreen(context);
+                },
+              ),
             ),
-          ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          BarcodeCard(
-            pass: p,
-            minimal: true,
-            onCardTap: () {
-              if (p.barcodeValue.isNotEmpty) {
-                HapticFeedback.mediumImpact();
-                Navigator.push(
-                  context,
-                  SmoothPageRoute(
-                    page: DisplayBarcodeScreen(
-                      barcodeData: p.barcodeValue,
-                      barcodeFormat: p.barcodeFormat,
-                      cardName: p.organizationName,
-                    ),
-                  ),
-                );
-              }
-            },
-          ),
-          const SizedBox(height: 24),
+      body: p.sourceType == 'pkpass'
+          ? PkpassDetailView(pass: p, onBarcodeTap: () => _showBarcode(p))
+          : ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: [
+                BarcodeCard(
+                  pass: p,
+                  minimal: true,
+                  onCardTap: () {
+                    if (p.barcodeValue.isNotEmpty) {
+                      HapticFeedback.mediumImpact();
+                      Navigator.push(
+                        context,
+                        SmoothPageRoute(
+                          page: DisplayBarcodeScreen(
+                            barcodeData: p.barcodeValue,
+                            barcodeFormat: p.barcodeFormat,
+                            cardName: p.organizationName,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: 24),
 
-          _buildDetailsSection(p, isDark),
+                _buildDetailsSection(p, isDark),
 
-          if (_hasPassImages(p)) _buildPassImagesSection(p, isDark),
-          const SizedBox(height: 32),
-        ],
+                if (_hasPassImages(p)) _buildPassImagesSection(p, isDark),
+                const SizedBox(height: 32),
+              ],
+            ),
+    );
+  }
+
+  void _showBarcode(Pass pass) {
+    if (pass.barcodeValue.isEmpty) return;
+    HapticFeedback.mediumImpact();
+    Navigator.push(
+      context,
+      SmoothPageRoute(
+        page: DisplayBarcodeScreen(
+          barcodeData: pass.barcodeValue,
+          barcodeFormat: pass.barcodeFormat,
+          cardName: pass.organizationName,
+        ),
       ),
     );
   }

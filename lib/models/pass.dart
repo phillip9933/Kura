@@ -21,6 +21,9 @@ class Pass {
   final String? stripImagePath;
   final String? thumbnailImagePath;
   final String? iconImagePath;
+  final String? logoImagePath;
+  final String? footerImagePath;
+  final String? sourceType;
   final Map<String, dynamic>? fields;
   int orderIndex;
   bool isArchived;
@@ -45,6 +48,9 @@ class Pass {
     this.stripImagePath,
     this.thumbnailImagePath,
     this.iconImagePath,
+    this.logoImagePath,
+    this.footerImagePath,
+    this.sourceType,
     this.fields,
     this.orderIndex = 0,
     this.isArchived = false,
@@ -71,6 +77,9 @@ class Pass {
       'stripImagePath': stripImagePath,
       'thumbnailImagePath': thumbnailImagePath,
       'iconImagePath': iconImagePath,
+      'logoImagePath': logoImagePath,
+      'footerImagePath': footerImagePath,
+      'sourceType': sourceType,
       'fields': fields != null ? jsonEncode(fields) : null,
       'orderIndex': orderIndex,
       'isArchived': isArchived,
@@ -99,6 +108,9 @@ class Pass {
       'stripImagePath': stripImagePath,
       'thumbnailImagePath': thumbnailImagePath,
       'iconImagePath': iconImagePath,
+      'logoImagePath': logoImagePath,
+      'footerImagePath': footerImagePath,
+      'sourceType': sourceType,
       'fields': fields != null ? enc.encryptJson(fields!) : null,
       'orderIndex': orderIndex,
       'isArchived': isArchived,
@@ -126,6 +138,9 @@ class Pass {
       stripImagePath: map['stripImagePath'],
       thumbnailImagePath: map['thumbnailImagePath'],
       iconImagePath: map['iconImagePath'],
+      logoImagePath: map['logoImagePath'],
+      footerImagePath: map['footerImagePath'],
+      sourceType: map['sourceType'],
       fields: map['fields'] != null ? jsonDecode(map['fields']) : null,
       orderIndex: map['orderIndex'] ?? 0,
       isArchived: map['isArchived'] == 1 || map['isArchived'] == true,
@@ -154,6 +169,9 @@ class Pass {
       stripImagePath: map['stripImagePath'],
       thumbnailImagePath: map['thumbnailImagePath'],
       iconImagePath: map['iconImagePath'],
+      logoImagePath: map['logoImagePath'],
+      footerImagePath: map['footerImagePath'],
+      sourceType: map['sourceType'],
       fields: map['fields'] != null
           ? enc.decryptJsonToDynamicMap(map['fields'])
           : null,
