@@ -131,48 +131,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return [
       _LiquidGlassSection(
-        title: 'General & Security',
+        title: 'Data & Security',
         icon: Icons.security_outlined,
-        children: [
-          _LiquidGlassTile(
-            icon: Icons.shield_outlined,
-            title: 'Authentication',
-            subtitle: 'Require biometrics when the app starts',
-            trailing: Switch(
-              value: startupProvider.showAuthenticationScreen,
-              onChanged: (_) => startupProvider.toggleAuthenticationScreen(),
-            ),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.tune_outlined,
-            title: 'General Display',
-            subtitle: 'Configure theme, currency, and default tab',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const GeneralDisplayPage()),
-            ),
-          ),
-        ],
-      ),
-      _LiquidGlassSection(
-        title: 'Notifications',
-        icon: Icons.notifications_outlined,
-        children: [
-          _LiquidGlassTile(
-            icon: Icons.notifications_active_outlined,
-            title: 'Expiry Alerts',
-            subtitle: 'Configure startup expiry alerts and lead time',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ExpiryAlertsPage()),
-            ),
-          ),
-        ],
-      ),
-      _LiquidGlassSection(
-        title: 'Data & Backup',
-        icon: Icons.storage_outlined,
         children: [
           _LiquidGlassTile(
             icon: Icons.inventory_2_outlined,
@@ -181,6 +141,16 @@ class _SettingsPageState extends State<SettingsPage> {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ArchiveScreen()),
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.shield_outlined,
+            title: 'Require Biometrics',
+            subtitle: 'Require biometrics when the app starts',
+            trailing: Switch(
+              value: startupProvider.showAuthenticationScreen,
+              onChanged: (_) => startupProvider.toggleAuthenticationScreen(),
             ),
           ),
           divider,
@@ -203,32 +173,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
       _LiquidGlassSection(
-        title: 'Interface & Layout',
-        icon: Icons.palette_outlined,
-        children: [
-          _LiquidGlassTile(
-            icon: Icons.visibility_outlined,
-            title: 'Navigation & Layout',
-            subtitle: 'Configure tabs, navigation, controls, and search',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const NavigationLayoutPage()),
-            ),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.screen_rotation_outlined,
-            title: 'Barcode & Scanning',
-            subtitle: 'Configure barcode display and QR import scanning',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const BarcodeScanningPage()),
-            ),
-          ),
-        ],
-      ),
-      _LiquidGlassSection(
-        title: 'Section Configuration',
+        title: 'Section Management',
         icon: Icons.tab_outlined,
         children: [
           _LiquidGlassTile(
@@ -272,12 +217,57 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
       _LiquidGlassSection(
+        title: 'App Preferences',
+        icon: Icons.palette_outlined,
+        children: [
+          _LiquidGlassTile(
+            icon: Icons.tune_outlined,
+            title: 'General Display',
+            subtitle: 'Configure theme, currency, and default tab',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const GeneralDisplayPage()),
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.notifications_active_outlined,
+            title: 'Expiry Alerts',
+            subtitle: 'Configure startup expiry alerts and lead time',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ExpiryAlertsPage()),
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.visibility_outlined,
+            title: 'Navigation & Layout',
+            subtitle: 'Configure tabs, navigation, controls, and search',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NavigationLayoutPage()),
+            ),
+          ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.screen_rotation_outlined,
+            title: 'Barcode & Scanning',
+            subtitle: 'Configure barcode display and QR import scanning',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const BarcodeScanningPage()),
+            ),
+          ),
+        ],
+      ),
+      _LiquidGlassSection(
         title: 'About',
         icon: Icons.info_outline_rounded,
         children: [
           _LiquidGlassTile(
             icon: Icons.info_outline_rounded,
-            title: 'App Version & Trademark Notice',
+            title: 'App Version & Trademark',
             subtitle: '$_appVersionSubtitle - View trademark information',
             onTap: () => _showTrademarkNotice(isDark),
           ),
