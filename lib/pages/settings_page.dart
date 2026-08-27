@@ -12,6 +12,7 @@ import 'package:kura/models/theme_provider.dart';
 import 'package:kura/models/startup_settings_provider.dart';
 import 'package:kura/pages/section_settings_page.dart';
 import 'package:kura/pages/auto_backup_configuration_page.dart';
+import 'package:kura/pages/navigation_search_layout_page.dart';
 import 'package:kura/services/backup_service.dart';
 import 'package:kura/models/provider_helper.dart';
 import 'package:kura/models/db_helper.dart';
@@ -214,44 +215,13 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           _LiquidGlassTile(
             icon: Icons.visibility_outlined,
-            title: 'Visible Tabs',
-            subtitle: 'Choose the sections shown in main navigation',
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildVisibleTabChip(
-                  label: 'Payments',
-                  selected: startupProvider.showPaymentsTab,
-                  onSelected: (selected) =>
-                      startupProvider.setTabVisibility(0, selected),
-                ),
-                _buildVisibleTabChip(
-                  label: 'Passes',
-                  selected: startupProvider.showPassesTab,
-                  onSelected: (selected) =>
-                      startupProvider.setTabVisibility(1, selected),
-                ),
-                _buildVisibleTabChip(
-                  label: 'Identity',
-                  selected: startupProvider.showIdentityTab,
-                  onSelected: (selected) =>
-                      startupProvider.setTabVisibility(2, selected),
-                ),
-              ],
-            ),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.navigation_outlined,
-            title: 'Show Bottom Navigation',
-            subtitle: 'Show or hide the Payments, Passes, and Identity bar',
-            trailing: Switch(
-              value: startupProvider.showBottomNavigationBar,
-              onChanged: startupProvider.setShowBottomNavigationBar,
+            title: 'Navigation & Search Layout',
+            subtitle: 'Configure tabs, navigation, controls, and search',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const NavigationSearchLayoutPage(),
+              ),
             ),
           ),
           divider,
@@ -334,83 +304,6 @@ class _SettingsPageState extends State<SettingsPage> {
             title: 'App Theme',
             subtitle: _getThemeDisplayName(themeProvider.themePreference),
             onTap: () => _showThemeDialog(context, themeProvider),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.search_rounded,
-            title: 'Show Search',
-            subtitle:
-                'Show or hide the search bar on Payments, Passes, and Identity',
-            trailing: Switch(
-              value: startupProvider.isPassSearchEnabled,
-              onChanged: startupProvider.setPassSearchEnabled,
-            ),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.manage_search_rounded,
-            title: 'Search Style',
-            subtitle: _getSearchStyleDisplayName(
-              startupProvider.passSearchStyle,
-            ),
-            trailing: TextButton(
-              onPressed: startupProvider.isPassSearchEnabled
-                  ? () => startupProvider.setPassSearchStyle(
-                      startupProvider.passSearchStyle ==
-                              PassSearchStyle.alwaysOn
-                          ? PassSearchStyle.icon
-                          : PassSearchStyle.alwaysOn,
-                    )
-                  : null,
-              child: Text(
-                _getSearchStyleDisplayName(startupProvider.passSearchStyle),
-              ),
-            ),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.swap_vert_rounded,
-            title: 'Search Position',
-            subtitle: _getSearchPositionDisplayName(
-              startupProvider.searchBarPosition,
-            ),
-            trailing: TextButton(
-              onPressed:
-                  startupProvider.isPassSearchEnabled &&
-                      startupProvider.passSearchStyle ==
-                          PassSearchStyle.alwaysOn
-                  ? () => startupProvider.setSearchBarPosition(
-                      startupProvider.searchBarPosition == SearchBarPosition.top
-                          ? SearchBarPosition.bottom
-                          : SearchBarPosition.top,
-                    )
-                  : null,
-              child: Text(
-                _getSearchPositionDisplayName(
-                  startupProvider.searchBarPosition,
-                ),
-              ),
-            ),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.vertical_align_bottom_rounded,
-            title: 'Control Row Position',
-            subtitle: _getControlRowPositionDisplayName(
-              startupProvider.controlRowPosition,
-            ),
-            trailing: TextButton(
-              onPressed: () => startupProvider.setControlRowPosition(
-                startupProvider.controlRowPosition == ControlRowPosition.top
-                    ? ControlRowPosition.bottom
-                    : ControlRowPosition.top,
-              ),
-              child: Text(
-                _getControlRowPositionDisplayName(
-                  startupProvider.controlRowPosition,
-                ),
-              ),
-            ),
           ),
           divider,
           _LiquidGlassTile(
@@ -517,46 +410,6 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       const SizedBox(height: 30),
     ];
-  }
-
-  Widget _buildVisibleTabChip({
-    required String label,
-    required bool selected,
-    required ValueChanged<bool> onSelected,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return FilterChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          color: selected ? colorScheme.onPrimary : colorScheme.onSurface,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      selected: selected,
-      onSelected: onSelected,
-      selectedColor: colorScheme.primary,
-      backgroundColor: colorScheme.surfaceContainerHighest,
-      checkmarkColor: colorScheme.onPrimary,
-    );
-  }
-
-  String _getSearchStyleDisplayName(PassSearchStyle style) {
-    return switch (style) {
-      PassSearchStyle.alwaysOn => 'Search Bar',
-      PassSearchStyle.icon => 'Search Button',
-    };
-  }
-
-  String _getSearchPositionDisplayName(SearchBarPosition position) {
-    return switch (position) {
-      SearchBarPosition.top => 'Top',
-      SearchBarPosition.bottom => 'Bottom',
-    };
-  }
-
-  String _getControlRowPositionDisplayName(ControlRowPosition position) {
-    return position == ControlRowPosition.top ? 'Top' : 'Bottom';
   }
 
   void _showBarcodeOrientationDialog(
