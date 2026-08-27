@@ -13,6 +13,7 @@ import 'package:kura/models/startup_settings_provider.dart';
 import 'package:kura/pages/section_settings_page.dart';
 import 'package:kura/pages/backup_storage_page.dart';
 import 'package:kura/pages/barcode_scanning_page.dart';
+import 'package:kura/pages/general_display_page.dart';
 import 'package:kura/pages/navigation_search_layout_page.dart';
 import 'package:kura/services/backup_service.dart';
 import 'package:kura/models/provider_helper.dart';
@@ -74,30 +75,6 @@ class _SettingsPageState extends State<SettingsPage> {
       localizedReason: 'Authenticate to perform this action',
       options: const AuthenticationOptions(stickyAuth: true),
     );
-  }
-
-  String _getThemeDisplayName(ThemePreference preference) {
-    switch (preference) {
-      case ThemePreference.light:
-        return 'Light';
-      case ThemePreference.dark:
-        return 'Dark';
-      case ThemePreference.system:
-        return 'Follow System';
-    }
-  }
-
-  String _getDefaultScreenName(int index) {
-    switch (index) {
-      case 0:
-        return 'Payments';
-      case 1:
-        return 'Passes';
-      case 2:
-        return 'Identity';
-      default:
-        return 'Payments';
-    }
   }
 
   @override
@@ -167,18 +144,13 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           divider,
           _LiquidGlassTile(
-            icon: Icons.brightness_6_outlined,
-            title: 'App Theme',
-            subtitle: _getThemeDisplayName(themeProvider.themePreference),
-            onTap: () => _showThemeDialog(context, themeProvider),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.payments_outlined,
-            title: 'Default Currency',
-            subtitle:
-                '${startupProvider.selectedCurrencyCode} (${startupProvider.selectedCurrencySymbol})',
-            onTap: () => _showCurrencyDialog(context, startupProvider),
+            icon: Icons.tune_outlined,
+            title: 'General Display',
+            subtitle: 'Configure theme, currency, and default tab',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const GeneralDisplayPage()),
+            ),
           ),
         ],
       ),
@@ -248,13 +220,6 @@ class _SettingsPageState extends State<SettingsPage> {
         title: 'Interface & Layout',
         icon: Icons.palette_outlined,
         children: [
-          _LiquidGlassTile(
-            icon: Icons.home_outlined,
-            title: 'Default Tab on Launch',
-            subtitle: _getDefaultScreenName(startupProvider.defaultScreenIndex),
-            onTap: () => _showDefaultScreenDialog(context, startupProvider),
-          ),
-          divider,
           _LiquidGlassTile(
             icon: Icons.visibility_outlined,
             title: 'Navigation & Search Layout',
@@ -376,140 +341,6 @@ class _SettingsPageState extends State<SettingsPage> {
             child: const Text('Close'),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showCurrencyDialog(
-    BuildContext context,
-    StartupSettingsProvider provider,
-  ) {
-    final isDark = Provider.of<ThemeProvider>(
-      context,
-      listen: false,
-    ).isDarkMode;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
-        title: const Text(
-          'Choose Currency',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: StartupSettingsProvider.majorCurrencies.length,
-            itemBuilder: (context, index) {
-              final currency = StartupSettingsProvider.majorCurrencies[index];
-              return RadioListTile<String>(
-                title: Text('${currency['name']} (${currency['symbol']})'),
-                value: currency['code']!,
-                groupValue: provider.selectedCurrencyCode,
-                onChanged: (val) {
-                  if (val != null) {
-                    provider.setCurrency(val, currency['symbol']!);
-                    Navigator.pop(context);
-                  }
-                },
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showDefaultScreenDialog(
-    BuildContext context,
-    StartupSettingsProvider provider,
-  ) {
-    final isDark = Provider.of<ThemeProvider>(
-      context,
-      listen: false,
-    ).isDarkMode;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
-        title: const Text(
-          'Default Screen',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (provider.showPaymentsTab)
-              _buildRadioOption('Payments', 0, provider.defaultScreenIndex, (
-                v,
-              ) {
-                provider.setDefaultScreen(v);
-                Navigator.pop(context);
-              }, isDark),
-            if (provider.showPassesTab)
-              _buildRadioOption('Passes', 1, provider.defaultScreenIndex, (v) {
-                provider.setDefaultScreen(v);
-                Navigator.pop(context);
-              }, isDark),
-            if (provider.showIdentityTab)
-              _buildRadioOption('Identity', 2, provider.defaultScreenIndex, (
-                v,
-              ) {
-                provider.setDefaultScreen(v);
-                Navigator.pop(context);
-              }, isDark),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRadioOption(
-    String label,
-    int value,
-    int groupValue,
-    Function(int) onChanged,
-    bool isDark,
-  ) {
-    return RadioListTile<int>(
-      title: Text(label),
-      value: value,
-      groupValue: groupValue,
-      onChanged: (val) {
-        if (val != null) onChanged(val);
-      },
-    );
-  }
-
-  void _showThemeDialog(BuildContext context, ThemeProvider themeProvider) {
-    final isDark = themeProvider.isDarkMode;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF0A0A0A) : Colors.white,
-        title: const Text(
-          'Choose Theme',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: ThemePreference.values
-              .map(
-                (p) => RadioListTile<ThemePreference>(
-                  title: Text(_getThemeDisplayName(p)),
-                  value: p,
-                  groupValue: themeProvider.themePreference,
-                  onChanged: (v) {
-                    if (v != null) {
-                      themeProvider.setThemePreference(v);
-                      Navigator.pop(context);
-                    }
-                  },
-                ),
-              )
-              .toList(),
-        ),
       ),
     );
   }
