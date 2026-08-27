@@ -107,6 +107,9 @@ class PkpassService {
           'Imported Pass';
       String description = passJson['description'] ?? '';
       String? logoText = passJson['logoText'];
+      final expiryDate = _expiryDateValue(
+        passJson['expirationDate'] ?? passJson['relevantDate'],
+      );
       String number = '';
       String? barcodeFormat;
       String? barcodeAltText;
@@ -174,6 +177,7 @@ class PkpassService {
         barcodeAltText: barcodeAltText,
         transitType: transitType,
         relevantDate: passJson['relevantDate']?.toString(),
+        expiryDate: expiryDate,
         frontImagePath: imagePaths.background,
         backImagePath: null,
         stripImagePath: imagePaths.strip,
@@ -187,6 +191,13 @@ class PkpassService {
     } catch (_) {
       return null;
     }
+  }
+
+  String? _expiryDateValue(dynamic value) {
+    if (value == null) return null;
+    final date = DateTime.tryParse(value.toString());
+    if (date == null) return null;
+    return '${date.month.toString().padLeft(2, '0')}/${(date.year % 100).toString().padLeft(2, '0')}';
   }
 
   Map<String, String> _localizedStrings(Archive archive) {

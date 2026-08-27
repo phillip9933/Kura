@@ -283,7 +283,6 @@ class _BarcodeCardDetailScreenState extends State<BarcodeCardDetailScreen> {
 
   bool _hasPassImages(Pass pass) {
     return _isPathValid(pass.frontImagePath) ||
-        _isPathValid(pass.backImagePath) ||
         _isPathValid(pass.stripImagePath) ||
         _isPathValid(pass.thumbnailImagePath);
   }
@@ -304,15 +303,6 @@ class _BarcodeCardDetailScreenState extends State<BarcodeCardDetailScreen> {
                 child: _buildImageThumbnail(
                   pass.frontImagePath!,
                   'Front',
-                  isDark,
-                ),
-              ),
-            if (_isPathValid(pass.backImagePath))
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: _buildImageThumbnail(
-                  pass.backImagePath!,
-                  'Back',
                   isDark,
                 ),
               ),

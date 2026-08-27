@@ -128,17 +128,7 @@ class PassGridCard extends StatelessWidget {
       );
     }
 
-    // Mode 2: Back Image (with fallback to digital card)
-    if (displayMode == PassDisplayMode.back &&
-        pass.backImagePath != null &&
-        pass.backImagePath!.isNotEmpty) {
-      return EncryptedImageDisplay(
-        imagePath: pass.backImagePath!,
-        fit: BoxFit.cover,
-      );
-    }
-
-    // Mode 3: Styled Digital "Fake Card" View
+    // Styled Digital "Fake Card" View
     final customBgColor = _parseColor(pass.backgroundColor);
     final customFgColor =
         _parseColor(pass.foregroundColor) ??

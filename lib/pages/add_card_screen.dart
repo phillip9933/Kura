@@ -8,11 +8,15 @@ import 'package:kura/widgets/identity_card_entry_form.dart';
 class AddCardScreen extends StatefulWidget {
   final int initialTabIndex;
   final String? initialSharedImagePath;
+  final String? initialBarcodeValue;
+  final String? initialBarcodeFormat;
 
   const AddCardScreen({
     super.key,
     this.initialTabIndex = 0,
     this.initialSharedImagePath,
+    this.initialBarcodeValue,
+    this.initialBarcodeFormat,
   });
 
   @override
@@ -34,6 +38,8 @@ class _AddCardScreenState extends State<AddCardScreen> {
       case 1:
         form = BarcodeCardEntryForm(
           initialSharedImagePath: widget.initialSharedImagePath,
+          initialBarcodeValue: widget.initialBarcodeValue,
+          initialBarcodeFormat: widget.initialBarcodeFormat,
         );
         break;
       case 2:

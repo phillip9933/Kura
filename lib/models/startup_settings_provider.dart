@@ -266,6 +266,13 @@ class StartupSettingsProvider with ChangeNotifier {
       (mode) => mode.name == savedGridDisplayMode,
       orElse: () => PassGridDisplayMode.front,
     );
+    if (savedGridDisplayMode == 'back') {
+      _passGridDisplayMode = PassGridDisplayMode.front;
+      await prefs.setString(
+        _passGridDisplayModeKey,
+        PassGridDisplayMode.front.name,
+      );
+    }
     final savedGridColumns = prefs.getInt(_passGridColumnsKey) ?? 1;
     for (final section in WalletSection.values) {
       final savedColumns = prefs.getInt(_sectionGridColumnsKey(section));
@@ -284,6 +291,13 @@ class StartupSettingsProvider with ChangeNotifier {
             ? _passGridDisplayMode
             : PassGridDisplayMode.front,
       );
+      if (section == WalletSection.passes && savedDisplayMode == 'back') {
+        _sectionGridDisplayModes[section] = PassGridDisplayMode.front;
+        await prefs.setString(
+          _sectionGridDisplayModeKey(section),
+          PassGridDisplayMode.front.name,
+        );
+      }
       final savedCategories = prefs.getStringList(
         _sectionCategoriesKey(section),
       );

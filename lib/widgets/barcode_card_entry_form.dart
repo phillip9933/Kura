@@ -19,12 +19,16 @@ import 'package:kura/widgets/full_screen_image_viewer.dart';
 class BarcodeCardEntryForm extends StatefulWidget {
   final Pass? existingPass;
   final String? initialSharedImagePath;
+  final String? initialBarcodeValue;
+  final String? initialBarcodeFormat;
   final Widget? footer;
 
   const BarcodeCardEntryForm({
     super.key,
     this.existingPass,
     this.initialSharedImagePath,
+    this.initialBarcodeValue,
+    this.initialBarcodeFormat,
     this.footer,
   });
 
@@ -46,7 +50,6 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
   String _selectedBarcodeFormat = 'QR Code';
   String? _transitType;
   String? _frontImagePath;
-  String? _backImagePath;
   String? _iconImagePath;
   DateTime? _expiryDate;
 
@@ -74,7 +77,6 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
       _transitType = p.transitType;
       _selectedBarcodeFormat = BarcodeUtils.getLabelFromFormat(p.barcodeFormat);
       _frontImagePath = p.frontImagePath;
-      _backImagePath = p.backImagePath;
       _iconImagePath = p.iconImagePath;
       _expiryDate = _parseExpiryDate(p.expiryDate);
 
@@ -103,6 +105,14 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
       // Load color from existing pass background color
       if (p.backgroundColor != null && p.backgroundColor!.isNotEmpty) {
         _selectedColor = p.backgroundColor!;
+      }
+    } else {
+      _barcodeValueController.text = widget.initialBarcodeValue ?? '';
+      if (widget.initialBarcodeFormat != null &&
+          BarcodeUtils.supportedFormats.containsKey(
+            widget.initialBarcodeFormat,
+          )) {
+        _selectedBarcodeFormat = widget.initialBarcodeFormat!;
       }
     }
 
@@ -257,7 +267,6 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
         transitType: _transitType,
         expiryDate: _expiryDateValue,
         frontImagePath: _frontImagePath,
-        backImagePath: _backImagePath,
         iconImagePath: _iconImagePath,
         stripImagePath: widget.existingPass?.stripImagePath,
         thumbnailImagePath: widget.existingPass?.thumbnailImagePath,
@@ -357,22 +366,16 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
     } catch (_) {}
   }
 
-  Future<void> _pickImage(bool isFront) async {
+  Future<void> _pickImage() async {
     try {
       final croppedFile = await pickAndCropCardImage(
         context,
-        sideLabel: isFront ? 'Front' : 'Back',
+        sideLabel: 'Front',
       );
       if (croppedFile == null) return;
       final encryptedPath = await saveImageToAppDirectory(croppedFile);
       if (encryptedPath == null || !mounted) return;
-      setState(() {
-        if (isFront) {
-          _frontImagePath = encryptedPath;
-        } else {
-          _backImagePath = encryptedPath;
-        }
-      });
+      setState(() => _frontImagePath = encryptedPath);
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -519,7 +522,6 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
             transitType: _transitType,
             fields: _dynamicFields,
             frontImagePath: _frontImagePath,
-            backImagePath: _backImagePath,
             iconImagePath: _iconImagePath,
             stripImagePath: widget.existingPass?.stripImagePath,
             thumbnailImagePath: widget.existingPass?.thumbnailImagePath,
@@ -622,16 +624,7 @@ class BarcodeCardEntryFormState extends State<BarcodeCardEntryForm> {
               child: _buildImagePickerTile(
                 'Front Side',
                 _frontImagePath,
-                () => _pickImage(true),
-                isDark,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildImagePickerTile(
-                'Back Side',
-                _backImagePath,
-                () => _pickImage(false),
+                _pickImage,
                 isDark,
               ),
             ),

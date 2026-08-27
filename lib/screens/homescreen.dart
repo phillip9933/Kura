@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kura/services/clipboard_service.dart';
+import 'package:kura/services/barcode_utils.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:barcode_scan2/barcode_scan2.dart';
 import 'package:provider/provider.dart';
@@ -344,8 +345,10 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.qr_code_scanner_rounded),
-                title: const Text('Scan Barcode'),
-                subtitle: const Text('Scan a barcode to import shared data'),
+                title: const Text('Scan for Sharing or Import'),
+                subtitle: const Text(
+                  'Import shared data or add a scanned barcode',
+                ),
                 onTap: () {
                   Navigator.pop(sheetContext);
                   _scanAndImport();
@@ -454,8 +457,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _scanAndImport() async {
+    ScanResult? scannedResult;
     try {
       final scanResult = await BarcodeScanner.scan();
+      scannedResult = scanResult;
       if (scanResult.type != ResultType.Barcode) return;
 
       final rawData = scanResult.rawContent;
@@ -471,11 +476,7 @@ class _HomeScreenState extends State<HomeScreen> {
           .decryptFromTransfer(rawData);
 
       if (decryptedJson == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid or corrupted sharing code.')),
-          );
-        }
+        await _openScannedBarcodeEntry(scanResult);
         return;
       }
 
@@ -484,11 +485,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final data = payload['data'] as Map<String, dynamic>?;
 
       if (type == null || data == null || !_isValidImportType(type)) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid sharing code format.')),
-          );
-        }
+        await _openScannedBarcodeEntry(scanResult);
         return;
       }
 
@@ -553,16 +550,33 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         }
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Failed to import. The sharing code may be corrupted.',
-            ),
-          ),
-        );
+    } catch (_) {
+      if (scannedResult != null) {
+        await _openScannedBarcodeEntry(scannedResult);
+      } else if (mounted) {
+        _showImportError('Failed to scan barcode. Please try again.');
       }
+    }
+  }
+
+  Future<void> _openScannedBarcodeEntry(ScanResult scanResult) async {
+    final barcodeValue = scanResult.rawContent.trim();
+    if (barcodeValue.isEmpty || !mounted) return;
+    final barcodeFormat = BarcodeUtils.getLabelFromScannerFormat(
+      scanResult.format,
+    );
+    final result = await Navigator.push<bool>(
+      context,
+      SmoothPageRoute(
+        page: AddCardScreen(
+          initialTabIndex: 1,
+          initialBarcodeValue: barcodeValue,
+          initialBarcodeFormat: barcodeFormat,
+        ),
+      ),
+    );
+    if (result == true && mounted) {
+      await context.read<PassProvider>().fetchPasses();
     }
   }
 
@@ -2079,7 +2093,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       WalletSection.passes,
                     )) {
                       PassGridDisplayMode.front => PassDisplayMode.front,
-                      PassGridDisplayMode.back => PassDisplayMode.back,
+                      PassGridDisplayMode.back => PassDisplayMode.front,
                       PassGridDisplayMode.virtualCards => PassDisplayMode.card,
                     };
 
