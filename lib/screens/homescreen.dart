@@ -135,10 +135,10 @@ class _HomeScreenState extends State<HomeScreen> {
           _handleSharedMedia(value);
         }, onError: (_) {});
 
-    // For sharing images when app was closed/opened via intent
-    ReceiveSharingIntent.instance.getInitialMedia().then((value) {
-      _handleSharedMedia(value);
-      ReceiveSharingIntent.instance.reset();
+    // For sharing media when app was closed/opened via intent.
+    ReceiveSharingIntent.instance.getInitialMedia().then((value) async {
+      await _handleSharedMedia(value);
+      await ReceiveSharingIntent.instance.reset();
     });
   }
 
@@ -284,21 +284,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _handleSharedMedia(List<SharedMediaFile> value) {
-    if (value.isNotEmpty && mounted) {
-      final imagePath = value.first.path;
-      if (imagePath.isNotEmpty) {
-        Navigator.push(
-          context,
-          SmoothPageRoute(
-            page: AddCardScreen(
-              initialTabIndex: 1,
-              initialSharedImagePath: imagePath,
-            ),
-          ),
-        );
-      }
+  Future<void> _handleSharedMedia(List<SharedMediaFile> files) async {
+    if (files.isEmpty || !mounted) return;
+    final file = files.first;
+    if (file.path.isEmpty) return;
+
+    if (_isPkpassFile(file)) {
+      await _importPassFileFromPath(file.path);
+      return;
     }
+
+    Navigator.push(
+      context,
+      SmoothPageRoute(
+        page: AddCardScreen(
+          initialTabIndex: 1,
+          initialSharedImagePath: file.path,
+        ),
+      ),
+    );
+  }
+
+  bool _isPkpassFile(SharedMediaFile file) {
+    final path = file.path.toLowerCase();
+    final mimeType = file.mimeType?.toLowerCase();
+    return path.endsWith('.pkpass') ||
+        (path.endsWith('.zip') &&
+            (mimeType == 'application/vnd.apple.pkpass' ||
+                mimeType == 'application/zip')) ||
+        mimeType == 'application/vnd.apple.pkpass';
   }
 
   @override
@@ -384,7 +398,14 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       final path = result?.files.single.path;
       if (path == null) return;
+      await _importPassFileFromPath(path);
+    } catch (_) {
+      _showImportError('Failed to import pass. Please try again.');
+    }
+  }
 
+  Future<void> _importPassFileFromPath(String path) async {
+    try {
       final pass = await PkpassService.instance.parsePkpass(path);
       if (pass == null) {
         _showImportError('Failed to parse .pkpass file.');
@@ -402,9 +423,33 @@ class _HomeScreenState extends State<HomeScreen> {
       AutoBackupService.triggerBackup();
       if (!mounted) return;
       await context.read<PassProvider>().fetchPasses();
+      _selectPassesTab();
       _showSuccessSnackBar('Pass imported successfully!');
     } catch (_) {
       _showImportError('Failed to import pass. Please try again.');
+    }
+  }
+
+  void _selectPassesTab() {
+    final settings = context.read<StartupSettingsProvider>();
+    if (!settings.showPassesTab) return;
+
+    final visibleTabs = <int>[
+      if (settings.showPaymentsTab) 0,
+      if (settings.showPassesTab) 1,
+      if (settings.showIdentityTab) 2,
+    ];
+    final passesPageIndex = visibleTabs.indexOf(1);
+    if (passesPageIndex < 0) return;
+
+    if (_tabPageController.hasClients) {
+      _tabPageController.animateToPage(
+        passesPageIndex,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+    } else {
+      setState(() => _selectedIndex = 1);
     }
   }
 
