@@ -18,8 +18,10 @@ class AutoBackupService {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(seconds: 2), () async {
       try {
+        final password = await provider.readBackupPassword();
+        if (password == null || password.isEmpty) return;
         await BackupService.createAutoBackup(
-          provider.backupPassword,
+          password,
           provider.backupUri,
           retentionCount: provider.retentionCount,
         );
@@ -30,4 +32,6 @@ class AutoBackupService {
       }
     });
   }
+
+  static void lock() => _debounceTimer?.cancel();
 }

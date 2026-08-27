@@ -2,6 +2,12 @@
 
 All notable changes to Kura will be documented in this file.
 
+## [1.1.1] - 2026-08-27
+
+### Security & Hardening
+- **Secure Auto-Backup Password Storage:** Migrated auto-backup encryption passwords from plain `SharedPreferences` to Android Keystore-backed `flutter_secure_storage`, including one-time migration and removal of legacy plaintext values.
+- **Vault Access Gate:** Added a mandatory biometric/device PIN authentication gate before encrypted vault initialization on launch and whenever the app resumes. Locking now clears in-memory vault data and encryption keys, closes database connections, and cancels pending auto-backups.
+
 ## [1.1.0] - 2026-08-27
 
 ### Features

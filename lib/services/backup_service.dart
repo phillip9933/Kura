@@ -44,11 +44,12 @@ class BackupService {
       final settings = <String, dynamic>{};
       final keys = prefs.getKeys();
       for (final key in keys) {
-        // DO NOT backup encryption keys or migration flags
+        // DO NOT backup encryption keys, migration flags, or legacy secrets.
         if (key.startsWith('wallet_aes_256_master_key') ||
             key == 'wallet_encryption_migrated' ||
             key == 'wallet_encryption_migrated_v2' ||
-            key == 'wallet_transfer_key') {
+            key == 'wallet_transfer_key' ||
+            key == 'autoBackupPassword') {
           continue;
         }
         settings[key] = prefs.get(key);

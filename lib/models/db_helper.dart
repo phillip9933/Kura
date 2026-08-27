@@ -31,6 +31,12 @@ class DatabaseHelper {
     return _database!;
   }
 
+  Future<void> close() async {
+    final database = _database;
+    _database = null;
+    await database?.close();
+  }
+
   Future<Database> _initDatabase() async {
     final directory = await _DirectoryCache.docs;
     final path = join(directory.path, 'walletbox.db');
@@ -281,6 +287,12 @@ class PassDatabaseHelper {
     return _database!;
   }
 
+  Future<void> close() async {
+    final database = _database;
+    _database = null;
+    await database?.close();
+  }
+
   Future<Database> _initDatabase() async {
     final directory = await _DirectoryCache.docs;
     final path = join(directory.path, 'passes.db');
@@ -486,6 +498,12 @@ class IdentityDatabaseHelper {
     if (_database != null) return _database!;
     _database = await _initDatabase();
     return _database!;
+  }
+
+  Future<void> close() async {
+    final database = _database;
+    _database = null;
+    await database?.close();
   }
 
   Future<Database> _initDatabase() async {

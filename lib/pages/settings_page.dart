@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:kura/models/theme_provider.dart';
@@ -20,6 +19,7 @@ import 'package:kura/services/backup_service.dart';
 import 'package:kura/models/provider_helper.dart';
 import 'package:kura/models/db_helper.dart';
 import 'package:kura/models/auto_backup_provider.dart';
+import 'package:kura/models/vault_access_provider.dart';
 import 'package:kura/screens/archive_screen.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -68,13 +68,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<bool> _authenticateForDestructiveAction() async {
-    if (Platform.isLinux) return true;
-    final auth = LocalAuthentication();
-    final isDeviceSupported = await auth.isDeviceSupported();
-    if (!isDeviceSupported) return true;
-    return await auth.authenticate(
-      localizedReason: 'Authenticate to perform this action',
-      options: const AuthenticationOptions(stickyAuth: true),
+    return context.read<VaultAccessProvider>().authenticateSensitiveAction(
+      'Authenticate to perform this sensitive action',
     );
   }
 
@@ -141,16 +136,6 @@ class _SettingsPageState extends State<SettingsPage> {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ArchiveScreen()),
-            ),
-          ),
-          divider,
-          _LiquidGlassTile(
-            icon: Icons.shield_outlined,
-            title: 'Require Biometrics',
-            subtitle: 'Require biometrics when the app starts',
-            trailing: Switch(
-              value: startupProvider.showAuthenticationScreen,
-              onChanged: (_) => startupProvider.toggleAuthenticationScreen(),
             ),
           ),
           divider,
@@ -609,13 +594,11 @@ class _LiquidGlassTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String? subtitle;
-  final Widget? trailing;
   final VoidCallback? onTap;
   const _LiquidGlassTile({
     required this.icon,
     required this.title,
     this.subtitle,
-    this.trailing,
     this.onTap,
   });
 
@@ -650,15 +633,13 @@ class _LiquidGlassTile extends StatelessWidget {
               ),
             )
           : null,
-      trailing:
-          trailing ??
-          (onTap != null
-              ? Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: isDark ? Colors.white30 : Colors.black26,
-                )
-              : null),
+      trailing: onTap != null
+          ? Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: isDark ? Colors.white30 : Colors.black26,
+            )
+          : null,
     );
   }
 }

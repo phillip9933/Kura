@@ -10,6 +10,11 @@ class WalletProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void clear() {
+    wallets = [];
+    notifyListeners();
+  }
+
   Future<Wallet?> getWalletDetails(int id) async {
     return await DatabaseHelper.instance.getWalletById(id);
   }
@@ -56,6 +61,11 @@ class PassProvider with ChangeNotifier {
 
   Future<void> fetchPasses() async {
     passes = await PassDatabaseHelper.instance.getActivePasses();
+    notifyListeners();
+  }
+
+  void clear() {
+    passes = [];
     notifyListeners();
   }
 
@@ -148,6 +158,11 @@ class IdentityProvider with ChangeNotifier {
 
   Future<void> fetchIdentities() async {
     identities = await IdentityDatabaseHelper.instance.getActiveIdentities();
+    notifyListeners();
+  }
+
+  void clear() {
+    identities = [];
     notifyListeners();
   }
 

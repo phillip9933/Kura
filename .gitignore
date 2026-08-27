@@ -38,6 +38,8 @@ migrate_working_dir/
 /web/
 /windows/
 /test/
+!/test/
+!/test/*.dart
 
 # Symbolication related
 app.*.symbols

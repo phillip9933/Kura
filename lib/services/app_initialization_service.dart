@@ -29,4 +29,13 @@ class AppInitializationService {
       await EncryptionService.instance.markMigratedV2();
     }
   }
+
+  static Future<void> lockVault() async {
+    await Future.wait([
+      DatabaseHelper.instance.close(),
+      PassDatabaseHelper.instance.close(),
+      IdentityDatabaseHelper.instance.close(),
+    ]);
+    EncryptionService.instance.lock();
+  }
 }

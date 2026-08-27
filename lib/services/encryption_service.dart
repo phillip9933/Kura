@@ -158,6 +158,17 @@ class EncryptionService {
     }
   }
 
+  /// Removes decrypted key material and cached plaintext from this process.
+  /// Keys are loaded from the platform keystore again only after reauthentication.
+  void lock() {
+    clearImageCache();
+    _encryptionKey = null;
+    _transferKey = null;
+    _gcmEncrypter = null;
+    _transferEncrypter = null;
+    _isInitialized = false;
+  }
+
   /// Generate cryptographically secure random bytes.
   Uint8List _generateSecureRandomBytes(int length) {
     final random = Random.secure();
