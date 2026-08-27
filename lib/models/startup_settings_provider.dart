@@ -68,29 +68,53 @@ class StartupSettingsProvider with ChangeNotifier {
   };
   final Map<WalletSection, List<String>> _sectionCategories = {
     WalletSection.payments: [
-      'Visa',
-      'Mastercard',
-      'RuPay',
-      'American Express',
-      'Discover',
+      'Credit',
+      'Debit',
+      'Prepaid',
+      'Gift Card',
+      'Cash',
     ],
     WalletSection.passes: [
-      'Retail',
-      'Tickets & Transit',
-      'Access',
-      'Health',
-      'Identity',
-      'Generic',
+      'Transit',
+      'Membership',
+      'Loyalty',
+      'Ticket',
+      'Boarding Pass',
+      'Event',
     ],
     WalletSection.identity: [
       'Passport',
-      'Driver License',
+      "Driver's License",
       'National ID',
-      'Health Card',
-      'Other',
+      'Health Insurance',
+      'Student ID',
     ],
   };
   static const Map<WalletSection, List<String>> _defaultSectionCategories = {
+    WalletSection.payments: [
+      'Credit',
+      'Debit',
+      'Prepaid',
+      'Gift Card',
+      'Cash',
+    ],
+    WalletSection.passes: [
+      'Transit',
+      'Membership',
+      'Loyalty',
+      'Ticket',
+      'Boarding Pass',
+      'Event',
+    ],
+    WalletSection.identity: [
+      'Passport',
+      "Driver's License",
+      'National ID',
+      'Health Insurance',
+      'Student ID',
+    ],
+  };
+  static const Map<WalletSection, List<String>> _previousDefaultCategories = {
     WalletSection.payments: [
       'Visa',
       'Mastercard',
@@ -271,13 +295,13 @@ class StartupSettingsProvider with ChangeNotifier {
         _sectionCategoriesKey(section),
       );
       if (savedCategories != null && savedCategories.isNotEmpty) {
-        final shouldMigratePassCategories =
-            section == WalletSection.passes &&
-            _listsEqual(savedCategories, _legacyPassCategorySeed);
-        _sectionCategories[section] = shouldMigratePassCategories
-            ? List.of(_defaultSectionCategories[WalletSection.passes]!)
+        final shouldMigrateCategories =
+            _listsEqual(savedCategories, _legacyPassCategorySeed) ||
+            _listsEqual(savedCategories, _previousDefaultCategories[section]!);
+        _sectionCategories[section] = shouldMigrateCategories
+            ? List.of(_defaultSectionCategories[section]!)
             : savedCategories;
-        if (shouldMigratePassCategories) {
+        if (shouldMigrateCategories) {
           await prefs.setStringList(
             _sectionCategoriesKey(section),
             _sectionCategories[section]!,
