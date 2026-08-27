@@ -279,6 +279,14 @@ class _SettingsPageState extends State<SettingsPage> {
             onTap: () =>
                 _launchExternalUrl('https://github.com/phillip9933/Kura'),
           ),
+          divider,
+          _LiquidGlassTile(
+            icon: Icons.coffee_outlined,
+            title: 'Buy Me a Coffee',
+            subtitle: 'Support Kura’s development',
+            onTap: () =>
+                _launchExternalUrl('https://buymeacoffee.com/phillip9933'),
+          ),
         ],
       ),
       const SizedBox(height: 30),
