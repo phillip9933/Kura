@@ -7,6 +7,8 @@ All notable changes to Kura will be documented in this file.
 ### Fixed
 - [#3](https://github.com/phillip9933/Kura/issues/3) Restored appropriately sized `.pkpass` strip images for business cards in the two-column grid while keeping compact three-column rendering.
 - [#4](https://github.com/phillip9933/Kura/issues/4) Removed the excess top gap from payment, pass, and identity grids when controls are positioned at the bottom.
+- [#6](https://github.com/phillip9933/Kura/issues/6) Restored automatic biometric unlock and encrypted vault data reload after returning from the app switcher, without interrupting file-picker imports.
+- [#7](https://github.com/phillip9933/Kura/issues/7) Rendered PKPASS strip imagery in Virtual Cards grids and removed social/link metadata from compact three-column cards to prevent overlap.
 
 ### Maintenance
 - Added regression coverage for responsive pass-strip and grid-spacing layout policies.
