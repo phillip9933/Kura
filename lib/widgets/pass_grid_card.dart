@@ -13,6 +13,7 @@ class PassGridCard extends StatelessWidget {
   final PassDisplayMode displayMode;
   final bool showLabels;
   final bool truncateOrganizationName;
+  final int gridColumns;
 
   const PassGridCard({
     super.key,
@@ -22,15 +23,39 @@ class PassGridCard extends StatelessWidget {
     this.displayMode = PassDisplayMode.front,
     this.showLabels = true,
     this.truncateOrganizationName = false,
+    this.gridColumns = 1,
   });
 
   static bool usesCompactStripLayout({
-    required double availableWidth,
+    required int gridColumns,
     required String passType,
     required bool hasStrip,
   }) {
-    return availableWidth < 145 && passType != 'boardingPass' && hasStrip;
+    return gridColumns >= 3 && passType != 'boardingPass' && hasStrip;
   }
+
+  static bool showsPkpassStrip({
+    required PassDisplayMode displayMode,
+    required bool hasStripImage,
+  }) {
+    return displayMode != PassDisplayMode.back && hasStripImage;
+  }
+
+  static bool isSocialOrLinkField(Map<String, dynamic> field) {
+    final text = [field['key'], field['label'], field['value']]
+        .whereType<Object>()
+        .map((value) => value.toString().toLowerCase())
+        .join(' ');
+    return RegExp(
+      r'\b(blog|twitter|website|web site|url|link|https?://|www\.)',
+    ).hasMatch(text);
+  }
+
+  static String? pkpassBackgroundImagePath(Pass pass) =>
+      pass.frontImagePath ?? pass.thumbnailImagePath;
+
+  static String? pkpassBrandImagePath(Pass pass) =>
+      pass.logoImagePath ?? pass.iconImagePath ?? pass.thumbnailImagePath;
 
   Color? _parseColor(String? hexString) {
     if (hexString == null || hexString.isEmpty) return null;
@@ -289,123 +314,138 @@ class PassGridCard extends StatelessWidget {
                 ? 8.0
                 : 10.0) *
             scale;
-        final hasStrip =
-            displayMode == PassDisplayMode.front &&
-            pass.stripImagePath?.isNotEmpty == true;
-        // Two-column cards are compact, but still have enough vertical space
-        // for a strip image. Reserve the fixed-height treatment for the
-        // genuinely narrow three-column layout.
+        final hasStrip = PassGridCard.showsPkpassStrip(
+          displayMode: displayMode,
+          hasStripImage: pass.stripImagePath?.isNotEmpty == true,
+        );
+        // Only three-column grids use the fixed-height strip treatment.
+        // Two-column cards retain the available vertical space for the strip.
         final showsCompactStrip = PassGridCard.usesCompactStripLayout(
-          availableWidth: constraints.maxWidth,
+          gridColumns: gridColumns,
           passType: pass.type,
           hasStrip: hasStrip,
         );
-        final header = _fields('headerFields');
-        final secondary = _fields('secondaryFields');
-        final auxiliary = _fields('auxiliaryFields');
-        return Container(
-          color: background,
-          padding: EdgeInsets.all(padding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        final header = _gridFields('headerFields');
+        final secondary = _gridFields('secondaryFields');
+        final auxiliary = _gridFields('auxiliaryFields');
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(color: background),
+            if (pkpassBackgroundImagePath(pass) != null)
+              Opacity(
+                opacity: 0.18,
+                child: EncryptedImageDisplay(
+                  imagePath: pkpassBackgroundImagePath(pass)!,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            Padding(
+              padding: EdgeInsets.all(padding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildPkpassBrand(30 * scale, foreground),
-                  SizedBox(width: 7 * scale),
-                  Expanded(
-                    child: Text(
-                      pass.logoText ?? pass.organizationName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: foreground,
-                        fontSize: 12 * scale,
-                        fontWeight: FontWeight.w700,
+                  Row(
+                    children: [
+                      _buildPkpassBrand(30 * scale, foreground),
+                      SizedBox(width: 7 * scale),
+                      Expanded(
+                        child: Text(
+                          pass.logoText ?? pass.organizationName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: foreground,
+                            fontSize: 12 * scale,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
-                    ),
+                      if (!isNarrow && header.isNotEmpty)
+                        SizedBox(
+                          width: (isCompact ? 58 : 76) * scale,
+                          child: _pkpassFieldRow(
+                            header,
+                            label,
+                            foreground,
+                            scale,
+                            alignEnd: true,
+                            maxFields: 1,
+                          ),
+                        ),
+                    ],
                   ),
-                  if (!isNarrow && header.isNotEmpty)
-                    SizedBox(
-                      width: (isCompact ? 58 : 76) * scale,
-                      child: _pkpassFieldRow(
-                        header,
-                        label,
-                        foreground,
-                        scale,
-                        alignEnd: true,
-                        maxFields: 1,
-                      ),
+                  SizedBox(height: (isNarrow ? 3 : 5) * scale),
+                  if (pass.type == 'boardingPass')
+                    _boardingFields(
+                      label,
+                      foreground,
+                      scale,
+                      prominent: !isCompact && !isNarrow,
+                    )
+                  else
+                    _pkpassFieldRow(
+                      _gridFields('primaryFields'),
+                      label,
+                      foreground,
+                      scale,
+                      primary: true,
+                      maxFields: isNarrow ? 1 : 2,
                     ),
+                  if (!isNarrow &&
+                      !showsCompactStrip &&
+                      secondary.isNotEmpty) ...[
+                    SizedBox(height: (isCompact ? 3 : 5) * scale),
+                    _pkpassFieldRow(
+                      secondary,
+                      label,
+                      foreground,
+                      scale,
+                      maxFields: isCompact ? 2 : null,
+                    ),
+                  ],
+                  if (!isCompact && auxiliary.isNotEmpty) ...[
+                    SizedBox(height: 5 * scale),
+                    _pkpassFieldRow(auxiliary, label, foreground, scale),
+                  ],
+                  if (hasStrip) ...[
+                    SizedBox(height: 5 * scale),
+                    if (showsCompactStrip)
+                      SizedBox(
+                        height: 26 * scale,
+                        width: double.infinity,
+                        child: EncryptedImageDisplay(
+                          imagePath: pass.stripImagePath!,
+                          fit: BoxFit.contain,
+                        ),
+                      )
+                    else
+                      Expanded(
+                        child: EncryptedImageDisplay(
+                          imagePath: pass.stripImagePath!,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                  ] else
+                    const Spacer(),
                 ],
               ),
-              SizedBox(height: (isNarrow ? 3 : 5) * scale),
-              if (pass.type == 'boardingPass')
-                _boardingFields(
-                  label,
-                  foreground,
-                  scale,
-                  prominent: !isCompact && !isNarrow,
-                )
-              else
-                _pkpassFieldRow(
-                  _fields('primaryFields'),
-                  label,
-                  foreground,
-                  scale,
-                  primary: true,
-                  maxFields: isNarrow ? 1 : 2,
-                ),
-              if (!isNarrow && !showsCompactStrip && secondary.isNotEmpty) ...[
-                SizedBox(height: (isCompact ? 3 : 5) * scale),
-                _pkpassFieldRow(
-                  secondary,
-                  label,
-                  foreground,
-                  scale,
-                  maxFields: isCompact ? 2 : null,
-                ),
-              ],
-              if (!isCompact && auxiliary.isNotEmpty) ...[
-                SizedBox(height: 5 * scale),
-                _pkpassFieldRow(auxiliary, label, foreground, scale),
-              ],
-              if (hasStrip) ...[
-                SizedBox(height: 5 * scale),
-                if (showsCompactStrip)
-                  SizedBox(
-                    height: 26 * scale,
-                    width: double.infinity,
-                    child: EncryptedImageDisplay(
-                      imagePath: pass.stripImagePath!,
-                      fit: BoxFit.contain,
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: EncryptedImageDisplay(
-                      imagePath: pass.stripImagePath!,
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-              ] else
-                const Spacer(),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );
   }
 
   Widget _buildPkpassBrand(double size, Color foreground) =>
-      pass.logoImagePath?.isNotEmpty == true
+      pkpassBrandImagePath(pass)?.isNotEmpty == true
       ? SizedBox(
           width: size * 1.8,
           height: size,
           child: EncryptedImageDisplay(
-            imagePath: pass.logoImagePath!,
+            imagePath: pkpassBrandImagePath(pass)!,
             fit: BoxFit.contain,
             errorWidget: _buildPassIcon(size, foreground),
           ),
@@ -555,6 +595,12 @@ class PassGridCard extends StatelessWidget {
         .whereType<Map>()
         .map((field) => Map<String, dynamic>.from(field))
         .toList();
+  }
+
+  List<Map<String, dynamic>> _gridFields(String section) {
+    final fields = _fields(section);
+    if (gridColumns < 3) return fields;
+    return fields.where((field) => !isSocialOrLinkField(field)).toList();
   }
 
   String _value(Map<String, dynamic> field) => field['value']?.toString() ?? '';
