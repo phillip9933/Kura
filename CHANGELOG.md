@@ -2,6 +2,16 @@
 
 All notable changes to Kura will be documented in this file.
 
+## [1.1.2] - 2026-08-28
+
+### Fixed
+- [#3](https://github.com/phillip9933/Kura/issues/3) Restored appropriately sized `.pkpass` strip images for business cards in the two-column grid while keeping compact three-column rendering.
+- [#4](https://github.com/phillip9933/Kura/issues/4) Removed the excess top gap from payment, pass, and identity grids when controls are positioned at the bottom.
+
+### Maintenance
+- Added regression coverage for responsive pass-strip and grid-spacing layout policies.
+- Moved GitHub issue and pull-request templates to their recognized locations and made CI run formatting checks, analysis, and tests with read-only permissions.
+
 ## [1.1.1] - 2026-08-27
 
 ### Security & Hardening
