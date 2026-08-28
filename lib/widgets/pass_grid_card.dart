@@ -24,6 +24,14 @@ class PassGridCard extends StatelessWidget {
     this.truncateOrganizationName = false,
   });
 
+  static bool usesCompactStripLayout({
+    required double availableWidth,
+    required String passType,
+    required bool hasStrip,
+  }) {
+    return availableWidth < 145 && passType != 'boardingPass' && hasStrip;
+  }
+
   Color? _parseColor(String? hexString) {
     if (hexString == null || hexString.isEmpty) return null;
     final rgb = RegExp(
@@ -284,8 +292,14 @@ class PassGridCard extends StatelessWidget {
         final hasStrip =
             displayMode == PassDisplayMode.front &&
             pass.stripImagePath?.isNotEmpty == true;
-        final showsCompactStrip =
-            isCompact && pass.type != 'boardingPass' && hasStrip;
+        // Two-column cards are compact, but still have enough vertical space
+        // for a strip image. Reserve the fixed-height treatment for the
+        // genuinely narrow three-column layout.
+        final showsCompactStrip = PassGridCard.usesCompactStripLayout(
+          availableWidth: constraints.maxWidth,
+          passType: pass.type,
+          hasStrip: hasStrip,
+        );
         final header = _fields('headerFields');
         final secondary = _fields('secondaryFields');
         final auxiliary = _fields('auxiliaryFields');
