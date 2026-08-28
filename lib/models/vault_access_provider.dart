@@ -10,13 +10,21 @@ class VaultAccessProvider with ChangeNotifier {
   final VaultAuthenticator _authenticationService;
   VaultAccessState _state = VaultAccessState.locked;
   bool _initializing = false;
+  bool _isReady = false;
+  int _externalOperationCount = 0;
+  int _automaticUnlockRequest = 0;
 
   VaultAccessState get state => _state;
   bool get isUnlocked => _state == VaultAccessState.unlocked;
+  bool get isAuthenticating => _state == VaultAccessState.authenticating;
+  bool get isReady => _isReady;
+  bool get hasExternalOperation => _externalOperationCount > 0;
+  int get automaticUnlockRequest => _automaticUnlockRequest;
 
   Future<bool> unlock({String? reason}) async {
     if (_state == VaultAccessState.authenticating) return false;
     _state = VaultAccessState.authenticating;
+    _isReady = false;
     notifyListeners();
     final authenticated = await _authenticationService.authenticate(
       reason: reason ?? 'Authenticate to unlock your vault',
@@ -32,8 +40,9 @@ class VaultAccessProvider with ChangeNotifier {
       _authenticationService.authenticate(reason: reason);
 
   void lock() {
-    if (_state == VaultAccessState.locked) return;
+    if (_state == VaultAccessState.locked && !_isReady) return;
     _state = VaultAccessState.locked;
+    _isReady = false;
     notifyListeners();
   }
 
@@ -44,4 +53,31 @@ class VaultAccessProvider with ChangeNotifier {
   }
 
   void finishInitialization() => _initializing = false;
+
+  void markReady() {
+    if (!isUnlocked) return;
+    _isReady = true;
+    notifyListeners();
+  }
+
+  void beginExternalOperation() {
+    _externalOperationCount++;
+    notifyListeners();
+  }
+
+  void endExternalOperation() {
+    if (_externalOperationCount == 0) return;
+    _externalOperationCount--;
+    notifyListeners();
+  }
+
+  void requestAutomaticUnlock() {
+    if (_state != VaultAccessState.locked ||
+        hasExternalOperation ||
+        _initializing) {
+      return;
+    }
+    _automaticUnlockRequest++;
+    notifyListeners();
+  }
 }

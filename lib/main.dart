@@ -53,22 +53,33 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _lifecycleListener = AppLifecycleListener(
       onStateChange: (state) {
-        if (state == AppLifecycleState.paused ||
-            state == AppLifecycleState.detached) {
+        if (state == AppLifecycleState.hidden) {
           _lockVault();
+        } else if (state == AppLifecycleState.detached) {
+          _lockVault(disposeDatabases: true);
+        } else if (state == AppLifecycleState.resumed) {
+          _requestAutomaticUnlock();
         }
       },
     );
   }
 
-  void _lockVault() {
+  void _lockVault({bool disposeDatabases = false}) {
     if (!mounted) return;
+    final access = context.read<VaultAccessProvider>();
+    if (!access.isReady || access.hasExternalOperation) return;
     AutoBackupService.lock();
     context.read<WalletProvider>().clear();
     context.read<PassProvider>().clear();
     context.read<IdentityProvider>().clear();
-    context.read<VaultAccessProvider>().lock();
+    access.lock();
     AppInitializationService.lockVault();
+    if (disposeDatabases) AppInitializationService.disposeVault();
+  }
+
+  void _requestAutomaticUnlock() {
+    if (!mounted) return;
+    context.read<VaultAccessProvider>().requestAutomaticUnlock();
   }
 
   @override
@@ -105,6 +116,7 @@ class VaultAccessGate extends StatefulWidget {
 
 class _VaultAccessGateState extends State<VaultAccessGate> {
   String? _error;
+  int _handledAutomaticUnlockRequest = 0;
 
   @override
   void initState() {
@@ -116,6 +128,7 @@ class _VaultAccessGateState extends State<VaultAccessGate> {
     final access = context.read<VaultAccessProvider>();
     final unlocked = await access.unlock();
     if (!unlocked) {
+      if (access.isAuthenticating) return;
       if (mounted) {
         setState(
           () => _error = 'Authentication is required to access your vault.',
@@ -128,6 +141,13 @@ class _VaultAccessGateState extends State<VaultAccessGate> {
     try {
       await AppInitializationService.initializeApp();
       if (!mounted || !access.isUnlocked) return;
+      await Future.wait([
+        context.read<WalletProvider>().fetchWallets(),
+        context.read<PassProvider>().fetchPasses(),
+        context.read<IdentityProvider>().fetchIdentities(),
+      ]);
+      if (!mounted || !access.isUnlocked) return;
+      access.markReady();
       setState(() => _error = null);
     } catch (_) {
       access.lock();
@@ -141,12 +161,28 @@ class _VaultAccessGateState extends State<VaultAccessGate> {
     }
   }
 
+  void _scheduleAutomaticUnlock(VaultAccessProvider access) {
+    if (access.automaticUnlockRequest == _handledAutomaticUnlockRequest) return;
+    _handledAutomaticUnlockRequest = access.automaticUnlockRequest;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          context.read<VaultAccessProvider>().state ==
+              VaultAccessState.locked) {
+        _unlock();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final access = context.watch<VaultAccessProvider>();
-    if (access.isUnlocked && _error == null) return const HomeScreen();
+    _scheduleAutomaticUnlock(access);
+    if (access.isUnlocked && access.isReady && _error == null) {
+      return const HomeScreen();
+    }
 
     final isAuthenticating = access.state == VaultAccessState.authenticating;
+    final isInitializing = access.isUnlocked && !access.isReady;
     return Scaffold(
       body: Center(
         child: Padding(
@@ -163,13 +199,15 @@ class _VaultAccessGateState extends State<VaultAccessGate> {
               const SizedBox(height: 8),
               Text(
                 _error ??
-                    'Authenticate with your device credential to continue.',
+                    (isInitializing
+                        ? 'Opening your encrypted vault…'
+                        : 'Authenticate with your device credential to continue.'),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
-                onPressed: isAuthenticating ? null : _unlock,
-                icon: isAuthenticating
+                onPressed: isAuthenticating || isInitializing ? null : _unlock,
+                icon: isAuthenticating || isInitializing
                     ? const SizedBox(
                         width: 18,
                         height: 18,
@@ -177,7 +215,11 @@ class _VaultAccessGateState extends State<VaultAccessGate> {
                       )
                     : const Icon(Icons.lock_open_rounded),
                 label: Text(
-                  isAuthenticating ? 'Authenticating…' : 'Unlock vault',
+                  isAuthenticating
+                      ? 'Authenticating…'
+                      : isInitializing
+                      ? 'Opening vault…'
+                      : 'Unlock vault',
                 ),
               ),
             ],

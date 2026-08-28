@@ -31,11 +31,18 @@ class AppInitializationService {
   }
 
   static Future<void> lockVault() async {
+    // Android may suspend database-close work when an app is backgrounded.
+    // Closing SQLCipher here can therefore deadlock the next unlock. Clear
+    // Dart-held key material and provider data instead; the process teardown
+    // still releases native database handles.
+    EncryptionService.instance.lock();
+  }
+
+  static Future<void> disposeVault() async {
     await Future.wait([
       DatabaseHelper.instance.close(),
       PassDatabaseHelper.instance.close(),
       IdentityDatabaseHelper.instance.close(),
     ]);
-    EncryptionService.instance.lock();
   }
 }

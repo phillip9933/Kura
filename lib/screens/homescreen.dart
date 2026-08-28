@@ -27,6 +27,7 @@ import 'package:kura/widgets/pass_grid_card.dart';
 import 'package:kura/widgets/encrypted_image_display.dart';
 import 'package:kura/models/pass_types.dart';
 import 'package:kura/services/pkpass_service.dart';
+import 'package:kura/models/vault_access_provider.dart';
 
 enum _ExpiryStatus { expired, expiringSoon }
 
@@ -398,17 +399,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _importPassFile() async {
+    final vaultAccess = context.read<VaultAccessProvider>();
+    vaultAccess.beginExternalOperation();
+    String? path;
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pkpass', 'zip'],
       );
-      final path = result?.files.single.path;
-      if (path == null) return;
-      await _importPassFileFromPath(path);
+      path = result?.files.single.path;
     } catch (_) {
       _showImportError('Failed to import pass. Please try again.');
+    } finally {
+      vaultAccess.endExternalOperation();
     }
+    if (path != null) await _importPassFileFromPath(path);
   }
 
   Future<void> _importPassFileFromPath(String path) async {
@@ -2102,6 +2107,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: PassGridCard(
                         pass: pass,
                         displayMode: gridMode,
+                        gridColumns: settings.gridColumnsFor(
+                          WalletSection.passes,
+                        ),
                         showLabels:
                             settings.gridColumnsFor(WalletSection.passes) != 1,
                         truncateOrganizationName:

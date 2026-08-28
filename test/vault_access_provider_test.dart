@@ -26,6 +26,7 @@ void main() {
       expect(provider.isUnlocked, isFalse);
       expect(await provider.unlock(), isTrue);
       expect(provider.state, VaultAccessState.unlocked);
+      expect(provider.isReady, isFalse);
       expect(authenticator.calls, 1);
     });
 
@@ -55,5 +56,75 @@ void main() {
         expect(authenticator.calls, 2);
       },
     );
+
+    test('does not become ready until initialization succeeds', () async {
+      final provider = VaultAccessProvider(
+        authenticationService: FakeVaultAuthenticator(true),
+      );
+
+      await provider.unlock();
+
+      expect(provider.isReady, isFalse);
+      provider.markReady();
+      expect(provider.isReady, isTrue);
+    });
+
+    test('clears readiness before showing the biometric prompt', () async {
+      final provider = VaultAccessProvider(
+        authenticationService: FakeVaultAuthenticator(true),
+      );
+
+      await provider.unlock();
+      provider.markReady();
+
+      final unlock = provider.unlock();
+      expect(provider.isReady, isFalse);
+      await unlock;
+    });
+
+    test('clears readiness when the vault locks for app resume', () async {
+      final provider = VaultAccessProvider(
+        authenticationService: FakeVaultAuthenticator(true),
+      );
+
+      await provider.unlock();
+      provider.markReady();
+      provider.lock();
+
+      expect(provider.isUnlocked, isFalse);
+      expect(provider.isReady, isFalse);
+    });
+
+    test(
+      'tracks external operations without changing vault readiness',
+      () async {
+        final provider = VaultAccessProvider(
+          authenticationService: FakeVaultAuthenticator(true),
+        );
+
+        await provider.unlock();
+        provider.markReady();
+        provider.beginExternalOperation();
+
+        expect(provider.hasExternalOperation, isTrue);
+        expect(provider.isReady, isTrue);
+
+        provider.endExternalOperation();
+        expect(provider.hasExternalOperation, isFalse);
+      },
+    );
+
+    test('requests automatic unlock only while locked and idle', () {
+      final provider = VaultAccessProvider(
+        authenticationService: FakeVaultAuthenticator(true),
+      );
+
+      provider.requestAutomaticUnlock();
+      expect(provider.automaticUnlockRequest, 1);
+
+      provider.beginExternalOperation();
+      provider.requestAutomaticUnlock();
+      expect(provider.automaticUnlockRequest, 1);
+    });
   });
 }
