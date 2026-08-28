@@ -53,6 +53,13 @@ jobs:
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
           echo "storeFile=upload-keystore.jks" >> android/key.properties
 
+      - name: Validate Keystore
+        run: |
+          keytool -list \
+            -keystore android/app/upload-keystore.jks \
+            -storepass "${{ secrets.STORE_PASSWORD }}" \
+            -alias "${{ secrets.KEY_ALIAS }}"
+
       - name: Build Universal APK
         run: flutter build apk --release
 
