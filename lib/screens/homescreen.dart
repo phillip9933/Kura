@@ -62,6 +62,10 @@ class SmoothPageRoute<T> extends PageRouteBuilder<T> {
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  static double gridTopSpacing(ControlRowPosition controlRowPosition) {
+    return controlRowPosition == ControlRowPosition.top ? 12 : 0;
+  }
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -1196,9 +1200,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             SliverToBoxAdapter(
               child: SizedBox(
-                height: settings.controlRowPosition == ControlRowPosition.bottom
-                    ? 68
-                    : 12,
+                height: HomeScreen.gridTopSpacing(settings.controlRowPosition),
               ),
             ),
             // Cards list
@@ -2047,9 +2049,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             SliverToBoxAdapter(
               child: SizedBox(
-                height: settings.controlRowPosition == ControlRowPosition.bottom
-                    ? 68
-                    : 12,
+                height: HomeScreen.gridTopSpacing(settings.controlRowPosition),
               ),
             ),
 
@@ -2517,9 +2517,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             SliverToBoxAdapter(
               child: SizedBox(
-                height: settings.controlRowPosition == ControlRowPosition.bottom
-                    ? 68
-                    : 12,
+                height: HomeScreen.gridTopSpacing(settings.controlRowPosition),
               ),
             ),
             if (filteredIdentities.isEmpty)
