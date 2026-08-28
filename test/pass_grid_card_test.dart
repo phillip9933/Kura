@@ -59,6 +59,19 @@ void main() {
       );
     });
 
+    test('keeps three-column PKPASS photos at usable minimum dimensions', () {
+      expect(PassGridCard.compactPkpassBrandSize(0.48), 20);
+      expect(PassGridCard.compactPkpassStripHeight(0.48), 26);
+    });
+
+    test(
+      'does not enlarge compact PKPASS photos beyond full-size dimensions',
+      () {
+        expect(PassGridCard.compactPkpassBrandSize(1), 30);
+        expect(PassGridCard.compactPkpassStripHeight(1), 26);
+      },
+    );
+
     test('identifies social and link metadata for compact grids', () {
       expect(
         PassGridCard.isSocialOrLinkField({

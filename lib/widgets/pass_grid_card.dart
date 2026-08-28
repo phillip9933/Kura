@@ -41,6 +41,12 @@ class PassGridCard extends StatelessWidget {
     return displayMode != PassDisplayMode.back && hasStripImage;
   }
 
+  static double compactPkpassBrandSize(double scale) =>
+      (30 * scale).clamp(20, 30).toDouble();
+
+  static double compactPkpassStripHeight(double scale) =>
+      (26 * scale).clamp(26, 32).toDouble();
+
   static bool isSocialOrLinkField(Map<String, dynamic> field) {
     final text = [field['key'], field['label'], field['value']]
         .whereType<Object>()
@@ -347,7 +353,12 @@ class PassGridCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      _buildPkpassBrand(30 * scale, foreground),
+                      _buildPkpassBrand(
+                        showsCompactStrip
+                            ? PassGridCard.compactPkpassBrandSize(scale)
+                            : 30 * scale,
+                        foreground,
+                      ),
                       SizedBox(width: 7 * scale),
                       Expanded(
                         child: Text(
@@ -412,7 +423,7 @@ class PassGridCard extends StatelessWidget {
                     SizedBox(height: 5 * scale),
                     if (showsCompactStrip)
                       SizedBox(
-                        height: 26 * scale,
+                        height: PassGridCard.compactPkpassStripHeight(scale),
                         width: double.infinity,
                         child: EncryptedImageDisplay(
                           imagePath: pass.stripImagePath!,
