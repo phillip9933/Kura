@@ -1,4 +1,4 @@
-name: Testing
+name: Android verification
 
 on:
   push:
@@ -11,29 +11,25 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: Analyze & Test
+  verify:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          flutter-version: '3.44.7'
-          channel: 'stable'
-          cache: true
-
-      - name: Get Dependencies
-        run: flutter pub get
-
-      - name: Check Formatting
-        run: dart format --output=none --set-exit-if-changed lib test
-
-      - name: Analyze
-        run: flutter analyze
-
-      - name: Test
-        run: flutter test
-
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android build tools
+        run: sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
+      - name: Unit tests, lint and unsigned build
+        run: ./gradlew :core:model:test :core:import:testDebugUnitTest :core:import:testLowMemory :app:lintDebug :app:assembleDebug :app:assembleRelease --max-workers=2 --console=plain
+      - name: Verify offline release and 16 KiB packaging
+        run: python3 verify-native-packaging.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-verification-reports
+          path: |
+            **/build/reports/
+            **/build/test-results/

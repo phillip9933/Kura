@@ -1,0 +1,164 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 7,
+    "identityHash": "f48bcbea6394bf4d95b664e7c133b7be",
+    "entities": [
+      {
+        "tableName": "passes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `type` TEXT, `organizationName` TEXT, `description` TEXT, `logoText` TEXT, `backgroundColor` TEXT, `foregroundColor` TEXT, `labelColor` TEXT, `barcodeValue` TEXT, `barcodeFormat` TEXT, `barcodeAltText` TEXT, `transitType` TEXT, `relevantDate` TEXT, `expiry_date` TEXT, `frontImagePath` TEXT, `backImagePath` TEXT, `stripImagePath` TEXT, `thumbnailImagePath` TEXT, `iconImagePath` TEXT, `logoImagePath` TEXT, `footerImagePath` TEXT, `sourceType` TEXT, `fields` TEXT, `orderIndex` INTEGER DEFAULT 0, `isArchived` INTEGER NOT NULL DEFAULT 0)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "organizationName",
+            "columnName": "organizationName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "logoText",
+            "columnName": "logoText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backgroundColor",
+            "columnName": "backgroundColor",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "foregroundColor",
+            "columnName": "foregroundColor",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "labelColor",
+            "columnName": "labelColor",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "barcodeValue",
+            "columnName": "barcodeValue",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "barcodeFormat",
+            "columnName": "barcodeFormat",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "barcodeAltText",
+            "columnName": "barcodeAltText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "transitType",
+            "columnName": "transitType",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "relevantDate",
+            "columnName": "relevantDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "expiry_date",
+            "columnName": "expiry_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frontImagePath",
+            "columnName": "frontImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backImagePath",
+            "columnName": "backImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "stripImagePath",
+            "columnName": "stripImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "thumbnailImagePath",
+            "columnName": "thumbnailImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "iconImagePath",
+            "columnName": "iconImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "logoImagePath",
+            "columnName": "logoImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "footerImagePath",
+            "columnName": "footerImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sourceType",
+            "columnName": "sourceType",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fields",
+            "columnName": "fields",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "orderIndex",
+            "columnName": "orderIndex",
+            "affinity": "INTEGER",
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "isArchived",
+            "columnName": "isArchived",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "idx_passes_order",
+            "unique": false,
+            "columnNames": [
+              "orderIndex"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_passes_order` ON `${TABLE_NAME}` (`orderIndex`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f48bcbea6394bf4d95b664e7c133b7be')"
+    ]
+  }
+}

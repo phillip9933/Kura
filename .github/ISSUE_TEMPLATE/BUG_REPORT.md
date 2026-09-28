@@ -20,9 +20,9 @@ Steps to reproduce the behavior:
 A clear and concise description of what you expected to happen.
 
 **Environment:**
- - Device: [e.g. Pixel 7]
- - OS: [e.g. Android 14]
- - App Version: [e.g. 1.0.0]
+ - Device: [e.g. Pixel 10 Pro]
+ - OS: [e.g. Android 16]
+ - App Version: [e.g. 2.0.0-dev (116)]
 
 **Additional context**
-Add any other context about the problem here, including crash logs if applicable.
+Include theme, font size and whether this is a debug or release build. Use synthetic examples. Redact names, identifiers, barcodes, images and local paths from logs/screenshots. Never attach vault backups, passwords or signing keys to a public issue.

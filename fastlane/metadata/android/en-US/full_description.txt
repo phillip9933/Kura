@@ -1,35 +1,22 @@
-Wallet is the ultimate privacy-first vault for your credit, debit, loyalty, and identity cards. Designed with a zero-knowledge architecture, Wallet ensures your most sensitive information stays exactly where it belongs: encrypted on your device.
+Privacy first pass wallet.
 
-Why choose Wallet?
+Keep your cards, tickets and identity documents together in three separate sections: Cards, Passes and Identity. Kura works offline, without accounts, advertising or telemetry, and does not request Internet access.
 
-🚫 TOTAL PRIVACY (OFFLINE BY DESIGN)
-Wallet does not have internet permission. Your data never leaves your device, making it 100% immune to cloud leaks, remote hacks, or third-party tracking. True privacy is offline.
+Organize your wallet
+- Import .pkpass files and .pkpasses bundles.
+- Add items manually with category-specific fields, custom fields and attachments.
+- Store logos and front/back images, and scan or import barcodes.
+- Find items with search, categories, favorites, sorting and archive.
+- Open barcodes full screen for scanning.
 
-🛡️ MILITARY-GRADE ENCRYPTION
-Every detail—card numbers, images, and custom fields—is protected using industry-standard AES-256-GCM authenticated encryption with Argon2id key derivation (RFC 9106). Your master key stays safely in your device's hardware keystore.
+Keep control of your data
+- Unlock with supported biometrics or your device credential.
+- Encrypted databases and media with automatic vault locking.
+- Password-encrypted backups and optional automatic backups to a folder you choose.
+- Light and dark themes, with adjustable layouts and navigation.
 
-🎨 PREMIUM "LIQUID GLASS" DESIGN
-Experience a beautiful, modern interface with glassmorphism effects, smooth staggered animations, and full support for premium Light and OLED Dark modes.
+Kura stores card references and barcodes. It does not make NFC payments. Imported pass issuer signatures are not verified. Opening links, sharing passes or viewing exported attachments hands data to another app.
 
-📲 APPLE WALLET & PKPASS SUPPORT
-Easily import your digital passes and tickets. Support for .pkpass files allows you to move your boarding passes, coupons, and event tickets into a secure, offline vault.
+Upgrading from Kura 1.x: create and keep a backup before updating. Restore that backup in Kura 2.0; old private app storage is not migrated automatically. If an older backup omitted images, Kura warns before restoring the available records and media.
 
-🔐 BIOMETRIC PROTECTION
-Secure your vault with your fingerprint or face unlock. Authentication is required on app start, and before destructive actions like backup restore or data deletion.
-
-🔄 SECURE ENCRYPTED SHARING
-Share passes or loyalty cards securely via End-to-End Encrypted (E2EE) QR codes. Your data is encrypted for transfer and can only be decrypted by another instance of the app.
-
-💾 SECURE BACKUPS
-Create encrypted backups (.wbk) of your entire vault, including passes, and settings. Every backup is protected by Argon2id key derivation, memory-hard and resistant to GPU attacks.
-
-📸 ENCRYPTED CARD SCANS
-Store high-quality, encrypted images of the front and back of your physical cards. Access them digitally whenever you need them, without compromising your security.
-
-Key Features:
-- 100% Ad-Free: No distractions, no tracking, just your cards.
-- Smart Detection: Automatic card network detection (Visa, Mastercard, RuPay, etc.).
-- Custom Fields: Add unique data points to any card or pass.
-- Tap-to-Copy: Instantly copy details for seamless online transactions.
-
-Protect your identity and simplify your life. Experience the peace of mind that comes with true local security.
+Requires Android 7.0 or later, a secure device lock and supported hardware-backed key storage.

@@ -1,57 +1,55 @@
 # Contributing to Kura
 
-First off, thank you for taking the time to contribute. It is contributors like you that make this a secure, community-driven tool for everyone.
+Kura is a Kotlin/Compose Android app. Start with [README](README.md), [Architecture](docs/ARCHITECTURE.md) and [Security](SECURITY.md).
 
-As a local-first, privacy-focused application, we have specific standards to ensure user data remains safe and the codebase remains maintainable.
+## Development
 
-## How Can I Contribute?
+1. Install JDK 21 and Android SDK platform 37.0/build-tools 36.0.0.
+2. Set `ANDROID_HOME` or an ignored `local.properties` file.
+3. Open the repository root in Android Studio or run `./gradlew :app:assembleDebug` (`gradlew.bat` on Windows).
+4. Run the relevant checks in [Testing](docs/TESTING.md). Never run destructive fixtures against a personal device or production package.
 
-### 1. Reporting Bugs
-* Search First: Check the project's issue tracker to see if the bug has already been reported.
-* Be Specific: Provide a clear title, steps to reproduce, and your environment details (Flutter version, OS, Device).
-* Logs: If the app crashed, provide the stack trace from your terminal.
+Use small, focused changes. Follow Kotlin conventions and the surrounding code. Prefer standard Material 3 components, lifecycle-aware state, bounded background work and explicit ownership of sensitive buffers. No formatter is currently enforced by the build; do not run unrelated bulk formatting.
 
-### 2. Suggesting Enhancements
-* Open an issue titled [Feature Request] Your Feature Name.
-* Privacy Check: Since this app operates without internet permissions, any feature request that requires a backend, cloud sync, or external API will likely be declined to maintain the offline-first philosophy.
+Do not add network access or telemetry. Treat imports, document-provider streams, image metadata and backup contents as untrusted. Keep SQL identifiers allowlisted and values bound. Preserve application ID, signing continuity and legacy data compatibility unless a separately reviewed migration changes them.
 
-### 3. Pull Requests (PRs)
-* Branching: Create a feature branch from main.
-* Formatting: Run `flutter format .` before committing.
-* Atomic Commits: Keep your commits small and descriptive.
-* Update Documentation: If you add a feature, ensure the README or relevant documentation is updated.
+## Choose tests by change
 
-## Development Setup
+Build from the repository root. Commands below use the Unix wrapper; substitute `./gradlew.bat` on Windows.
 
-1. Ensure you have the Flutter SDK installed.
-2. Clone the repository:
-   ```bash
-   git clone <your-kura-repository-url>
-   cd Kura
-   ```
-3. Install dependencies:
-   ```bash
-   flutter pub get
-   ```
-4. Run the app:
-   ```bash
-   flutter run
-   ```
+| Change | Start here | Validation |
+| --- | --- | --- |
+| Lock/session/background policy | `core/model/Session.kt`, `Lifecycle.kt`; Android binding in `core/security` | `:core:model:test`, security instrumentation, relevant app resume/authentication journeys |
+| Room/SQLCipher/schema | `core/database` and its committed `schemas/` | Database compatibility instrumentation and staged-restore tests |
+| PKPASS, backup or transfer | `core/import`; encrypted streams in `core/storage` | `:core:import:testDebugUnitTest :core:import:testLowMemory`, import instrumentation for media/restore changes |
+| Cards, pass display, editors, sorting | `feature/vault`; Android callbacks in `app` | `:app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug`, relevant app journeys |
+| Permissions, dependencies, signing/build | Root/module Gradle, app manifests | Debug and unsigned release builds, lint, `python3 verify-native-packaging.py`; inspect merged manifest |
+| Documentation | Relevant canonical doc in `docs/` | Check commands/paths/links against source; no app suite needed for prose alone |
 
-## Style Guidelines
+The paths in the table identify modules/classes, not shell file paths; the [architecture code map](docs/ARCHITECTURE.md#code-map) links to exact sources. [Testing](docs/TESTING.md) explains the full disposable-emulator runner and known failures. Tests should protect behavior or a meaningful failure boundary; do not add tests that merely duplicate an implementation.
 
-### Dart & Flutter
-* Follow the Official Dart Style Guide.
-* Prefer const constructors wherever possible to optimize performance.
-* Keep UI components modular. If a widget is becoming too large, break it down into smaller, reusable widgets.
+## Structure and code style
 
-### Security Standards
-* No Network Requests: Do not add dependencies or code that attempt to connect to the internet.
-* Local Storage: Ensure any sensitive data is handled securely within the local database.
-* Permissions: Do not add unnecessary Android or iOS permissions to the manifest files.
+Keep UI rendering in `feature/vault`, Android launchers in `app`, and import/storage behavior in the core modules. Module dependencies are currently acyclic. Do not expose a new implementation dependency with `api` merely to make a downstream compile error disappear; declare the actual owner/dependency deliberately. Package names and compatibility keys are stable even when they contain historical terminology.
 
-## Code of Conduct
-Please be kind and respectful to fellow contributors. We are all here to build something useful.
+Follow `.editorconfig` and normal Kotlin formatting for new or substantially edited code. Prefer small named functions and named arguments at long callback call sites. Avoid unrelated bulk reformatting of the older compact source. Android lint includes local library modules; no third-party formatter or dead-code analyzer is currently enforced. The compiler, reference searches and shrinker/lint each catch different things; none proves every unreferenced-looking declaration is removable.
 
-## License
-By contributing, you agree that your contributions will be licensed under the project's GPL3 License.
+For a larger structural change, describe the affected owner, retained behavior and test plan first. Keep behavior-changing work separate from mechanical movement where practical. Do not generate a new framework or abstraction for a single caller without a concrete benefit.
+
+## AI-assisted contributions
+
+Disclose material AI assistance in the PR/commit summary: whether it was used for analysis, documentation, code or tests, and which checks you personally verified. You remain responsible for understanding the submitted change. Do not present generated test claims as observed results or share private vault data with an assistant. Coding agents should start with [AGENTS.md](AGENTS.md), then follow links only for the area being changed.
+
+## Build troubleshooting
+
+After relocating a checkout, Gradle incremental outputs can retain old absolute paths. If a dex transform reports a file outside the current module root, run `./gradlew clean` from this root and rebuild. Do not delete personal data, signing material or the Gradle wrapper to fix a generated-cache problem.
+
+## Reports and pull requests
+
+Report the app version/code, Android version, device, font scale, theme and steps to reproduce. Use synthetic cards/passes and redact personal data from screenshots and logs. Never attach passwords, vault backups or signing keys to public issues. See [Security](SECURITY.md) for vulnerability reporting.
+
+PRs should explain the problem, final behavior, tests run and remaining limits. Update affected docs. CI runs JVM tests, lint and unsigned build checks; it does not replace emulator, physical-device or upgrade testing. The manual release-candidate workflow only uploads unsigned artifacts and does not publish.
+
+Source publication is authorized for the 2.0 transition. Store submissions and signed binary releases remain separate actions requiring explicit authorization; the user is updating the pending F-Droid submission.
+
+Contributions are licensed under [GPL-3.0](LICENSE). Follow the [Code of Conduct](CODE_OF_CONDUCT.md).

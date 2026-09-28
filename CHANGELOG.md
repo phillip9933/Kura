@@ -1,60 +1,19 @@
 # Changelog
 
-All notable changes to Kura will be documented in this file.
+## 2.0.0 — unreleased
 
-## [1.1.2] - 2026-08-28
+- Replaced the app implementation with Kotlin, Jetpack Compose and Material 3.
+- Moved the standalone prototype into the repository-root Android project and removed the old build/tooling from the working tree.
+- Added authenticated vault sessions, bounded external-operation guards, hardware-bound key wrapping, SQLCipher/Room storage and encrypted media.
+- Added bounded pass import, compatible encrypted backup/restore, typed manual fields, images, attachments, favorites and ordering.
+- Preserved the release application ID and separate debug installation ID.
+- Centralized sensitive pending-state cleanup on vault lock and added startup cleanup of abandoned camera captures.
+- Replaced obsolete docs and release automation with current Android guidance and unsigned verification workflows.
+- Added explicit recovery confirmation for backups with omitted images and compatibility with older image filenames. Missing attachments and corrupt images still block restoration.
+- Made migration backup-only; removed automatic Flutter database, XML preference and plugin-key extraction. Existing native vaults and older backup formats stay readable.
+- Updated SQLCipher to 4.19.0 and Bouncy Castle to 1.86; moved compilation to API 37.0 with compatible Gradle/AGP/KSP tooling.
+- Removed obsolete editors/reorder plumbing and unused assets; added contributor/agent guidance and expanded library lint coverage.
 
-### Fixed
-- [#3](https://github.com/phillip9933/Kura/issues/3) Restored appropriately sized `.pkpass` strip images for business cards in the two-column grid while keeping compact three-column rendering.
-- [#4](https://github.com/phillip9933/Kura/issues/4) Removed the excess top gap from payment, pass, and identity grids when controls are positioned at the bottom.
-- [#6](https://github.com/phillip9933/Kura/issues/6) Restored automatic biometric unlock and encrypted vault data reload after returning from the app switcher, without interrupting file-picker imports.
-- [#7](https://github.com/phillip9933/Kura/issues/7) Rendered PKPASS strip imagery in Virtual Cards grids and removed social/link metadata from compact three-column cards to prevent overlap.
+Source version code: 118. This is not a published release. Consult [Testing](docs/TESTING.md) and [Security review](docs/SECURITY_REVIEW.md) for remaining gates.
 
-### Maintenance
-- Added regression coverage for responsive pass-strip and grid-spacing layout policies.
-- Moved GitHub issue and pull-request templates to their recognized locations and made CI run formatting checks, analysis, and tests with read-only permissions.
-
-## [1.1.1] - 2026-08-27
-
-### Security & Hardening
-- **Secure Auto-Backup Password Storage:** Migrated auto-backup encryption passwords from plain `SharedPreferences` to Android Keystore-backed `flutter_secure_storage`, including one-time migration and removal of legacy plaintext values.
-- **Vault Access Gate:** Added a mandatory biometric/device PIN authentication gate before encrypted vault initialization on launch and whenever the app resumes. Locking now clears in-memory vault data and encryption keys, closes database connections, and cancels pending auto-backups.
-
-## [1.1.0] - 2026-08-27
-
-### Features
-- Added universal APK version-code support for broader Android device compatibility.
-- Added expiry dates for passes and identities, optional expiry date pickers, expiry dates in item details, expiry indicators in main grids, configurable expiry notifications, and startup expiry alerts.
-- Added Apple Wallet `.pkpass` importing, sharing support, improved pass scanning, and responsive Apple Wallet-inspired pass rendering.
-- Added offline-safe PDF document import and rendering support.
-- Added archive storage, archive and delete actions on edit screens, and item reorder mode.
-- Added automatic-backup retention settings and restored access to the auto-backup folder.
-- Added barcode type selection based on scanned formats and clearer guidance for unrecognized barcode formats.
-- Added settings for bottom-navigation visibility, search-bar position, control-row position, and gesture navigation.
-- Added a Buy Me a Coffee link.
-
-### Improvements
-- Refactored and reorganized Settings into focused submenus for general display, navigation and search, barcode, backup, auto-backup, and expiry alerts.
-- Consolidated add actions and clarified search display settings.
-- Updated default item categories and renamed automatic-backup files.
-- Linked the About version to application metadata.
-- Improved payment and identity card ratios and aligned pass-grid spacing.
-- Hardened file imports and resolved analyzer issues.
-
-### Documentation
-- Added community guidelines and issue templates.
-
-## [1.0.0] - 2026-08-25
-
-### Security & Hardening
-- **Encrypted Local Storage:** Migrated to SQLCipher for full AES-256 database encryption at rest.
-- **Hardware-Backed Keys:** Integrated Android Keystore via `flutter_secure_storage` to secure database keys.
-- **PKPASS Security Hardening:** Added strict bounds, size limitations, and nested depth checks to prevent archive-based attacks (zip bombs).
-- **Backup Exclusion:** Set `android:allowBackup="false"` in the manifest to completely block automated cloud backups of sensitive local vaults.
-- **Release Sanitization:** Enforced strict `kDebugMode` guards around logging and error traces.
-
-### Major Features & UI Overhauls
-- **Independent Rebrand:** Transitioned project identity to **Kura** (蔵).
-- **Dynamic Custom Fields:** Replaced rigid forms with flexible, user-defined schema fields.
-- **Grid Layout UI:** Introduced a modernized grid view for faster card and pass browsing.
-- **Modular Architecture:** Split logic cleanly across Payments, Passes, and Identity card modules.
+Earlier released history remains in Git and existing release tags. Historical prototype iteration reports are outside the current source tree in the local recovery archive.

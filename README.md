@@ -1,55 +1,52 @@
 # Kura
 
-**Kura** (蔵) is a completely offline, privacy-first digital wallet for your payment cards, passes, and IDs. Named after the traditional Japanese secure storehouse, it's built to keep your data organized and strictly on your device. No accounts, no ads, no analytics, and no cloud dependency.
+**Privacy first pass wallet.** Kura (蔵) is an offline Android wallet for cards, passes and identity documents. It has no accounts, advertising or telemetry and does not request the Android INTERNET permission. It stores card references and barcodes; it does not make NFC payments.
 
-Kura is a hard fork of [Wallet by Sidhant](https://github.com/sidhant947/Wallet). Huge thanks to Sidhant for building an awesome foundation.
+Kura 2.0 is written in **Kotlin and Jetpack Compose with Material 3**. This repository contains only the native Android build. Older backup formats remain readable through Kotlin compatibility code.
 
-I spun this off to take the app in a more customizable direction and implement major architectural overhauls for security. The main differences are:
-- Dynamic custom fields so you choose what data matters for your cards.
-- A more customizable grid-based UI for browsing.
-- Split architecture for Payments, Passes, and Identity cards.
-- Additional Security Hardening against malicious imports and data exfiltration.
+**2.0 source is available; signed 2.0 downloads are not published yet.** Older GitHub installer downloads are retired. Before upgrading from 1.x, export and keep a backup; 2.0 migration is by explicit backup restore. See [Release preparation](docs/RELEASE.md) and the [F-Droid handoff](docs/FDROID.md).
 
-Kura is its own independent project now, but it still heavily respects the local-only DNA of the original.
+## What it does
 
-## Security & Hardening
+- Three separate swipeable sections: **Cards**, **Passes** (default), and **Identity**.
+- Categories, favorites, search, archive, grid/list layouts and custom ordering.
+- `.pkpass` / `.pkpasses` import, barcode scanning and fullscreen barcode display.
+- Manual items with category-specific fields, typed custom fields, logos, front/back images and attachments.
+- Device credential or biometric unlock, automatic locking, and encrypted databases/media.
+- Password-encrypted `.wbk` backup and restore, with optional automatic backups to a selected folder.
 
-Kura is built with a highly defensive threat model. Every security and privacy claim made about the app's data handling is auditable in the codebase.
+## Build and test
 
-### Trust claim audit map
+Use **JDK 21**, Android SDK platform **37.0**, build-tools **36.0.0**, and the included Gradle wrapper. Minimum supported Android API is **24**; target API is **36**. Set `ANDROID_HOME` or configure an ignored `local.properties` file.
 
-| Kura claim | Where to look |
-| :--- | :--- |
-| **Pass/Card storage is fully encrypted at rest** | `lib/models/db_helper.dart` — SQLCipher `openDatabase` integration across all three databases. |
-| **Encryption keys are hardware-backed** | `lib/services/encryption_service.dart` — `flutter_secure_storage` Keystore implementation. |
-| **PKPASS parser is hardened against zip bombs and malicious inputs** | `lib/services/pkpass_service.dart` — Explicit archive size limits, nested depth bounds, and maximum file-count checks before extraction. |
-| **Pass data is excluded from Android Auto Backup** | `android/app/src/main/AndroidManifest.xml` — `android:allowBackup="false"` prevents silent Google Drive syncing. |
-| **Card deletion purges images from disk and RAM** | `lib/models/db_helper.dart` — `deleteImageFile()` triggers explicit file deletion and calls `PaintingBinding.instance.imageCache.evict()`. |
-| **App data never appears in system logs in release mode** | `lib/services/*.dart` — All error handling, stack traces, and debug prints are wrapped in strict `kDebugMode` guards. |
-| **100% offline; no internet access** | `android/app/src/main/AndroidManifest.xml` — Total absence of `android.permission.INTERNET`. |
+```sh
+./gradlew :app:assembleDebug
+./gradlew :core:model:test :core:import:testDebugUnitTest :core:import:testLowMemory :app:lintDebug
+```
 
-## Permissions
+On Windows use `./gradlew.bat`. The debug APK is `app/build/outputs/apk/debug/app-debug.apk`. It installs separately as **app.kura.wallet.prototype** so existing test vaults remain accessible. Release keeps **app.kura.wallet** and is unsigned unless signing is explicitly configured. Current source version: **2.0.0**, code **118**; debug displays **2.0.0-dev**.
 
-**Why it asks for permissions:**
-- **Camera:** For taking pictures of the front and back of your cards.
-- **Modify System Settings (WRITE_SETTINGS):** This is purely so the app can temporarily max out your screen brightness when you pull up a fullscreen barcode to scan at a register. It drops right back to your system default when you close it. If you don't toggle this feature on in settings, you don't need to grant the permission.
+For device suites, emulator setup and exact results, see [Testing](docs/TESTING.md). [Release preparation](docs/RELEASE.md) covers signing, packaging and store gates. Nothing in this local consolidation publishes a release.
 
-## Features
+## Privacy and limits
 
-- Store payment card information, passes, and identity cards. (NOT capable of making actual NFC payments)
-- Build dynamic forms with user-configurable custom field schemas
-- Customize pass categories and grid layouts
-- Crop and align card front/back images internally
-- Display fullscreen barcodes with optional maximum brightness control
-- Secure clipboard that auto-clears sensitive copied values
-- Export and import fully encrypted `.wbk` backups
-- Protect the vault with local biometric/PIN authentication
-- 100% offline by design
+The vault uses SQLCipher with Room, AES-256-GCM for new media/backups, and an Android Keystore key bound to authentication. Release requires hardware-backed key storage. Backups use Argon2id with fixed parameters; older CBC backups have weaker integrity guarantees. Pass manifests are checked when present, but **issuer signatures are not verified**.
 
-## How it's built
+Opening an attachment or link hands it to another app. Exported attachments and `.pkpass` files are plaintext; `.wbk` files are password-encrypted. Deletion is not a secure-erasure guarantee: backups, retained recovery generations and shared media can retain copies. Screenshots are restricted, but a compromised OS or an authorized external app is outside that protection.
 
-Kura is developed using AI-assisted workflows. AI assistance does not replace engineering judgment: changes are human-reviewed and understood to hold the project’s local-first privacy model, existing architecture, and device-level behavior.
+See [Privacy policy](PRIVACY.MD), [Security policy](SECURITY.md), the [security review](docs/SECURITY_REVIEW.md), and [Backup and migration](docs/BACKUP_AND_MIGRATION.md). These describe the implementation and its limits, not an independent security certification.
 
-## License
+## Project documentation
 
-Kura is licensed under the [GNU General Public License v3.0](LICENSE).
+The [documentation index](docs/README.md) maps each guide to its purpose. Contributors start with [Contributing](CONTRIBUTING.md); coding agents start with [AGENTS.md](AGENTS.md).
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Contributing](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
+- [Testing and remaining validation](docs/TESTING.md)
+- [Backup and migration](docs/BACKUP_AND_MIGRATION.md)
+- [Release preparation](docs/RELEASE.md)
+
+Kura originated as a fork of [Wallet by Sidhant](https://github.com/sidhant947/Wallet). The native rewrite retains that project's attribution and local-first intent. Development uses AI assistance; review findings and validation limits are documented explicitly.
+
+Licensed under [GPL-3.0](LICENSE). See the [Code of Conduct](CODE_OF_CONDUCT.md) for community expectations.

@@ -1,93 +1,29 @@
-name: Build & Release APK
+name: Unsigned Android release candidate
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version tag (e.g. v1.0.0)'
-        required: true
-        default: 'v1.0.0'
-      flutter_version:
-        description: 'Flutter version'
-        required: false
-        default: ''
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
-    name: Build & Release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
+      - name: Build unsigned APK and app bundle
+        run: ./gradlew :app:assembleRelease :app:bundleRelease --max-workers=2 --console=plain
+      - name: Verify release packaging
+        run: python3 verify-native-packaging.py
+      - uses: actions/upload-artifact@v4
         with:
-          flutter-version: ${{ github.event.inputs.flutter_version }}
-          flutter-version-file: ${{ github.event.inputs.flutter_version == '' && 'pubspec.yaml' || '' }}
-          channel: 'stable'
-          cache: true
-
-      - name: Print Flutter Version
-        run: flutter --version
-
-      - name: Get Dependencies
-        run: |
-          flutter pub get
-          sed -i -e 's/-Wl,/-Wl,--build-id=none,/' ${PUB_CACHE}/hosted/*/jni-*/src/CMakeLists.txt
-
-      - name: Setup Keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
-          echo "storePassword=${{ secrets.STORE_PASSWORD }}" > android/key.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
-          echo "storeFile=upload-keystore.jks" >> android/key.properties
-
-      - name: Validate Keystore
-        run: |
-          keytool -list \
-            -keystore android/app/upload-keystore.jks \
-            -storepass "${{ secrets.STORE_PASSWORD }}" \
-            -alias "${{ secrets.KEY_ALIAS }}"
-
-      - name: Build Universal APK
-        run: flutter build apk --release
-
-      - name: Build Split APKs
-        run: flutter build apk --release --split-per-abi
-
-      - name: Build App Bundle
-        run: flutter build appbundle --release
-
-      - name: Stage Release Assets
-        run: |
-          mkdir -p build/release-assets
-          cp build/app/outputs/flutter-apk/app-release.apk build/release-assets/Kura-${{ github.ref_name }}-universal.apk
-          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/release-assets/Kura-${{ github.ref_name }}-armeabi-v7a.apk
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/release-assets/Kura-${{ github.ref_name }}-arm64-v8a.apk
-          cp build/app/outputs/flutter-apk/app-x86_64-release.apk build/release-assets/Kura-${{ github.ref_name }}-x86_64.apk
-          cp build/app/outputs/bundle/release/app-release.aab build/release-assets/Kura-${{ github.ref_name }}.aab
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.event.inputs.version }}
-          files: |
-            build/release-assets/Kura-${{ github.ref_name }}-universal.apk
-            build/release-assets/Kura-${{ github.ref_name }}-armeabi-v7a.apk
-            build/release-assets/Kura-${{ github.ref_name }}-arm64-v8a.apk
-            build/release-assets/Kura-${{ github.ref_name }}-x86_64.apk
-            build/release-assets/Kura-${{ github.ref_name }}.aab
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: Kura-unsigned-release-candidate
+          path: |
+            app/build/outputs/apk/release/app-release-unsigned.apk
+            app/build/outputs/bundle/release/app-release.aab

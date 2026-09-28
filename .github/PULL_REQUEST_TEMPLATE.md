@@ -1,20 +1,19 @@
-## Description
-Please include a summary of the change and which issue is fixed. 
+## Change
 
-Fixes # (issue number)
+Describe the problem and the resulting behavior.
 
-## Type of change
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+## Validation
 
-## Security & Privacy Checklist:
-- [ ] My code does not introduce any network requests.
-- [ ] My code does not request any new device permissions (or I have explicitly justified them).
-- [ ] Any new data fields are properly handled by the local encryption layer.
+List the build, unit/instrumentation tests and device checks run. State any failures or checks not run.
 
-## General Checklist:
-- [ ] My code follows the style guidelines of this project.
-- [ ] I have performed a self-review of my own code.
-- [ ] I have run `flutter format .`
-- [ ] I have commented my code, particularly in hard-to-understand areas.
+## Security and compatibility
+
+- [ ] No network/telemetry dependency or INTERNET permission added.
+- [ ] Keys, user backups, screenshots of personal data and signing files are excluded.
+- [ ] Import limits, cancellation, lock cleanup and backup compatibility considered.
+- [ ] Any schema, application ID or signing change is explicitly documented.
+- [ ] README and relevant docs match the behavior.
+
+## Assistance
+
+Disclose material AI assistance (analysis, docs, code or tests) and the checks actually verified.

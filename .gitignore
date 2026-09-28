@@ -1,64 +1,32 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
+# Local build and IDE state
+.gradle/
+.kotlin/
+**/build/
 .idea/
+*.iml
+local.properties
+*.log
+*.class
+*.pyc
+__pycache__/
+.DS_Store
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-
-/linux/
-/macos/
-/web/
-/windows/
-/test/
-!/test/
-!/test/*.dart
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-/android/app/.cxx
-
-# Signing keys
+# Private signing material and personal vaults
+signing/
 key.properties
 *.jks
 *.keystore
-# Widget Preview related
-.widget_preview/
+*.p12
+*.pfx
+*.wbk
+*.db
+*.db-wal
+*.db-shm
+*.enc
 
-# Android build output
-android/build/
+# Local validation artifacts and chat attachments
+artifacts/
+test-results/
+verification/
+verification-runtime/
+.codex-remote-attachments/

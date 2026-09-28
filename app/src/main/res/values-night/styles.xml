@@ -1,0 +1,1 @@
+<resources><style name="Theme.Kura" parent="android:style/Theme.Material.NoActionBar"><item name="android:windowBackground">#000000</item><item name="android:colorBackground">#000000</item><item name="android:windowLightStatusBar">false</item><item name="android:colorAccent">#176B53</item><item name="android:windowActionModeOverlay">true</item></style></resources>

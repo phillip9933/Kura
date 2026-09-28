@@ -1,1 +1,1 @@
-Offline card vault with AES-256-GCM encryption. Zero internet, total privacy.
+A private, offline wallet for your cards, passes and identity documents.
