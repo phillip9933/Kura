@@ -121,3 +121,7 @@ The new opt-in `StoreScreenshotsTest` compiled successfully: debug/app-test buil
 The capture uses only fictional owned fixtures, authenticates through the real emulator credential UI, restores saved settings and removes owned rows. Screen protection is changed only by instrumentation and restored in `finally`; production screenshot security is unchanged. The emulator display was restored after capture. Ordinary suite runs skip the opt-in capture test.
 
 No production Kotlin, Gradle configuration, schema or crypto behavior changed in this release-preparation pass. Full JVM/device suites, lint, the runtime advisory scan and optimized-device performance journeys were **not rerun**; their earlier evidence above remains scoped to those runs. No private signing material or personal backup was opened. No signed upgrade, F-Droid Linux/server build, new physical-device benchmark or store submission was performed. AI assistance was used for test tooling, assets and documentation.
+
+## First public source verification
+
+Source revision `1d77cb7` was pushed on 2026-09-29, preserving the remotely added privacy policy. Its first GitHub Android verification run (`36514186319`) failed during SDK setup: setup-android's default `tools platform-tools` requested the removed `tools` package. No Gradle tests ran in that attempt. Both Android workflows now explicitly request only `platform-tools` before installing the pinned platform/build-tools. This is a CI bootstrap fix; no application behavior changes.
