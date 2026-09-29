@@ -1,7 +1,7 @@
 param([string]$Serial = 'emulator-5580')
 $ErrorActionPreference = 'Stop'
 if ($Serial -notmatch '^emulator-\d+$') { throw 'Only disposable emulators are permitted.' }
-$projectRoot = $PSScriptRoot
+$projectRoot = Split-Path -Parent $PSScriptRoot
 $sdk = $env:ANDROID_HOME
 if (-not $sdk) { $sdk = "$env:LOCALAPPDATA/Android/sdk" }
 $adb = Join-Path $sdk 'platform-tools/adb.exe'

@@ -1,19 +1,15 @@
 # Changelog
 
-## 2.0.0 — unreleased
+## 2.0.0 — September 29, 2026
 
-- Replaced the app implementation with Kotlin, Jetpack Compose and Material 3.
-- Moved the standalone prototype into the repository-root Android project and removed the old build/tooling from the working tree.
-- Added authenticated vault sessions, bounded external-operation guards, hardware-bound key wrapping, SQLCipher/Room storage and encrypted media.
-- Added bounded pass import, compatible encrypted backup/restore, typed manual fields, images, attachments, favorites and ordering.
-- Preserved the release application ID and separate debug installation ID.
-- Centralized sensitive pending-state cleanup on vault lock and added startup cleanup of abandoned camera captures.
-- Replaced obsolete docs and release automation with current Android guidance and unsigned verification workflows.
-- Added explicit recovery confirmation for backups with omitted images and compatibility with older image filenames. Missing attachments and corrupt images still block restoration.
-- Made migration backup-only; removed automatic Flutter database, XML preference and plugin-key extraction. Existing native vaults and older backup formats stay readable.
-- Updated SQLCipher to 4.19.0 and Bouncy Castle to 1.86; moved compilation to API 37.0 with compatible Gradle/AGP/KSP tooling.
-- Removed obsolete editors/reorder plumbing and unused assets; added contributor/agent guidance and expanded library lint coverage.
+### Built for Android, from the ground up
 
-Source version code: 118. This is not a published release. Consult [Testing](docs/TESTING.md) and [Security review](docs/SECURITY_REVIEW.md) for remaining gates.
+Kura 2.0 moves from Flutter to **Kotlin and Jetpack Compose**. The goal is a wallet that starts promptly, unlocks reliably and behaves predictably when you switch apps, scan a barcode or choose a file.
 
-Earlier released history remains in Git and existing release tags. Historical prototype iteration reports are outside the current source tree in the local recovery archive.
+- **A leaner startup path.** Removing the Flutter engine avoids its warm-up overhead and gives Kura direct control over initialization.
+- **More reliable unlocking and resume.** Authentication and vault lifetime now follow an explicit native session model, designed to prevent overlapping unlocks and lifecycle races.
+- **Smoother camera and file-picker handoffs.** External operations are tracked so a temporary switch to another activity does not prematurely close the vault during an import.
+- **Direct Android security integration.** Keystore-backed cryptography and Android biometric prompts replace plugin bridges, with clearer ownership and cleanup of sensitive session data.
+- **An Android-native interface.** Jetpack Compose and Material 3 provide the foundation for Cards, Passes and Identity, with consistent editing, navigation and barcode views.
+
+Kura remains offline, private and account-free. This release changes the foundation so future improvements can build on Android's own tools and lifecycle.

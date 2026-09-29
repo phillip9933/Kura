@@ -1,7 +1,7 @@
 param([string]$Serial = 'emulator-5580')
 $ErrorActionPreference = 'Stop'
 if ($Serial -notmatch '^emulator-\d+$') { throw 'Only disposable emulators are permitted.' }
-$projectRoot = $PSScriptRoot
+$projectRoot = Split-Path -Parent $PSScriptRoot
 $adb = Join-Path $env:LOCALAPPDATA 'Android/sdk/platform-tools/adb.exe'
 $package = 'app.kura.wallet.prototype.profile'
 if ([int](& $adb -s $Serial shell getprop ro.build.version.sdk) -lt 34) { throw 'Profile capture requires API 34 or later.' }

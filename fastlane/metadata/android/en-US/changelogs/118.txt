@@ -1,6 +1,7 @@
-Kura 2.0 rebuilds the wallet in native Kotlin and Jetpack Compose.
-- Separate Cards, Passes and Identity sections.
-- Favorites, sorting, custom fields, images and attachments.
-- Biometric or device-credential unlock and encrypted backups.
-- Improved recovery when older backups contain missing image references.
-Before upgrading from 1.x, create and keep a backup, then restore it in 2.0. Migration is not automatic.
+Kura 2.0 is rebuilt in Kotlin and Jetpack Compose for a more reliable native Android experience.
+- No Flutter engine warm-up.
+- Native vault sessions for unlocking and app resume.
+- Camera and file-picker handoffs that keep imports active.
+- Direct Android Keystore and biometric integration.
+- A Material 3 interface for Cards, Passes and Identity.
+Still offline, private and account-free.

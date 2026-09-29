@@ -7,10 +7,10 @@ Use JDK 21, SDK platform 36 and build-tools 36.0.0. On Windows use `gradlew.bat`
 ```sh
 ./gradlew :core:model:test :core:import:testDebugUnitTest :core:import:testLowMemory
 ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest :app:assembleRelease :app:lintDebug
-python3 verify-native-packaging.py
+python3 tools/verify-native-packaging.py
 ```
 
-The runner `./run-tests.ps1 -Serial emulator-5580` builds the modules and runs security, database, import/storage and app instrumentation. It rejects non-emulator serials and requires 16 KiB pages. Use **only a disposable emulator**, API 37 x86_64 in the current setup, with synthetic PIN `2468`. Do not change credentials, clear data or run fixtures on a personal device. Supply JDK/SDK locations through `JAVA_HOME` and `ANDROID_HOME`.
+The runner `./tools/run-tests.ps1 -Serial emulator-5580` builds the modules and runs security, database, import/storage and app instrumentation. It rejects non-emulator serials and requires 16 KiB pages. Use **only a disposable emulator**, API 37 x86_64 in the current setup, with synthetic PIN `2468`. Do not change credentials, clear data or run fixtures on a personal device. Supply JDK/SDK locations through `JAVA_HOME` and `ANDROID_HOME`.
 
 UI tests enter a real system credential prompt. They may install synthetic records, alter preferences/font scale and create test documents. Some fixtures temporarily remove screenshot protection on the emulator for synthetic screenshots; this is test code only.
 
@@ -103,13 +103,13 @@ This focused fix does not reuse prior full-app, security, database or optimized-
 
 The user reported successful real-backup restore on the Pixel 10 Pro with build 118 and then confirmed that everything was good. This is user-reported acceptance, not an assistant-observed checklist run: individual biometrics/PIN, background/resume, screen-off, camera/picker, image-editing, font/rotation/theme and sorting checks were not separately recorded. An emulator cannot establish physical StrongBox behavior or measured device smoothness.
 
-Run `./run-benchmark.ps1 -Serial emulator-5580` for independent optimized journeys and cold launches. `capture-profile.ps1` and `measure-profile.ps1` generate/compare ART profiles on a disposable emulator. Existing profiles are historical measured startup coverage; no fresh physical-device frame benchmark is claimed for this consolidation.
+Run `./tools/run-benchmark.ps1 -Serial emulator-5580` for independent optimized journeys and cold launches. `tools/capture-profile.ps1` and `tools/measure-profile.ps1` generate/compare ART profiles on a disposable emulator. Existing profiles are historical measured startup coverage; no fresh physical-device frame benchmark is claimed for this consolidation.
 
 The API 24–29 fallback and a production-signed upgrade remain separate gates. One real historical backup is now user-confirmed; exhaustive historical-version coverage is not claimed. Raw local results/captures live in ignored `test-results/` and `verification/`, not in the repository. Record exact tests, failures and reused results when reporting validation; a completed test is not necessarily a passed test.
 
 ## Local release preparation — build 118
 
-On 2026-09-29, `:app:assembleRelease :app:bundleRelease` succeeded in 3m 27s: **237 tasks, 40 executed / 197 up-to-date**. `verify-native-packaging.py` passed on this build's APK, including all 16 packaged native libraries. AAPT independently reported release ID `app.kura.wallet`, version `2.0.0` / `118`, min API 24 and target API 36. Outputs remain unsigned. Logs: `verification/release-118-build.log` and `release-118-packaging.txt`.
+On 2026-09-29, `:app:assembleRelease :app:bundleRelease` succeeded in 3m 27s: **237 tasks, 40 executed / 197 up-to-date**. `tools/verify-native-packaging.py` passed on this build's APK, including all 16 packaged native libraries. AAPT independently reported release ID `app.kura.wallet`, version `2.0.0` / `118`, min API 24 and target API 36. Outputs remain unsigned. Logs: `verification/release-118-build.log` and `release-118-packaging.txt`.
 
 | Artifact | SHA-256 |
 | --- | --- |
@@ -129,3 +129,13 @@ Source revision `1d77cb7` was pushed on 2026-09-29, preserving the remotely adde
 The follow-up public run [36514363928](https://github.com/phillip9933/Kura/actions/runs/36514363928), on F-Droid-pinned revision `c429d29e6d523a1aee5f76aa969dc0b9b5ac6129`, **passed** on GitHub's Linux runner. Gradle completed in 9m 6s: **473 tasks executed, none reused/up-to-date**. Downloaded XML reports show model **17/17**, import JVM **34/34**, separate constrained-heap **1/1**: **52 executions, 0 failures, 0 errors, 0 skipped**. Lint reported **0 errors / 56 warnings**. Debug/release APK builds and release packaging checks passed, including no INTERNET permission and 16 KiB native/ZIP alignment. This workflow does not run instrumentation, sign binaries or perform an F-Droid build-server run. Raw downloaded reports are retained locally in ignored `verification/github-native-2.0/`.
 
 The final documentation-only record of these already-completed checks uses `[skip ci]` to avoid another identical full build; it changes no application or workflow code. The earlier SDK-setup failure remains visible in GitHub and is not counted as passing. AI assistance was used for source publication, the CI fix and these validation notes.
+
+## Signed 2.0 publication
+
+The user authorized signed APK/AAB publication and requested a simpler public README/changelog. Production application code is unchanged from the verified build 118. Test/profile helpers now live under `tools/`, with their repository-root resolution and workflow/doc references updated. The packaging verifier adds an explicit APK path and expected-certificate option for signed validation.
+
+The signed build succeeded in 1m 31s: **238 tasks, 15 executed / 223 up-to-date**. APK signature verification matched the existing public release certificate, `1e19598265c5c5920639da46261944463f8ec65793fe0dbd362a558599c6dfd1`; identity/version are `app.kura.wallet`, `2.0.0` / `118`, min API 24 and target API 36. Offline manifest, baseline profiles and all 16 native-library/ZIP alignment checks passed on the signed APK. Jarsigner verified the AAB signature and its public certificate matched; Google's bundletool 1.18.3 validated the bundle structure. Bundletool was downloaded from Google's release and checked against its published SHA-256.
+
+Jarsigner additionally reports self-signed/untrusted CA-chain and missing-timestamp warnings, ignored POSIX attributes, and JarFile/JarInputStream differences caused by the bundle's entry ordering. These warnings are retained in the local validation log rather than suppressed. The independent bundletool structural check passed; Play Console acceptance has not been tested. No personal phone or production package was used for destructive device testing, and no new physical-device claim is made.
+
+PowerShell helpers received syntax/root-path checks; the moved packaging verifier ran on both unsigned and signed APKs, including rejection of an incorrect expected certificate. This pass reuses the earlier **52 passing Linux test executions** and **0 errors / 56 lint warnings**; no application change calls for a fresh device suite. Release assets carry a separate SHA256SUMS file. Local evidence is under `verification/signed-2.0-*`; published hashes and assets live on the GitHub release. AI assistance was used for signing orchestration, tool organization, validation and public documentation.

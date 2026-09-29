@@ -1,8 +1,13 @@
 """Verify native ELF load alignment and APK permissions without installing release."""
-import struct, zipfile, subprocess, pathlib, os
+import argparse, struct, zipfile, subprocess, pathlib, os
 import xml.etree.ElementTree as ET
-root = pathlib.Path(__file__).resolve().parent
-apk = root / "app/build/outputs/apk/release/app-release-unsigned.apk"
+root = pathlib.Path(__file__).resolve().parent.parent
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--apk", type=pathlib.Path, default=root / "app/build/outputs/apk/release/app-release-unsigned.apk")
+parser.add_argument("--expected-certificate", help="Expected signed APK certificate SHA-256 (hex)")
+args = parser.parse_args()
+apk = args.apk
+
 sdk_home = os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
 if not sdk_home:
     sdk_home = str(pathlib.Path(os.environ["LOCALAPPDATA"]) / "Android/sdk")
@@ -54,5 +59,17 @@ with zipfile.ZipFile(apk) as archive:
                 assert alignment >= 16384, (name, alignment)
                 alignments.append(alignment)
         print(name, "PT_LOAD", alignments)
-    assert not any(n.startswith("META-INF/") and n.endswith((".RSA", ".DSA", ".EC")) for n in archive.namelist())
-print("Native libraries are 16 KiB compatible; release has no JAR signature")
+    if not args.expected_certificate:
+        assert not any(n.startswith("META-INF/") and n.endswith((".RSA", ".DSA", ".EC")) for n in archive.namelist())
+if args.expected_certificate:
+    signer = sdk / ("apksigner.bat" if os.name == "nt" else "apksigner")
+    result = subprocess.check_output([str(signer), "verify", "--verbose", "--print-certs", str(apk)], text=True)
+    expected = args.expected_certificate.lower().replace(":", "")
+    assert len(expected) == 64 and all(c in "0123456789abcdef" for c in expected)
+    fingerprints = [line.split(":", 1)[1].strip().lower() for line in result.splitlines()
+                    if "certificate SHA-256 digest:" in line and line.startswith("Signer #")]
+    assert fingerprints == [expected], "Release signing certificate mismatch"
+    print("APK signature verified; certificate matches expected release identity")
+else:
+    print("Release has no JAR signature (unsigned verification mode)")
+print("Native libraries are 16 KiB compatible")

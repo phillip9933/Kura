@@ -17,6 +17,4 @@ Keep control of your data
 
 Kura stores card references and barcodes. It does not make NFC payments. Imported pass issuer signatures are not verified. Opening links, sharing passes or viewing exported attachments hands data to another app.
 
-Upgrading from Kura 1.x: create and keep a backup before updating. Restore that backup in Kura 2.0; old private app storage is not migrated automatically. If an older backup omitted images, Kura warns before restoring the available records and media.
-
 Requires Android 7.0 or later, a secure device lock and supported hardware-backed key storage.

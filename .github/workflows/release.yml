@@ -22,7 +22,7 @@ jobs:
       - name: Build unsigned APK and app bundle
         run: ./gradlew :app:assembleRelease :app:bundleRelease --max-workers=2 --console=plain
       - name: Verify release packaging
-        run: python3 verify-native-packaging.py
+        run: python3 tools/verify-native-packaging.py
       - uses: actions/upload-artifact@v4
         with:
           name: Kura-unsigned-release-candidate

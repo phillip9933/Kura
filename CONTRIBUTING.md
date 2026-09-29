@@ -23,7 +23,7 @@ Build from the repository root. Commands below use the Unix wrapper; substitute 
 | Room/SQLCipher/schema | `core/database` and its committed `schemas/` | Database compatibility instrumentation and staged-restore tests |
 | PKPASS, backup or transfer | `core/import`; encrypted streams in `core/storage` | `:core:import:testDebugUnitTest :core:import:testLowMemory`, import instrumentation for media/restore changes |
 | Cards, pass display, editors, sorting | `feature/vault`; Android callbacks in `app` | `:app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug`, relevant app journeys |
-| Permissions, dependencies, signing/build | Root/module Gradle, app manifests | Debug and unsigned release builds, lint, `python3 verify-native-packaging.py`; inspect merged manifest |
+| Permissions, dependencies, signing/build | Root/module Gradle, app manifests | Debug and unsigned release builds, lint, `python3 tools/verify-native-packaging.py`; inspect merged manifest |
 | Documentation | Relevant canonical doc in `docs/` | Check commands/paths/links against source; no app suite needed for prose alone |
 
 The paths in the table identify modules/classes, not shell file paths; the [architecture code map](docs/ARCHITECTURE.md#code-map) links to exact sources. [Testing](docs/TESTING.md) explains the full disposable-emulator runner and known failures. Tests should protect behavior or a meaningful failure boundary; do not add tests that merely duplicate an implementation.
@@ -50,6 +50,6 @@ Report the app version/code, Android version, device, font scale, theme and step
 
 PRs should explain the problem, final behavior, tests run and remaining limits. Update affected docs. CI runs JVM tests, lint and unsigned build checks; it does not replace emulator, physical-device or upgrade testing. The manual release-candidate workflow only uploads unsigned artifacts and does not publish.
 
-Source publication is authorized for the 2.0 transition. Store submissions and signed binary releases remain separate actions requiring explicit authorization; the user is updating the pending F-Droid submission.
+The 2.0 source and signed GitHub release are authorized for publication. Store-console submissions remain separate; the user is updating the pending F-Droid submission.
 
 Contributions are licensed under [GPL-3.0](LICENSE). Follow the [Code of Conduct](CODE_OF_CONDUCT.md).

@@ -1,7 +1,7 @@
 param([string]$Serial = 'emulator-5580')
 $ErrorActionPreference = 'Stop'
 if ($Serial -notmatch '^emulator-\d+$') { throw 'Only disposable emulators are permitted.' }
-$projectRoot = $PSScriptRoot
+$projectRoot = Split-Path -Parent $PSScriptRoot
 $adb = Join-Path $env:LOCALAPPDATA 'Android/sdk/platform-tools/adb.exe'
 if ((& $adb -s $Serial shell getconf PAGE_SIZE).Trim() -ne '16384') { throw 'A 16 KiB emulator is required.' }
 & "$projectRoot/gradlew.bat" -p $projectRoot :benchmark:assembleDebugAndroidTest :app:assembleBenchmark --max-workers=1

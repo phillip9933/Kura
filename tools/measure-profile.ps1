@@ -1,9 +1,10 @@
 param([string]$Serial = 'emulator-5580')
 $ErrorActionPreference = 'Stop'
+$projectRoot = Split-Path -Parent $PSScriptRoot
 if ($Serial -notmatch '^emulator-\d+$') { throw 'Only disposable emulators are permitted.' }
 $adb = Join-Path $env:LOCALAPPDATA 'Android/sdk/platform-tools/adb.exe'
 $package = 'app.kura.wallet.prototype.benchmark'
-$results = Join-Path $PSScriptRoot 'test-results/profile-startup-comparison.txt'
+$results = Join-Path $projectRoot 'test-results/profile-startup-comparison.txt'
 # Requires run-benchmark.ps1 first: the optimized APK must be installed and its
 # synthetic vault provisioned through real system authentication.
 function Measure-ColdLaunch {
