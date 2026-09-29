@@ -61,7 +61,7 @@ apksigner verify --print-certs previous-production.apk
 apksigner verify --print-certs candidate-signed.apk
 ```
 
-Record the highest uploaded version code from all Play tracks (including drafts/internal tracks) and the relevant F-Droid entry. Code 118 is only verified against source history, not those consoles. No private signing material was opened for this checklist. Certificate continuity, a signed same-ID upgrade and highest uploaded codes remain unverified.
+Record the highest uploaded version code from all Play tracks (including drafts/internal tracks) and the relevant F-Droid entry. Code 118 is only verified against source history, not those consoles. No private signing material was opened for this checklist. The retired public GitHub v1.1.2 universal APK passed `apksigner verify`; its certificate SHA-256 is `1e19598265c5c5920639da46261944463f8ec65793fe0dbd362a558599c6dfd1`. This identifies that GitHub artifact only, not the Play/F-Droid signing keys. Candidate certificate continuity, a signed same-ID upgrade and highest uploaded codes remain unverified.
 
 ## Store screenshots
 

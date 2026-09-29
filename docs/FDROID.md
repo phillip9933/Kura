@@ -10,13 +10,13 @@ The tested local toolchain is JDK 21, Android SDK `platforms;android-37.0` and `
 
 ## Build entry draft
 
-Append a disabled entry like this to the existing `Builds` list in the external `metadata/app.kura.wallet.yml`. Replace the revision only after a final reviewed revision is publicly available, check the actual highest store code, and remove `disable` only after maintainer verification. This deliberately is not an executable publishing configuration in this repository.
+Append a disabled entry like this to the existing `Builds` list in the external `metadata/app.kura.wallet.yml`. The entry below pins the public native source and CI-bootstrap revision. Check the actual highest store code and remove `disable` only after maintainer verification. If application code changes again, update the pin to that reviewed revision. This deliberately is not an executable publishing configuration in this repository.
 
 ```yaml
   - versionName: 2.0.0
     versionCode: 118
-    disable: Native rewrite pending public revision and build-server verification
-    commit: REPLACE_WITH_FINAL_PUBLIC_COMMIT
+    disable: Native rewrite pending F-Droid build-server verification
+    commit: c429d29e6d523a1aee5f76aa969dc0b9b5ac6129
     gradle:
       - yes
     output: app/build/outputs/apk/release/app-release-unsigned.apk

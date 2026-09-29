@@ -44,7 +44,7 @@ The Gradle 9.3.1 distribution checksum is pinned from its official checksum endp
 
 ## Remaining limits and release work
 
-PKPASS issuer/CMS signatures are **not verified**; a valid manifest only checks consistency. Legacy CBC formats lack authenticated integrity. Biometric/StrongBox behavior on physical hardware, API 24–29 fallback, the final production signing identity and real historical backup restoration remain unverified release gates.
+PKPASS issuer/CMS signatures are **not verified**; a valid manifest only checks consistency. Legacy CBC formats lack authenticated integrity. Biometric/StrongBox behavior on physical hardware, API 24–29 fallback, the final production signing identity and a signed upgrade remain unverified release gates. After this review, the user confirmed successful restoration of a real historical backup on Pixel 10 Pro with build 118; see [Testing](TESTING.md) for the limited user-reported scope.
 
 Mutable owned buffers can be overwritten; immutable strings, framework/provider internals, GPU/OS copies and already-shared exports cannot all be recalled or securely erased. Clipboard clearing is a best-effort delayed ownership check, subject to Android restrictions. File deletion on flash storage is not secure erasure. A compromised OS or authorized recipient can bypass the intended app-level privacy boundary.
 
