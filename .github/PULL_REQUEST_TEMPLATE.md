@@ -14,6 +14,6 @@ List the build, unit/instrumentation tests and device checks run. State any fail
 - [ ] Any schema, application ID or signing change is explicitly documented.
 - [ ] README and relevant docs match the behavior.
 
-## Assistance
+## AI usage
 
 Disclose material AI assistance (analysis, docs, code or tests) and the checks actually verified.

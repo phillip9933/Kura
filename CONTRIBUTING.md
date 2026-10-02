@@ -9,6 +9,8 @@ Kura is a Kotlin/Compose Android app. Start with [README](README.md), [Architect
 3. Open the repository root in Android Studio or run `./gradlew :app:assembleDebug` (`gradlew.bat` on Windows).
 4. Run the relevant checks in [Testing](docs/TESTING.md). Never run destructive fixtures against a personal device or production package.
 
+I prioritize data safety, security, correctness and privacy, followed by usability, maintainability, simplicity, compatibility, extensibility, performance and architectural purity. Prefer small, understandable changes with clear ownership. Explain exceptions to defaults and preserve existing data and public contracts. Consider accessibility and localization when changing UI. These are review priorities, not a claim that every current implementation meets them.
+
 Use small, focused changes. Follow Kotlin conventions and the surrounding code. Prefer standard Material 3 components, lifecycle-aware state, bounded background work and explicit ownership of sensitive buffers. No formatter is currently enforced by the build; do not run unrelated bulk formatting.
 
 Do not add network access or telemetry. Treat imports, document-provider streams, image metadata and backup contents as untrusted. Keep SQL identifiers allowlisted and values bound. Preserve application ID, signing continuity and legacy data compatibility unless a separately reviewed migration changes them.
@@ -36,7 +38,7 @@ Follow `.editorconfig` and normal Kotlin formatting for new or substantially edi
 
 For a larger structural change, describe the affected owner, retained behavior and test plan first. Keep behavior-changing work separate from mechanical movement where practical. Do not generate a new framework or abstraction for a single caller without a concrete benefit.
 
-## AI-assisted contributions
+## AI usage
 
 Disclose material AI assistance in the PR/commit summary: whether it was used for analysis, documentation, code or tests, and which checks you personally verified. You remain responsible for understanding the submitted change. Do not present generated test claims as observed results or share private vault data with an assistant. Coding agents should start with [AGENTS.md](AGENTS.md), then follow links only for the area being changed.
 
