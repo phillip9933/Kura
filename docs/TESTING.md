@@ -2,7 +2,7 @@
 
 ## Local build and JVM checks
 
-Use JDK 21, SDK platform 36 and build-tools 36.0.0. On Windows use `gradlew.bat` in the commands below.
+Use JDK 21, SDK platform 37.0 and build-tools 36.0.0. On Windows use `gradlew.bat` in the commands below.
 
 ```sh
 ./gradlew :core:model:test :core:import:testDebugUnitTest :core:import:testLowMemory
@@ -14,7 +14,256 @@ The runner `./tools/run-tests.ps1 -Serial emulator-5580` builds the modules and 
 
 UI tests enter a real system credential prompt. They may install synthetic records, alter preferences/font scale and create test documents. Some fixtures temporarily remove screenshot protection on the emulator for synthetic screenshots; this is test code only.
 
+For release-style performance testing without production signing, build
+`:app:assembleOptimized`. This non-debuggable, R8-optimized APK updates the existing
+debug prototype package using its debug certificate. Use the separate `benchmark`
+test driver rather than in-process debug instrumentation against this variant.
+`:app:assembleBenchmark` remains the independently installed comparison target.
+
+`tools/capture-profile.ps1` captures four real unlocks plus the broader synthetic
+UI journey into `app/src/main/baseline-prof.txt`. After `tools/run-benchmark.ps1`,
+`tools/measure-profile.ps1 -Unlock` compares verify-only and packaged-profile
+compilation on the same benchmark APK, including authentication-to-draw traces.
+The ordinary cold-launch log measures entry to the lock screen, not vault access.
+For empty-vault comparisons, provision an empty disposable benchmark installation
+first; the normal benchmark journey populates synthetic items. Scripts never target
+the production package. Compilation state is explicitly reset in the comparison;
+do not compare uncontrolled debug runs against forced-compiled runs as equivalent.
+
 ## Verification status
+
+### Optimized prototype and refreshed profile — 2026-10-03
+
+Added the non-debuggable `optimized` build type: release-style R8/resource shrinking,
+debug signing and the existing `app.kura.wallet.prototype` identity. No database,
+key, backup, authentication or session-policy change is part of this pass. Updated
+profile capture to exercise four real credential unlocks before the broader UI
+journey; the measured baseline profile now contains 24,914 rules (previously
+24,194). The external, opt-in `benchmark.UnlockTimingTest` can drive optimized
+apps without making them debuggable. Scripts and the driver restrict targets to
+disposable emulators/prototype packages; production is excluded.
+
+Fresh builds:
+
+| Build | Executed / up-to-date tasks | Duration |
+| --- | --- | --- |
+| Benchmark, profile and external driver | 102 / 230 | 4m 55s |
+| Profile capture rebuild | 13 / 266 | 55s |
+| Refreshed benchmark and optimized APK | 64 / 216 | 3m 1s |
+
+**9 instrumentation executions passed, 0 failed**: empty-vault provisioning (1),
+old-profile comparison (2), profile capture unlock/UI journeys (2), new-profile
+comparison (2), final optimized benchmark UI journey (1), and install-over-debug
+prototype unlock journey (1). The final update retained the existing emulator vault
+without clearing its data and passed four credential unlocks in 27.505 seconds.
+Broader optimized UI journeys passed in 54.018 and 49.745 seconds, exercising
+synthetic cards, barcode display, scrolling, camera, picker, rotation and relock.
+These are repeated executions of the timing/journey tests, not nine distinct cases.
+
+The same empty benchmark vault was used for these callback-to-first-draw observations
+(ms; first process opening followed by three reopenings):
+
+| APK/profile | Verify-only compilation | Packaged-profile compilation |
+| --- | --- | --- |
+| Previous profile | 592 / 557 / 666 / 470 | 449 / 463 / 467 / 432 |
+| Refreshed profile | 611 / 591 / 586 / 567 | 566 / 549 / 561 / 563 |
+
+Android reported `speed-profile`, not forced full `speed`, for the compiled runs.
+The native database-open mean also varied from about 418 to 520 ms between the two
+compiled runs despite unchanged cryptography, so these results do not establish
+a speedup from the profile refresh itself. They confirm the packaged profile is
+accepted and the optimized unlock path runs successfully. Earlier debug/forced-full-
+compilation timings are not equivalent release measurements. Sideloading does not
+guarantee Android has finished profile compilation immediately; no Pixel speedup or
+fixed percentage gain is claimed.
+
+The final synthetic scrolling sample reported 102/201 janky frames (50.75%; legacy
+metric 39/201), with 17 ms median / 29 ms p95 on this headless emulator. Passing the
+functional journey does not establish smooth 60/120 fps physical-device rendering.
+
+APK verification passed: matching debug certificate, prototype ID/version 118,
+no INTERNET permission, backup/cleartext disabled, non-debuggable manifest and
+16 KiB ZIP alignment. The APK includes `baseline.prof` (10,366 bytes) and
+`baseline.profm` (1,211 bytes). Artifact size is 11,089,419 bytes versus the previous
+debug APK's 33,456,464 bytes. Current local testing artifact:
+`artifacts/Kura-2.0.0-dev-118-optimized-20261003.apk`, SHA-256
+`feeb1f14be5a1bc03bf6cf9014b03319918e526c4d3963e65cfd59c9f349f844`.
+
+PowerShell syntax and `git diff --check` passed. Full JVM/database/import suites,
+full lint, a production-signed release and physical-device tests were not rerun.
+Logs/traces are in `verification/profile-*` and `test-results/profile-*`; prior
+comparison traces were preserved before the second run. AI assistance was used
+for build configuration, profile/test tooling and validation. Nothing was pushed
+or published.
+
+### Code-only preload investigation — 2026-10-03
+
+`VaultController` now schedules SQLCipher native/runtime class loading on the I/O
+dispatcher when the controller is created, alongside authentication. The opener
+awaits its completion only after authentication. `prepareRuntime()` takes no
+Context, path or secret and creates no database connection. Locked-state data,
+key lifetime, authentication and database derivation settings are unchanged.
+
+The debug/app-test build passed: **14 tasks executed / 155 up-to-date**. Alternating
+baseline/preload installations on the empty disposable API 37 / 16 KiB emulator
+passed **4 timing-test executions**, four unlocks each. Callback-to-first-draw
+durations (ms) were:
+
+| Variant/run | First | Repeat 1 | Repeat 2 | Repeat 3 |
+| --- | --- | --- | --- | --- |
+| Existing parallel opener / 1 | 1212 | 617 | 630 | 624 |
+| Code preload / 1 | 1145 | 649 | 625 | 621 |
+| Existing parallel opener / 2 | 1249 | 630 | 606 | 615 |
+| Code preload / 2 | 978 | 503 | 502 | 528 |
+
+The preload trace completed before authentication and moved **18–29 ms** of
+code loading out of the post-authentication path. Repeat timings also varied
+substantially despite this being a once-per-controller preload, so the larger
+end-to-end differences cannot be attributed to preloading alone. No reliable
+percentage improvement or physical-device benefit is claimed.
+
+A separate diagnostic forced ART `speed` compilation on the emulator prototype
+installation: **1 timing execution passed**, with 669 / 522 / 552 / 523 ms.
+This is not a release/profile benchmark: full forced compilation is emulator-local
+and is not carried in the supplied APK. Kura already ships a baseline profile;
+refreshing and measuring its coverage remains a separate optimization opportunity.
+The emulator prototype now has forced compilation enabled; reset compilation when
+using it for future controlled comparisons.
+
+Lock-time pending-buffer/grant/capture regressions passed **2/2** in 0.817 seconds.
+These are **7 passing executions**, covering 3 distinct test methods; earlier full
+database/import suite results were not rerun for this code-loading-only change.
+No fresh lint, release build, Pixel timing or cryptographic migration was performed.
+Raw traces and results are under `verification/preload-*`; AI assistance was used
+for the experiment, implementation and validation.
+
+Verified local APK: `artifacts/Kura-2.0.0-dev-118-preload-20261003.apk`, prototype
+package / version 118, SHA-256
+`cc1fcd5980ac793556d563062387c6d302a2d8d80ae7d5dcc6d9273cc37a77f0`.
+Signature verification passed; INTERNET permission remains absent. Nothing was
+pushed or published.
+
+Potential larger work requires a separately validated key-handling design.
+[SQLCipher's guidance](https://www.zetetic.net/sqlcipher/performance/) permits raw
+high-entropy keys without password stretching; applying that to existing vaults
+requires compatibility, recovery, authenticated wrapping and crash-safety tests.
+No such key change, reduced KDF work, retained unlocked connection or decrypted
+preload is part of this patch. [Android's baseline-profile guidance](https://developer.android.com/topic/performance/baselineprofiles/overview)
+describes code precompilation without changing authentication or encryption.
+
+### Concurrent database unlock — 2026-10-03
+
+The three existing SQLCipher databases now open concurrently on the I/O dispatcher.
+All must pass key/version checks before any Room callback can adopt a database.
+Failure joins the openers before closing their handles and wiping their password
+copies; cancellation cannot return an owned vault without cleanup. Encryption
+parameters, schemas and lock-time key destruction are unchanged. First-time vault
+creation still uses the existing sequential creation path.
+
+The initial concurrent candidate passed 9/10 database tests: the corruption test
+caught Room metadata being written to a healthy sibling database before another
+opener failed. Adding the shared verification checkpoint corrected this without
+weakening the assertion. The revised suite passed **12/12** in 27.309 seconds,
+including missing-file and cancellation/reopen regressions. Builds before and
+after this correction passed (14 executed / 155 up-to-date and 16 / 153).
+
+The opt-in empty-vault timing journey passed **1/1**, exercising four real credential
+unlocks in 28.519 seconds on the same disposable API 37 / 16 KiB emulator. Compared
+with the sequential single-open baseline immediately below:
+
+| Authentication callback to first vault draw end | Sequential | Concurrent |
+| --- | --- | --- |
+| First opening after process start | 1488 ms | 989 ms |
+| Subsequent opening 1 | 1006 ms | 504 ms |
+| Subsequent opening 2 | 992 ms | 492 ms |
+| Subsequent opening 3 | 999 ms | 507 ms |
+
+Repeat-opening median improved from 999 to 504 ms (about 50%). These are four-sample
+debug emulator observations, not a physical Pixel or release benchmark. Database
+opens overlap; their individual durations must not be summed. No reduction in
+cryptographic work or authentication requirements is claimed. Initial process/UI
+work still contributes to the first opening. Local evidence: `parallel-database-tests.txt`
+(failed candidate), `parallel-safe-database-tests.txt`, `parallel-safe-timing-test.txt`,
+`parallel-safe-timing.atrace`, and `parallel-safe-spans.json` under `verification/`.
+AI assistance was used for implementation, diagnosis and validation.
+
+Final debug APK/lint/import-test build passed in 1m 54s (**49 tasks executed,
+229 up-to-date**). Lint reported **0 errors / 44 warnings**; this offline run is not
+a fresh dependency-advisory scan. Fresh import/storage instrumentation passed
+**29/29** in 91.947 seconds, including staged restore, publication failure,
+encrypted media and large backups (`verification/unlock-import-tests.txt`).
+APK signature verification passed and its manifest
+has no INTERNET permission. Local test artifact:
+`artifacts/Kura-2.0.0-dev-118-fast-unlock-20261003.apk`, prototype package,
+version `2.0.0-dev` / `118`, SHA-256
+`e8c05a6f7a24000cd8754873337850c428eba3ddd7c7690af6fcc328167caf79`.
+Prior artifacts were retained. No remote publication, release build, full app
+journey suite or physical-device timing was performed in this pass.
+
+### Empty-vault post-authentication timing — 2026-10-03
+
+AI-assisted local tracing added fixed-name Android trace sections (no keys, records,
+paths or passwords) for authentication success, unwrap, the three existing-database
+opens, settings, backup-secret lookup, refresh and vault drawing. These are local
+system traces, not analytics. `UnlockTimingTest` is opt-in via `-e unlockTiming true`,
+requires a disposable emulator and uses synthetic PIN 2468; ordinary runs skip it.
+Start from an empty prototype installation when reproducing these measurements.
+
+On API 37 / 16 KiB `emulator-5580`, the final debug run measured four empty-vault
+reopenings after a process start:
+
+| Stage | Observed duration |
+| --- | --- |
+| Authentication callback to first vault draw end | 1488, 1006, 992, 999 ms |
+| Master-key unwrap | 2.5–9.8 ms |
+| Wallet database open | 321–342 ms |
+| Pass database open | 288–298 ms |
+| Identity database open | 290–297 ms |
+| Three opens combined | 899–938 ms |
+| Settings | 0.5–1.6 ms |
+| Backup-secret lookup | 0.15–0.19 ms |
+| Empty-vault refresh | 0.9–12.4 ms |
+| First vault draw itself | 3.9–8.2 ms |
+
+Database opening is the dominant measured stage. The callback-to-draw interval also
+includes scheduling/composition/layout; draw end is not proof of physical display
+presentation. These are debug emulator measurements, not Pixel/StrongBox timings,
+and exclude the user's PIN entry and the time before the authentication callback.
+No encryption parameters or database formats were changed for this measurement.
+
+The first journey failed before authentication because the emulator had no secure
+credential. After configuring the documented synthetic PIN, two runs passed (one
+test each, four unlocks per run). The first successful run captured creation plus
+three reopenings but missed the first-frame marker due to cached parent drawing;
+the marker was moved onto the newly composed vault container. The final run passed
+in 30.93 seconds. Local evidence: `verification/unlock-timing-test.txt` (initial
+failure), `unlock-timing-retest.txt`, `unlock-timing-final-test.txt`,
+`unlock-timing.atrace`, and `unlock-spans.json`.
+
+App/test build passed (17 executed / 152 up-to-date tasks); the test diagnostic
+rebuild passed (4 / 147), and the corrected draw-marker app build passed (5 / 132).
+No full app suite or release-performance comparison was run, and no new APK was
+published or copied over the previously supplied test artifact.
+
+### Unlock database-open regression — 2026-10-03
+
+Existing vaults now check database versions on the same SQLCipher connection used by Room,
+before Room can create or migrate tables. This removes the three separate read-only
+preflight opens per unlock. Room validation, key cleanup and non-deleting corruption
+handling remain in place; cryptographic parameters are unchanged.
+
+Fresh `DatabaseCompatibilityTest` instrumentation on disposable 16 KiB `emulator-5580`:
+**10 passed, 0 failed, 0 ignored**, including new rejection tests for version zero,
+older/newer versions, wrong keys and corrupt files without file deletion or replacement.
+Existing schema, nullable-column, reopen and session-lock checks passed. Evidence:
+`verification/unlock-database-tests.txt` (ignored local output).
+
+`:core:database:assembleDebugAndroidTest :app:compileDebugKotlin` passed with
+14 tasks executed and 90 up-to-date. Only the database test APK was built/installed;
+no new application APK was built or published. Full app journeys, lint and physical-device
+latency measurements were not rerun. The reduction in opens is established by the code;
+no percentage or millisecond improvement on the Pixel is claimed. AI assistance was used
+for implementation and validation.
 
 Fresh validation on 2026-09-29 after relocation to the repository root:
 

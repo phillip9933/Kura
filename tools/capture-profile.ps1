@@ -5,6 +5,7 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $adb = Join-Path $env:LOCALAPPDATA 'Android/sdk/platform-tools/adb.exe'
 $package = 'app.kura.wallet.prototype.profile'
 if ([int](& $adb -s $Serial shell getprop ro.build.version.sdk) -lt 34) { throw 'Profile capture requires API 34 or later.' }
+if ((& $adb -s $Serial shell getconf PAGE_SIZE).Trim() -ne '16384') { throw 'A 16 KiB emulator is required.' }
 & "$projectRoot/gradlew.bat" -p $projectRoot :app:assembleProfile :benchmark:assembleDebugAndroidTest --max-workers=1
 if ($LASTEXITCODE -ne 0) { throw 'Profile build failed.' }
 & $adb -s $Serial install -r "$projectRoot/app/build/outputs/apk/profile/app-profile.apk"
@@ -23,7 +24,10 @@ if ($LASTEXITCODE -ne 0) { throw 'Compilation reset failed.' }
 if ($LASTEXITCODE -ne 0) { throw 'Profile clearing failed.' }
 $results = Join-Path $projectRoot 'test-results'
 [IO.Directory]::CreateDirectory($results) | Out-Null
-$output = & $adb -s $Serial shell am instrument -w -e targetPackage $package app.kura.prototype.benchmarktest/androidx.test.runner.AndroidJUnitRunner
+$unlock = & $adb -s $Serial shell am instrument -w -e class app.kura.benchmark.UnlockTimingTest -e unlockTiming true -e targetPackage $package app.kura.prototype.benchmarktest/androidx.test.runner.AndroidJUnitRunner
+$unlock | Set-Content "$results/profile-unlock-journey.txt"
+if (($unlock -join ' ') -notmatch 'OK \(1 test\)' -or ($unlock -join ' ') -match 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed') { throw 'Unlock capture failed.' }
+$output = & $adb -s $Serial shell am instrument -w -e class app.kura.benchmark.OptimizedJourneyTest -e targetPackage $package app.kura.prototype.benchmarktest/androidx.test.runner.AndroidJUnitRunner
 $output | Set-Content "$results/profile-journey.txt"
 $text = $output -join [Environment]::NewLine
 if ($text -notmatch 'OK \(1 test\)' -or $text -match 'FAILURES!!!|Process crashed') { throw 'Capture journey failed.' }

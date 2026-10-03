@@ -1,8 +1,8 @@
 # Release tooling
 
-## Kura 2.0
+## Kura 2.1
 
-Version **2.0.0**, code **118**, is distributed as a signed APK and Android App Bundle on [GitHub Releases](https://github.com/phillip9933/Kura/releases/tag/v2.0.0). The APK is for direct installation; the AAB is for submission through Google Play Console. GitHub publication does not submit either store listing. The user is updating the pending F-Droid request.
+Version **2.1.0**, code **119**, is the optimization release, with a signed APK and Android App Bundle on [GitHub Releases](https://github.com/phillip9933/Kura/releases/tag/v2.1.0). The APK is for direct installation; the AAB is for submission through Google Play Console. GitHub publication does not submit either store listing or alter the pending F-Droid request.
 
 Release identity is `app.kura.wallet`; debug is `app.kura.wallet.prototype`. Preserve the signing identity, native Keystore aliases and storage contracts. Historical backup support is documented in [Backup and migration](BACKUP_AND_MIGRATION.md), rather than in the public release notes.
 
@@ -39,7 +39,7 @@ The expected certificate above was verified against the existing public GitHub A
 - Review the existing Play feature graphic, listing and data-safety declarations in the console.
 - Remaining hardware/platform validation limits are in [Testing](TESTING.md) and [Security review](SECURITY_REVIEW.md). No independent security certification or exhaustive physical-device coverage is claimed.
 
-GitHub APK/AAB publication and the 2.0 tag were explicitly authorized on September 29, 2026. Store-console submission requires account access and a separate execution step. Older GitHub installer assets were withdrawn; historical tags and source archives remain.
+GitHub APK/AAB publication and the 2.0 tag were explicitly authorized on September 29, 2026; the 2.1.0 optimization release was authorized on October 3. Store-console submission requires account access and a separate execution step. Pre-2.0 GitHub installer assets were withdrawn; historical tags and source archives remain.
 
 ## Refresh screenshots
 

@@ -1,5 +1,11 @@
 # F-Droid native build handoff
 
+The current optimization release is **2.1.0 / 119**, tag `v2.1.0`, with the same
+root Gradle release build and toolchain. The 2.0 submission guidance below is
+retained for the pending request. Updating this document or publishing GitHub
+assets does not update that request; a maintainer can add a new entry pinned to
+`v2.1.0`. Only the `release` variant is for distribution, never `optimized`.
+
 This handoff accompanies the published 2.0 source; it does not update fdroiddata or a pending submission. Preserve the existing 1.x build entries and signing/distribution policy. The user will edit the original pending F-Droid submission; no external request is modified by the source push.
 
 ## What changes for 2.0

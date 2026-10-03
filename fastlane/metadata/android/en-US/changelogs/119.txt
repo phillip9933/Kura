@@ -1,0 +1,1 @@
+Faster access to your wallet: fewer database opens, concurrent encrypted database initialization, and refreshed Android code optimization for startup and unlocking. Backup folders now show their display names. Encryption, authentication requirements, database formats and backups are unchanged. Performance varies by device; further improvements are ongoing.

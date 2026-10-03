@@ -2,7 +2,7 @@ import java.util.Properties
 import java.io.File
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.plugin.compose") }
 android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) { minorApiLevel = 0 } }
- defaultConfig { applicationId = "app.kura.wallet"; minSdk = 24; targetSdk = 36; versionCode = 118; versionName = "2.0.0"
+ defaultConfig { applicationId = "app.kura.wallet"; minSdk = 24; targetSdk = 36; versionCode = 119; versionName = "2.1.0"
 
  testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
 
@@ -12,6 +12,15 @@ android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) {
         isMinifyEnabled = true; isShrinkResources = true
         buildConfigField("boolean","PROTOTYPE","false")
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"),"proguard-rules.pro")
+    }
+    // Release-style performance with the existing local prototype's identity/signature.
+    create("optimized") {
+        initWith(getByName("release"))
+        applicationIdSuffix = ".prototype"
+        versionNameSuffix = "-dev"
+        signingConfig = signingConfigs.getByName("debug")
+        buildConfigField("boolean", "PROTOTYPE", "true")
+        matchingFallbacks += listOf("release")
     }
     create("profile") {
         initWith(getByName("release")); applicationIdSuffix = ".prototype.profile"

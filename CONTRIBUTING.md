@@ -13,6 +13,14 @@ I prioritize data safety, security, correctness and privacy, followed by usabili
 
 Use small, focused changes. Follow Kotlin conventions and the surrounding code. Prefer standard Material 3 components, lifecycle-aware state, bounded background work and explicit ownership of sensitive buffers. No formatter is currently enforced by the build; do not run unrelated bulk formatting.
 
+For performance testing, build `:app:assembleOptimized`. It uses release-style R8
+optimization and the debug signing identity, with the same `app.kura.wallet.prototype`
+package as debug, so it updates the local test installation. It is not debuggable
+and is not a production release. Keep debug for debugger/in-process instrumentation
+work; use the external `benchmark` driver on a disposable emulator for optimized
+app journeys. Packaged baseline profiles guide Android's compilation; sideloading
+an APK does not guarantee that compilation has completed immediately.
+
 Do not add network access or telemetry. Treat imports, document-provider streams, image metadata and backup contents as untrusted. Keep SQL identifiers allowlisted and values bound. Preserve application ID, signing continuity and legacy data compatibility unless a separately reviewed migration changes them.
 
 ## Choose tests by change

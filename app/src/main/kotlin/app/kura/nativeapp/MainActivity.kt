@@ -26,6 +26,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -88,15 +89,45 @@ class MainActivity : FragmentActivity() {
         credentialResult?.let { pending -> if(pending.isActive) pending.resume(it.resultCode == Activity.RESULT_OK) }
         credentialResult = null
     }
-    private val backupFolderPicker = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {uri->
-        vm.launch {try {
-            if(uri!=null) {
-                contentResolver.takePersistableUriPermission(uri,android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                vm.preference("autoBackupUri",uri.toString())
-                vm.preference("autoBackupPath",android.provider.DocumentsContract.getTreeDocumentId(uri))
-                vm.queueAutomaticBackup(true)
+    private val backupFolderPicker = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        vm.launch {
+            try {
+                if (uri != null) {
+                    contentResolver.takePersistableUriPermission(
+                        uri,
+                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                            android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    )
+                    val folderName = withContext(Dispatchers.IO) {
+                        try {
+                            val documentUri = android.provider.DocumentsContract.buildDocumentUriUsingTree(
+                                uri,
+                                android.provider.DocumentsContract.getTreeDocumentId(uri)
+                            )
+                            contentResolver.query(
+                                documentUri,
+                                arrayOf(android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME),
+                                null,
+                                null,
+                                null
+                            )?.use { cursor ->
+                                if (cursor.moveToFirst()) cursor.getString(0) else null
+                            }?.takeIf { it.isNotBlank() }
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
+                        } catch (_: Exception) {
+                            // A provider can grant access without returning a usable label.
+                            null
+                        }
+                    }
+                    vm.preference("autoBackupUri", uri.toString())
+                    vm.preference("autoBackupPath", folderName ?: "Selected folder")
+                    vm.queueAutomaticBackup(true)
+                }
+            } finally {
+                finishGuard()
             }
-        } finally {finishGuard()}}
+        }
     }
     private val passPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         vm.launch {
@@ -320,6 +351,10 @@ class MainActivity : FragmentActivity() {
                 val error by vm.error.collectAsState()
                 Surface(Modifier.fillMaxSize()) {
                     if(state is VaultState.Unlocked) {
+                        Box(Modifier.fillMaxSize().drawWithContent {
+                            android.os.Trace.beginSection("Kura.vault.draw")
+                            try { drawContent() } finally { android.os.Trace.endSection() }
+                        }) {
                         VaultScreen(items, busy, window, { vm.launch { vm.archive(it) } },
                             { external(ExternalOperation.PICKER) { passPicker.launch(arrayOf("*/*")) } },
                             { external(ExternalOperation.SAF_IMPORT) { restorePicker.launch(arrayOf("*/*")) } },
@@ -353,6 +388,7 @@ class MainActivity : FragmentActivity() {
                             onBackupFolder={external(ExternalOperation.SAF_EXPORT) {backupFolderPicker.launch(android.provider.DocumentsContract.buildDocumentUri("com.android.externalstorage.documents","primary:Documents"))}},
                             onBackupPassword={vm.pending.autoPassword=true},onBackupNow={vm.launch {vm.automaticBackupNow()}},
                             onPurge={vm.pending.deleteConfirmation=true})
+                        }
                     } else {
                         Column(Modifier.fillMaxSize().safeDrawingPadding().padding(32.dp),verticalArrangement=Arrangement.Center,
                             horizontalAlignment=androidx.compose.ui.Alignment.CenterHorizontally) {
@@ -433,7 +469,10 @@ class MainActivity : FragmentActivity() {
                     hardware.cipher(existing == null, iv)
                 }
                 if(existing != null) {
-                    val master = hardware.unwrap(cipher, Envelope.decode(existing.getString("wrapped")))
+                    android.os.Trace.beginSection("Kura.unwrap")
+                    val master = try {
+                        hardware.unwrap(cipher, Envelope.decode(existing.getString("wrapped")))
+                    } finally { android.os.Trace.endSection() }
                     try { enrollOldBiometric(master); master } catch(e: Throwable) { master.fill(0); throw e }
                 }
                 else {
@@ -453,6 +492,8 @@ class MainActivity : FragmentActivity() {
     private fun createBiometricPrompt() = BiometricPrompt(this, ContextCompat.getMainExecutor(this),
         object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                android.os.Trace.beginSection("Kura.authSucceeded")
+                android.os.Trace.endSection()
                 val continuation = vm.pending.authentication ?: return
                 vm.pending.authentication = null
                 if (continuation.isActive) {

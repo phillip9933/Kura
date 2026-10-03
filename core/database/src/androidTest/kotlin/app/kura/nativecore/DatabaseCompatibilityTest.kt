@@ -4,6 +4,10 @@ import android.content.Context
 import android.util.Base64
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import org.junit.Assert.*
 import org.junit.Test
@@ -74,6 +78,67 @@ class DatabaseCompatibilityTest {
             assertEquals(before, hashes(root))
         }
     }
+    @Test fun unsupportedVersionsCannotCreateOrMigrateTables() = runBlocking {
+        val root = fixture()
+        for (version in listOf(0, 6, 99)) {
+            val snapshot = copyFixture(root, File(context.cacheDir, UUID.randomUUID().toString()))
+            val file = File(snapshot, "walletbox.db")
+            SQLiteDatabase.openOrCreateDatabase(file, password, null, null).use { it.version = version }
+            val before = file.readBytes()
+            SensitiveBytes(password.copyOf()).use { key ->
+                assertTrue(runCatching { VaultDatabases.open(context, snapshot, key).close() }.isFailure)
+            }
+            assertArrayEquals(before, file.readBytes())
+        }
+    }
+
+    @Test fun wrongKeyAndCorruptionDoNotDeleteDatabaseFiles() = runBlocking {
+        val root = fixture()
+        for (corrupt in listOf(false, true)) {
+            val snapshot = copyFixture(root, File(context.cacheDir, UUID.randomUUID().toString()))
+            val file = File(snapshot, "walletbox.db")
+            if (corrupt) file.writeBytes(ByteArray(4096) { 0x5a })
+            val before = hashes(snapshot)
+            val supplied = if (corrupt) password.copyOf() else ByteArray(password.size) { 42 }
+            SensitiveBytes(supplied).use { key ->
+                assertTrue(runCatching { VaultDatabases.open(context, snapshot, key).close() }.isFailure)
+            }
+            assertEquals(before, hashes(snapshot))
+        }
+    }
+
+    @Test fun cancelledParallelOpenCanBeReopened() = runBlocking {
+        val root = fixture()
+        for (wait in listOf(0L, 50L, 200L)) {
+            val snapshot = copyFixture(root, File(context.cacheDir, UUID.randomUUID().toString()))
+            SensitiveBytes(password.copyOf()).use { key ->
+                withTimeout(10000) {
+                    val opening = async { VaultDatabases.open(context, snapshot, key).close() }
+                    delay(wait)
+                    opening.cancelAndJoin()
+                    val reopened = VaultDatabases.open(context, snapshot, key)
+                    try {
+                        assertEquals(1, reopened.wallets.rows().all().size)
+                        assertEquals(1, reopened.passes.rows().all().size)
+                        assertEquals(1, reopened.identities.rows().all().size)
+                    } finally { reopened.close() }
+                }
+            }
+        }
+    }
+
+    @Test fun missingParallelDatabaseFailsWithoutHanging() = runBlocking {
+        val snapshot = copyFixture(fixture(), File(context.cacheDir, UUID.randomUUID().toString()))
+        assertTrue(File(snapshot, "passes.db").delete())
+        val before = hashes(snapshot)
+        withTimeout(10000) {
+            SensitiveBytes(password.copyOf()).use { key ->
+                assertTrue(runCatching { VaultDatabases.open(context, snapshot, key).close() }.isFailure)
+            }
+        }
+        assertEquals(before, hashes(snapshot))
+    }
+
     @Test fun walletsAllColumnsReadWriteParity() = runBlocking {
         val fixture = fixture()
         val before = hashes(fixture)

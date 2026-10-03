@@ -32,6 +32,10 @@ class VaultController(app: Application) : AndroidViewModel(app) {
     private var vault: VaultStore.Opened? = null
     private var token: Generation? = null
     private val startupCleanup = viewModelScope.async(Dispatchers.IO) { CaptureFiles.clearOrphans(app.cacheDir) }
+    // Run alongside authentication; never preload keys, records or open database handles.
+    private val databaseRuntime = viewModelScope.async(Dispatchers.IO) {
+        traced("Kura.prepareRuntime") { VaultDatabases.prepareRuntime() }
+    }
     init {
         store.onMutation={queueAutomaticBackup(true)}
         viewModelScope.launch {
@@ -45,11 +49,12 @@ class VaultController(app: Application) : AndroidViewModel(app) {
     suspend fun unlock(auth: suspend () -> ByteArray) {
         startupCleanup.await()
         token = coordinator.unlock(auth) { key ->
+            databaseRuntime.await()
             store.open(key).also { vault = it }
         }
-        presentation.value = work { PresentationSettings.parse(store.settings(it)) }
+        presentation.value = work { traced("Kura.settings") { PresentationSettings.parse(store.settings(it)) } }
         localPrefs.edit().putInt("appearance",presentation.value.theme).apply()
-        backupPasswordReady.value=work {opened->store.deviceSecret(opened,"auto-backup-password.enc")?.let {bytes->try {bytes.isNotEmpty()} finally {bytes.fill(0)}} ?: false}
+        backupPasswordReady.value=work {opened->traced("Kura.backupSecret") {store.deviceSecret(opened,"auto-backup-password.enc")?.let {bytes->try {bytes.isNotEmpty()} finally {bytes.fill(0)}} ?: false}}
         refresh()
         queueAutomaticBackup(false)
     }
@@ -57,6 +62,7 @@ class VaultController(app: Application) : AndroidViewModel(app) {
         coordinator.run(token ?: error("Vault is locked")) { operations.withLock { block(vault ?: error("Vault is locked")) } }
     suspend fun refresh() {
         val list = work { opened ->
+            traced("Kura.refresh") {
             val settings=store.settings(opened)
             val order=settings.optJSONArray("nativeItemOrder")
             val ranks=(0 until (order?.length() ?: 0)).associate {order!!.getString(it) to it}
@@ -82,8 +88,13 @@ class VaultController(app: Application) : AndroidViewModel(app) {
             }
             presentation.value=PresentationSettings.parse(settings)
             rows
+            }
         }
         if (state.value is VaultState.Unlocked) items.value = list
+    }
+    private inline fun <T> traced(name: String, block: () -> T): T {
+        android.os.Trace.beginSection(name)
+        return try { block() } finally { android.os.Trace.endSection() }
     }
     fun queueAutomaticBackup(dirty:Boolean) {
         if(dirty) {mutationVersion.incrementAndGet();localPrefs.edit().putBoolean("autoBackupDirty",true).apply()}

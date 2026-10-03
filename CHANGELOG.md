@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.1.0 — October 3, 2026
+
+### Faster access to your wallet
+
+- Reduced the delay after authentication by removing duplicate database opens and opening the three encrypted databases concurrently.
+- Prepared database engine code while authentication is displayed and refreshed Android's compilation profile for startup, unlocking and common interactions.
+- Improved backup folder labels to show the folder's display name while retaining its existing access permission.
+
+Encryption, authentication requirements, database formats and backups are unchanged. Actual speed improvements depend on the device; further optimization work is ongoing.
+
 ## 2.0.0 — September 29, 2026
 
 ### Built for Android, from the ground up
