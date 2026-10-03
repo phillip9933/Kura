@@ -32,6 +32,42 @@ do not compare uncontrolled debug runs against forced-compiled runs as equivalen
 
 ## Verification status
 
+### Signed optimization release 2.1.0 / 119 — 2026-10-03
+
+The user authorized GitHub publication of the optimization work as a minor release.
+The version was increased to 2.1.0 / 119 and the newer remote documentation commit
+was preserved. Source revision `8d5c082` contains the application changes; this
+validation record is documentation only. Store-console submissions are unchanged.
+
+Local signed APK/AAB, JVM and lint build passed in 3m 28s: **75 tasks executed,
+375 up-to-date**. Import JVM **34/34** and constrained-heap **1/1** ran afresh;
+model **17/17** results were reused (`UP-TO-DATE`). Lint: **0 errors / 44 warnings**.
+The database, restore and optimized-device tests recorded above apply to the same
+application changes before the version-only release bump; no new complete device
+suite or production-package installation was performed for this signing pass.
+
+APK signature matched the existing release certificate
+`1e19598265c5c5920639da46261944463f8ec65793fe0dbd362a558599c6dfd1`.
+Production ID/version, offline/component restrictions, baseline profiles and all
+16 native-library/ZIP 16 KiB alignment checks passed. Jarsigner verified the AAB;
+its certificate matched and bundletool 1.18.3 validated its structure. Jarsigner's
+self-signed/untrusted CA-chain, missing timestamp, ignored POSIX attributes and
+JarFile/JarInputStream entry-order warnings remain in the local log, as with 2.0.
+These do not constitute Play Console acceptance or a physical-device upgrade test.
+
+| Signed artifact | SHA-256 |
+| --- | --- |
+| Kura-2.1.0.apk | `443a78234032620ee6fd7349f292e83b3471dc05aa0a7131614366657d2dd343` |
+| Kura-2.1.0.aab | `4dd44f0e09214649e15c41ff6afa60abb8824b67667957f08076a1a0b3326a32` |
+
+Local files are in `artifacts/releases/2.1.0/`, with `SHA256SUMS.txt`; validation
+logs are `verification/release-2.1-*`. Independent GitHub verification for the
+application revision is [run 37130857749](https://github.com/phillip9933/Kura/actions/runs/37130857749).
+At the time this record was written that run was in progress; its linked status
+is authoritative. AI assistance was used for implementation, release preparation
+and validation. Private signing inputs were consumed by Gradle, not printed or
+committed. GitHub publication does not update Play or F-Droid submissions.
+
 ### Optimized prototype and refreshed profile — 2026-10-03
 
 Added the non-debuggable `optimized` build type: release-style R8/resource shrinking,
