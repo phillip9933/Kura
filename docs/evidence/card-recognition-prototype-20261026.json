@@ -1,0 +1,86 @@
+{
+  "engine": "tesseract 5.5.3",
+  "engine_role": "Linux research tool only; not bundled in Kura",
+  "languages_tested": [
+    "English",
+    "Latin identifiers/numerals"
+  ],
+  "languages_not_tested": [
+    "Japanese"
+  ],
+  "image_source": "generated synthetic cards only",
+  "results": [
+    {
+      "fixture": "synthetic-card-1.png",
+      "expected": {
+        "identifier": "KURA-TEST-0001",
+        "expiry": "12/2030"
+      },
+      "suggested": {
+        "identifier": "KURA-TEST-0001",
+        "expiry": "12/2030"
+      },
+      "correct_fields": 2,
+      "fields": 2,
+      "elapsed_ms": 125.34,
+      "process_peak_rss_kib": 89844
+    },
+    {
+      "fixture": "synthetic-card-2.png",
+      "expected": {
+        "identifier": "000002",
+        "expiry": "12/2030"
+      },
+      "suggested": {
+        "identifier": "000002",
+        "expiry": "12/2030"
+      },
+      "correct_fields": 2,
+      "fields": 2,
+      "elapsed_ms": 113.99,
+      "process_peak_rss_kib": 90356
+    },
+    {
+      "fixture": "synthetic-card-3.png",
+      "expected": {
+        "identifier": "KURA-TEST-0003",
+        "expiry": "12/2030"
+      },
+      "suggested": {
+        "identifier": "KURA-TEST-0003",
+        "expiry": "12/2030"
+      },
+      "correct_fields": 2,
+      "fields": 2,
+      "elapsed_ms": 116.69,
+      "process_peak_rss_kib": 90300
+    },
+    {
+      "fixture": "synthetic-card-4.png",
+      "expected": {
+        "identifier": "KURA-TEST-0004",
+        "expiry": "12/2030"
+      },
+      "suggested": {
+        "identifier": "KURA-TEST-0004",
+        "expiry": "12/2030"
+      },
+      "correct_fields": 2,
+      "fields": 2,
+      "elapsed_ms": 115.84,
+      "process_peak_rss_kib": 90072
+    }
+  ],
+  "correct_fields": 8,
+  "total_fields": 8,
+  "ambiguous_identifier_abstention": true,
+  "leading_zeros_retained": true,
+  "manual_correction_isolated_draft": true,
+  "cancelled_process_no_result": true,
+  "limitations": "Four printed synthetic cards are feasibility evidence only. No real-camera, Japanese, mobile latency/memory, recognition confidence calibration or production integration claim.",
+  "pillow_version": "13.0.0",
+  "font": "DejaVuSans.ttf",
+  "font_sha256": "6038a160b491e121c1f12c7bccb4a9c8730296e3adc1086a059404ed84b7451c",
+  "required_manual_corrections_clean_fixtures": 0,
+  "ambiguous_case_manual_review": "Two conflicting synthetic identifiers: no automatic choice; operator selects the intended value. This is a draft simulation, not an Android UI acceptance result."
+}

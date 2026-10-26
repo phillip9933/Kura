@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Pin the published Android App Updater 0.2.0 prerelease and show a dismissible new-version popup in the optional direct-update build.
+- Add Require app unlock in Data & Security. Users may opt into relying on the phone lock while retaining encrypted wallet storage and the original authenticated recovery wrapper.
+- AI assistance was used for implementation, tests and documentation; validation is recorded in docs/TESTING.md. No app release or signing is part of this work.
+
+- Keep manual update details and automatic offers in one panel to prevent overlapping dialogs.
+- Verify offline and direct-update distributions independently in CI.
+
+- Optional direct-update build with opt-in GitHub release checks, verified APK downloads and user-confirmed Android installation. The default offline build is retained.
+- Corrected GPL labels in project documentation to match the existing AGPL-3.0 license.
+
 ## 2.1.0 — October 3, 2026
 
 ### Faster access to your wallet

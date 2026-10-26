@@ -51,3 +51,9 @@ On the documented disposable emulator with synthetic PIN 2468:
 ```
 
 The opt-in test captures real production views with fictional fixtures. It restores screenshot-protection flags and preferences, removes owned rows, and restores the emulator display size/density. Ordinary suites skip this capture case. Inspect all images before uploading. The existing captures are 1080 × 1920 RGB JPEGs; see [Play asset requirements](https://support.google.com/googleplay/android-developer/answer/9866151) and [F-Droid metadata layout](https://f-droid.org/docs/All_About_Descriptions_Graphics_and_Screenshots/).
+
+## Optional direct-update distribution
+
+The owner authorized updater integration on 2026-10-24. The default build remains offline/API 24. Build with `-PdirectUpdates=true` for API 26+ GitHub updates, then verify with `python3 tools/verify-native-packaging.py --direct-updates`. Do not confuse outputs from the two invocations: they share package identity and output paths. This integration retains version 2.1.0 / 119 only for local development; increment both release version and version code before distributing a new Kura update.
+
+The public updater library is independently versioned and pinned; see [App updates](APP-UPDATES.md). Publishing that library does not authorize publishing Kura. Signed same-ID retained-data upgrade acceptance remains required.

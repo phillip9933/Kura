@@ -1,0 +1,19 @@
+{
+  "artifact_type": "local debug or unsigned release; not a released candidate",
+  "version": "2.1.0 (119); no version bump",
+  "sha256": {
+    "direct": {
+      "app-debug.apk": "33e1697e8fc08ae0a439eda23b0fb15af6a5ec5c7c5e8c72cae7739879b50fca",
+      "app-debug-androidTest.apk": "4796d2763068c1e82feeb39ff61e8c3a00c9f1798ec155977da0f344bc326f55",
+      "app-release-unsigned.apk": "36901a113224dd6846eb4b2e7243674381aaba8f1cf3668fc60b9c1ef2cbf18b",
+      "app-release.aab": "c92a00ed1542a8c6287617ee45a9ee2d355151487ab1dbe826f44a0bb5d8cd12",
+      "security-debug-androidTest.apk": "304d8f5c1270d5b138d29cc318cd2dcac30c0c2a0aaf52fc90b0dfb90b546381"
+    },
+    "offline": {
+      "app-debug.apk": "857ab0d88b494ec27eaabed17dc685fbde06613d02a6ff35742b3f1cf1a81d57",
+      "app-debug-androidTest.apk": "2036afbcd0cd1724d8f858d1edc1077426d70ac2bfc26ec40367b2b1479c4fe8",
+      "app-release-unsigned.apk": "f124ee399640954b924d0856546c23a1a0be4ae27c76683e3aace99fb4c98f7b",
+      "app-release.aab": "c6cf49ae1d8350fc6d6272b3908053dbe944c67717975b9855c9f6ab2ec8b749"
+    }
+  }
+}

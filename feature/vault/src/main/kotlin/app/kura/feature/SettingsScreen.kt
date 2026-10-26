@@ -47,11 +47,12 @@ fun SettingsScreen(preferences: VaultPreferences, theme: Int, visibleTables: Set
     preference:(String,Any)->Unit, onTheme:(Int)->Unit, onBiometrics:(Boolean)->Unit, onTimeout:(Long)->Unit,
     archive:()->Unit, backup:()->Unit, restore:()->Unit, recovery:()->Unit,
     fixture:(()->Unit)?, close:()->Unit, openLink:(String)->Unit,
-    backupStatus:String="",backupFolder:()->Unit={},backupPassword:()->Unit={},backupNow:()->Unit={},purge:()->Unit={},backupPasswordReady:Boolean=false) {
+    backupStatus:String="",backupFolder:()->Unit={},backupPassword:()->Unit={},backupNow:()->Unit={},purge:()->Unit={},backupPasswordReady:Boolean=false, updateSettings: @Composable () -> Unit = {},requireAppUnlock:Boolean=true,onRequireAppUnlock:(Boolean)->Unit={}) {
     val scrollStates=remember {mutableMapOf<String,ScrollState>()}
     var page by androidx.compose.runtime.saveable.rememberSaveable {mutableStateOf("Settings")}
     var sectionTable by androidx.compose.runtime.saveable.rememberSaveable {mutableStateOf("wallets")}
     var autoSetup by androidx.compose.runtime.saveable.rememberSaveable {mutableStateOf(false)}
+    var confirmPhoneUnlock by remember {mutableStateOf(false)}
     var restoreOptions by remember {mutableStateOf(false)}
     fun back() {page=if(page in setOf("Manage Categories","Manage Custom Fields")) sectionNames.getValue(sectionTable)+" Settings" else "Settings"}
     var choices by remember {mutableStateOf<Triple<String,List<Pair<String,Any>>,String>?>(null)}
@@ -59,6 +60,13 @@ fun SettingsScreen(preferences: VaultPreferences, theme: Int, visibleTables: Set
     var renaming by remember {mutableStateOf<Triple<String,String,String>?>(null)}
     var information by remember {mutableStateOf<String?>(null)}
     fun choose(title:String,key:String,values:List<Pair<String,Any>>) {choices=Triple(title,values,key)}
+    if(confirmPhoneUnlock) AlertDialog(
+        onDismissRequest={confirmPhoneUnlock=false},
+        title={Text("Use phone unlock only?")},
+        text={Text("Anyone who can use your unlocked phone can open Kura. Your wallet stays encrypted. You can turn app unlock back on here.")},
+        confirmButton={TextButton(onClick={confirmPhoneUnlock=false;onRequireAppUnlock(false)}) {Text("Use phone unlock")}},
+        dismissButton={TextButton(onClick={confirmPhoneUnlock=false}) {Text("Cancel")}},
+    )
     androidx.activity.compose.BackHandler {if(page=="Settings") close() else back()}
     Scaffold(topBar={TopAppBar(title={Text(page)},navigationIcon={
         IconButton(onClick={if(page=="Settings") close() else back()}) {Icon(Icons.AutoMirrored.Filled.ArrowBack,"Back")}
@@ -69,7 +77,9 @@ fun SettingsScreen(preferences: VaultPreferences, theme: Int, visibleTables: Set
                 "Settings" -> {
                     SettingsGroup("Data & Security") {
                         SettingsRow("Archive","Restore or permanently delete archived items",Icons.Outlined.Inventory2,archive)
-                        SettingsRow("Use biometrics to unlock","Use fingerprint or face recognition when available. When off, unlock with your device PIN, pattern or password. Authentication is always required.",Icons.Outlined.Fingerprint,
+                        SettingsRow("Require app unlock","When off, Kura opens while your phone is unlocked and relies on your phone’s screen lock.",Icons.Outlined.Lock,
+                            trailing={KuraSwitch(requireAppUnlock,{required->if(required) onRequireAppUnlock(true) else confirmPhoneUnlock=true},Modifier.semantics {contentDescription="Require app unlock"})})
+                        if(requireAppUnlock) SettingsRow("Use biometrics to unlock","Use fingerprint or face recognition when available. When off, unlock with your device PIN, pattern or password.",Icons.Outlined.Fingerprint,
                             trailing={KuraSwitch(biometrics,onBiometrics)})
                         SettingsRow("Auto-lock","After leaving Kura: "+when(autoLock) {0L->"Immediately";30000L->"30 seconds";60000L->"1 minute";else->"5 minutes"},Icons.Outlined.Timer,
                             {choose("Auto-lock","autoLock",listOf("Immediately" to 0L,"30 seconds" to 30000L,"1 minute" to 60000L,"5 minutes" to 300000L))})
@@ -87,6 +97,7 @@ fun SettingsScreen(preferences: VaultPreferences, theme: Int, visibleTables: Set
                         SettingsRow("Barcode & Scanning","Configure barcode display and QR import scanning",Icons.Outlined.ScreenRotation,{page="Barcode & Scanning"})
                     }
                     SettingsGroup("About") {
+                        updateSettings()
                         SettingsRow("App Version & Trademark","Kura "+appVersionLabel(),Icons.Outlined.Info,{information="Kura is an offline, privacy first pass wallet. All product names, logos, and brands belong to their respective owners."})
                         SettingsRow("GitHub & Issue Tracker","View source or report an issue",Icons.Default.Code,{openLink("https://github.com/phillip9933/Kura")})
                         SettingsRow("Buy Me a Coffee","Support development",Icons.Outlined.Coffee,{openLink("https://buymeacoffee.com/phillip9933")})

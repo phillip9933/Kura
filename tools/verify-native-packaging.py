@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 root = pathlib.Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--apk", type=pathlib.Path, default=root / "app/build/outputs/apk/release/app-release-unsigned.apk")
+parser.add_argument("--direct-updates", action="store_true", help="Expect opt-in GitHub updater permissions/provider")
 parser.add_argument("--expected-certificate", help="Expected signed APK certificate SHA-256 (hex)")
 args = parser.parse_args()
 apk = args.apk
@@ -15,12 +16,18 @@ sdk = pathlib.Path(sdk_home) / "build-tools/36.0.0"
 exe = ".exe" if os.name == "nt" else ""
 subprocess.run([str(sdk / ("zipalign" + exe)), "-c", "-P", "16", "4", str(apk)], check=True)
 badging = subprocess.check_output([str(sdk / ("aapt2" + exe)), "dump", "badging", str(apk)], text=True)
-assert "android.permission.INTERNET" not in badging
+for permission in ("INTERNET", "ACCESS_NETWORK_STATE", "REQUEST_INSTALL_PACKAGES"):
+    assert ("android.permission." + permission in badging) == args.direct_updates, permission
 assert "package: name='app.kura.wallet'" in badging
-print("Release ID preserved; INTERNET absent")
+print("Release ID preserved; update permissions match selected distribution")
 # Check the merged manifest from this release build, including library-contributed components.
 manifest = ET.parse(root / "app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml").getroot()
 a = "{http://schemas.android.com/apk/res/android}"
+providers = manifest.findall("application/provider")
+update_providers = [p for p in providers if p.get(a + "authorities") == "app.kura.wallet.android-updates"]
+assert len(update_providers) == int(args.direct_updates)
+if args.direct_updates:
+    assert update_providers[0].get(a + "name") == "io.github.phillip9933.appupdater.UpdateFileProvider"
 application = manifest.find("application")
 assert application is not None
 assert application.get(a + "allowBackup") == "false"
@@ -33,9 +40,15 @@ for component in application:
         assert component.get(a + "exported") == "false"
     if component.get(a + "exported") == "true":
         name = component.get(a + "name")
-        assert name in ("app.kura.nativeapp.MainActivity", "androidx.profileinstaller.ProfileInstallReceiver"), name
-        if name.endswith("ProfileInstallReceiver"):
-            assert component.get(a + "permission") == "android.permission.DUMP"
+        allowed = {"app.kura.nativeapp.MainActivity": None,
+                   "androidx.profileinstaller.ProfileInstallReceiver": "android.permission.DUMP"}
+        if args.direct_updates:
+            allowed.update({
+                "androidx.work.impl.background.systemjob.SystemJobService": "android.permission.BIND_JOB_SERVICE",
+                "androidx.work.impl.diagnostics.DiagnosticsReceiver": "android.permission.DUMP",
+            })
+        assert name in allowed, name
+        assert component.get(a + "permission") == allowed[name], name
 print("Release backup/debugging disabled; exported components restricted")
 with zipfile.ZipFile(apk) as archive:
     if (root / "app/src/main/baseline-prof.txt").is_file():

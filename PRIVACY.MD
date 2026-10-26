@@ -2,11 +2,11 @@
 
 **Updated:** September 29, 2026 — native Kura 2.0
 
-Kura is an offline Android wallet for cards, passes and identity documents. It has no account service, advertising, analytics or telemetry, and does not request Android's INTERNET permission.
+Kura is an offline Android wallet for cards, passes and identity documents. It has no account service, advertising, analytics or telemetry, and the default build does not request Android's INTERNET permission. The optional direct-update build uses networking only for app updates.
 
 ## Local data and authentication
 
-Records are stored in encrypted SQLCipher databases. New imported media and attachments are encrypted in the app's private storage. The Android operating system handles biometrics and device credentials; Kura does not receive raw biometric data or your device PIN. Android Keystore protects access to the vault key.
+Records are stored in encrypted SQLCipher databases. New imported media and attachments are encrypted in the app's private storage. The Android operating system handles biometrics and device credentials; Kura does not receive raw biometric data or your device PIN. Android Keystore protects access to the vault key. App unlock is enabled by default. You can turn off Require app unlock in Data & Security to rely on your phone’s secure screen lock; anyone using the unlocked phone can then open Kura. The wallet remains encrypted, and this device-local choice is not included in exported backups.
 
 Camera capture can temporarily create a plaintext file in private cache while a photo is processed. Kura cleans its capture files on cancellation, locking and subsequent startup; a camera application can retain its own copies.
 
@@ -27,3 +27,7 @@ Kura includes no advertising or tracking SDKs. Android services and external app
 ## Contact
 
 For general privacy questions, use the [Kura repository](https://github.com/phillip9933/Kura). Do not post personal records, backups or passwords in public issues. See the [security policy](SECURITY.md) for vulnerability reporting and implementation limits.
+
+## Optional app updates
+
+The direct-update build can contact GitHub for public release metadata and APK downloads. Checks are off initially; you can check manually or enable approximately daily checks and optional Wi-Fi downloads. GitHub receives ordinary connection information such as your IP address. Wallet records, images, backups, credentials and encryption keys are not passed to the updater. Downloaded APKs and public update preferences are stored separately from the vault. Installation requires your explicit action and Android confirmation. The default offline build includes no updater or update-network permissions.

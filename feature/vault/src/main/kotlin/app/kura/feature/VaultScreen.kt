@@ -46,7 +46,7 @@ fun VaultScreen(items: List<VaultItem>, busy: Boolean, window: Window,
     preferences:VaultPreferences=VaultPreferences(), onPreference:(String,Any)->Unit={_,_->}, autoLock:Long=0,
     onSaveRecord:(String,String)->Unit={_,_->}, onImage:(VaultItem,String,String)->Unit={_,_,_->},
     onRemoveImage:(VaultItem,String)->Unit={_,_->},
-    onShare:(VaultItem)->Unit={}, backupStatus:String="", onBackupFolder:()->Unit={}, onBackupPassword:()->Unit={}, onBackupNow:()->Unit={}, onPurge:()->Unit={}, draftImages:Map<String,String> = emptyMap(),onDiscardDraft:()->Unit={},onPkpass:(VaultItem)->Unit={},uiMemory:VaultUiMemory?=null,backupPasswordReady:Boolean=false,onDeleteArchived:(List<VaultItem>)->Unit={},onFavorite:(VaultItem)->Unit={},onSaveOrder:suspend(String,List<String>)->Boolean={_,_->true}) {
+    onShare:(VaultItem)->Unit={}, backupStatus:String="", onBackupFolder:()->Unit={}, onBackupPassword:()->Unit={}, onBackupNow:()->Unit={}, onPurge:()->Unit={}, draftImages:Map<String,String> = emptyMap(),onDiscardDraft:()->Unit={},onPkpass:(VaultItem)->Unit={},uiMemory:VaultUiMemory?=null,backupPasswordReady:Boolean=false,onDeleteArchived:(List<VaultItem>)->Unit={},onFavorite:(VaultItem)->Unit={},onSaveOrder:suspend(String,List<String>)->Boolean={_,_->true},updateSettings: @Composable () -> Unit = {},requireAppUnlock:Boolean=true,onRequireAppUnlock:(Boolean)->Unit={}) {
     val memory=uiMemory ?: remember {VaultUiMemory()}
     if(!memory.initialized) {memory.table.value=initialTable;memory.initialized=true}
     var table by memory.table
@@ -120,7 +120,7 @@ fun VaultScreen(items: List<VaultItem>, busy: Boolean, window: Window,
     if(settings) {
         SettingsScreen(preferences,theme,visibleTables,biometrics,autoLock,onPreference,onTheme,onBiometrics,onTimeout,
             {settings=false;archive=true},{settings=false;onExport()},{settings=false;onRestore()},{settings=false;onRecovery()},
-            fixture,{settings=false},onOpenLink,backupStatus,onBackupFolder,onBackupPassword,onBackupNow,onPurge,backupPasswordReady)
+            fixture,{settings=false},onOpenLink,backupStatus,onBackupFolder,onBackupPassword,onBackupNow,onPurge,backupPasswordReady,updateSettings,requireAppUnlock,onRequireAppUnlock)
     } else if(archive) {
         ArchiveScreen(items.filter {it.archived},{archive=false},::select,onArchive,onDelete,onDeleteArchived,busy)
     } else {
