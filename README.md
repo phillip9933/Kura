@@ -1,5 +1,11 @@
 # Kura
 
+## Roadmap and work
+
+[Release roadmap](https://github.com/users/phillip9933/projects/2/views/2) · [Work board](https://github.com/users/phillip9933/projects/2/views/1) · [Issue conventions](CONTRIBUTING.md#public-roadmap-and-issue-management)
+
+Follow release scope and maturity separately from individual work. Dates are estimates; unscheduled ideas have no release milestone.
+
 **Privacy first pass wallet.**
 
 Kura (蔵) keeps your cards, passes and identity documents in an encrypted, offline Android wallet. No accounts, advertising or telemetry. No Internet permission.
@@ -46,4 +52,4 @@ See [testing evidence](docs/TESTING.md), [security review](docs/SECURITY_REVIEW.
 
 ## License
 
-Licensed under [GPL-3.0](LICENSE).
+Licensed under [AGPL-3.0](LICENSE).
