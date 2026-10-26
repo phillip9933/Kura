@@ -1,10 +1,12 @@
 import java.util.Properties
 import java.io.File
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.plugin.compose") }
+val directUpdates = providers.gradleProperty("directUpdates").orNull == "true"
 android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) { minorApiLevel = 0 } }
- defaultConfig { applicationId = "app.kura.wallet"; minSdk = 24; targetSdk = 36; versionCode = 119; versionName = "2.1.0"
+ defaultConfig { applicationId = "app.kura.wallet"; minSdk = if (directUpdates) 26 else 24; targetSdk = 36; versionCode = 119; versionName = "2.1.0"
 
  testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
+
 
  buildTypes {
     debug { applicationIdSuffix = ".prototype"; versionNameSuffix = "-dev"; buildConfigField("boolean","PROTOTYPE","true") }
@@ -38,6 +40,10 @@ android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) {
     }
  }
 
+    if (directUpdates) buildTypes.forEach { type ->
+        sourceSets.getByName(type.name).manifest.srcFile("src/direct/AndroidManifest.xml")
+    }
+
     dependenciesInfo { includeInApk = false; includeInBundle = false }
     // Release stays unsigned unless the existing signing identity is explicitly supplied.
     providers.gradleProperty("releaseSigningProperties").orNull?.let { suppliedPath ->
@@ -61,6 +67,10 @@ android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) {
 }
 kotlin { jvmToolchain(21); compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 dependencies {
+ if (directUpdates) {
+    implementation("io.github.phillip9933:android-updater:0.2.0")
+    implementation("androidx.work:work-runtime:2.11.2")
+ }
  coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
  implementation("androidx.profileinstaller:profileinstaller:1.4.1")
  implementation("androidx.camera:camera-camera2:1.4.2")
@@ -81,3 +91,6 @@ dependencies {
  androidTestImplementation("androidx.test.ext:junit:1.2.1")
  androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
 }
+
+android.sourceSets.getByName("main").kotlin.srcDir(if (directUpdates) "src/direct/kotlin" else "src/offline/kotlin")
+if (directUpdates) android.sourceSets.getByName("androidTest").kotlin.srcDir("src/directAndroidTest/kotlin")

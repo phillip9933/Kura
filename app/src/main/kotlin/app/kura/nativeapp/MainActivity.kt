@@ -53,6 +53,8 @@ class MainActivity : FragmentActivity() {
     private val envelope by lazy { AtomicFile(File(noBackupFilesDir, "native-key-envelope")) }
     private val oldBiometric by lazy { HardwareVaultKey(this, "app.kura.wallet.native.master.biometric.v1", BuildConfig.PROTOTYPE && Build.HARDWARE in setOf("ranchu", "goldfish"), biometricOnly = true) }
     private val biometricEnvelope by lazy { AtomicFile(File(noBackupFilesDir, "native-biometric-envelope")) }
+    private val deviceUnlock by lazy { DeviceUnlock(this, BuildConfig.PROTOTYPE && Build.HARDWARE in setOf("ranchu", "goldfish")) }
+    private var requireAppUnlock by mutableStateOf(true)
     private class CredentialFallback : Exception()
     private var guard: ExternalOperationRegistry.Guard?
         get() = vm.pending.guard
@@ -319,6 +321,7 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         biometricPrompt = createBiometricPrompt()
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        requireAppUnlock = !deviceUnlock.enabled
         biometricPreference = prefs.getBoolean("biometrics", true)
         autoLockPreference=prefs.getLong("autoLock",0)
         vm.lifecycle.setAutoLockMillis(autoLockPreference)
@@ -349,6 +352,7 @@ class MainActivity : FragmentActivity() {
                 val backupStatus by vm.autoBackupStatus.collectAsState()
                 val backupPasswordReady by vm.backupPasswordReady.collectAsState()
                 val error by vm.error.collectAsState()
+                AppUpdateNotice()
                 Surface(Modifier.fillMaxSize()) {
                     if(state is VaultState.Unlocked) {
                         Box(Modifier.fillMaxSize().drawWithContent {
@@ -387,7 +391,8 @@ class MainActivity : FragmentActivity() {
                             backupPasswordReady=backupPasswordReady,uiMemory=vm.pending.uiMemory,onPkpass={vm.pending.pkpassTarget=it},onShare={vm.pending.shareTarget=it},backupStatus=backupStatus,
                             onBackupFolder={external(ExternalOperation.SAF_EXPORT) {backupFolderPicker.launch(android.provider.DocumentsContract.buildDocumentUri("com.android.externalstorage.documents","primary:Documents"))}},
                             onBackupPassword={vm.pending.autoPassword=true},onBackupNow={vm.launch {vm.automaticBackupNow()}},
-                            onPurge={vm.pending.deleteConfirmation=true})
+                            onPurge={vm.pending.deleteConfirmation=true},updateSettings={AppUpdateEntry()},
+                            requireAppUnlock=requireAppUnlock,onRequireAppUnlock=::changeAppUnlock)
                         }
                     } else {
                         Column(Modifier.fillMaxSize().safeDrawingPadding().padding(32.dp),verticalArrangement=Arrangement.Center,
@@ -397,6 +402,7 @@ class MainActivity : FragmentActivity() {
                                     .semantics {contentDescription="Unlock Kura"},colorFilter=androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onBackground))
                             Text("Kura",style=MaterialTheme.typography.displayLarge,modifier=Modifier.padding(top=20.dp))
                             Text("Privacy first pass wallet.",Modifier.padding(top=12.dp),style=MaterialTheme.typography.bodyLarge)
+                            AppUpdateEntry()
                         }
                     }
                     if(error != null) AlertDialog(onDismissRequest = { vm.error.value = null }, title = { Text("Could not complete operation") },
@@ -449,46 +455,84 @@ class MainActivity : FragmentActivity() {
                 withContext(Dispatchers.Main.immediate) {
                     authenticationGuard = vm.lifecycle.begin(ExternalOperation.AUTHENTICATION)
                 }
-                hardware.provision()
-                val existing = if(envelope.baseFile.exists()) envelope.openRead().use { JSONObject(Envelope.readBounded(it, 2048).toString(Charsets.UTF_8)) } else null
-                if (Build.VERSION.SDK_INT < 30 && existing != null && biometricPreference && biometricEnvelope.baseFile.exists()) {
-                    val biometricMaster = try {
-                        val document = biometricEnvelope.openRead().use { JSONObject(Envelope.readBounded(it, 2048).toString(Charsets.UTF_8)) }
-                        val cipher = authenticate(oldBiometric.cryptoObject(false, Envelope.decode(document.getString("iv"))))
-                        oldBiometric.unwrap(cipher, Envelope.decode(document.getString("wrapped")))
-                    } catch (_: CredentialFallback) { null }
-                    catch (_: android.security.keystore.KeyPermanentlyInvalidatedException) { null }
-                    if (biometricMaster != null) return@authentication biometricMaster
-                }
-                val iv = existing?.let { Envelope.decode(it.getString("iv")) }
-                val cipher = if(Build.VERSION.SDK_INT >= 30) {
-                    val crypto = hardware.cryptoObject(existing == null, iv)
-                    authenticate(crypto)
-                } else {
-                    check(confirmCredential()) { "Authentication cancelled" }
-                    hardware.cipher(existing == null, iv)
-                }
-                if(existing != null) {
-                    android.os.Trace.beginSection("Kura.unwrap")
-                    val master = try {
-                        hardware.unwrap(cipher, Envelope.decode(existing.getString("wrapped")))
-                    } finally { android.os.Trace.endSection() }
-                    try { enrollOldBiometric(master); master } catch(e: Throwable) { master.fill(0); throw e }
-                }
-                else {
-                    // Existing native keys are unwrapped above; old installations migrate by backup import.
-                    val master = ByteArray(32).also(SecureRandom()::nextBytes)
+                if (deviceUnlock.enabled) {
                     try {
-                        val encrypted = SensitiveBytes(master.copyOf()).use { hardware.wrap(cipher, it) }
-                        val document = JSONObject().put("iv", Envelope.encode(cipher.iv)).put("wrapped", Envelope.encode(encrypted))
-                        VerifiedAtomicWrite.write(envelope,document.toString().toByteArray())
-                        enrollOldBiometric(master)
-                        master
-                    } catch(e: Throwable) { master.fill(0); throw e }
+                        return@authentication deviceUnlock.open()
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        // Keep the original authenticated wrapper as a recovery path.
+                    }
                 }
+                authenticatedMaster()
             }
         } finally { withContext(Dispatchers.Main.immediate) { authenticationGuard?.let { vm.lifecycle.complete(it) } } }
     }
+    private suspend fun authenticatedMaster(): ByteArray {
+        hardware.provision()
+        val existing = if(envelope.baseFile.exists()) envelope.openRead().use { JSONObject(Envelope.readBounded(it, 2048).toString(Charsets.UTF_8)) } else null
+        if (Build.VERSION.SDK_INT < 30 && existing != null && biometricPreference && biometricEnvelope.baseFile.exists()) {
+            val biometricMaster = try {
+                val document = biometricEnvelope.openRead().use { JSONObject(Envelope.readBounded(it, 2048).toString(Charsets.UTF_8)) }
+                val cipher = authenticate(oldBiometric.cryptoObject(false, Envelope.decode(document.getString("iv"))))
+                oldBiometric.unwrap(cipher, Envelope.decode(document.getString("wrapped")))
+            } catch (_: CredentialFallback) { null }
+            catch (_: android.security.keystore.KeyPermanentlyInvalidatedException) { null }
+            if (biometricMaster != null) return biometricMaster
+        }
+        val iv = existing?.let { Envelope.decode(it.getString("iv")) }
+        val cipher = if(Build.VERSION.SDK_INT >= 30) {
+            val crypto = hardware.cryptoObject(existing == null, iv)
+            authenticate(crypto)
+        } else {
+            check(confirmCredential()) { "Authentication cancelled" }
+            hardware.cipher(existing == null, iv)
+        }
+        return if(existing != null) {
+            android.os.Trace.beginSection("Kura.unwrap")
+            val master = try {
+                hardware.unwrap(cipher, Envelope.decode(existing.getString("wrapped")))
+            } finally { android.os.Trace.endSection() }
+            try { enrollOldBiometric(master); master } catch(e: Throwable) { master.fill(0); throw e }
+        }
+        else {
+            // Existing native keys are unwrapped above; old installations migrate by backup import.
+            val master = ByteArray(32).also(SecureRandom()::nextBytes)
+            try {
+                val encrypted = SensitiveBytes(master.copyOf()).use { hardware.wrap(cipher, it) }
+                val document = JSONObject().put("iv", Envelope.encode(cipher.iv)).put("wrapped", Envelope.encode(encrypted))
+                VerifiedAtomicWrite.write(envelope,document.toString().toByteArray())
+                enrollOldBiometric(master)
+                master
+            } catch(e: Throwable) { master.fill(0); throw e }
+        }
+    }
+
+    private fun changeAppUnlock(required: Boolean) {
+        if (vm.busy.value) return
+        vm.launch {
+            if (required == requireAppUnlock) return@launch
+            try {
+                if (required) {
+                    val authenticationGuard = vm.lifecycle.begin(ExternalOperation.AUTHENTICATION)
+                    try {
+                        vm.work { opened ->
+                            val master = authenticatedMaster()
+                            try {
+                                check(opened.key.useBytes { java.security.MessageDigest.isEqual(it, master) }) { "Vault key changed" }
+                                deviceUnlock.disable()
+                            } finally { master.fill(0) }
+                        }
+                    } finally { vm.lifecycle.complete(authenticationGuard) }
+                } else {
+                    vm.work { opened -> deviceUnlock.enable(opened.key) }
+                }
+            } finally {
+                requireAppUnlock = !deviceUnlock.enabled
+            }
+        }
+    }
+
     private fun createBiometricPrompt() = BiometricPrompt(this, ContextCompat.getMainExecutor(this),
         object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
@@ -626,7 +670,7 @@ class MainActivity : FragmentActivity() {
         } finally {vm.lifecycle.complete(authenticationGuard)}
         vm.purgeNative()
         withContext(Dispatchers.IO) {
-            hardware.delete();oldBiometric.delete();envelope.delete();biometricEnvelope.delete()
+            deviceUnlock.disable();hardware.delete();oldBiometric.delete();envelope.delete();biometricEnvelope.delete()
             val base=cacheDir.canonicalFile
             val roots=listOf("pass-staging","backup-staging","capture","auto-backup").map {File(base,it)}
             for(root in roots) if(root.exists()) {
@@ -636,7 +680,7 @@ class MainActivity : FragmentActivity() {
                 files.forEach {check(it.delete())}
             }
         }
-        vm.pending.close();biometricPreference=true;autoLockPreference=0;vm.lifecycle.setAutoLockMillis(0)
+        vm.pending.close();requireAppUnlock=true;biometricPreference=true;autoLockPreference=0;vm.lifecycle.setAutoLockMillis(0)
     }
 
     @Composable private fun PasswordDialog() {

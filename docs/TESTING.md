@@ -32,6 +32,26 @@ do not compare uncontrolled debug runs against forced-compiled runs as equivalen
 
 ## Verification status
 
+### Updater 0.2.0 and optional app unlock — 2026-10-26
+
+Integrated the published immutable 0.2.0 prerelease (`90367917ac451bb1b065d4a49044df23ed3138a6`) as a checksum-verified Maven/source/license bundle. Public bundle SHA-256: `7b8cd5befbb65142c96fd16cbb84b069c51d029370ca1e198ed6440c11520b1d`. The direct distribution uses the new package/group and a foreground new-version popup with View update/Later; the default distribution remains offline/API 24. Added the device-local Require app unlock choice, default on, retaining the original authenticated wrapper and encrypted wallet formats. Re-enabling verifies the original key inside cancellable background session work before removing the phone-only wrapper.
+
+Final builds on Linux/JDK 21:
+
+| Variant | Checks | Result |
+| --- | --- | --- |
+| Direct updates | Debug + instrumentation APK, unsigned release APK/AAB, lint | Passed, 1m 2s; 25 tasks executed / 477 up-to-date; lint 0 errors / 61 warnings |
+| Default offline | Debug + instrumentation APK, unsigned release APK/AAB, lint | Passed, 1m 26s; 78 tasks executed / 424 up-to-date; lint 0 errors / 57 warnings |
+| Both | Packaging/permissions/provider checks, 16 KiB native/ZIP alignment | Passed; release APKs and AABs unsigned |
+
+Model JVM task was UP-TO-DATE: existing 17/17 passing results were reused, not rerun. Library host/native results are upstream evidence rather than new Kura test executions.
+
+On the newly created disposable `kura-features-20261026` API 37 emulator (16 KiB pages, synthetic PIN 2468), **11 selected native acceptance executions passed**: updater identity/manifest/application registration 3/3; popup dismissal, manual access and a newer-version offer 1/1; phone-unlock retained-data/locked-phone rejection/restored app prompt journey 1/1; cold-process preparation and post-force-stop verification 1/1 each; hardware-key regressions including key-mode separation 4/4. Cold-process phases are two executions of one test method, not two independent test cases. Popup metadata was injected synthetically; no live download/installer journey was used. The final unlock journey passed after moving re-authentication into session-owned IO work. The task's emulator was stopped afterward.
+
+An initial unlock test stopped at Android accessibility’s checked-state assertion. It was replaced with a direct default-policy assertion while retaining the actual opt-in dialog and mode-transition checks; the complete journey subsequently passed. The initial failure log is preserved rather than counted as a pass. An initial packaging check still expected the former provider namespace; its expected class was updated to 0.2.0 and both variants then passed.
+
+Evidence and separate direct/offline artifacts: `../outputs/updater-and-unlock-20261026/`, with checksums. Prior 0.1.3 vendor bytes were preserved there before repinning. AI assistance was used for implementation, tests and documentation. No app version bump, commit, push, production signing or release was performed. No private signing material was inspected or activated. Physical hardware, older-API device behavior, signed same-ID retained-data upgrades and full existing device suites remain unverified for these changes.
+
 ### Signed optimization release 2.1.0 / 119 — 2026-10-03
 
 The user authorized GitHub publication of the optimization work as a minor release.
@@ -424,3 +444,40 @@ The signed build succeeded in 1m 31s: **238 tasks, 15 executed / 223 up-to-date*
 Jarsigner additionally reports self-signed/untrusted CA-chain and missing-timestamp warnings, ignored POSIX attributes, and JarFile/JarInputStream differences caused by the bundle's entry ordering. These warnings are retained in the local validation log rather than suppressed. The independent bundletool structural check passed; Play Console acceptance has not been tested. No personal phone or production package was used for destructive device testing, and no new physical-device claim is made.
 
 PowerShell helpers received syntax/root-path checks; the moved packaging verifier ran on both unsigned and signed APKs, including rejection of an incorrect expected certificate. This pass reuses the earlier **52 passing Linux test executions** and **0 errors / 56 lint warnings**; no application change calls for a fresh device suite. Release assets carry a separate SHA256SUMS file. Local evidence is under `verification/signed-2.0-*`; published hashes and assets live on the GitHub release. AI assistance was used for signing orchestration, tool organization, validation and public documentation.
+
+## Optional direct-update integration — 2026-10-24
+
+The owner requested reuse of the standalone updater. Kura now pins the published `dev.rogers:android-updater:0.1.2` Maven/source/AGPL bundle. Its downloaded release ZIP and internal checksums were verified. The independent library repository CI passed 43 host tests with no failures/skips; those are library tests, not Kura coverage. No private signing material was inspected or used. README/contribution GPL labels were corrected to match Kura's already-existing AGPL LICENSE.
+
+The final direct build (`-PdirectUpdates=true`) passed debug/test APKs, unsigned release APK/AAB and lint in 1m 17s: **502 tasks, 27 executed / 475 up-to-date**. Lint reported **0 errors / 61 warnings**. The direct packaging verifier passed identity, exact update-permission mode, restricted exported components, baseline profiles and all native 16 KiB alignment checks. Normal offline debug/release builds and lint also passed in 1m 47s (**465 tasks, 59 executed / 406 up-to-date**) with **0 errors / 57 warnings**, and the default packaging verifier confirmed no update/network permissions. These are separate, overlapping builds; task/test counts are not summed.
+
+On the disposable API 37 / 16 KiB emulator, the focused updater integration selection passed **3/3**, with zero failures. It covers Kura-only release/asset configuration, declared direct-update permissions and nonexported provider scope, first-run opt-out, and Application/WorkManager registration without opening a vault. The first device attempts could not start while Android credential-encrypted storage was locked. Once the emulator was unlocked, instrumentation exposed missing WorkManager initialization. The Application now supplies Configuration.Provider and removes only WorkManager's default startup metadata. Lint initially caught the missing metadata removal; that was corrected without suppressing the error. The final selection passed with the complete configuration. Two earlier build attempts also corrected AGP 9 Kotlin source-set wiring. Failed attempts remain in local logs rather than being counted as passes.
+
+Artifacts and evidence are preserved in `../outputs/updater-integration-20261024/`. This pass did not rerun Kura's complete app/JVM/database/import suites, sign an app, perform a production-package upgrade, verify the recovered signing key, test API 26 or physical hardware, or publish a Kura app release. The signed retained-data upgrade acceptance in [App updates](APP-UPDATES.md) remains required. AI assistance was used for integration, tests, library publication, dependency pinning and documentation.
+
+## Updater debug-APK rejection correction — 0.1.3
+
+Raiun's native acceptance identified that Android 15 can report archive ApplicationInfo.flags=0 even for debuggable=true. The shared library was corrected under a new immutable **0.1.3** pin, reading the compiled manifest and resolving resource-backed booleans. Kura adopted the downloaded public bundle after its outer and per-file SHA-256 checks passed; previous 0.1.2 bytes remain preserved in project outputs. No Raiun integration files were changed by this correction task.
+
+The authoritative shared library passed **43 fresh host tests**, ktlint/detekt, release lint (0 errors / 11 warnings / 1 hint), and **10 native verifier tests on each API 26 and API 35**. Its public quality CI also passed. These are shared-library tests, distinct from Kura app acceptance.
+
+Kura's direct-update debug/test APKs, unsigned release APK/AAB and lint passed in **1m 15s**, **502 tasks: 33 executed / 469 up-to-date**; lint reported **0 errors / 61 warnings**. Direct packaging checks passed, including restricted components and 16 KiB alignment. Logs and APKs are in `../outputs/updater-security-0.1.3/direct/`. The earlier Kura 3/3 integration and default offline build results were not rerun for this dependency-only correction. Full app suites, signed installation/retained-data upgrades, physical hardware and the recovered key remain unverified by this pass. No Kura app release or production signing was performed.
+
+The shared library's final independent native CI [40052660831](https://github.com/phillip9933/android-app-updater/actions/runs/40052660831) subsequently passed **10/10 on API 26 and 10/10 on API 35**; both downloaded XML reports contain zero failures/errors/skips. CI-only setup corrections are documented in the library repository; its 0.1.3 tag and published bytes are unchanged. Raiun's owning task separately verified its published-library pin and synthetic retained-data installer journeys; that does not establish Kura production upgrade acceptance.
+
+
+## Issue closeout review — 26 October 2026
+
+An isolated linked worktree based on public main `4931b1e` preserves the original local checkout and unpublished edits. The updater is pinned to immutable 0.2.0 (the newest published SDK prerelease checked on this date). The shared-panel change prevents an automatic offer from stacking over manual update details. CI now checks both offline and direct distributions and compiles their instrumentation APKs.
+
+Fresh isolated direct build: **539/539 Gradle tasks executed**, 3m 4s; model **17/17** and import **35/35** JVM test executions passed (the import count includes the low-memory task). Debug/test APKs, unsigned release APK/AAB, lint (**0 errors, 61 warnings**) and direct permissions/export/alignment verification passed. No production signing occurred.
+
+The exact isolated branch's API 37 / 16 KiB synthetic phone-unlock journey passed **1/1** in 60.033 seconds. It verifies cancel-before-opt-in, retained sentinel data after background lock, encrypted backup round-trip and wrong-password refusal, staged restore, device-local policy exclusion from backup, locked-device key refusal, and authenticated restoration of app unlock. The expanded foreground update-popup regression also passed **1/1** in 12.486 seconds, including persistent Later, manual access and suppression of overlapping offers. It injects public synthetic metadata; it does not exercise a production installer.
+
+Earlier API 26 updater integration passed **3/3** in the closeout session. Extended credential-journey attempts first exposed test helpers assuming a modern keypad; helpers now use the real Android 8 credential activity. After interruption/restart the API 26 image had an unavailable credential service and Settings/SystemUI crashes (including missing user_dictionary provider). Restarting its normal credential service allowed a synthetic PIN but did not repair the system UI. These failed/incomplete runs are retained in local logs and **do not establish older-API unlock acceptance**. Initial modern runs before first device unlock failed on credential-encrypted storage; first unlock through the real synthetic PIN restored normal test operation.
+
+Full app regression, API 24, physical hardware, biometrics, prior-production same-ID retained-data upgrades, real installer denial/return journeys, signing continuity and the recovered key are not established by these focused results. Issues #9/#10/#13 retain those acceptance gates. Shared SDK 0.2.0 [quality CI](https://github.com/phillip9933/android-app-updater/actions/runs/40056763702) and [native API 26/35 verifier CI](https://github.com/phillip9933/android-app-updater/actions/runs/40056763707) passed for its exact source; those remain library evidence, not Kura upgrade acceptance.
+
+OCR discovery has separate [synthetic measurements and limitations](CARD-RECOGNITION.md). No scanner or OCR dependency was added to Android. AI assistance was used for review, implementation, experiments, tests and documentation. Local disposable artifacts/logs are under `../outputs/issue-closeout-20261026/`; no personal data or signing material was used.
+
+The separate offline build passed in **1m 53s**, **502 tasks: 78 executed / 424 up-to-date**, including debug/test APKs and unsigned APK/AAB. Offline lint reported **0 errors / 57 warnings**; manifest permission restrictions and 16 KiB packaging passed. The cold-process preparation and post-force-stop verification each passed **1/1** on API 37 (9.960s and 28.012s), preserving the sentinel and restoring app authentication. A combined updater invocation used a misspelled test-class selector and is a runner error; the corrected suite is recorded separately.

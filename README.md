@@ -12,6 +12,13 @@ Kura (蔵) keeps your cards, passes and identity documents in an encrypted, offl
 
 [Download Kura](https://github.com/phillip9933/Kura/releases/latest) · [Changelog](CHANGELOG.md) · [Privacy](PRIVACY.MD)
 
+
+**Privacy first pass wallet.**
+
+Kura (蔵) keeps your cards, passes and identity documents in an encrypted, offline Android wallet. No accounts, advertising or telemetry. The default build has no Internet permission. An optional direct-update build can check GitHub for updates; see [app updates](docs/APP-UPDATES.md).
+
+[Download Kura](https://github.com/phillip9933/Kura/releases/latest) · [Changelog](CHANGELOG.md) · [Privacy](PRIVACY.MD)
+
 ## About this project
 
 I build projects to solve problems I run into in my own life. I share them because I believe in open source and hope others can learn from them, adapt them or find them useful.
@@ -25,7 +32,7 @@ Making it public does not mean it is a polished production product or suitable f
 - Add logos, card images, attachments and custom fields.
 - Find what you need with categories, favorites, search, sorting and archive.
 - Show barcodes full screen when it is time to scan.
-- Unlock with biometrics or your device credential, with automatic vault locking.
+- Unlock with biometrics or your device credential, or choose phone-unlock-only access in Settings. Wallet data remains encrypted and sessions close on lock.
 - Keep password-encrypted backups, optionally saved automatically to a folder you choose.
 
 ## Native Android

@@ -45,4 +45,21 @@ class HardwareVaultKeyTest {
             try { wrapper.cipher(false, ByteArray(16)); fail() } catch (_: IllegalArgumentException) {}
         } finally { KeyStore.getInstance("AndroidKeyStore").apply { load(null); deleteEntry(alias) } }
     }
+    @Test fun phoneUnlockWrapperCannotBeMistakenForAuthenticatedKey() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val alias = "app.kura.prototype.device-mode." + UUID.randomUUID()
+        val phoneKey = HardwareVaultKey(context, alias, allowSoftwareForTests = true, requireAuthentication = false)
+        try {
+            phoneKey.provision()
+            val cipher = phoneKey.cipher(true)
+            val expected = ByteArray(32) { 7 }
+            val wrapped = SensitiveBytes(expected.copyOf()).use { phoneKey.wrap(cipher, it) }
+            val actual = phoneKey.unwrap(phoneKey.cipher(false, cipher.iv), wrapped)
+            try { assertArrayEquals(expected, actual) } finally { actual.fill(0); expected.fill(0) }
+            try {
+                HardwareVaultKey(context, alias, allowSoftwareForTests = true).provision()
+                fail("An existing phone-unlock key must not pass authenticated-key validation")
+            } catch (_: IllegalArgumentException) { }
+        } finally { phoneKey.delete() }
+    }
 }

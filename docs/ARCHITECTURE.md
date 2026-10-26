@@ -17,7 +17,7 @@ The repository root is the only Android build. There is no Dart runtime or alter
 
 `VaultSessionCoordinator` moves through Locked, Authenticating, Opening, Unlocked and Closing. Generation tokens reject stale work. A session owns its master key, cancellable work and database handles. Lock invalidates the generation, cancels/joins session jobs, closes databases off the UI thread and clears owned mutable secrets. The ViewModel also clears pending image/attachment buffers and invalidates attachment access, independently of Activity visibility.
 
-Camera, picker and SAF operations receive bounded guards (normally 120 seconds). Guards defer ordinary process-background locking, not screen-off or explicit locking. User auto-lock delays are bounded to five minutes. Authentication continuations survive Activity recreation; process death requires fresh authentication.
+Camera, picker and SAF operations receive bounded guards (normally 120 seconds). Guards defer ordinary process-background locking, not screen-off or explicit locking. User auto-lock delays are bounded to five minutes. Authentication continuations survive Activity recreation. By default, process death requires fresh app authentication. The optional phone-unlock-only mode reopens through a separate device-local wrapper after checking the phone is secure and unlocked; the original authenticated envelope and aliases are preserved. `DeviceUnlock` in core/storage owns this optional atomic envelope; `HardwareVaultKey` in core/security enforces the selected key policy. The setting is device-local and is not exported in wallet backups.
 
 ## Storage
 
@@ -29,7 +29,7 @@ New media uses AES-256-GCM with random nonces. Temporary imported pass/backup co
 
 ## Trust boundaries
 
-Untrusted files enter through explicitly launched system document pickers or camera/scanner input. Import code bounds compressed/expanded sizes, path names, entry counts and nesting. SQL table/column identifiers are allowlisted; record values are bound. The release has no network permission. Links and file viewing require user actions and leave the app via Android intents; plaintext recipients can retain copies.
+Untrusted files enter through explicitly launched system document pickers or camera/scanner input. Import code bounds compressed/expanded sizes, path names, entry counts and nesting. SQL table/column identifiers are allowlisted; record values are bound. The default release has no network permission. The optional direct-update build has an application-owned updater facade with no vault/controller references; it uses pinned standalone library artifacts. See [App updates](APP-UPDATES.md). Links and file viewing require user actions and leave the app via Android intents; plaintext recipients can retain copies.
 
 [Security review](SECURITY_REVIEW.md) and [Testing](TESTING.md) distinguish implemented protections from unverified device/release behavior.
 
