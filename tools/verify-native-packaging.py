@@ -5,6 +5,7 @@ root = pathlib.Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--apk", type=pathlib.Path, default=root / "app/build/outputs/apk/release/app-release-unsigned.apk")
 parser.add_argument("--direct-updates", action="store_true", help="Expect opt-in GitHub updater permissions/provider")
+parser.add_argument("--card-scanner", action="store_true", help="Expect the optional API 26/64-bit offline scanner")
 parser.add_argument("--expected-certificate", help="Expected signed APK certificate SHA-256 (hex)")
 args = parser.parse_args()
 apk = args.apk
@@ -20,6 +21,16 @@ for permission in ("INTERNET", "ACCESS_NETWORK_STATE", "REQUEST_INSTALL_PACKAGES
     assert ("android.permission." + permission in badging) == args.direct_updates, permission
 assert "package: name='app.kura.wallet'" in badging
 print("Release ID preserved; update permissions match selected distribution")
+assert ("minSdkVersion:'26'" in badging) == (args.direct_updates or args.card_scanner)
+with zipfile.ZipFile(apk) as archive:
+    models = ["assets/card-ocr/eng.traineddata", "assets/card-ocr/jpn.traineddata"]
+    assert all((name in archive.namelist()) == args.card_scanner for name in models)
+    if args.card_scanner:
+        import hashlib
+        for name, expected in zip(models, ["7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2", "1f5de9236d2e85f5fdf4b3c500f2d4926f8d9449f28f5394472d9e8d83b91b4d"]):
+            assert hashlib.sha256(archive.read(name)).hexdigest() == expected
+        abis = {n.split("/")[1] for n in archive.namelist() if n.startswith("lib/") and n.endswith(".so")}
+        assert abis == {"arm64-v8a", "x86_64"}, abis
 # Check the merged manifest from this release build, including library-contributed components.
 manifest = ET.parse(root / "app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml").getroot()
 a = "{http://schemas.android.com/apk/res/android}"

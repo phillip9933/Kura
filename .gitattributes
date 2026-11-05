@@ -1,3 +1,7 @@
 gradlew text eol=lf
 *.bat text eol=crlf
 *.sh text eol=lf
+
+# Preserve exact published artifact/model bytes used by integrity pins.
+third_party/** -text
+app/src/cardScanner/assets/** -text

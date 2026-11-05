@@ -1,5 +1,13 @@
 # Release tooling
 
+## Kura 2.2 beta
+
+The owner authorized source commit/push and GitHub publication on 5 November 2026. Version **2.2.0-beta.1**, code **120**, combines `-PcardScanner=true -PdirectUpdates=true`: API 26+, arm64-v8a/x86_64, offline English/Japanese OCR and opt-in GitHub updates. Base source builds remain offline/API 24. The beta retains known physical-device/photographed-card and production-upgrade acceptance gaps; it does not promote those gates to passed.
+
+Build with `./gradlew -PcardScanner=true -PdirectUpdates=true :app:assembleRelease :app:bundleRelease` plus the private signing properties/keystore overrides below. Verify with `python3 tools/verify-native-packaging.py --card-scanner --direct-updates --apk app/build/outputs/apk/release/app-release.apk --expected-certificate 1e19598265c5c5920639da46261944463f8ec65793fe0dbd362a558599c6dfd1`. Keep private material outside Git and passwords off command lines/logs.
+
+Publish the beta tag from its validated source branch if main still awaits the required approving review; preserve branch protection. GitHub beta releases do not replace the current stable latest release. Enable Include beta releases in App updates to receive subsequent beta builds; stable-only remains the default. No store submission is authorized by this GitHub publication.
+
 ## Kura 2.1
 
 Version **2.1.0**, code **119**, is the optimization release, with a signed APK and Android App Bundle on [GitHub Releases](https://github.com/phillip9933/Kura/releases/tag/v2.1.0). The APK is for direct installation; the AAB is for submission through Google Play Console. GitHub publication does not submit either store listing or alter the pending F-Droid request.
@@ -54,6 +62,6 @@ The opt-in test captures real production views with fictional fixtures. It resto
 
 ## Optional direct-update distribution
 
-The owner authorized updater integration on 2026-10-24. The default build remains offline/API 24. Build with `-PdirectUpdates=true` for API 26+ GitHub updates, then verify with `python3 tools/verify-native-packaging.py --direct-updates`. Do not confuse outputs from the two invocations: they share package identity and output paths. This integration retains version 2.1.0 / 119 only for local development; increment both release version and version code before distributing a new Kura update.
+The owner authorized updater integration on 2026-10-24. The default build remains offline/API 24. Build with `-PdirectUpdates=true` for API 26+ GitHub updates, then verify with `python3 tools/verify-native-packaging.py --direct-updates`. Do not confuse outputs from the two invocations: they share package identity and output paths. The first integration retained 2.1.0 / 119 for local development. The 2.2 beta increments both version and code; any subsequent APK update must increase the version code again.
 
 The public updater library is independently versioned and pinned; see [App updates](APP-UPDATES.md). Publishing that library does not authorize publishing Kura. Signed same-ID retained-data upgrade acceptance remains required.

@@ -61,3 +61,7 @@ The UI's section (`Cards`, `Passes`, `Identity`) is distinct from a physical leg
 `VaultUiMemory` owns editable drafts for the current session, not process-persistent state. `PendingOperations` owns activity-result guards, temporary image bytes and attachment exports. A caller transferring a mutable buffer must define who wipes it; a caller returning an owned bitmap must define disposal. Framework callbacks, Room entities/DAOs and manifest providers can be used without direct source callers.
 
 Room definitions validate existing schemas and handle database opening; much of `VaultStore` uses bound SQL over the opened database for compatibility operations. Do not delete generated/schema declarations just because row operations also exist as SQL.
+
+## Optional card-scanner boundary
+
+The independent `cardScanner` build switch selects a pinned API-26+/64-bit processing/OCR bundle. `CardScanEngine` in the app owns bounded temporary rasters/models; `EnhancedCardDialog` owns crop and suggestion review in the active form. `core:model/CardAutofill` performs allowlisted, labelled-value suggestions without Android or schema creation. Existing `VaultController.imageChange`, encrypted draft media and explicit form Save retain persistence ownership. The normalizer/camera/picker and barcode paths remain host-owned. See [card scanning](CARD-RECOGNITION.md).

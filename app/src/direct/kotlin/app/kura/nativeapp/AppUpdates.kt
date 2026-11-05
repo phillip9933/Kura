@@ -18,6 +18,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.work.Configuration
+import io.github.phillip9933.appupdater.AndroidUpdateChannel
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import io.github.phillip9933.appupdater.UpdateConfig
 import io.github.phillip9933.appupdater.UpdateManager
 import kotlinx.coroutines.CancellationException
@@ -104,6 +107,12 @@ fun AppUpdateNotice() {
                 Row {
                     Checkbox(state.wifiDownload, { updater.setWifiDownload(it) })
                     Text("Download updates automatically on Wi-Fi")
+                }
+                Row {
+                    Checkbox(state.channel == AndroidUpdateChannel.BETA,
+                        { updater.setChannel(if (it) AndroidUpdateChannel.BETA else AndroidUpdateChannel.STABLE) },
+                        modifier = Modifier.semantics { contentDescription = "Include beta releases" })
+                    Text("Include beta releases")
                 }
                 TextButton(onClick = { scope.launch { updater.checkNow() } }, enabled = !state.checking && !state.downloading) {
                     Text(if (state.checking) "Checking…" else "Check for updates")

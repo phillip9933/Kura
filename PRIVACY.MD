@@ -31,3 +31,7 @@ For general privacy questions, use the [Kura repository](https://github.com/phil
 ## Optional app updates
 
 The direct-update build can contact GitHub for public release metadata and APK downloads. Checks are off initially; you can check manually or enable approximately daily checks and optional Wi-Fi downloads. GitHub receives ordinary connection information such as your IP address. Wallet records, images, backups, credentials and encryption keys are not passed to the updater. Downloaded APKs and public update preferences are stored separately from the vault. Installation requires your explicit action and Android confirmation. The default offline build includes no updater or update-network permissions.
+
+## Optional offline card recognition
+
+Enhanced-scanning builds can detect card edges and, with your choice during import, recognize English/Japanese text on this device. Models are bundled; images/text are not sent to a service. OCR suggestions fill only empty existing form fields after review. Processing can temporarily create plaintext input/cropped images and model/job copies in private app cache. Operation cleanup runs on completion/cancellation (blocking native recognition may finish first); abandoned jobs are cleaned at the next startup. Confirmed card images use existing encrypted storage. Recognition can be wrong, so check suggested names and numbers before saving.

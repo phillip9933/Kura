@@ -1,0 +1,76 @@
+{
+  "date": "2026-11-05",
+  "scanner_version": "0.8.0-beta.1",
+  "scanner_revision": "8d9a451c27ed87d20110d25dcedb81001e0f521f",
+  "sdk_archive_sha256": "6f68f7000817b981854dd68a5863804a28c6f388b7040af1b4e4ef4879d4af99",
+  "variants": {
+    "enhanced": {
+      "result": "passed",
+      "elapsed": "1m 40s",
+      "tasks": 511,
+      "execution": "109 executed, 402 up-to-date",
+      "packaging": "permissions, models, API floor, ABIs and ELF/ZIP alignment passed"
+    },
+    "basic": {
+      "result": "passed",
+      "elapsed": "1m 34s",
+      "tasks": 497,
+      "execution": "80 executed, 417 up-to-date",
+      "packaging": "permissions, models, API floor, ABIs and ELF/ZIP alignment passed"
+    },
+    "basic-direct": {
+      "result": "passed",
+      "elapsed": "1m 33s",
+      "tasks": 496,
+      "execution": "74 executed, 422 up-to-date",
+      "packaging": "permissions, models, API floor, ABIs and ELF/ZIP alignment passed"
+    },
+    "enhanced-direct": {
+      "result": "passed",
+      "elapsed": "1m 34s",
+      "tasks": 497,
+      "execution": "56 executed, 441 up-to-date",
+      "packaging": "permissions, models, API floor, ABIs and ELF/ZIP alignment passed"
+    }
+  },
+  "jvm": {
+    "model": 24,
+    "import_including_low_memory": 35,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "fresh_results_utc": "2026-11-04T23:37"
+  },
+  "instrumentation": {
+    "api26_native": {
+      "passed": 3,
+      "seconds": 1.624
+    },
+    "api37_16k": {
+      "passed": 6,
+      "seconds": 18.859
+    }
+  },
+  "artifacts": {
+    "app-debug.apk": "1a5034aeb826e7f2f3582df1e3067e61cf4d22185804168ea1fcbbdf2fdb17f8",
+    "app-debug-androidTest.apk": "7ab7474b727b1d710ac93aafcad99c9666b1823b9519f493f8fb6808278f7328",
+    "app-release-unsigned.apk": "9608982a4fbcb35ef6d94b3db8a4994abcfe966af8ee00e62e901c513bea68a0",
+    "app-release.aab": "890856105b590f8e2aa47d5f1da4787917de3c238359f3fa771ca731c9011424"
+  },
+  "limitations": [
+    "Synthetic cards only; real physical camera quality and mobile profiling pending",
+    "API26 native engine verified; API26 authentication/import UI not rerun",
+    "Full app regression, signed production upgrade and backup/restore not rerun",
+    "No calibrated blur/glare feedback, duplicate warnings or barcode/OCR reconciliation",
+    "No production signing, app version bump, app release or installation on a personal phone"
+  ],
+  "canonical_checkout": {
+    "result": "passed",
+    "elapsed": "56s",
+    "tasks": 137,
+    "executed": 29,
+    "up_to_date": 108,
+    "preserved": "Original branch/index/prior local edits; validated scanner delta applied only",
+    "source_publication": "Not committed or pushed during this integration"
+  }
+}

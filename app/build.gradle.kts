@@ -1,10 +1,12 @@
 import java.util.Properties
 import java.io.File
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.plugin.compose") }
+val cardScanner = providers.gradleProperty("cardScanner").orNull == "true"
 val directUpdates = providers.gradleProperty("directUpdates").orNull == "true"
 android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) { minorApiLevel = 0 } }
- defaultConfig { applicationId = "app.kura.wallet"; minSdk = if (directUpdates) 26 else 24; targetSdk = 36; versionCode = 119; versionName = "2.1.0"
+ defaultConfig { applicationId = "app.kura.wallet"; minSdk = if (directUpdates || cardScanner) 26 else 24; targetSdk = 36; versionCode = 120; versionName = "2.2.0-beta.1"
 
+ if (cardScanner) ndk { abiFilters += setOf("arm64-v8a", "x86_64") }
  testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
 
 
@@ -67,6 +69,11 @@ android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) {
 }
 kotlin { jvmToolchain(21); compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 dependencies {
+ if (cardScanner) {
+    implementation("dev.offlinescan:scanner-core:0.8.0-beta.1")
+    implementation("dev.offlinescan:scanner-processing-opencv:0.8.0-beta.1")
+    implementation("dev.offlinescan:scanner-ocr-tesseract:0.8.0-beta.1")
+ }
  if (directUpdates) {
     implementation("io.github.phillip9933:android-updater:0.2.0")
     implementation("androidx.work:work-runtime:2.11.2")
@@ -94,3 +101,9 @@ dependencies {
 
 android.sourceSets.getByName("main").kotlin.srcDir(if (directUpdates) "src/direct/kotlin" else "src/offline/kotlin")
 if (directUpdates) android.sourceSets.getByName("androidTest").kotlin.srcDir("src/directAndroidTest/kotlin")
+
+android.sourceSets.getByName("main").kotlin.srcDir(if (cardScanner) "src/cardScanner/kotlin" else "src/basicScanner/kotlin")
+if (cardScanner) {
+    android.sourceSets.getByName("main").assets.srcDir("src/cardScanner/assets")
+    android.sourceSets.getByName("androidTest").kotlin.srcDir("src/cardScannerAndroidTest/kotlin")
+}

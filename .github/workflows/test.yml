@@ -16,9 +16,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        direct-updates: [false, true]
+        include:
+          - {direct-updates: false, card-scanner: false}
+          - {direct-updates: true, card-scanner: false}
+          - {direct-updates: false, card-scanner: true}
+          - {direct-updates: true, card-scanner: true}
     env:
       DIRECT_UPDATES: ${{ matrix.direct-updates }}
+      CARD_SCANNER: ${{ matrix.card-scanner }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -31,18 +36,17 @@ jobs:
       - name: Install Android build tools
         run: sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
       - name: Unit tests, lint and unsigned build
-        run: ./gradlew :core:model:test :core:import:testDebugUnitTest :core:import:testLowMemory :app:lintDebug :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest -PdirectUpdates=$DIRECT_UPDATES --max-workers=2 --console=plain
+        run: ./gradlew :core:model:test :core:import:testDebugUnitTest :core:import:testLowMemory :app:lintDebug :app:assembleDebug :app:assembleRelease :app:assembleDebugAndroidTest -PdirectUpdates=$DIRECT_UPDATES -PcardScanner=$CARD_SCANNER --max-workers=2 --console=plain
       - name: Verify permissions and 16 KiB packaging
         run: |
-          if [ "$DIRECT_UPDATES" = "true" ]; then
-            python3 tools/verify-native-packaging.py --direct-updates
-          else
-            python3 tools/verify-native-packaging.py
-          fi
+          args=()
+          if [ "$DIRECT_UPDATES" = "true" ]; then args+=(--direct-updates); fi
+          if [ "$CARD_SCANNER" = "true" ]; then args+=(--card-scanner); fi
+          python3 tools/verify-native-packaging.py "${args[@]}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: android-verification-reports-${{ matrix.direct-updates }}
+          name: android-verification-reports-updates-${{ matrix.direct-updates }}-scanner-${{ matrix.card-scanner }}
           path: |
             **/build/reports/
             **/build/test-results/

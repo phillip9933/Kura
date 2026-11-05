@@ -12,6 +12,7 @@ class AppUpdatesIntegrationTest {
 
     @Test fun releaseIdentityUsesOnlyKuraUniversalAssets() {
         assertEquals("Kura-2.2.0.apk", kuraUpdateConfig.assetName("v2.2.0"))
+        assertEquals("Kura-2.2.0-beta.1.apk", kuraUpdateConfig.assetName("v2.2.0-beta.1"))
         assertNull(kuraUpdateConfig.assetName("android-v2.2.0"))
         assertNull(kuraUpdateConfig.assetName("v2.2.0/other"))
         assertEquals("Kura", kuraUpdateConfig.repository)

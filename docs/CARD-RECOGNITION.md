@@ -1,4 +1,26 @@
-# Card recognition: scanner/host boundary
+# Card scanning and recognition
+
+## Current integration — 5 November 2026
+
+The optional enhanced-scanning build pins [scanner 0.8.0-beta.1](https://github.com/phillip9933/open-android-doc-scanner/releases/tag/v0.8.0-beta.1), revision `8d9a451c27ed87d20110d25dcedb81001e0f521f`. Upstream OCR implementation and beta release issues are closed; real photographed-card accuracy/stable-promotion acceptance remains open upstream. This beta is suitable for integration testing, with editable/manual fallbacks, rather than a claim of universal recognition quality.
+
+Build with `./gradlew -PcardScanner=true :app:assembleDebug`. This explicitly selects API 26+, arm64-v8a/x86_64, processing and OCR dependencies and bundled pinned English/Japanese models. The base build remains API 24 without scanner dependencies/models. `-PdirectUpdates=true` is independent and may be combined; scanning adds no network permissions or runtime downloads. SDK Maven artifacts, source JARs, checksums, provenance, licenses and notices are in `third_party/card-scanner/`; model hashes are checked at build time, packaging verification and before OCR. Use `python3 tools/verify-native-packaging.py --card-scanner` after the enhanced unsigned release build (add `--direct-updates` when selected).
+
+### Import flow
+
+In a card form, add a front/back image from the existing camera or photo picker. Automatic edge detection proposes a four-corner perspective crop. Drag handles or use the labelled corner position sliders, rotate, use the full image, or fall back to the existing manual crop. Confirm the crop before recognition. Front/back image targets retain their existing meaning; each side is imported separately. Logos and barcode scanning keep their existing flows.
+
+After crop confirmation, **Autofill card details?** offers **Review autofill** or **Use image only**. OCR runs only after that opt-in. Whole-card English/Japanese sparse recognition maps explicitly labelled values to empty basic/custom fields already displayed by the current form; it creates no field definitions, guesses no card type and never writes arbitrary OCR keys. Unlabelled text and competing values are left for manual entry. Identifiers remain strings; no O/0, I/1 or 8/3 substitution is performed. Date/custom-field validation applies before selected suggestions can be used.
+
+The review shows editable, individually selectable suggestions and a cropped preview. Existing filled values are excluded and checked again at application time. **Apply selected details and use image** encrypts the image into the existing draft-media path and updates only allowed empty draft fields. The form's separate **Save** publishes the record. Cancelling the import changes neither fields nor images. Existing-record image replacement uses image-only confirmation; OCR autofill is available in an editable form. Declining or failed recognition retains image/manual entry. Barcode values are deliberately excluded from OCR suggestions to avoid confusing a printed identifier with encoded content.
+
+### Ownership and limits
+
+`CardScanEngine` owns bounded private operation workspaces for input/output rasters and verified model/job copies. It uses the published processing/OCR API on IO workers inside the current vault session; callbacks cannot write after lock/session cancellation. Native OCR is blocking: cancellation cleanup can wait until the current native call returns. Operation directories are deleted in `finally`; abandoned scanner cache is removed before the next vault unlock. Bitmaps and owned mutable image buffers are cleared on disposal. OCR strings/drafts remain session memory only and are never logged or saved to Android state.
+
+Input is at most 10 MiB/16 MP through the existing capture normalizer; processing/OCR output is capped at 2048 pixels/4 MP. Scan mode uses Original rendering to retain colored/light card details. The SDK adds native memory overhead. Blur/glare feedback is currently instructional with crop review/retake, not a calibrated automatic quality score. No duplicate-card warning, barcode/OCR reconciliation, automatic capture/video edge overlay, unknown-layout inference or selected-field region UI is implemented in this first integration. Japanese models are bundled, but Kura-specific Japanese real-camera quality and physical-device acceptance still need evidence. See [Testing](TESTING.md).
+
+## Historical discovery
 
 Decision for discovery issue [#11](https://github.com/phillip9933/Kura/issues/11), 26 October 2026. This is a reviewed integration direction and measured research prototype, not a shipped scanner/OCR feature or a commitment to include it in the updater/unlock release.
 
@@ -6,7 +28,7 @@ Decision for discovery issue [#11](https://github.com/phillip9933/Kura/issues/11
 
 Use the independent scanner for camera/import, page detection, perspective crop, rotation, image enhancement and the optional offline OCR engine. Keep OCR generic: text, word confidence and image-relative bounds, without wallet models or field inference. Kura owns card-field suggestions, validation, user correction/confirmation, record selection, encrypted persistence and backup policy. Do not duplicate an OCR engine inside Kura or let a scanner automatically create wallet records.
 
-The currently published [scanner v0.7.0](https://github.com/phillip9933/open-android-doc-scanner/releases/tag/v0.7.0) is Apache-2.0 and provides scanning/export, not OCR/card extraction. Its [host contract](https://github.com/phillip9933/open-android-doc-scanner/blob/v0.7.0/docs/INTEGRATION.md) supplies completed/cancelled/failed outcomes and host-owned output files. Optional English/Japanese OCR is tracked upstream in [scanner #1](https://github.com/phillip9933/open-android-doc-scanner/issues/1); its local SNAPSHOT is not a published dependency or a reason to follow a sibling checkout. Audit the exact released OCR engine, models and notices when a consumable version exists.
+At discovery time, published [scanner v0.7.0](https://github.com/phillip9933/open-android-doc-scanner/releases/tag/v0.7.0) is Apache-2.0 and provides scanning/export, not OCR/card extraction. Its [host contract](https://github.com/phillip9933/open-android-doc-scanner/blob/v0.7.0/docs/INTEGRATION.md) supplies completed/cancelled/failed outcomes and host-owned output files. Optional English/Japanese OCR is tracked upstream in [scanner #1](https://github.com/phillip9933/open-android-doc-scanner/issues/1); the then-local SNAPSHOT was not a published dependency or a reason to follow a sibling checkout. Audit the exact released OCR engine, models and notices when a consumable version exists.
 
 ## Intended user flow and data contract
 
@@ -32,7 +54,7 @@ Run `python3 tools/card-recognition-prototype.py --output NEW_EMPTY_DIRECTORY` o
 
 These four generated cards are not a representative benchmark. No real-camera accuracy, Japanese quality, mobile latency/thermal/memory, confidence calibration or Android scanner-host integration was measured. The initial experiment could not run because GNU time was absent; the final script uses Python's child-resource accounting without installing software. The failed attempt is preserved in local output evidence.
 
-## Concrete implementation follow-up
+## Historical implementation follow-up
 
 Before adding a dependency, obtain an immutable published OCR-capable scanner bundle with source, checksums, models and notices. Create an API-26+ enhanced-scanning adapter with bounded session ownership, editable suggestions and explicit save/cancel tests. Kura currently supports API 24 in its base offline build, while the scanner requires API 26 and 64-bit ABIs: **do not silently raise the existing floor or couple scanning to network permission**. The maintainer must choose the enhanced-build/distribution policy before assigning a release milestone; preserve the base manual/barcode fallback.
 

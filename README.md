@@ -8,16 +8,9 @@ Follow release scope and maturity separately from individual work. Dates are est
 
 **Privacy first pass wallet.**
 
-Kura (蔵) keeps your cards, passes and identity documents in an encrypted, offline Android wallet. No accounts, advertising or telemetry. No Internet permission.
-
-[Download Kura](https://github.com/phillip9933/Kura/releases/latest) · [Changelog](CHANGELOG.md) · [Privacy](PRIVACY.MD)
-
-
-**Privacy first pass wallet.**
-
 Kura (蔵) keeps your cards, passes and identity documents in an encrypted, offline Android wallet. No accounts, advertising or telemetry. The default build has no Internet permission. An optional direct-update build can check GitHub for updates; see [app updates](docs/APP-UPDATES.md).
 
-[Download Kura](https://github.com/phillip9933/Kura/releases/latest) · [Changelog](CHANGELOG.md) · [Privacy](PRIVACY.MD)
+[Stable download](https://github.com/phillip9933/Kura/releases/latest) · [2.2 beta](https://github.com/phillip9933/Kura/releases/tag/v2.2.0-beta.1) · [Changelog](CHANGELOG.md) · [Privacy](PRIVACY.MD)
 
 ## About this project
 
@@ -60,3 +53,7 @@ See [testing evidence](docs/TESTING.md), [security review](docs/SECURITY_REVIEW.
 ## License
 
 Licensed under [AGPL-3.0](LICENSE).
+
+## Optional card scanning
+
+The enhanced-scanning development build (`-PcardScanner=true`) adds automatic card-edge cropping and optional offline English/Japanese OCR into existing empty form fields, with editable review before saving. It uses scanner 0.8.0-beta.1 and requires Android API 26+ on 64-bit devices. The base build retains API 24 support. See [card scanning](docs/CARD-RECOGNITION.md) for controls, privacy, build flags and known limitations.

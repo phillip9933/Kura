@@ -17,11 +17,29 @@ class PendingSecurityTest {
         val directory = File(root, "capture").apply { mkdirs() }
         val stale = File(directory, "scan-test.jpg").apply { writeText("synthetic image") }
         val other = File(directory, "unrelated.txt").apply { writeText("retain") }
+        val abandoned = File(root, "card-scans/job/ocr").apply { mkdirs() }
+        File(abandoned, "image").writeText("synthetic OCR input")
         try {
             CaptureFiles.clearOrphans(root)
             assertFalse(stale.exists())
+            assertFalse(File(root, "card-scans").exists())
             assertTrue(other.exists())
         } finally { other.delete(); stale.delete(); directory.delete(); root.delete() }
+    }
+
+    @Test fun startupRejectsScannerLinksWithoutDeletingOtherFiles() {
+        val app = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(app.cacheDir.canonicalFile, "scanner-link-test-${UUID.randomUUID()}").apply { mkdirs() }
+        val outside = File(root, "outside").apply { mkdirs() }
+        val retained = File(outside, "synthetic.txt").apply { writeText("retain") }
+        val scans = File(root, "card-scans").apply { mkdirs() }
+        val link = File(scans, "link")
+        try {
+            android.system.Os.symlink(outside.path, link.path)
+            try { CaptureFiles.clearOrphans(root); fail("Scanner links must be rejected") }
+            catch (_: IllegalArgumentException) { }
+            assertTrue(retained.isFile)
+        } finally { link.delete(); retained.delete(); outside.delete(); scans.delete(); root.delete() }
     }
 
     @Test fun lockClearsAttachmentGrantsBuffersAndCaptureWithoutActivity() = runBlocking {

@@ -1,16 +1,15 @@
 # Changelog
 
-## Unreleased
+## 2.2.0-beta.1 — November 5, 2026
 
-- Pin the published Android App Updater 0.2.0 prerelease and show a dismissible new-version popup in the optional direct-update build.
-- Add Require app unlock in Data & Security. Users may opt into relying on the phone lock while retaining encrypted wallet storage and the original authenticated recovery wrapper.
-- AI assistance was used for implementation, tests and documentation; validation is recorded in docs/TESTING.md. No app release or signing is part of this work.
+- Automatic card-edge detection and editable perspective crop in the enhanced-scanning build.
+- Optional offline English/Japanese OCR with editable suggestions for existing empty card fields. Confirm the form before saving; leading zeros and original recognized characters are retained.
+- GitHub update checks and a foreground new-version popup, with opt-in automatic checks/downloads and an explicit beta-release option.
+- Optional phone-unlock-only access while retaining encrypted wallet storage and the original authenticated wrapper.
+- Removed the donation row/link from settings and its unused icon profile entries.
+- Pinned SDK/model integrity checks, line-ending protection and a four-distribution verification matrix.
 
-- Keep manual update details and automatic offers in one panel to prevent overlapping dialogs.
-- Verify offline and direct-update distributions independently in CI.
-
-- Optional direct-update build with opt-in GitHub release checks, verified APK downloads and user-confirmed Android installation. The default offline build is retained.
-- Corrected GPL labels in project documentation to match the existing AGPL-3.0 license.
+The GitHub beta combines enhanced scanning and direct updates (Android API 26+, arm64-v8a/x86_64). The source default retains offline/API 24 support. Scanner 0.8.0-beta.1 remains subject to photographed-card accuracy limits; verify OCR suggestions before saving. Physical-device/full release acceptance remains open. AI assistance and exact validation are recorded in docs/TESTING.md.
 
 ## 2.1.0 — October 3, 2026
 

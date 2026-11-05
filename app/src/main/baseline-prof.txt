@@ -8873,8 +8873,6 @@ PLandroidx/compose/material/icons/outlined/BackupKt;-><clinit>()V
 PLandroidx/compose/material/icons/outlined/BackupKt;->getBackup(Landroidx/compose/material/icons/Icons$Outlined;)Landroidx/compose/ui/graphics/vector/ImageVector;
 PLandroidx/compose/material/icons/outlined/BadgeKt;-><clinit>()V
 PLandroidx/compose/material/icons/outlined/BadgeKt;->getBadge(Landroidx/compose/material/icons/Icons$Outlined;)Landroidx/compose/ui/graphics/vector/ImageVector;
-PLandroidx/compose/material/icons/outlined/CoffeeKt;-><clinit>()V
-PLandroidx/compose/material/icons/outlined/CoffeeKt;->getCoffee(Landroidx/compose/material/icons/Icons$Outlined;)Landroidx/compose/ui/graphics/vector/ImageVector;
 PLandroidx/compose/material/icons/outlined/ConfirmationNumberKt;-><clinit>()V
 PLandroidx/compose/material/icons/outlined/ConfirmationNumberKt;->getConfirmationNumber(Landroidx/compose/material/icons/Icons$Outlined;)Landroidx/compose/ui/graphics/vector/ImageVector;
 PLandroidx/compose/material/icons/outlined/CreditCardKt;-><clinit>()V
