@@ -131,7 +131,11 @@ class UiFixJourneyTest {
    }
    click("Settings");click("Backup & Storage")
    assertFalse(device.hasObject(By.text("Backup Location")));assertFalse(device.hasObject(By.text("Backup Retention")))
-   assertTrue(device.hasObject(By.text("Create Backup")));assertTrue(device.hasObject(By.text("Restore Backup")));assertTrue(device.hasObject(By.text("Delete All Data")))
+   for (label in listOf("Create Backup", "Restore Backup", "Delete All Data")) {
+    val ready = device.wait(Until.hasObject(By.text(label)), 5000)
+    if (!ready) device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null), "ux-backup-missing-control.xml"))
+    assertTrue("Backup page must show $label", ready)
+   }
    snapshot("ux-backup-disabled")
    click("Enable Auto-Backup");assertTrue(device.wait(Until.hasObject(By.text("Set up automatic backups")),5000))
    click("Enable backups")
@@ -173,6 +177,9 @@ class UiFixJourneyTest {
    assertEquals("2030-12-01",vm.pending.uiMemory.form.customValues["Renewal"])
    assertEquals("12/30",customDisplayValue(CustomField("Renewal","date","MM/yy"),vm.pending.uiMemory.form.customValues["Renewal"].orEmpty(),"USD"))
    instrumentation.runOnMainSync {vm.pending.uiMemory.form.customValues["Full date"]="1985-01-02"}
+   // The preceding monthly field leaves this control clipped below the viewport.
+   device.findObject(By.scrollable(true))!!.scroll(Direction.DOWN,.5f)
+   device.waitForIdle()
    click("Choose date for Full date");click("Set date")
    assertEquals("1985-01-02",vm.pending.uiMemory.form.customValues["Full date"])
    assertTrue(customDisplayValue(CustomField("Full date","date","dd/MM/yy"),vm.pending.uiMemory.form.customValues["Full date"].orEmpty(),"USD").matches(Regex("\\d{2}/\\d{2}/\\d{2}")))

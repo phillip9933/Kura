@@ -248,5 +248,31 @@
       "failed": 0,
       "duration_seconds": 31.478
     }
+  },
+  "date_control_followup": {
+    "head": "0bbca541e82cbeac7b305194fa5aa7dafc6823eb",
+    "complete_run": {
+      "passed": 71,
+      "failed": 1,
+      "assumption_skips": 4,
+      "transcript": "before-date-scroll-app-full-protected.log",
+      "result": "before-date-scroll-protected-full-results.json"
+    },
+    "failure": "UiFixJourneyTest second date picker never opened; saved control bounds [963,1836][1017,1866] were clipped at viewport bottom. Monthly date value and settings assertions passed.",
+    "change": "Explicitly scroll the form before opening Full date; preserve assertions and app source.",
+    "final_acceptance": "https://github.com/phillip9933/Kura/issues/16",
+    "first_focused_attempt": {
+      "log": "date-scroll-focused.log",
+      "passed": 0,
+      "failed": 1,
+      "failure": "Immediate Backup page hasObject assertion at line134, before date control. No in-test snapshot existed; post-test snapshot showed launcher and cannot establish cause.",
+      "change": "Bounded observable waits preserve all three Backup page control assertions and dump in-test failure hierarchy."
+    },
+    "focused_verification": {
+      "log": "date-scroll-focused2.log",
+      "passed": 1,
+      "failed": 0,
+      "duration_seconds": 49.55
+    }
   }
 }
