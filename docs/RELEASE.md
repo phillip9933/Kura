@@ -8,7 +8,7 @@ Build with `./gradlew -PcardScanner=true -PdirectUpdates=true :app:assembleRelea
 
 Publish the beta tag from its validated source branch if main still awaits the required approving review; preserve branch protection. GitHub beta releases do not replace the current stable latest release. Enable Include beta releases in App updates to receive subsequent beta builds; stable-only remains the default. No store submission is authorized by this GitHub publication.
 
-Stable-readiness follow-up remains **Beta**. The protected SystemUI event-delivery correction passes focused Android 8/15 wake/security acceptance and optimized 3/3; [#16](https://github.com/phillip9933/Kura/issues/16) records final regression/review acceptance. See [Testing](TESTING.md#protected-system-event-delivery-correction--5-november-2026) and [focused evidence](evidence/protected-wake-20261105.json). Physical/production qualification still gates stable; no new signing or release occurred.
+Stable-readiness follow-up remains **Beta**. The protected SystemUI event-delivery correction passes focused Android 8/15 wake/security acceptance and optimized 3/3; [#16](https://github.com/phillip9933/Kura/issues/16) records final regression/review acceptance. See [Testing](TESTING.md#protected-system-event-delivery-correction--5-november-2026) and [focused evidence](evidence/protected-wake-20261105.json). Physical/production qualification still gates stable; no production signing or new release occurred.
 
 ## Kura 2.1
 
