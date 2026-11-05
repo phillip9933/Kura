@@ -19,7 +19,7 @@ Update metadata and APK cache are separate from vault files. The library's nonex
 
 ## Dependency and licensing
 
-The independent AGPL-3.0 updater is vendored as an immutable Maven/source/license bundle under `third_party/android-updater`. Gradle verifies its SHA256SUMS and rejects unlisted Maven files; builds never follow a sibling checkout. The exact public pin is `io.github.phillip9933:android-updater:0.2.0`, from [the standalone release](https://github.com/phillip9933/android-app-updater/releases/tag/v0.2.0). See the bundle README for source revision and archive checksum. Kura's existing LICENSE is AGPL-3.0; earlier README/contribution GPL labels were corrected. Do not replace already distributed artifacts under an existing version.
+The independent AGPL-3.0 updater is vendored as an immutable Maven/source/license bundle under `third_party/android-updater`. Gradle verifies its SHA256SUMS and rejects unlisted Maven files; builds never follow a sibling checkout. The exact public pin is `io.github.phillip9933:android-updater:0.2.1`, from [the standalone release](https://github.com/phillip9933/android-app-updater/releases/tag/v0.2.1). See the bundle README for source revision and archive checksum. Kura's existing LICENSE is AGPL-3.0; earlier README/contribution GPL labels were corrected. Do not replace already distributed artifacts under an existing version.
 
 ## Acceptance limits
 
@@ -31,10 +31,12 @@ The previous direct distribution pinned the immutable 0.1.3 security prerelease.
 
 ## New-version popup — 26 October 2026
 
-The application root observes the updater’s offer state on both the locked and unlocked screens. New releases show a “New version available” dialog. “View update” opens the update controls; “Later” dismisses that version persistently while keeping it available from App updates. A newer version can prompt again. No background activity launches a dialog or installer; the popup appears in the foreground. Automatic checks remain opt-in, and the default offline build has no updater. The published 0.2.0 prerelease is checksum-pinned with its source and license; earlier 0.1.3 artifacts are preserved in project outputs.
+The application root observes the updater’s offer state on both the locked and unlocked screens. New releases show a “New version available” dialog. “View update” opens the update controls; “Later” dismisses that version persistently while keeping it available from App updates. A newer version can prompt again. No background activity launches a dialog or installer; the popup appears in the foreground. Automatic checks remain opt-in, and the default offline build has no updater. The published 0.2.1 stable SDK is checksum-pinned with its source and license; earlier 0.1.3 artifacts are preserved in project outputs.
 
 The Application owns a single update-panel visibility state. The root notice hosts both automatic offers and the manual panel, suppressing a second offer while details are already open. Closing details dismisses the currently displayed version; a later version can offer again.
 
 ## Beta-release selection
 
 App updates includes an explicit Include beta releases checkbox. It selects the SDK BETA channel and persists that choice; clearing it selects STABLE. Stable-only remains the default. Automatic checks and Wi-Fi downloads remain independent opt-ins. Beta asset names retain their full version, for example `Kura-2.2.0-beta.1.apk`. Changing channels clears the prior offer/ready state through the SDK, so an APK from the old selection is not silently reused.
+
+The 2.2 beta uses updater 0.2.1, source `60b8fb82aa14ab0fc115ee9f9f96d3cc2c60f5fc`. Its reviewed runtime delta cancels obsolete queued downloads when no eligible release remains; public API/runtime dependency declarations are unchanged from 0.2.0. Outer archive and all seven inner pins were verified before vendoring. Upstream tests do not replace Kura's host/popup and retained-data acceptance.

@@ -4,6 +4,7 @@
 
 - Automatic card-edge detection and editable perspective crop in the enhanced-scanning build.
 - Optional offline English/Japanese OCR with editable suggestions for existing empty card fields. Confirm the form before saving; leading zeros and original recognized characters are retained.
+- Updater 0.2.1 cancels obsolete queued downloads after host upgrades.
 - GitHub update checks and a foreground new-version popup, with opt-in automatic checks/downloads and an explicit beta-release option.
 - Optional phone-unlock-only access while retaining encrypted wallet storage and the original authenticated wrapper.
 - Updated CameraX to 1.5.3 to handle newer Android camera dynamic-range profiles.

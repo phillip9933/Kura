@@ -75,7 +75,7 @@ dependencies {
     implementation("dev.offlinescan:scanner-ocr-tesseract:0.8.0-beta.1")
  }
  if (directUpdates) {
-    implementation("io.github.phillip9933:android-updater:0.2.0")
+    implementation("io.github.phillip9933:android-updater:0.2.1")
     implementation("androidx.work:work-runtime:2.11.2")
  }
  coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")

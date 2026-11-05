@@ -1,7 +1,7 @@
-# Android App Updater 0.2.0
+# Android App Updater 0.2.1
 
-Published prerelease: https://github.com/phillip9933/android-app-updater/releases/tag/v0.2.0
+Published stable SDK: https://github.com/phillip9933/android-app-updater/releases/tag/v0.2.1
 
-Source revision: 90367917ac451bb1b065d4a49044df23ed3138a6
+Source revision: 60b8fb82aa14ab0fc115ee9f9f96d3cc2c60f5fc
 
-Downloaded bundle SHA-256: `7b8cd5befbb65142c96fd16cbb84b069c51d029370ca1e198ed6440c11520b1d`. SHA256SUMS pins the Maven artifacts, corresponding source, license and revision. Gradle verifies all pins and rejects unlisted Maven files. Previous 0.1.3 bytes are preserved in project outputs. See ../../docs/APP-UPDATES.md.
+Downloaded bundle SHA-256: `cc528b338cb293851ccca3ff964ede320a9e63d0bf2b1c586f92cebb3926a9a6`. SHA256SUMS pins all seven Maven/source/license/revision files. Gradle verifies pins and rejects unlisted Maven files. The patch cancels obsolete queued downloads after a host upgrade; public API and minimum API 26 are unchanged. Previous pins remain in Git history and project outputs. See ../../docs/APP-UPDATES.md.
