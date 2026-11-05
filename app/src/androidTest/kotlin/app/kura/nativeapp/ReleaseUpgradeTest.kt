@@ -27,16 +27,26 @@ class ReleaseUpgradeTest {
         val phase = InstrumentationRegistry.getArguments().getString("releaseUpgradePhase")
         org.junit.Assume.assumeTrue(phase in setOf("seed", "verify"))
         val context = instrumentation.targetContext
+        val phoneOnly = InstrumentationRegistry.getArguments().getString("releaseUpgradeAccess") == "phone"
         check(context.packageName == "app.kura.wallet.prototype")
         check(Build.HARDWARE in setOf("ranchu", "goldfish"))
         val device = UiDevice.getInstance(instrumentation)
         device.wakeUp()
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        val prompt = device.wait(Until.findObject(By.text("2").pkg("com.android.systemui")), 15_000)
-        assertNotNull("Expected real synthetic-credential prompt", prompt)
-        listOf("2", "4", "6", "8").forEach { device.findObject(By.text(it).pkg("com.android.systemui")).click() }
-        device.findObject(By.desc("Enter").pkg("com.android.systemui")).click()
-        assertTrue(device.wait(Until.hasObject(By.desc("Settings")), 20_000))
+        if (phase == "verify" && phoneOnly) {
+            assertTrue("Upgraded phone-only vault must open without an app prompt",
+                waitForJourneyVault(device))
+            assertFalse(device.hasObject(By.text("2").pkg("com.android.systemui")))
+            assertTrue(phoneAccessEnabled(context))
+        } else {
+            val prompt = device.wait(Until.findObject(By.text("2").pkg("com.android.systemui")), 15_000)
+            assertNotNull("Expected real synthetic-credential prompt", prompt)
+            listOf("2", "4", "6", "8").forEach { device.findObject(By.text(it).pkg("com.android.systemui")).click() }
+            device.findObject(By.desc("Enter").pkg("com.android.systemui")).click()
+            val visible = waitForJourneyVault(device)
+            if (!visible) device.dumpWindowHierarchy(File(context.getExternalFilesDir(null), "upgrade-entry-failure.xml"))
+            assertTrue("Vault controls must appear after real credential entry", visible)
+        }
         lateinit var vm: VaultController
         instrumentation.runOnMainSync {
             val activity = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).filterIsInstance<MainActivity>().single()
@@ -63,6 +73,15 @@ class ReleaseUpgradeTest {
                     } finally { encoded.fill(0) }
                 }
             }
+            if (phoneOnly) {
+                clickJourneyControl(device, "Settings")
+                clickJourneyControl(device, "Require app unlock")
+                clickJourneyControl(device, "Use phone unlock")
+                val deadline = android.os.SystemClock.uptimeMillis() + 10000
+                while (!phoneAccessEnabled(context) && android.os.SystemClock.uptimeMillis() < deadline)
+                    android.os.SystemClock.sleep(25)
+                assertTrue("Phone-only wrapper must be published before upgrade", phoneAccessEnabled(context))
+            }
         } else {
             runBlocking {
                 var image = ""
@@ -85,5 +104,6 @@ class ReleaseUpgradeTest {
             }
         }
     }
+    private fun phoneAccessEnabled(context: android.content.Context) = app.kura.nativecore.DeviceUnlock(context, true).enabled
     companion object { private const val SENTINEL = "Release upgrade sentinel 2.1" }
 }

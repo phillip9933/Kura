@@ -54,3 +54,17 @@ internal fun clickJourneyControl(device: UiDevice, label: String) {
     device.dumpWindowHierarchy(File(InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null), "journey-missing-control.xml"))
     error("Missing UI control: $label")
 }
+
+/** A previously discovered update can cover the vault after credential entry. */
+internal fun waitForJourneyVault(device: UiDevice, timeoutMillis: Long = 20_000): Boolean {
+    val deadline = android.os.SystemClock.uptimeMillis() + timeoutMillis
+    while (android.os.SystemClock.uptimeMillis() < deadline) {
+        settleJourneyUi(device)
+        if (device.hasObject(By.text("New version available"))) {
+            device.findObject(By.text("Later"))?.click()
+            settleJourneyUi(device)
+        }
+        if (device.wait(Until.hasObject(By.desc("Settings")), 500)) return true
+    }
+    return false
+}

@@ -75,7 +75,7 @@ dependencies {
     implementation("dev.offlinescan:scanner-ocr-tesseract:0.8.0-beta.1")
  }
  if (directUpdates) {
-    implementation("io.github.phillip9933:android-updater:0.2.1")
+    implementation("io.github.phillip9933:android-updater:0.2.2-beta.1")
     implementation("androidx.work:work-runtime:2.11.2")
  }
  coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
@@ -106,4 +106,11 @@ android.sourceSets.getByName("main").kotlin.srcDir(if (cardScanner) "src/cardSca
 if (cardScanner) {
     android.sourceSets.getByName("main").assets.srcDir("src/cardScanner/assets")
     android.sourceSets.getByName("androidTest").kotlin.srcDir("src/cardScannerAndroidTest/kotlin")
+}
+
+// Opt-in instrumentation only: no installer fixtures or fault transport enter an app APK.
+if (providers.gradleProperty("installerAcceptance").orNull == "true") {
+    require(directUpdates) { "Installer acceptance requires the direct-update variant" }
+    android.sourceSets.getByName("androidTest").kotlin.srcDir("src/installerAcceptanceAndroidTest/kotlin")
+    dependencies { androidTestImplementation("com.squareup.okhttp3:okhttp:4.12.0") }
 }

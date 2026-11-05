@@ -1,7 +1,8 @@
-# Android App Updater 0.2.1
+# Pinned Android updater candidate
 
-Published stable SDK: https://github.com/phillip9933/android-app-updater/releases/tag/v0.2.1
+Immutable `io.github.phillip9933:android-updater:0.2.2-beta.1` from [the public SDK prerelease](https://github.com/phillip9933/android-app-updater/releases/tag/v0.2.2-beta.1).
 
-Source revision: 60b8fb82aa14ab0fc115ee9f9f96d3cc2c60f5fc
+Source: `da2c9f30f3a9f4199d0e9cc1428be4519c954aa1`.
+Outer bundle SHA-256: `cc650431e3e429ae951eb227a97e77c356422bf032d8dbc1ccb989e4a09f4407`.
 
-Downloaded bundle SHA-256: `cc528b338cb293851ccca3ff964ede320a9e63d0bf2b1c586f92cebb3926a9a6`. SHA256SUMS pins all seven Maven/source/license/revision files. Gradle verifies pins and rejects unlisted Maven files. The patch cancels obsolete queued downloads after a host upgrade; public API and minimum API 26 are unchanged. Previous pins remain in Git history and project outputs. See ../../docs/APP-UPDATES.md.
+All seven inner pins, remote asset digests and source archive were verified. The independently tested CI AAR equals the isolated export. Gradle verifies all pins and rejects unlisted Maven files; consumers never follow a sibling checkout. This candidate fixes recovery of corrupt cached APKs without weakening verification. Physical acceptance/stable SDK promotion remain pending. Published Kura beta binaries still contain 0.2.1 and are unchanged.

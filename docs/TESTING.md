@@ -599,3 +599,31 @@ The first corrected enhanced full run at 7af82bf completed with **72 passes / ze
 The offline full run still reproduced the version-subtitle assertion: its captured hierarchy shows the About title clipped at `[158,1847][590,1866]`, with the subtitle below the exposed viewport. Thus frame synchronization alone was insufficient for this case; earlier focused/enhanced passes did not erase it. The scroll-reachability journey now explicitly requires the settings scroll container and a downward scroll to expose the actual version-code subtitle, then retains its visible-version assertion and failure dump. [Issue #18](https://github.com/phillip9933/Kura/issues/18) records subsequent focused/full verification. No production code changed.
 
 That offline run completed **63 passes / one failure / four opt-in skips (68 total)** in 844.781s; the subtitle assertion was the sole failure. An intermediate focused attempt stopped on UiScrollable.scrollIntoView returning false, before the original assertion; it is retained. The direct bounded scroll then passed the complete focused settings/version/secure-window journey **1/1 in 24.901s**. Both complete configurations and optimized acceptance are being reverified; linked issues record final results rather than asserting future passes.
+
+
+## PR #14 upgrade and installer acceptance — 6 November 2026
+
+The owner approved fixing and publishing the reproduced upstream cache-recovery defect. Kura now pins **android-updater 0.2.2-beta.1**, source `da2c9f30f3a9f4199d0e9cc1428be4519c954aa1`. This is a candidate SDK release; latest stable 0.2.1 and previously published Kura beta bytes remain unchanged. SDK quality CI passed 56 host tests, nine exporter tests and four dependency-rejection checks; native CI passed **15/15 on API 26 and 15/15 on API 35**, no failures/errors/skips. Published bundle/source/AAR checksums and all seven inner pins were independently verified.
+
+Fresh owned API 37 / 16 KiB prototype acceptance passed:
+
+| Check | Result |
+| --- | --- |
+| Stable-source 119 → current debug 120 | Seed 1/1, retained-data verification 1/1 |
+| Actual Android installer 120 → nondebuggable validation 121 | Real Update confirmation; UID retained; post-install wallet verification 1/1 and installed-version/obsolete-ready cleanup 1/1 |
+| Published-beta-source 120 phone-only → validation 121 | Seed 1/1, cold retained-data verification 1/1; phone-only choice retained |
+| APK refusal/interrupted transfer/active cancellation | 1/1 phase containing five checked subscenarios |
+| Corrupted-cache recovery | 1/1 with new SDK; original SDK 0.2.1 STORAGE failure retained |
+| Malformed opt-in state, actual process recreation | Seed 1/1, cold verification 1/1 |
+| Real offline request | 1/1; actual active-network absence, NETWORK error, no ready/install |
+| Ready download/process recreation/FileProvider grant | Seed 1/1, cold verification 1/1 |
+| Normal prototype installation prohibition | 1/1, effective disabled ancestor checked |
+| Real unknown-source denial/back, grant/return, explicit install and Cancel | 1/1; return never auto-launched installer; real app reauthentication retained |
+
+Each upgrade retained synthetic wallet rows, leading-zero `00009901`, encrypted image decoded dimensions/pixels and currency preferences. No uninstall or data clear occurred between any scenario's seed and verification. Actual installer acceptance used Android's Update button, not ADB installation for that hop. Validation 121 is an external nonshipping metadata override, standard development signer, prototype package and nondebuggable/nonminified profile build. It is not a production-identity, optimized/R8 or physical-device upgrade claim.
+
+Build the additional harness only with `-PdirectUpdates=true -PcardScanner=true -PinstallerAcceptance=true :app:assembleDebugAndroidTest`. `InstallerAcceptanceTest` requires an explicit `installerPhase`, generated fixtures under prototype external files and its package/emulator/16 KiB guards. Never run it on a personal phone or production package. The default suite excludes this source set; CI additionally compiles it. Normal app entry retains the prototype installation prohibition.
+
+Failed attempts remain preserved under `<project>/outputs/pr14-upgrade-installer-20261105/`: incorrect fixture version metadata, cancellation-before-active-job timing, misunderstanding checkNow's attempted-request return value, disabled-text versus disabled-parent semantics, cancellation window dismissal and installer completion-sheet synchronization. An obsolete UID observer aborted before confirmation; its dependent checks are not passes. Upgrade entry initially encountered a legitimate newer-version offer after PIN entry; the helper now chooses Later and waits for the vault. No credential bypass, verifier suppression or weakened data assertion was introduced. A restricted Gradle cache lock prevented one build from starting; the permitted toolchain build succeeded.
+
+The current enhanced full run and exact-head CI are reported in [PR #14](https://github.com/phillip9933/Kura/pull/14/checks) and the [structured evidence](evidence/pr14-upgrade-installer-20261106.json). Prior enhanced 72-pass and offline 64-pass full runs remain historical evidence. Offline runtime/core sources are unchanged; no fresh offline full-run claim is made in this pass. Production-identity retained-data/installer acceptance, physical photographed-card/arm64/hardware-key checks, dedicated scanner lifecycle/source-conflict checks, independent approval and final stable artifacts remain open. No spare phone is available. Stage remains Beta; no Kura release or signing was performed. AI assistance was used.

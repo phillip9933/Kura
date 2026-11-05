@@ -34,6 +34,12 @@ internal val kuraUpdateConfig = UpdateConfig(
     assetPrefix = "Kura-",
 )
 
+/** Missing or corrupt state must never opt a user into update traffic. */
+internal fun initializeKuraUpdatePreferences(preferences: android.content.SharedPreferences) {
+    val automatic = preferences.all["automatic"] as? Boolean ?: false
+    preferences.edit().putBoolean("automatic", automatic).apply()
+}
+
 /** Update metadata has no reference to the vault, its controller or authentication. */
 class KuraUpdateApplication : Application(), Configuration.Provider {
     internal val updatePanelVisible = MutableStateFlow(false)
@@ -48,9 +54,7 @@ class KuraUpdateApplication : Application(), Configuration.Provider {
         super.onCreate()
         // Network activity is opt-in on the first run, including background workers.
         val preferences = getSharedPreferences(kuraUpdateConfig.stateName, MODE_PRIVATE)
-        if (!preferences.contains("automatic")) {
-            preferences.edit().putBoolean("automatic", false).apply()
-        }
+        initializeKuraUpdatePreferences(preferences)
         updateManager = UpdateManager.get(this, kuraUpdateConfig)
         updateManager.initialize()
     }
@@ -70,6 +74,13 @@ fun AppUpdateEntry() {
 fun AppUpdateNotice() {
     val context = LocalContext.current
     val application = remember { context.applicationContext as KuraUpdateApplication }
+    AppUpdateDialogs(application, installationAllowed = !BuildConfig.PROTOTYPE)
+}
+
+/** The app entry above owns eligibility; a guarded test host can exercise the same dialogs. */
+@Composable
+internal fun AppUpdateDialogs(application: KuraUpdateApplication, installationAllowed: Boolean) {
+    val context = LocalContext.current
     val updater = application.updateManager
     val state by updater.state.collectAsState()
     val visible by application.updatePanelVisible.collectAsState()
@@ -99,7 +110,7 @@ fun AppUpdateNotice() {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("Installed: ${state.installedVersion}")
                 Text("Checks contact GitHub for public Kura releases. Wallet contents are never sent. Installation always needs your confirmation.")
-                if (BuildConfig.PROTOTYPE) Text("This testing app cannot install production Kura updates. Use the production APK for in-app upgrades.")
+                if (!installationAllowed) Text("This testing app cannot install production Kura updates. Use the production APK for in-app upgrades.")
                 Row {
                     Checkbox(state.automaticChecks, { updater.setAutomaticChecks(it) })
                     Text("Check automatically (about daily)")
@@ -124,7 +135,7 @@ fun AppUpdateNotice() {
                         Text("Downloaded ${state.bytesDownloaded / 1024} KiB")
                         TextButton(onClick = { updater.cancelDownload() }) { Text("Cancel download") }
                     } else if (!state.ready) {
-                        TextButton(onClick = { scope.launch { updater.download() } }, enabled = !BuildConfig.PROTOTYPE) {
+                        TextButton(onClick = { scope.launch { updater.download() } }, enabled = installationAllowed) {
                             Text("Download update")
                         }
                     } else {
@@ -145,7 +156,7 @@ fun AppUpdateNotice() {
                                     message = "Android could not open the installer or permission settings."
                                 }
                             }
-                        }, enabled = !BuildConfig.PROTOTYPE) { Text("Install update") }
+                        }, enabled = installationAllowed) { Text("Install update") }
                     }
                 }
                 state.error?.let { Text("Update could not complete: ${it.name.lowercase().replace('_', ' ')}. Your installed app and wallet are unchanged.") }

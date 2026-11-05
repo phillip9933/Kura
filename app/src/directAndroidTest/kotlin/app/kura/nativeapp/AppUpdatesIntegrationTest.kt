@@ -10,6 +10,23 @@ import org.junit.Test
 class AppUpdatesIntegrationTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
+    @Test fun corruptAutomaticPreferenceDoesNotEnableNetworking() {
+        val preferences = context.getSharedPreferences("updater-opt-in-regression", 0)
+        try {
+            for (value in listOf<Any?>(null, "true", 1, false, true)) {
+                preferences.edit().clear().apply()
+                when (value) {
+                    is String -> preferences.edit().putString("automatic", value).apply()
+                    is Int -> preferences.edit().putInt("automatic", value).apply()
+                    is Boolean -> preferences.edit().putBoolean("automatic", value).apply()
+                }
+                initializeKuraUpdatePreferences(preferences)
+                assertEquals("Only a previously saved Boolean true is opt-in", value == true,
+                    preferences.getBoolean("automatic", true))
+            }
+        } finally { preferences.edit().clear().apply() }
+    }
+
     @Test fun releaseIdentityUsesOnlyKuraUniversalAssets() {
         assertEquals("Kura-2.2.0.apk", kuraUpdateConfig.assetName("v2.2.0"))
         assertEquals("Kura-2.2.0-beta.1.apk", kuraUpdateConfig.assetName("v2.2.0-beta.1"))

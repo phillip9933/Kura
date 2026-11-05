@@ -19,7 +19,7 @@ Update metadata and APK cache are separate from vault files. The library's nonex
 
 ## Dependency and licensing
 
-The independent AGPL-3.0 updater is vendored as an immutable Maven/source/license bundle under `third_party/android-updater`. Gradle verifies its SHA256SUMS and rejects unlisted Maven files; builds never follow a sibling checkout. The exact public pin is `io.github.phillip9933:android-updater:0.2.1`, from [the standalone release](https://github.com/phillip9933/android-app-updater/releases/tag/v0.2.1). See the bundle README for source revision and archive checksum. Kura's existing LICENSE is AGPL-3.0; earlier README/contribution GPL labels were corrected. Do not replace already distributed artifacts under an existing version.
+The independent AGPL-3.0 updater is vendored as an immutable Maven/source/license bundle under `third_party/android-updater`. Gradle verifies its SHA256SUMS and rejects unlisted Maven files; builds never follow a sibling checkout. The current source pin is the explicit candidate `io.github.phillip9933:android-updater:0.2.2-beta.1`, from [the standalone prerelease](https://github.com/phillip9933/android-app-updater/releases/tag/v0.2.2-beta.1). See the bundle README for source revision and archive checksum. Kura's existing LICENSE is AGPL-3.0; earlier README/contribution GPL labels were corrected. Do not replace already distributed artifacts under an existing version.
 
 ## Acceptance limits
 
@@ -40,3 +40,9 @@ The Application owns a single update-panel visibility state. The root notice hos
 App updates includes an explicit Include beta releases checkbox. It selects the SDK BETA channel and persists that choice; clearing it selects STABLE. Stable-only remains the default. Automatic checks and Wi-Fi downloads remain independent opt-ins. Beta asset names retain their full version, for example `Kura-2.2.0-beta.1.apk`. Changing channels clears the prior offer/ready state through the SDK, so an APK from the old selection is not silently reused.
 
 The 2.2 beta uses updater 0.2.1, source `60b8fb82aa14ab0fc115ee9f9f96d3cc2c60f5fc`. Its reviewed runtime delta cancels obsolete queued downloads when no eligible release remains; public API/runtime dependency declarations are unchanged from 0.2.0. Outer archive and all seven inner pins were verified before vendoring. Upstream tests do not replace Kura's host/popup and retained-data acceptance.
+
+## Cache recovery and startup opt-in — 6 November 2026
+
+PR #14 review reproduced a 0.2.1 cache-recovery defect: a valid fresh download could not replace a corrupted cached APK. The new immutable 0.2.2-beta.1 bundle fixes that condition after all normal verification succeeds; invalid new bytes cannot replace an existing valid candidate. Source, remote digests, seven inner pins and corresponding source were verified; the AAR matches independent API26/35-tested CI bytes. SDK physical acceptance remains pending, so it is explicitly a prerelease. Existing app beta artifacts still contain 0.2.1.
+
+Kura startup now normalizes a missing or wrong-typed automatic-check preference to false, retaining only a saved Boolean true as opt-in. The guarded opt-in instrumentation host renders the same dialog controls for synthetic same-package APKs; the normal app entry still prohibits prototype production-update installation. Fixture transport does not bypass size/hash/package/version/debug/signer checks. See TESTING.md and issue #20 for exact Kura upgrade/installer evidence and limits.
