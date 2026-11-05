@@ -327,10 +327,17 @@ class VaultController(app: Application) : AndroidViewModel(app) {
             }
             if(store.rows(opened,"identities").isEmpty()) store.insert(opened,"identities",
                 JSONObject().put("name","Sample identity").put("value","TEST-000001").put("cardType","National ID"))
-            if (store.rows(opened, "passes").isEmpty()) repeat(100) { i ->
-                store.insert(opened, "passes", JSONObject().put("type", "boardingPass").put("organizationName", "Kura Test Transit " + i)
-                    .put("description", "Synthetic fixture").put("barcodeFormat", "PKBarcodeFormatQR").put("barcodeValue", "KURA-TEST-" + i)
-                    .put("transitType", "PKTransitTypeTrain").put("fields", """{"primaryFields":[{"label":"FROM","value":"Tokyo"},{"label":"TO","value":"Kyoto"}],"backFields":[{"label":"Notice","value":"Synthetic test pass"}]}"""))
+            val existingPassNames = store.rows(opened, "passes")
+                .mapTo(mutableSetOf()) { it.optString("organizationName") }
+            repeat(100) { index ->
+                val title = "Kura Test Transit $index"
+                if (title !in existingPassNames) {
+                    store.insert(opened, "passes", JSONObject()
+                        .put("type", "boardingPass").put("organizationName", title)
+                        .put("description", "Synthetic fixture").put("barcodeFormat", "PKBarcodeFormatQR")
+                        .put("barcodeValue", "KURA-TEST-$index").put("transitType", "PKTransitTypeTrain")
+                        .put("fields", """{"primaryFields":[{"label":"FROM","value":"Tokyo"},{"label":"TO","value":"Kyoto"}],"backFields":[{"label":"Notice","value":"Synthetic test pass"}]}"""))
+                }
             }
         }; refresh()
     }
