@@ -352,8 +352,10 @@ class MainActivity : FragmentActivity() {
         biometricPreference = prefs.getBoolean("biometrics", true)
         autoLockPreference=prefs.getLong("autoLock",0)
         vm.lifecycle.setAutoLockMillis(autoLockPreference)
+        // USER_PRESENT is system-protected and sent by SystemUI's separate UID.
+        // Receive that single system action across builds; keyguard/lifecycle checks still gate opening.
         ContextCompat.registerReceiver(this, userPresentReceiver,
-            android.content.IntentFilter(android.content.Intent.ACTION_USER_PRESENT), ContextCompat.RECEIVER_NOT_EXPORTED)
+            android.content.IntentFilter(android.content.Intent.ACTION_USER_PRESENT), ContextCompat.RECEIVER_EXPORTED)
         userPresentRegistered = true
         lifecycleScope.launch {
             vm.state.collectLatest { state ->

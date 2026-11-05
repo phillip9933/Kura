@@ -128,6 +128,10 @@ class AppUnlockJourneyTest {
         repeat(50) { if (!keyguard.isDeviceLocked) Thread.sleep(100) }
         assertTrue("Phone must lock for the boundary check", keyguard.isDeviceLocked)
         try {
+            context.sendBroadcast(Intent(Intent.ACTION_USER_PRESENT).setPackage(context.packageName))
+            fail("An app must not spoof the system-protected user-present event")
+        } catch (_: SecurityException) { }
+        try {
             DeviceUnlock(context, true).open().also { it.fill(0) }
             fail("A locked phone must not release the vault key")
         } catch (_: IllegalStateException) { }

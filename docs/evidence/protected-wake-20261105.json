@@ -1,0 +1,97 @@
+{
+  "date": "2026-11-05",
+  "application_diff_base": "8518741487c9a969a1fa60e5ee299fcb9c473b44",
+  "source_main_sha256_normalized_lf": "c9c5844d5d7597ec6ca48a3ed849f6eea1b0842f073f334d89da64cf5606c6a3",
+  "change": "Receive only system-protected USER_PRESENT across SystemUI UID boundaries while retaining bounded resume/keyguard/idle/no-pending-authentication checks.",
+  "runtime_systemui_uid_on_api35": 10180,
+  "android_primary_sources": [
+    "https://developer.android.com/develop/background-work/background-tasks/broadcasts",
+    "https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r1/packages/SystemUI/AndroidManifest.xml",
+    "https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r1/core/res/AndroidManifest.xml",
+    "https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r1/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java"
+  ],
+  "protected_event_spoof_refusal": "A real app-UID Context.sendBroadcast(USER_PRESENT) is rejected with SecurityException while the phone is locked; verified inside each regular API26/API35 journey.",
+  "api35_focused": [
+    {
+      "case": "protected-wake-api35-1",
+      "passed": true,
+      "summary": [
+        "Time: 51.253",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "protected-wake-api35-2",
+      "passed": true,
+      "summary": [
+        "Time: 50.381",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "protected-wake-api35-3",
+      "passed": true,
+      "summary": [
+        "Time: 50.251",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "protected-wake-api35-cold-prepare",
+      "passed": true,
+      "summary": [
+        "Time: 7.392",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "protected-wake-api35-cold-verify",
+      "passed": true,
+      "summary": [
+        "Time: 24.629",
+        "OK (1 test)"
+      ]
+    }
+  ],
+  "api26_focused": {
+    "passed": true,
+    "profile": "fresh/no hardware keyboard",
+    "summary": [
+      "Time: 63.566",
+      "OK (1 test)"
+    ]
+  },
+  "optimized_complete_suite": {
+    "passed": true,
+    "summary": [
+      "Time: 77.545",
+      "OK (3 tests)"
+    ]
+  },
+  "prior_failed_and_recovered_run_evidence": "stable-readiness-20261105.json",
+  "complete_regression_record": "https://github.com/phillip9933/Kura/issues/16",
+  "current_ci_record": "https://github.com/phillip9933/Kura/pull/14/checks",
+  "full_run_local_log": "<project>/outputs/stable-readiness-20261105/app-full-protected.log",
+  "full_run_capture": "Line-flushed transcript and separate progress/result JSON; final outcomes are recorded against this source on issue16.",
+  "lint": {
+    "errors": 0,
+    "warnings": 61,
+    "log": "/tmp/kura-stable-system-wake-build.log"
+  },
+  "stable_ready": false,
+  "release_stage": "Beta",
+  "remaining_release_gates": [
+    "Required approving review",
+    "Physical photographed-card/arm64/hardware-key and latency/memory acceptance; no spare phone available",
+    "Production-package retained-data and actual Kura installer/interruption acceptance",
+    "Dedicated scanner lock/process-death/front-back/source-conflict qualification",
+    "Final stable version/code and signed/checksummed artifacts after promotion gates pass"
+  ],
+  "infrastructure_limits": [
+    "API26 reused profiles intermittently failed package-service/install setup after reboot; those attempts did not start tests. The fresh-profile protected-event journey passed.",
+    "Prior full-run buffered desktop output was lost; the recovered zero-failure JUnit summary and its log-rotation limits remain preserved in the prior evidence."
+  ],
+  "production_signing_activated": false,
+  "new_release_published": false,
+  "ai_assistance": true
+}
