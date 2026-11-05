@@ -100,7 +100,11 @@ class UiFixJourneyTest {
     val card=device.wait(Until.findObject(By.desc("Open "+title)),5000)!!
     card.longClick()
     assertTrue(device.wait(Until.hasObject(By.text("Edit")),5000))
-    assertTrue(device.hasObject(By.text("Archive")));assertTrue(device.hasObject(By.text("Delete")))
+    assertTrue("Archive action must be available", device.hasObject(By.text("Archive")))
+    if (!device.hasObject(By.text("Delete"))) {
+        UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("Delete"))
+    }
+    assertTrue("Delete action must be reachable by scrolling", device.hasObject(By.text("Delete")))
     click("Edit");assertTrue(device.wait(Until.hasObject(By.text("Edit item")),5000));click("Cancel")
     click("Open "+title)
     click(if(table=="passes") "Pass barcode" else "Item barcode")

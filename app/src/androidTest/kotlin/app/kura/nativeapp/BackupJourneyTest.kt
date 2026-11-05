@@ -37,7 +37,28 @@ class BackupJourneyTest {
         val input = device.findObject(UiSelector().className("android.widget.EditText"))
         assertTrue(input.waitForExists(15000))
         input.setText("Synthetic backup test password")
-        click("Continue")
+        device.waitForIdle()
+        if (device.hasObject(By.pkg("com.google.android.inputmethod.latin"))) {
+            device.pressBack()
+            assertTrue(device.wait(Until.gone(By.pkg("com.google.android.inputmethod.latin")), 5000))
+        }
+        val proceed = device.wait(Until.findObject(By.text("Continue").clickable(true).enabled(true)), 10000)
+        assertNotNull("Password confirmation must become enabled", proceed)
+        proceed.click()
+        device.waitForIdle()
+    }
+    private fun assertRestoreConfirmation() {
+        val shown = device.wait(Until.hasObject(By.text("Replace vault records?")), 20000)
+        val activity = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+        var failure: String? = null
+        instrumentation.runOnMainSync {
+            activity.getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED)
+                .filterIsInstance<MainActivity>().firstOrNull()?.let {
+                    val vm = androidx.lifecycle.ViewModelProvider(it)[VaultController::class.java]
+                    failure = "error=${vm.error.value}, busy=${vm.busy.value}, state=${vm.state.value::class.simpleName}, passwordAction=${vm.pending.passwordAction}, staged=${vm.pending.restoreDirectory != null}"
+                }
+        }
+        assertTrue("Restore confirmation missing; operation error: $failure", shown)
     }
     @Test fun missingImagesWarnBeforeConfirmationAndCancelPreservesVault() {
         check(android.os.Build.HARDWARE in setOf("ranchu", "goldfish"))
@@ -76,7 +97,7 @@ class BackupJourneyTest {
                 vm.pending.passwordAction = "restore"
             }
             password()
-            assertTrue(device.wait(Until.hasObject(By.text("Replace vault records?")), 20000))
+            assertRestoreConfirmation()
             assertTrue(device.hasObject(By.textContains("missing 1 image reference")))
             assertEquals(before, vm.store.active())
             click("Cancel")
@@ -113,7 +134,7 @@ class BackupJourneyTest {
         document.click()
         assertTrue(device.wait(Until.hasObject(By.text("Decrypt backup")),15000))
         password()
-        assertTrue(device.wait(Until.hasObject(By.text("Replace vault records?")),20000))
+        assertRestoreConfirmation()
         click("Restore"); authorize()
         click("Passes")
         assertTrue(device.wait(Until.hasObject(By.text("Kura Test Transit 0")),15000))

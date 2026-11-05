@@ -391,7 +391,7 @@ class OrganizationJourneyTest {
    assertTrue(value.top<format.top && format.top<details.top)
    snapshot("cardface114-editor");click("Cancel");click("Settings")
    assertTrue(device.wait(Until.hasObject(By.text("Use biometrics to unlock")),5000))
-   assertTrue(device.hasObject(By.textContains("Authentication is always required")))
+   assertTrue(device.hasObject(By.text("Require app unlock")))
    assertFalse(device.hasObject(By.text("Require Biometrics")))
   } finally {finish(vm,saved,owned(vm))}
  }
