@@ -8,6 +8,8 @@ Build with `./gradlew -PcardScanner=true -PdirectUpdates=true :app:assembleRelea
 
 Publish the beta tag from its validated source branch if main still awaits the required approving review; preserve branch protection. GitHub beta releases do not replace the current stable latest release. Enable Include beta releases in App updates to receive subsequent beta builds; stable-only remains the default. No store submission is authorized by this GitHub publication.
 
+Stable-readiness follow-up remains **Beta**: Android 15 phone-only wake still fails [#16](https://github.com/phillip9933/Kura/issues/16). The complete modern run, older-device results and capture limits are in [Testing](TESTING.md#stable-readiness-rerun--5-november-2026) and [structured evidence](evidence/stable-readiness-20261105.json). No stable promotion or new signing occurred.
+
 ## Kura 2.1
 
 Version **2.1.0**, code **119**, is the optimization release, with a signed APK and Android App Bundle on [GitHub Releases](https://github.com/phillip9933/Kura/releases/tag/v2.1.0). The APK is for direct installation; the AAB is for submission through Google Play Console. GitHub publication does not submit either store listing or alter the pending F-Droid request.

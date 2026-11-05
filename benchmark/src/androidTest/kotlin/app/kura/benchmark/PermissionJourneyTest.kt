@@ -35,10 +35,14 @@ class PermissionJourneyTest {
             device.wakeUp()
             instrumentation.context.startActivity(Intent().setClassName(target, "app.kura.nativeapp.MainActivity")
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
-            if (Build.VERSION.SDK_INT < 30) {
-                val pin = device.wait(Until.findObject(By.res("com.android.settings", "password_entry")), 15000)
-                assertNotNull("Expected device credential", pin)
-                pin!!.text = "2468"
+            val credentialInput = when {
+                Build.VERSION.SDK_INT < 30 -> device.wait(Until.findObject(By.res("com.android.settings", "password_entry")), 5000)
+                Build.VERSION.SDK_INT <= 35 -> device.wait(Until.findObject(By.res(Pattern.compile("com\\.android\\.systemui:id/(lockPassword|pinEntry)"))), 5000)
+                else -> null
+            }
+            if (credentialInput != null) {
+                credentialInput.click()
+                device.executeShellCommand("input text 2468")
                 device.pressEnter()
             } else {
                 assertNotNull(device.wait(Until.findObject(By.text("2").pkg("com.android.systemui")), 15000))

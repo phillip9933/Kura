@@ -24,10 +24,15 @@ class AppUpdatePopupTest {
         check(context.packageName == "app.kura.wallet.prototype")
         val device = UiDevice.getInstance(instrumentation)
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        val legacy = if (Build.VERSION.SDK_INT < 30) device.wait(Until.findObject(By.res("com.android.settings", "password_entry")), 5000) else null
+        // Android 15 with a hardware keyboard exposes a system PIN text field.
+        val legacy = when {
+            Build.VERSION.SDK_INT < 30 -> device.wait(Until.findObject(By.res("com.android.settings", "password_entry")), 5000)
+            Build.VERSION.SDK_INT <= 35 -> device.wait(Until.findObject(By.res(java.util.regex.Pattern.compile("com\\.android\\.systemui:id/(lockPassword|pinEntry)"))), 5000)
+            else -> null
+        }
         if (legacy != null) {
             legacy.click()
-            legacy.text = "2468"
+            device.executeShellCommand("input text 2468")
             device.pressEnter()
         } else {
             val pin = device.wait(Until.findObject(By.text("2").pkg("com.android.systemui")), 5000)

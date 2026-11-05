@@ -1,0 +1,629 @@
+{
+  "date": "2026-11-05",
+  "application_source": "1bbf86e9d2e672046bf7641390b59b0d790a5f98",
+  "previous_published_beta_source": "ad4203410e9ff15814754eee9f2dd7d6356e9b1d",
+  "source_review": "https://github.com/phillip9933/Kura/pull/14",
+  "wake_bug": "https://github.com/phillip9933/Kura/issues/16",
+  "published_version": "2.2.0-beta.1 (120)",
+  "stable_latest": "2.1.0 (119)",
+  "release_stage": "Beta",
+  "stable_ready": false,
+  "production_signing_activated": false,
+  "new_release_published": false,
+  "environment": {
+    "main_avd": "kura-release-20261105",
+    "api": "37.2",
+    "abi": "x86_64",
+    "page_size_bytes": 16384,
+    "fixtures": "generated nonprivate data only; guarded disposable prototype packages"
+  },
+  "fresh_local_jvm_before_host_only_fix": {
+    "model": {
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "import": {
+      "tests": 34,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "low-memory": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "fresh_unchanged_core_instrumentation": [
+    {
+      "log": "security-full.log",
+      "passed": 7,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 0.722,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    },
+    {
+      "log": "database-full.log",
+      "passed": 12,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 24.871,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    },
+    {
+      "log": "import-full.log",
+      "passed": 29,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 75.223,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    }
+  ],
+  "historical_full_app_attempts": [
+    {
+      "log": "app-full-attempt1.log",
+      "passed": 70,
+      "failed": 2,
+      "assumption_skips": 4,
+      "failed_cases": [
+        "app.kura.nativeapp.InteractionJourneyTest#photoPreviewsBackgroundMenuAndDragInMainGrid",
+        "app.kura.nativeapp.UiFixJourneyTest#settingsPagesAreSeparatedAndBackupSetupCanBeCancelled"
+      ],
+      "skipped_cases": [
+        "app.kura.nativeapp.AppUnlockJourneyTest#phoneUnlockColdProcessAcceptance",
+        "app.kura.nativeapp.ReleaseUpgradeTest#retainedSyntheticWalletAcrossPrototypeUpgrade",
+        "app.kura.nativeapp.StoreScreenshotsTest#captureStoreListing",
+        "app.kura.nativeapp.UnlockTimingTest#emptyVaultUnlockTrace"
+      ],
+      "duration_seconds": 869.849,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    },
+    {
+      "log": "app-full-attempt2-aborted.log",
+      "passed": 17,
+      "failed": 2,
+      "assumption_skips": 1,
+      "failed_cases": [
+        "app.kura.nativeapp.BackupJourneyTest#missingImagesWarnBeforeConfirmationAndCancelPreservesVault",
+        "app.kura.nativeapp.BackupJourneyTest#systemDocumentExportAndConfirmedRestoreRoundTrip"
+      ],
+      "skipped_cases": [
+        "app.kura.nativeapp.AppUnlockJourneyTest#phoneUnlockColdProcessAcceptance"
+      ],
+      "duration_seconds": null,
+      "completed": false,
+      "instrumentation_process_crashed": true
+    },
+    {
+      "log": "app-full-attempt3.log",
+      "passed": 70,
+      "failed": 2,
+      "assumption_skips": 4,
+      "failed_cases": [
+        "app.kura.nativeapp.InteractionJourneyTest#explicitSearchChoicesAndBubbleFilterMainGrid",
+        "app.kura.nativeapp.OrganizationJourneyTest#logoEditorAttachmentsAndHiddenSearchStyle"
+      ],
+      "skipped_cases": [
+        "app.kura.nativeapp.AppUnlockJourneyTest#phoneUnlockColdProcessAcceptance",
+        "app.kura.nativeapp.ReleaseUpgradeTest#retainedSyntheticWalletAcrossPrototypeUpgrade",
+        "app.kura.nativeapp.StoreScreenshotsTest#captureStoreListing",
+        "app.kura.nativeapp.UnlockTimingTest#emptyVaultUnlockTrace"
+      ],
+      "duration_seconds": 884.612,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    },
+    {
+      "log": "app-full-attempt4-aborted.log",
+      "passed": 11,
+      "failed": 1,
+      "assumption_skips": 1,
+      "failed_cases": [
+        "app.kura.nativeapp.AppUnlockJourneyTest#phoneUnlockRetainsDataAndCanRestoreAppAuthentication"
+      ],
+      "skipped_cases": [
+        "app.kura.nativeapp.AppUnlockJourneyTest#phoneUnlockColdProcessAcceptance"
+      ],
+      "duration_seconds": null,
+      "completed": false,
+      "instrumentation_process_crashed": true
+    }
+  ],
+  "focused_wake_after_fix": [
+    {
+      "log": "phone-wake-resume-fix.log",
+      "passed": 1,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 57.546,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    },
+    {
+      "log": "phone-wake-resume-fix-2.log",
+      "passed": 1,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 57.62,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    },
+    {
+      "log": "phone-wake-resume-fix-3.log",
+      "passed": 1,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 57.321,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    }
+  ],
+  "opt_in_acceptance": [
+    {
+      "log": "phone-cold-prepare.log",
+      "passed": 1,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 9.157,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    },
+    {
+      "log": "phone-cold-verify.log",
+      "passed": 1,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 27.272,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    },
+    {
+      "log": "store-screenshot-acceptance.log",
+      "passed": 1,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 17.593,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    },
+    {
+      "log": "empty-unlock-timing.log",
+      "passed": 1,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 24.781,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    }
+  ],
+  "optimized_attempts": [
+    {
+      "log": "optimized-full.log",
+      "passed": 2,
+      "failed": 1,
+      "assumption_skips": 0,
+      "failed_cases": [
+        "app.kura.benchmark.UnlockTimingTest#authenticatedVaultReopen"
+      ],
+      "skipped_cases": [],
+      "duration_seconds": 68.401,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    },
+    {
+      "log": "optimized-full-final.log",
+      "passed": 3,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 77.32,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    }
+  ],
+  "prototype_upgrade_executions": [
+    {
+      "case": "119-to-120-seed",
+      "passed": true,
+      "summary": [
+        "Time: 6.826",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "119-to-120-verify",
+      "passed": true,
+      "summary": [
+        "Time: 6.501",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "120-to-121-app-unlock-seed",
+      "passed": true,
+      "summary": [
+        "Time: 6.87",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "120-to-121-app-unlock-verify",
+      "passed": true,
+      "summary": [
+        "Time: 6.536",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "120-to-121-phone-only-seed",
+      "passed": true,
+      "summary": [
+        "Time: 6.96",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "120-to-121-phone-only-setup",
+      "passed": false,
+      "summary": [
+        "Time: 45.294",
+        "Tests run: 1,  Failures: 1"
+      ]
+    },
+    {
+      "case": "120-to-121-phone-only-prepare-after-baseline-wake-failure",
+      "passed": true,
+      "summary": [
+        "Time: 9.35",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "120-to-121-phone-only-cold-verify",
+      "passed": true,
+      "summary": [
+        "Time: 27.296",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "120-to-121-phone-only-verify",
+      "passed": true,
+      "summary": [
+        "Time: 6.312",
+        "OK (1 test)"
+      ]
+    }
+  ],
+  "prototype_upgrade_limits": [
+    "All packages and signers are disposable prototype/debug identities; not production-package acceptance.",
+    "119-to-120 verifies the old stable source to the exact published beta; 120-to-121 uses a nonshipping version-metadata override of the fixed source.",
+    "The old beta phone-only setup reproduced its wake failure. Data was retained, preparation succeeded, then the fixed candidate passed cold-open and record/media verification.",
+    "No uninstall or data clear occurred between any seed and its corresponding verification. Each independent scenario began with cleared synthetic prototype data."
+  ],
+  "older_platforms": {
+    "26": [
+      {
+        "suite": "hardware",
+        "passed": true,
+        "summary": [
+          "Time: 0.05",
+          "OK (4 tests)"
+        ],
+        "assumption_skips": 1
+      },
+      {
+        "suite": "scanner",
+        "passed": true,
+        "summary": [
+          "Time: 0.962",
+          "OK (3 tests)"
+        ],
+        "assumption_skips": 0
+      },
+      {
+        "suite": "updater",
+        "passed": true,
+        "summary": [
+          "Time: 11.31",
+          "OK (4 tests)"
+        ],
+        "assumption_skips": 0
+      },
+      {
+        "suite": "unlock",
+        "passed": true,
+        "summary": [
+          "Time: 62.545",
+          "OK (1 test)"
+        ],
+        "assumption_skips": 0
+      }
+    ],
+    "35": [
+      {
+        "suite": "hardware",
+        "passed": false,
+        "summary": [
+          "Time: 0.077",
+          "Tests run: 4,  Failures: 3"
+        ],
+        "assumption_skips": 0
+      },
+      {
+        "suite": "scanner",
+        "passed": true,
+        "summary": [
+          "Time: 1.856",
+          "OK (3 tests)"
+        ],
+        "assumption_skips": 0
+      },
+      {
+        "suite": "updater",
+        "passed": false,
+        "summary": [
+          "Time: 25.942",
+          "Tests run: 4,  Failures: 1"
+        ],
+        "assumption_skips": 0
+      },
+      {
+        "suite": "unlock",
+        "passed": false,
+        "summary": [
+          "Time: 15.86",
+          "Tests run: 1,  Failures: 1"
+        ],
+        "assumption_skips": 0
+      }
+    ],
+    "35_clean_before_selector_correction": [
+      {
+        "suite": "hardware",
+        "passed": true,
+        "summary": [
+          "Time: 0.062",
+          "OK (4 tests)"
+        ],
+        "assumption_skips": 0
+      },
+      {
+        "suite": "scanner",
+        "passed": true,
+        "summary": [
+          "Time: 1.299",
+          "OK (3 tests)"
+        ],
+        "assumption_skips": 0
+      },
+      {
+        "suite": "updater",
+        "passed": false,
+        "summary": [
+          "Time: 26.016",
+          "Tests run: 4,  Failures: 1"
+        ],
+        "assumption_skips": 0
+      },
+      {
+        "suite": "unlock",
+        "passed": false,
+        "summary": [
+          "Time: 15.84",
+          "Tests run: 1,  Failures: 1"
+        ],
+        "assumption_skips": 0
+      }
+    ]
+  },
+  "api35_limit": "Fresh-profile key tests passed 4/4 and native scanner 3/3. Hardware-keyboard credential UI uses the real SystemUI lockPassword/pinEntry text field; selectors were corrected and a real synthetic PIN manually confirmed vault access. Final selected UI run passed updater 4/4 and scanner import 1/1 but failed phone wake 1/1 (Locked, busy=false, no error). Permission denial/import cancellation passed separately 1/1. Do not treat this as full API35 unlock acceptance.",
+  "setup_failures": [
+    "Initial API26/API35 provisioning driver accepted only newer success wording; Pin set to was a successful setup. Corrected and rerun.",
+    "First password-wait implementation used package-private UIAutomator Searchable and failed compilation; replaced with a bounded public-API polling loop.",
+    "Focused search tests exposed stale accessibility nodes, asynchronous conditional controls and below-viewport Search Position. Failed diagnostics are retained locally.",
+    "A shell chain continued a full attempt after a failed focused precheck; that attempt was preserved and stopped after reproducing the phone-wake bug. Subsequent drivers stop on failed prerequisites.",
+    "API26 reused-profile APK installation failed before tests: Android package service unavailable. A new profile control connection failed outside the recommended emulator port range. The same clean profile on standard port5584 passed both new UI checks; no test failures were reclassified as passes.",
+    "Initial clean API35 key setup passed but UI tests expected digit buttons instead of its hardware-keyboard PIN field. Corrected selectors exposed a separate real phone-wake failure.",
+    "Full API37 desktop command exited143 before buffered output was saved; actual AndroidJUnitRunner completion was recovered with its transcript/rotation limits preserved in full_app."
+  ],
+  "lint": {
+    "fresh": true,
+    "errors": 0,
+    "warnings": 61,
+    "main_analysis_log": "/tmp/kura-stable-optimized-lint-build.log",
+    "final_test_analysis_log": "/tmp/kura-stable-final-lint.log"
+  },
+  "published_beta_readonly_recheck": {
+    "log": "published-apk-recheck.log",
+    "signature_certificate_matches_previous_release": true,
+    "native_16k_alignment": true,
+    "private_keys_accessed": false
+  },
+  "remaining_gates": [
+    "Fix API35 phone-only automatic reopening after phone PIN (#16); the bounded event retry is incomplete.",
+    "Required approving source review on PR14; no approval present.",
+    "No spare physical Android phone (owner confirmed): photographed-card/arm64 quality and latency/memory, physical hardware-backed key acceptance remain unverified.",
+    "Production-package retained-data upgrades with app unlock on/off and Kura-specific real installer denial/return, offline/interrupted download and process recreation remain unverified.",
+    "Dedicated scanner lock/process-death, front/back/source-conflict and broader photographed quality checks remain incomplete.",
+    "Prepare and validate the final stable version/code and its signed/checksummed artifacts only after the promotion gates pass."
+  ],
+  "ai_assistance": true,
+  "prototype_artifacts": [
+    {
+      "file": "baseline-120-prototype.apk",
+      "sha256": "bb0b0f80c129ddcec621ad8d6ddb7091cd86c393e948918b92e62fb94aca724b"
+    },
+    {
+      "file": "candidate-121-prototype.apk",
+      "sha256": "b30c9e6d1c1fe5c3a4355364a7524185e9f3afdcde9e01c8fdfefb195b19e2cf"
+    }
+  ],
+  "full_app": {
+    "source": "1bbf86e9d2e672046bf7641390b59b0d790a5f98",
+    "suite": "complete app",
+    "completed": true,
+    "total": 76,
+    "passed": 72,
+    "failed": 0,
+    "assumption_skips": 4,
+    "runner_summary": "run finished: 76 tests, 0 failed, 0 ignored",
+    "completed_device_time": "2026-11-05 18:00:06.832 +09:00",
+    "evidence": "app-full-final-logcat.txt",
+    "capture_limitation": "Desktop command session exited 143 before the Python driver saved its buffered ADB output. The independently preserved AndroidJUnitRunner completion summary reports all 76 tests and zero failures. The 2 MiB device log rotated before capture: 51 individual finishes and three assumption events remain. The fourth early cold-process skip is determined by its first-statement phase assumption with no opt-in argument; all four opt-in cases are separately documented. No synthetic instrumentation output was generated.",
+    "opt_in_branches": [
+      "AppUnlockJourneyTest.phoneUnlockColdProcessAcceptance",
+      "ReleaseUpgradeTest.retainedSyntheticWalletAcrossPrototypeUpgrade",
+      "StoreScreenshotsTest.captureStoreListing",
+      "UnlockTimingTest.emptyVaultUnlockTrace"
+    ]
+  },
+  "ci": {
+    "run": "https://github.com/phillip9933/Kura/actions/runs/41996003114",
+    "source": "1bbf86e9d2e672046bf7641390b59b0d790a5f98",
+    "conclusion": "success",
+    "configurations": [
+      {
+        "configuration": "android-verification-reports-updates-false-scanner-false",
+        "jvm": {
+          "tests": 59,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "report_files": 11,
+        "lint": {
+          "Error": 0,
+          "Fatal": 0,
+          "Warning": 57
+        }
+      },
+      {
+        "configuration": "android-verification-reports-updates-false-scanner-true",
+        "jvm": {
+          "tests": 59,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "report_files": 11,
+        "lint": {
+          "Error": 0,
+          "Fatal": 0,
+          "Warning": 58
+        }
+      },
+      {
+        "configuration": "android-verification-reports-updates-true-scanner-false",
+        "jvm": {
+          "tests": 59,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "report_files": 11,
+        "lint": {
+          "Error": 0,
+          "Fatal": 0,
+          "Warning": 61
+        }
+      },
+      {
+        "configuration": "android-verification-reports-updates-true-scanner-true",
+        "jvm": {
+          "tests": 59,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "report_files": 11,
+        "lint": {
+          "Error": 0,
+          "Fatal": 0,
+          "Warning": 61
+        }
+      }
+    ]
+  },
+  "wake_fix_status": "Partial mitigation only. API37 repeated wake and full run passed; API26 phone-unlock journey passed. API35 still reproduced Locked/no-error after the phone PIN, so issue16 remains open and stable is blocked.",
+  "additional_ui_acceptance": [
+    {
+      "log": "api26-scanner-ui-final.log",
+      "passed": 1,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 15.783,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    },
+    {
+      "log": "api26-permission-final.log",
+      "passed": 1,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 22.872,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    },
+    {
+      "log": "api35-ui-final.log",
+      "passed": 5,
+      "failed": 1,
+      "assumption_skips": 0,
+      "failed_cases": [
+        "app.kura.nativeapp.AppUnlockJourneyTest#phoneUnlockRetainsDataAndCanRestoreAppAuthentication"
+      ],
+      "skipped_cases": [],
+      "duration_seconds": 66.018,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    },
+    {
+      "log": "api35-permission-final.log",
+      "passed": 1,
+      "failed": 0,
+      "assumption_skips": 0,
+      "failed_cases": [],
+      "skipped_cases": [],
+      "duration_seconds": 14.383,
+      "completed": true,
+      "instrumentation_process_crashed": false
+    }
+  ],
+  "test_only_followup": "After application commit 1bbf86e, only credential test helpers changed: Settings text entry on API26 and the observed SystemUI PIN text entry on API30\u201335; API37 takes the unchanged digit-keypad branch. Application code is unchanged.",
+  "raw_logs_location": "<project>/outputs/stable-readiness-20261105/",
+  "release_notes_updated": false
+}

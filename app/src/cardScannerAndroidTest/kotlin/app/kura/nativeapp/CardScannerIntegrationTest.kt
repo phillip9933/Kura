@@ -102,10 +102,22 @@ class CardScannerIntegrationTest {
     @Test fun optionalAutofillReviewsExistingFieldsAndEncryptsOnlyAfterConfirmation() {
         disposable()
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        val pin = device.wait(Until.findObject(By.text("2").pkg("com.android.systemui")), 10_000)
-        if (pin != null) {
-            listOf("2", "4", "6", "8").forEach { device.findObject(By.text(it).pkg("com.android.systemui")).click() }
-            device.findObject(By.desc("Enter").pkg("com.android.systemui")).click()
+        // Android 15 with a hardware keyboard exposes a system PIN text field.
+        val legacy = when {
+            Build.VERSION.SDK_INT < 30 -> device.wait(Until.findObject(By.res("com.android.settings", "password_entry")), 5000)
+            Build.VERSION.SDK_INT <= 35 -> device.wait(Until.findObject(By.res(java.util.regex.Pattern.compile("com\\.android\\.systemui:id/(lockPassword|pinEntry)"))), 5000)
+            else -> null
+        }
+        if (legacy != null) {
+            legacy.click()
+            device.executeShellCommand("input text 2468")
+            device.pressEnter()
+        } else {
+            val pin = device.wait(Until.findObject(By.text("2").pkg("com.android.systemui")), 10_000)
+            if (pin != null) {
+                listOf("2", "4", "6", "8").forEach { device.findObject(By.text(it).pkg("com.android.systemui")).click() }
+                device.findObject(By.desc("Enter").pkg("com.android.systemui")).click()
+            }
         }
         assertTrue(device.wait(Until.hasObject(By.desc("Settings")), 20_000))
         val vm = controller()
