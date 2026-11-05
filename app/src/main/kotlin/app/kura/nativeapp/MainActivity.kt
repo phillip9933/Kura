@@ -55,6 +55,22 @@ class MainActivity : FragmentActivity() {
     private val biometricEnvelope by lazy { AtomicFile(File(noBackupFilesDir, "native-biometric-envelope")) }
     private val deviceUnlock by lazy { DeviceUnlock(this, BuildConfig.PROTOTYPE && Build.HARDWARE in setOf("ranchu", "goldfish")) }
     private var requireAppUnlock by mutableStateOf(true)
+    private var userPresentRegistered = false
+    private val userPresentReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+            if (intent?.action == android.content.Intent.ACTION_USER_PRESENT && deviceUnlock.enabled &&
+                lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED) &&
+                vm.state.value == VaultState.Locked && !vm.busy.value &&
+                vm.pending.authentication == null && vm.pending.credential == null && phoneUnlocked()) {
+                vm.error.value = null
+                unlock()
+            }
+        }
+    }
+    private fun phoneUnlocked(): Boolean {
+        val keyguard = getSystemService(android.app.KeyguardManager::class.java)
+        return keyguard.isDeviceSecure && !keyguard.isDeviceLocked
+    }
     private class CredentialFallback : Exception()
     private var guard: ExternalOperationRegistry.Guard?
         get() = vm.pending.guard
@@ -325,6 +341,9 @@ class MainActivity : FragmentActivity() {
         biometricPreference = prefs.getBoolean("biometrics", true)
         autoLockPreference=prefs.getLong("autoLock",0)
         vm.lifecycle.setAutoLockMillis(autoLockPreference)
+        ContextCompat.registerReceiver(this, userPresentReceiver,
+            android.content.IntentFilter(android.content.Intent.ACTION_USER_PRESENT), ContextCompat.RECEIVER_NOT_EXPORTED)
+        userPresentRegistered = true
         lifecycleScope.launch {
             vm.state.collectLatest { state ->
                 if(state !is VaultState.Unlocked) {
@@ -436,7 +455,8 @@ class MainActivity : FragmentActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
                 combine(vm.state,vm.busy) {state,busy->state to busy}.collect { (state,busy)->
-                    if(state==VaultState.Locked && !busy && vm.autoUnlockArmed && vm.pending.authentication==null && vm.pending.credential==null) {
+                    if(state==VaultState.Locked && !busy && vm.autoUnlockArmed && vm.pending.authentication==null && vm.pending.credential==null &&
+                        (!deviceUnlock.enabled || phoneUnlocked())) {
                         vm.autoUnlockArmed=false;unlock()
                     }
                 }
@@ -456,6 +476,9 @@ class MainActivity : FragmentActivity() {
                     authenticationGuard = vm.lifecycle.begin(ExternalOperation.AUTHENTICATION)
                 }
                 if (deviceUnlock.enabled) {
+                    // A wake can resume this activity before keyguard dismissal. Do not
+                    // turn that transient locked-phone refusal into a second app prompt.
+                    check(phoneUnlocked()) { "Unlock your phone first" }
                     try {
                         return@authentication deviceUnlock.open()
                     } catch (cancelled: kotlinx.coroutines.CancellationException) {
@@ -822,6 +845,7 @@ class MainActivity : FragmentActivity() {
             }) { Text(if(vm.pending.imageTarget?.column=="barcodeValue") "Use barcode" else if(vm.pending.imageTarget!=null) "Save image" else "Scan") } }, dismissButton = { TextButton(onClick = { bytes.fill(0); cropBytes = null; vm.pending.imageTarget=null }) { Text("Cancel") } })
     }
     override fun onDestroy() {
+        if (userPresentRegistered) unregisterReceiver(userPresentReceiver)
         if (isFinishing) vm.pending.close()
         super.onDestroy()
     }

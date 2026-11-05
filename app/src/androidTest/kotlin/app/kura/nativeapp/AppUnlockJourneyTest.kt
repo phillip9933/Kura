@@ -46,18 +46,19 @@ class AppUnlockJourneyTest {
             for (digit in listOf("2", "4", "6", "8")) device.findObject(By.text(digit).pkg("com.android.systemui")).click()
             device.findObject(By.desc("Enter").pkg("com.android.systemui")).click()
         }
-        val opened = device.wait(Until.hasObject(By.desc("Settings")), 20_000) || device.hasObject(By.desc("Require app unlock"))
-        if (!opened && DeviceUnlock(instrumentation.targetContext, true).enabled) {
-            val keyguard = instrumentation.targetContext.getSystemService(KeyguardManager::class.java)
-            assertFalse("Phone credential must have unlocked the device", keyguard.isDeviceLocked)
-            // A wake can resume the activity before keyguard dismissal completes. Retry the
-            // encrypted device wrapper through the real UI; no second credential is supplied.
-            if (device.hasObject(By.text("Could not complete operation"))) device.findObject(By.text("OK")).click()
-            instrumentation.targetContext.startActivity(Intent(instrumentation.targetContext, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            device.wait(Until.findObject(By.desc("Unlock Kura")), 5000)?.click()
+        val ready = device.wait(Until.hasObject(By.desc("Settings")), 20_000) || device.hasObject(By.desc("Require app unlock"))
+        var failure: String? = null
+        if (!ready) {
+            device.dumpWindowHierarchy(java.io.File(instrumentation.targetContext.getExternalFilesDir(null), "release-unlock-failure.xml"))
+            instrumentation.runOnMainSync {
+                ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                    .filterIsInstance<MainActivity>().firstOrNull()?.let { owner ->
+                        val vm = ViewModelProvider(owner)[VaultController::class.java]
+                        failure = "state=${vm.state.value::class.simpleName}; error=${vm.error.value}; busy=${vm.busy.value}"
+                    }
+            }
         }
-        assertTrue(device.wait(Until.hasObject(By.desc("Settings")), 20_000) || device.hasObject(By.desc("Require app unlock")))
+        assertTrue("Unlock UI not ready: $failure; foreground=${device.currentPackageName}", ready)
     }
 
     @org.junit.After fun restoreDefaultAuthentication() {
