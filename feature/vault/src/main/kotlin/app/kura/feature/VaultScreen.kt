@@ -267,7 +267,8 @@ fun VaultScreen(items: List<VaultItem>, busy: Boolean, window: Window,
         LaunchedEffect(Unit) {focus.requestFocus()}
     }
     contextItem?.let {item->
-        ModalBottomSheet(onDismissRequest={contextItem=null}) {
+        val actionSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(onDismissRequest={contextItem=null}, sheetState=actionSheetState) {
             Column(Modifier.navigationBarsPadding().verticalScroll(rememberScrollState())) {
                 Text(item.title,Modifier.padding(16.dp),style=MaterialTheme.typography.titleLarge)
                 SettingsRow(if(preferences.isFavorite(item)) "Remove favorite" else "Add favorite","",Icons.Outlined.StarOutline,{contextItem=null;onFavorite(item)})
