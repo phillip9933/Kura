@@ -80,9 +80,9 @@ dependencies {
  }
  coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
  implementation("androidx.profileinstaller:profileinstaller:1.4.1")
- implementation("androidx.camera:camera-camera2:1.4.2")
- implementation("androidx.camera:camera-lifecycle:1.4.2")
- implementation("androidx.camera:camera-view:1.4.2")
+ implementation("androidx.camera:camera-camera2:1.5.3")
+ implementation("androidx.camera:camera-lifecycle:1.5.3")
+ implementation("androidx.camera:camera-view:1.5.3")
  implementation(project(":feature:vault")); implementation(project(":core:import"))
  implementation("androidx.activity:activity-compose:1.10.1")
  implementation("androidx.fragment:fragment-ktx:1.8.9")

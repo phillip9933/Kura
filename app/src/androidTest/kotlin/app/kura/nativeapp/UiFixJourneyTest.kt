@@ -102,7 +102,13 @@ class UiFixJourneyTest {
     assertTrue(device.wait(Until.hasObject(By.text("Edit")),5000))
     assertTrue("Archive action must be available", device.hasObject(By.text("Archive")))
     if (!device.hasObject(By.text("Delete"))) {
-        UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("Delete"))
+        // Expand the partially opened action sheet before checking its lower actions.
+        device.swipe(device.displayWidth / 2, device.displayHeight * 3 / 4,
+            device.displayWidth / 2, device.displayHeight / 4, 25)
+        device.waitForIdle()
+        if (device.hasObject(By.scrollable(true))) {
+            UiScrollable(UiSelector().scrollable(true)).scrollIntoView(UiSelector().text("Delete"))
+        }
     }
     assertTrue("Delete action must be reachable by scrolling", device.hasObject(By.text("Delete")))
     click("Edit");assertTrue(device.wait(Until.hasObject(By.text("Edit item")),5000));click("Cancel")

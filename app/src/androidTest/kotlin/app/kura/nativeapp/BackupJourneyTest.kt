@@ -34,16 +34,23 @@ class BackupJourneyTest {
     }
 
     private fun password() {
-        val input = device.findObject(UiSelector().className("android.widget.EditText"))
-        assertTrue(input.waitForExists(15000))
-        input.setText("Synthetic backup test password")
+        // Directly setting pending state can precede Compose displaying the modal.
+        // Wait for it so the background search field cannot receive the password.
+        var modal = device.wait(Until.findObject(By.text(java.util.regex.Pattern.compile("Decrypt backup|Encrypt backup|Encrypt pass"))), 15000)
+        assertNotNull("Backup password dialog must be visible", modal)
+        while (modal != null && modal.findObject(By.clazz("android.widget.EditText")) == null) modal = modal.parent
+        assertNotNull("Password input must belong to the dialog", modal)
+        modal!!.findObject(By.clazz("android.widget.EditText")).text = "Synthetic backup test password"
         device.waitForIdle()
         if (device.hasObject(By.pkg("com.google.android.inputmethod.latin"))) {
             device.pressBack()
             assertTrue(device.wait(Until.gone(By.pkg("com.google.android.inputmethod.latin")), 5000))
         }
-        val proceed = device.wait(Until.findObject(By.text("Continue").clickable(true).enabled(true)), 10000)
-        assertNotNull("Password confirmation must become enabled", proceed)
+        var proceed = device.wait(Until.findObject(By.text("Continue")), 10000)
+        assertNotNull("Password confirmation must be visible", proceed)
+        while (proceed != null && !proceed.isClickable) proceed = proceed.parent
+        assertNotNull("Password confirmation must be clickable", proceed)
+        assertTrue("Password confirmation must be enabled", proceed!!.isEnabled)
         proceed.click()
         device.waitForIdle()
     }
