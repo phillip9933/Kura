@@ -125,6 +125,17 @@ class BackupJourneyTest {
         val context = instrumentation.targetContext
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
         authorize()
+        lateinit var vm: VaultController
+        instrumentation.runOnMainSync {
+            val owner = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+                .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED).filterIsInstance<MainActivity>().single()
+            vm = androidx.lifecycle.ViewModelProvider(owner)[VaultController::class.java]
+        }
+        kotlinx.coroutines.runBlocking {
+            vm.preference("isPassSearchEnabled", true)
+            vm.preference("passSearchStyle", "alwaysOn")
+            vm.preference("showUpcomingPasses", false)
+        }
         removeUiGalleryFixtures()
         click("Settings"); click("Load synthetic fixtures")
         click("Settings"); click("Backup & Storage"); click("Create Backup"); password()
@@ -144,8 +155,11 @@ class BackupJourneyTest {
         assertRestoreConfirmation()
         click("Restore"); authorize()
         click("Passes")
-        assertTrue(device.wait(Until.hasObject(By.text("Kura Test Transit 0")),15000))
-        device.findObject(UiSelector().description("Open Kura Test Transit 0")).click()
+        val search = device.wait(Until.findObject(By.clazz("android.widget.EditText")), 10000)
+        assertNotNull("Restored search preference must remain available", search)
+        search!!.text = "Kura Test Transit 0"
+        assertTrue(device.wait(Until.hasObject(By.desc("Open Kura Test Transit 0")),15000))
+        device.findObject(By.desc("Open Kura Test Transit 0")).click()
         click("Export encrypted pass")
         assertTrue(device.wait(Until.hasObject(By.text("Encrypt pass")),5000))
         password()
