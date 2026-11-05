@@ -117,6 +117,12 @@ class RefinementJourneyTest {
    assertFalse(device.hasObject(By.text("Cancel")))
    click("Back");click("App Version & Trademark")
    click("Close")
+   // The About row can be only partly visible after the helper reaches its title.
+   // Its version subtitle must be scrolled into view before testing reachability.
+   val settingsScroll = device.findObject(By.scrollable(true))
+   assertNotNull("Settings must remain scrollable after closing information", settingsScroll)
+   settingsScroll!!.scroll(Direction.DOWN, .5f)
+   settleJourneyUi(device)
    val version = device.wait(Until.findObject(By.textContains("(${BuildConfig.VERSION_CODE})")),5000)
    if (version == null) device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null), "version-label-failure.xml"))
    assertNotNull("Version label must remain visible after closing information", version)

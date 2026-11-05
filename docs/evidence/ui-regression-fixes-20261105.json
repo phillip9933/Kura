@@ -52,5 +52,34 @@
     "failed": 0,
     "duration_seconds": 144.563,
     "log": "failure-fixes/focused-repeat.log"
+  },
+  "offline_version_followup": {
+    "observation": "At test commit 7af82bf the enhanced full run passed 72 active cases with four opt-in skips. The offline run still failed the version subtitle visibility assertion.",
+    "snapshot": "failure-fixes/offline-version-label-failure.xml",
+    "title_bounds": "[158,1847][590,1866]",
+    "row_bounds": "[36,1822][1044,1866]",
+    "diagnosis": "The title is clipped at the viewport bottom; subtitle is outside the exposed hierarchy after closing the dialog. Layout synchronization alone does not reveal it.",
+    "correction": "Require the settings scroll container, perform a real bounded downward scroll after closing information, settle layout, then preserve the actual version-code visibility assertion and its in-test failure dump.",
+    "pending": "Focused offline and full paired-package verification recorded in issue #18.",
+    "first_focused_attempt": {
+      "log": "subtitle-scroll-focused.log",
+      "passed": 0,
+      "failed": 1,
+      "failure": "UiScrollable.scrollIntoView returned false before the existing version assertion; no failure snapshot at that earlier assertion."
+    },
+    "complete_failed_run": {
+      "passed": 63,
+      "failed": 1,
+      "assumption_skips": 4,
+      "total": 68,
+      "duration_seconds": 844.781,
+      "log": "failure-fixes/before-subtitle-scroll-offline-full.log"
+    },
+    "focused_verification": {
+      "passed": 1,
+      "failed": 0,
+      "duration_seconds": 24.901,
+      "log": "failure-fixes/subtitle-scroll-focused2.log"
+    }
   }
 }
