@@ -1,0 +1,56 @@
+{
+  "date": "2026-11-05",
+  "application_source": "0d4a093bc57b9a4fceeb11219b6da0ab3a4aef5e",
+  "scope": "Test-only synchronization; no app/core/feature source or acceptance assertion removal.",
+  "historical_complete_runs": {
+    "head": "f07416569005bce47171a7e3facdbca47888901f",
+    "enhanced": {
+      "passed": 69,
+      "failed": 3,
+      "assumption_skips": 4,
+      "total": 76,
+      "duration_seconds": 873.782
+    },
+    "offline": {
+      "passed": 62,
+      "failed": 2,
+      "assumption_skips": 4,
+      "total": 68,
+      "duration_seconds": 824.584
+    }
+  },
+  "correction": [
+    "Wait for two UI frame callbacks, accessibility idle and fresh API34+ cache before querying coordinates; repeat after a successful tap.",
+    "Retry overflow discovery when the destination detail screen publishes it, rather than deciding once before waiting.",
+    "Preserve actual touch input, ordering/persistence/cancel/encryption/version/secure-window assertions and failure snapshots.",
+    "One helper replaces six duplicate click loops; no dependency or production behavior changes."
+  ],
+  "first_focused_run": {
+    "passed": 4,
+    "failed": 0,
+    "duration_seconds": 145.761,
+    "log": "four-failures-frame-sync.log; retained failure-fixes/focused-first.log"
+  },
+  "setup_stop": "Initial real-PIN first-unlock publication was not complete at the runner check; stopped before data setup. Confirmed deviceLocked=0 before actual test start.",
+  "further_acceptance": "https://github.com/phillip9933/Kura/issues/16",
+  "related_issues": [
+    10,
+    17,
+    18,
+    19
+  ],
+  "stable_ready": false,
+  "remaining_gates": [
+    "Clean complete offline and enhanced regression and exact-head CI.",
+    "Required review.",
+    "Physical camera/arm64/hardware keys; no spare phone available.",
+    "Production identity retained-data/installer/interruption and dedicated scanner lifecycle/source-conflict acceptance."
+  ],
+  "ai_assistance": "Analysis, test synchronization and evidence.",
+  "repeat_focused_run": {
+    "passed": 4,
+    "failed": 0,
+    "duration_seconds": 144.563,
+    "log": "failure-fixes/focused-repeat.log"
+  }
+}

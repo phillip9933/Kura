@@ -13,22 +13,7 @@ class InteractionJourneyTest {
  private val instrumentation=InstrumentationRegistry.getInstrumentation()
  private val context get()=instrumentation.targetContext
  private val device=UiDevice.getInstance(instrumentation)
- private fun click(label:String) {
-  if(label in setOf("Edit","Delete","Archive","Unarchive","Share securely","Export encrypted pass","Export as .pkpass") && !device.hasObject(By.text(label)) && !device.hasObject(By.desc(label))) {
-   (device.findObject(By.desc("More pass actions")) ?: device.findObject(By.desc("More item actions")))?.let {it.click();device.waitForIdle()}
-  }
-  repeat(16) { attempt->
-   device.waitForIdle()
-   if(android.os.Build.VERSION.SDK_INT>=34) instrumentation.uiAutomation.clearCache()
-   val node=device.findObject(By.desc(label)) ?: device.findObject(By.text(label))
-   try {if(node!=null && !node.visibleBounds.isEmpty) {node.click();device.waitForIdle();return}} catch(_:StaleObjectException) {}
-   val scroll=device.findObject(By.scrollable(true))
-   if(scroll!=null) scroll.scroll(if(attempt<8) Direction.DOWN else Direction.UP,.5f)
-   else device.wait(Until.hasObject(By.text(label)),500)
-  }
-  device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null),"ux-missing-control.xml"))
-  error("Missing control: "+label)
- }
+ private fun click(label: String) = clickJourneyControl(device, label)
  private fun start():VaultController {
   check(android.os.Build.HARDWARE in setOf("ranchu","goldfish"))
   device.wakeUp();context.startActivity(Intent(context,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))

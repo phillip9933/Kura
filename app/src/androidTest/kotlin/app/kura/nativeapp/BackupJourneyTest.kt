@@ -9,21 +9,7 @@ import org.junit.Test
 class BackupJourneyTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val device = UiDevice.getInstance(instrumentation)
-    private fun click(text: String) {
-        if(text in setOf("Edit","Delete","Archive","Unarchive","Share securely","Export encrypted pass","Export as .pkpass") && !device.hasObject(By.text(text)) && !device.hasObject(By.desc(text))) {
-            (device.findObject(By.desc("More pass actions")) ?: device.findObject(By.desc("More item actions")))?.let {it.click();device.waitForIdle()}
-        }
-        if(text=="Settings") assertTrue(device.wait(Until.hasObject(By.desc("Settings")),10000))
-        repeat(8) { attempt->
-            val target = device.findObject(By.desc(text)) ?: device.findObject(By.text(text))
-            try { if(target != null && !target.visibleBounds.isEmpty) {
-                target.click(); device.waitForIdle(); return }
-            } catch (_: StaleObjectException) {}
-            val scroll = device.findObject(By.scrollable(true))
-            if(scroll != null) scroll.scroll(if(attempt<4) Direction.DOWN else Direction.UP,.8f) else device.wait(Until.hasObject(By.text(text)),2000)
-        }
-        error("Missing UI: " + text)
-    }
+ private fun click(label: String) = clickJourneyControl(device, label)
     private fun authorize() {
         // Real system credential UI; no auth bypass or test master key injection.
         val pin = device.wait(Until.findObject(By.text("2").pkg("com.android.systemui")), 15000)
