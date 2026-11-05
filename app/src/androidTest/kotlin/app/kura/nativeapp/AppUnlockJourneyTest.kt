@@ -46,7 +46,33 @@ class AppUnlockJourneyTest {
             for (digit in listOf("2", "4", "6", "8")) device.findObject(By.text(digit).pkg("com.android.systemui")).click()
             device.findObject(By.desc("Enter").pkg("com.android.systemui")).click()
         }
+        val opened = device.wait(Until.hasObject(By.desc("Settings")), 20_000) || device.hasObject(By.desc("Require app unlock"))
+        if (!opened && DeviceUnlock(instrumentation.targetContext, true).enabled) {
+            val keyguard = instrumentation.targetContext.getSystemService(KeyguardManager::class.java)
+            assertFalse("Phone credential must have unlocked the device", keyguard.isDeviceLocked)
+            // A wake can resume the activity before keyguard dismissal completes. Retry the
+            // encrypted device wrapper through the real UI; no second credential is supplied.
+            if (device.hasObject(By.text("Could not complete operation"))) device.findObject(By.text("OK")).click()
+            instrumentation.targetContext.startActivity(Intent(instrumentation.targetContext, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            device.wait(Until.findObject(By.desc("Unlock Kura")), 5000)?.click()
+        }
         assertTrue(device.wait(Until.hasObject(By.desc("Settings")), 20_000) || device.hasObject(By.desc("Require app unlock")))
+    }
+
+    @org.junit.After fun restoreDefaultAuthentication() {
+        if (InstrumentationRegistry.getArguments().getString("phoneUnlockPhase") != null) return
+        val context = instrumentation.targetContext
+        check(context.packageName == "app.kura.wallet.prototype")
+        check(android.os.Build.HARDWARE in setOf("ranchu", "goldfish"))
+        // Preserve the authenticated wrapper and data; remove only the optional test wrapper.
+        DeviceUnlock(context, true).disable()
+        instrumentation.runOnMainSync {
+            ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                .filterIsInstance<MainActivity>().forEach { it.finish() }
+        }
+        device.wakeUp()
+        device.pressHome()
     }
 
     private fun controller(): VaultController {
