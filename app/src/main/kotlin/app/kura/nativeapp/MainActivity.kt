@@ -56,14 +56,25 @@ class MainActivity : FragmentActivity() {
     private val deviceUnlock by lazy { DeviceUnlock(this, BuildConfig.PROTOTYPE && Build.HARDWARE in setOf("ranchu", "goldfish")) }
     private var requireAppUnlock by mutableStateOf(true)
     private var userPresentRegistered = false
+    private var phoneWakeRetry: Job? = null
     private val userPresentReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
-            if (intent?.action == android.content.Intent.ACTION_USER_PRESENT && deviceUnlock.enabled &&
-                lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED) &&
-                vm.state.value == VaultState.Locked && !vm.busy.value &&
-                vm.pending.authentication == null && vm.pending.credential == null && phoneUnlocked()) {
-                vm.error.value = null
-                unlock()
+            if (intent?.action != android.content.Intent.ACTION_USER_PRESENT) return
+            phoneWakeRetry?.cancel()
+            phoneWakeRetry = lifecycleScope.launch {
+                // USER_PRESENT can precede Activity resume or keyguard-state publication.
+                // Wait briefly for both boundaries; never open a background or locked phone.
+                repeat(50) {
+                    if (!deviceUnlock.enabled || vm.state.value is VaultState.Unlocked) return@launch
+                    if (lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED) &&
+                        vm.state.value == VaultState.Locked && !vm.busy.value &&
+                        vm.pending.authentication == null && vm.pending.credential == null && phoneUnlocked()) {
+                        vm.error.value = null
+                        unlock()
+                        return@launch
+                    }
+                    delay(100)
+                }
             }
         }
     }

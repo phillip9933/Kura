@@ -46,12 +46,18 @@ class BackupJourneyTest {
             device.pressBack()
             assertTrue(device.wait(Until.gone(By.pkg("com.google.android.inputmethod.latin")), 5000))
         }
-        var proceed = device.wait(Until.findObject(By.text("Continue")), 10000)
-        assertNotNull("Password confirmation must be visible", proceed)
-        while (proceed != null && !proceed.isClickable) proceed = proceed.parent
-        assertNotNull("Password confirmation must be clickable", proceed)
-        assertTrue("Password confirmation must be enabled", proceed!!.isEnabled)
-        proceed.click()
+        // Compose may publish the enabled button after the text-input event completes.
+        // Re-query until the real clickable control is enabled, retaining the assertion.
+        var proceed: UiObject2? = null
+        val deadline = android.os.SystemClock.uptimeMillis() + 10000
+        while (proceed == null && android.os.SystemClock.uptimeMillis() < deadline) {
+            var button = device.findObject(By.text("Continue"))
+            while (button != null && !button.isClickable) button = button.parent
+            proceed = button?.takeIf { it.isEnabled }
+            if (proceed == null) android.os.SystemClock.sleep(50)
+        }
+        assertNotNull("Password confirmation must become clickable and enabled", proceed)
+        proceed!!.click()
         device.waitForIdle()
     }
     private fun assertRestoreConfirmation() {

@@ -137,7 +137,13 @@ class UiFixJourneyTest {
    click("Back")
    for((table,label) in listOf("wallets" to "Cards Settings","passes" to "Passes Settings","identities" to "Identity Settings")) {
     click(label)
-    assertTrue(device.hasObject(By.text("Manage Categories")));assertTrue(device.hasObject(By.text("Manage Custom Fields")))
+    val categoriesReady = device.wait(Until.hasObject(By.text("Manage Categories")), 10000)
+    val fieldsReady = device.wait(Until.hasObject(By.text("Manage Custom Fields")), 10000)
+    if (!categoriesReady || !fieldsReady) {
+        device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null), "stable-settings-failure.xml"))
+    }
+    assertTrue("Category controls must appear on $label", categoriesReady)
+    assertTrue("Custom-field controls must appear on $label", fieldsReady)
     assertFalse(device.hasObject(By.text("Edit Categories")));assertFalse(device.hasObject(By.text("Add Custom Field")))
     click("Manage Categories");assertTrue(device.wait(Until.hasObject(By.text(vm.presentation.value.preferences.categories(table).first())),5000))
     click("Back");click("Manage Custom Fields");click("Add Custom Field")

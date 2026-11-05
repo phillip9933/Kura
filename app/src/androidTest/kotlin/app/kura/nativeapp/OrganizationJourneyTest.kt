@@ -18,9 +18,13 @@ class OrganizationJourneyTest {
    (device.findObject(By.desc("More pass actions")) ?: device.findObject(By.desc("More item actions")))?.let {it.click();device.waitForIdle()}
   }
   repeat(16) { attempt->
+   device.waitForIdle()
+   if(android.os.Build.VERSION.SDK_INT>=34) instrumentation.uiAutomation.clearCache()
    val node=device.findObject(By.desc(label)) ?: device.findObject(By.text(label))
    try {if(node!=null && !node.visibleBounds.isEmpty) {node.click();device.waitForIdle();return}} catch(_:StaleObjectException) {}
-   device.findObject(By.scrollable(true))?.scroll(if(attempt<8) Direction.DOWN else Direction.UP,.5f)
+   val scroll=device.findObject(By.scrollable(true))
+   if(scroll!=null) scroll.scroll(if(attempt<8) Direction.DOWN else Direction.UP,.5f)
+   else device.wait(Until.hasObject(By.text(label)),500)
   }
   device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null),"ux-missing-control.xml"))
   error("Missing control: "+label)
@@ -309,7 +313,7 @@ class OrganizationJourneyTest {
    click("Edit Front image");assertTrue(device.hasObject(By.text("Remove image")));device.pressBack();snapshot("card112-edit-images")
    click("Cancel");click("Settings");click("Navigation & Layout");click("Show Search")
    until {!vm.presentation.value.preferences.search}
-   assertFalse(device.hasObject(By.text("Search Style")));click("Back");click("Done")
+   assertTrue("Search style must hide after disabling search", device.wait(Until.gone(By.text("Search Style")), 5000));click("Back");click("Done")
   } finally {finish(vm,saved,owned(vm))}
  }
 
