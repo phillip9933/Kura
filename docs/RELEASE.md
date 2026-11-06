@@ -1,10 +1,12 @@
 # Release tooling
 
-## Kura 2.2 beta.2 preparation
+## Kura 2.2 beta.2 — published 6 November 2026
 
-The owner authorized a new testing beta on6 November2026 after the issue-closeout work. Target **2.2.0-beta.2 /121** combines `-PcardScanner=true -PdirectUpdates=true`, scanner0.8.0-beta.1 and updater0.2.2-beta.1. Publish an APK, SHA256SUMS and exact validation evidence; do not build/upload AABs. This is not stable promotion. Keep latest stable2.1.0 and branch protection unchanged; publish from the validated source branch/tag while required approving review is pending.
+The owner-authorized [2.2.0-beta.2 / 121](https://github.com/phillip9933/Kura/releases/tag/v2.2.0-beta.2) is published from validated source tag bcb9f9a on the PR branch. It combines `-PcardScanner=true -PdirectUpdates=true`, scanner 0.8.0-beta.1 and updater 0.2.2-beta.1. Distribution is APK-only: signed APK, SHA256SUMS.txt and [exact validation report](https://github.com/phillip9933/Kura/releases/download/v2.2.0-beta.2/release-validation.json). All public assets were downloaded and matched byte-for-byte; signature, models/permissions and native/ZIP 16 KiB packaging passed. The certificate matches checksum-verified public 2.1 and beta1 APKs. No AAB or store submission occurred.
 
-Before publication, complete final paired enhanced/offline/core/optimized regression, relevant cold-process/retained-upgrade/installer checks, final-source CI, and APK signature/checksum/model/permissions/16KiB verification. Use the existing signing identity only for this owner-authorized beta and keep credentials off command lines/logs. Physical/production-package qualification remains explicit rather than being inferred from disposable prototype results. The unconfirmed legacy-backup report #21 is owner-shelved as not planned, not fixed.
+APK SHA-256: `b2f2a561ce629c2bcea4a3b2e690fc920b0e2cea6d11ac59fa0892a1547d3e1c`. Application code remains b07ef53; subsequent changes through the release tag are test harnesses/documentation only, with unchanged debug/optimized application bytes verified. [Testing](TESTING.md#published-beta-2-qualification--6-november-2026) separates the complete enhanced run at74480f9, final offline run at bcb9f9a and subsequent affected enhanced test-only deltas. Earlier failures and environment interruptions remain preserved.
+
+Latest stable remains 2.1.0; this is not RC/stable promotion. Main protection and required independent approving review remain intact. Affected-phone updater discovery, representative photographed-card/arm64/mobile resource qualification and physical/production-package data-safety acceptance remain open. The unconfirmed legacy-backup report #21 is owner-shelved as not planned, not fixed. Enable Include beta releases in App updates to follow beta builds. Existing private signing inputs were consumed only for this authorized beta; no credentials were printed, committed or globally configured.
 
 ## Kura 2.2 beta.1 — historical
 

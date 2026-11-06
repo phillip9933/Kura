@@ -1,5 +1,26 @@
 # Testing
 
+## Published beta 2 qualification — 6 November 2026
+
+[Kura 2.2.0-beta.2 / 121](https://github.com/phillip9933/Kura/releases/tag/v2.2.0-beta.2) is published, APK-only, from bcb9f9a. [Public validation report](https://github.com/phillip9933/Kura/releases/download/v2.2.0-beta.2/release-validation.json) records exact hashes, source scopes, fresh/reused/skipped checks and preserved failures. Application code remains b07ef53; all later changes are test harnesses/docs, with byte-identical debug and optimized application artifacts verified.
+
+| Verification | Actual result and source scope |
+| --- | --- |
+| Complete enhanced app selection | **87 active passed, 0 failed, 4 intentional skips / 91 total**,1055.771s, at74480f9; complete streamed transcript and installed APK hashes |
+| Complete default offline selection | **67 active passed, 0 failed, 4 intentional skips / 71 total**,916.658s, at bcb9f9a; complete transcript and hashes |
+| Later enhanced test-only delta | Affected backup/export journey **1/1**,58.128s; ordinary encrypted-wallet prerequisite **1/1**,61.282s; all **12/12** cold-launch phases and phone-only cold prepare/verify **2/2**,9.751s/27.916s, at bcb9f9a. Do not relabel the earlier enhanced full selection as exact-final-head execution. |
+| Core instrumentation | **7 security +12 database +29 import =48 passed**, no failures/skips; application/core source unchanged from b07ef53 |
+| Optimized/R8 external selection | **4/4**,104.744s, including real authentication, camera denial/cancelled import and locked/Settings/version updater discovery |
+| Upgrade/installer | **18 successful phase executions** on synthetic prototype packages, source9d26ed1:119→121 app-authenticated,120→121 phone-only, actual Android121→122 nondebuggable candidate, refusal/interruption/cancellation/cache/permission/recreation/offline paths. Installed bytes match the candidate; UID, encrypted records/media, leading zeros and preferences retained; install permission restored to deny. |
+| Real scanner process death | Prepare intentionally force-stopped during active OCR, not a pass; verify **1/1**,6.948s. Four owned workspace files plus abandoned capture existed before relaunch; cleanup publishes no draft. Earlier five-file observations are historical/timing-dependent. |
+| Local JVM | **59 fresh executions** at b07ef53:24 model +34 import +1 constrained-heap; no subsequent model/import source change |
+| [Final-source CI](https://github.com/phillip9933/Kura/actions/runs/42171805484) | All four distributions pass; **59 fresh JVM tests each /236 total**,0 failures/errors/skips; build/lint/unsigned release/permission/model/16KiB checks and opt-in harness compilation pass. Warnings58/62/62/65;0 lint errors/fatals. |
+| Older supported API | Final beta application121 phone-unlock/data/backup/re-enable journey on API26 passes **1/1**,67.356s. Earlier focused scanner/launch/safety **17/17** on each API26 and API37 retain their development-metadata/source scope; no physical/arm64 claim. |
+
+Four default skips per complete app selection are phone cold-process, retained-upgrade, store screenshot and empty-vault timing opt-ins. Relevant cold/upgrade phases ran separately above. Store capture and empty-vault trace were not rerun here; older evidence remains historical. The launch matrix deliberately cleared its wallet, so the first separate phone-cold verification correctly failed its missing sentinel assertion. The final driver reruns the real ordinary encrypted-wallet journey before cold prepare/force-stop/verify, with no clear/uninstall between those phases. That failed setup remains preserved. Existing native/full/fixture failures and environment-interrupted runs are retained in the dated evidence sections below; none are silently counted as passing runs.
+
+The signed APK and all three public assets pass independent byte readback. Its public certificate matches 2.1/beta1; production identity, nondebuggable manifest, model/native payloads, baseline profiles and 16KiB packaging pass. No production-package or personal-phone destructive suite ran. Stage stays **Beta**: required independent review, affected-phone updater validation, real photographed-card/arm64/mobile performance, physical hardware-key and prior production-package upgrades under both unlock choices remain open. Latest stable is2.1.0. The owner-shelved backup report #21 is unconfirmed/not planned, not a claimed fix. AI assisted implementation, test diagnosis, validation and publication.
+
 ## Local build and JVM checks
 
 Use JDK 21, SDK platform 37.0 and build-tools 36.0.0. On Windows use `gradlew.bat` in the commands below.
