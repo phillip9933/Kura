@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.2.0-beta.3 — November 6, 2026
+
 - Keep update buttons and dialogs off the startup/loading background; show them after opening finishes or on the settled lock screen.
 
 ## 2.2.0-beta.2 — November 6, 2026
