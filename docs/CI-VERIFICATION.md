@@ -78,3 +78,29 @@ These validation artifacts are not inputs to privileged release signing or
 publishing. Production builds must follow the separate tagged-source release
 workflow. No branch/account settings, token grants or signing configuration
 change is included.
+
+
+## Resolved dependency evidence
+
+Each flag combination runs `tools/export-dependency-resolution.gradle` after
+normal build/packaging validation. It records app debug/release compile and
+runtime scopes, default Android-test compile/runtime, core model/import JVM
+test runtime, and the root buildscript classpath: nine named scopes per
+configuration. The four app scopes across four combinations retain the earlier
+16-configuration app coverage; test/build scopes are additional.
+
+Reports under `build/reports/dependencies/resolution.json` contain exact selected
+Maven coordinates and external artifact hashes, source revision, flags and
+toolchain versions. They are included in the ordinary report artifact. The
+collector does not change resolution attributes; it filters project outputs
+from artifact hashing because Android publishes several secondary variants.
+Project source is covered separately by source/artifact qualification. No
+credentials, repository URLs or absolute file paths are exported.
+
+Resolution is not a shipped/R8 SBOM. Platform/BOM metadata may carry no code;
+compile/test/build-tool matches must remain separate from runtime applicability.
+Opt-in installer-test dependencies, supplemental processor/lint configurations,
+embedded Gradle/JDK/SDK libraries and native components are not exhaustively
+covered. The collector API was exercised against real Gradle configurations in
+a credential-free offline probe; the final Kotlin graph requires its own CI
+report and advisory reconciliation.

@@ -57,6 +57,8 @@ jobs:
           if [ "$DIRECT_UPDATES" = "true" ]; then args+=(--direct-updates); fi
           if [ "$CARD_SCANNER" = "true" ]; then args+=(--card-scanner); fi
           python3 tools/verify-native-packaging.py "${args[@]}"
+      - name: Record resolved runtime and build dependencies
+        run: ./gradlew -I tools/export-dependency-resolution.gradle exportDependencyResolution -PdirectUpdates=$DIRECT_UPDATES -PcardScanner=$CARD_SCANNER -PkuraSourceRevision=${{ github.event.pull_request.head.sha || github.sha }} --max-workers=2 --console=plain
       - name: Build supplemental runtime acceptance APKs
         if: github.event_name == 'workflow_dispatch' && inputs.export-prototype-apks && matrix.direct-updates && matrix.card-scanner
         run: ./gradlew :core:security:assembleDebugAndroidTest :core:database:assembleDebugAndroidTest :core:import:assembleDebugAndroidTest :app:assembleOptimized :benchmark:assembleDebugAndroidTest -PdirectUpdates=$DIRECT_UPDATES -PcardScanner=$CARD_SCANNER --max-workers=2 --console=plain
