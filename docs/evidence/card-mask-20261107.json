@@ -1,6 +1,6 @@
 {
   "date": "2026-11-07",
-  "status": "Crop implementation qualified in focused/matrix/CI scopes; V8 full regression failed one legacy click fixture; V9 full rerun in progress",
+  "status": "Crop software qualification passes; maintainer layout review and separate release acceptance remain pending",
   "source_files": [
     {
       "path": "app/build.gradle.kts",
@@ -195,6 +195,23 @@
       "skipped": 0,
       "seconds": 62.526,
       "artifact": "0126-v9-parity-all.json"
+    },
+    {
+      "scope": "Complete enhanced selection / V9 synchronized harness",
+      "app_commit": "8d97adc85fe78e7ee2cbfc3798b9a149b0b72066",
+      "test_head": "44896723aebca4369b7966431043a1ae444d6245",
+      "total": 96,
+      "passed": 92,
+      "failed": 0,
+      "skipped": 4,
+      "seconds": 948.022,
+      "artifact": "0127-v9-full-enhanced.json",
+      "skip_scope": [
+        "phone-only cold-process opt-in",
+        "prototype retained-upgrade opt-in",
+        "store screenshot opt-in",
+        "empty-vault timing opt-in"
+      ]
     }
   ],
   "preserved_failures": [
@@ -206,11 +223,10 @@
     "Complete V8 suite: 91 pass / 1 Parity click failure / 4 intentional skips. The whole run is not a pass. Saved hierarchy remains on results after the old click helper; V9 uses the existing frame/cache synchronization without changing application code or assertions."
   ],
   "pending": [
-    "Complete enhanced app regression (running)",
-    "Final harness four-way CI",
-    "Owner crop layout review",
+    "Maintainer crop layout review before publication",
     "Screen-reader acceptance",
-    "Physical photographed-card/arm64/hardware-key and production-package acceptance"
+    "Physical photographed-card/arm64/hardware-key and production-package acceptance",
+    "Separate Kotlin/stable-SDK integration and final release artifact qualification"
   ],
   "privacy": "Synthetic fixtures only on a disposable prototype emulator. Production package, signing credentials and personal data were not used.",
   "visual_evidence": [
@@ -264,5 +280,67 @@
       "kind": "test",
       "sha256": "4c3cde3a922815421576797e859b48ee2c7957c62f6fa6683466dc2b6b455ab3"
     }
-  ]
+  ],
+  "ci": {
+    "run_id": 42252127473,
+    "head": "44896723aebca4369b7966431043a1ae444d6245",
+    "results": [
+      {
+        "configuration": "android-verification-reports-updates-false-scanner-false",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Fatal": 0,
+          "Error": 0,
+          "Warning": 58
+        }
+      },
+      {
+        "configuration": "android-verification-reports-updates-false-scanner-true",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Fatal": 0,
+          "Error": 0,
+          "Warning": 64
+        }
+      },
+      {
+        "configuration": "android-verification-reports-updates-true-scanner-false",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Fatal": 0,
+          "Error": 0,
+          "Warning": 62
+        }
+      },
+      {
+        "configuration": "android-verification-reports-updates-true-scanner-true",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Fatal": 0,
+          "Error": 0,
+          "Warning": 67
+        }
+      }
+    ]
+  }
 }

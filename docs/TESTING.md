@@ -909,3 +909,25 @@ The V9 test APK hash/source are in the evidence. The full selection is rerunning
 on that harness; the earlier failure remains recorded. The four default skips
 are cold-process, prototype retained-upgrade, store screenshot and empty-vault
 timing opt-ins, not new exclusions.
+
+### Completed crop regression
+
+The V9 complete enhanced selection passes **92 active tests / 0 failures /
+4 existing opt-in skips, 96 total**, in 948.022s, on the isolated API37.2
+x86_64/16 KiB emulator. Application implementation is `8d97adc`, synchronized
+harness head `4489672`. The complete transcript and all 96 terminal statuses
+were parsed; skipped cases are the four named opt-ins above. The previous V8
+91/1/4 run remains a failed run.
+
+[Harness CI at 4489672](https://github.com/phillip9933/Kura/actions/runs/42252127473)
+passes all four configurations. Downloaded XML records **63 fresh JVM tests
+each / 252 total**, zero failures/errors/skips. Debug/unsigned release, lint,
+instrumentation/installer-harness compilation and permissions/16 KiB packaging
+checks pass. Lint warnings are 58 offline, 62 updater, 64 scanner and 67 combined;
+zero errors/fatals. Configuration-size recommendations remain warnings.
+
+This closes the software regression for the crop change. Maintainer layout
+review remains pending before publication. Screen-reader, physical-card/arm64,
+production-identity upgrade and final signed-artifact acceptance are separate
+and unverified here. No app version, production signing, release or beta asset
+change occurred.
