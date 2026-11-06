@@ -1,10 +1,11 @@
 package app.kura.nativecore
 
 import android.util.AtomicFile
+import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 
-/** AtomicFile logs some failures instead of throwing; verify the committed bytes. */
+/** Verify transaction completion as well as bytes; AtomicFile can log failures without throwing. */
 object VerifiedAtomicWrite {
     fun write(file: AtomicFile, bytes: ByteArray, writer: (FileOutputStream,ByteArray) -> Unit = { output,value -> output.write(value) }) {
         val output = file.startWrite()
@@ -12,6 +13,11 @@ object VerifiedAtomicWrite {
             writer(output,bytes)
             output.fd.sync()
             file.finishWrite(output)
+            // A leftover backup wins on the next legacy read. A leftover new file
+            // means the modern rename failed, even when old and new bytes match.
+            if (File(file.baseFile.path + ".bak").exists() || File(file.baseFile.path + ".new").exists()) {
+                throw IOException("Atomic file transaction did not commit")
+            }
             val buffer = ByteArray(8192)
             try {
                 file.baseFile.inputStream().use { input ->

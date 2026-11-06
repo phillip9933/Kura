@@ -949,3 +949,29 @@ APK is also byte-identical to its prior qualified build. Therefore the
 evidence**, not a second fresh execution. [Pin/build/hash evidence](evidence/stable-sdk-pins-20261107.json).
 Kotlin remains 2.2.20 in this scope; the combined 2.4.21 candidate is separately
 qualified. No production signing, release or physical acceptance is inferred.
+
+
+### Atomic publication recovery — 7 November 2026
+
+A real API26 run exposed a false-success file publication: the base bytes matched
+the replacement while the legacy backup remained authoritative. A pre-Kotlin
+2.2.20 baseline with the unchanged helper reproduces all three selected cases
+(**0 pass / 3 fail**,1.985s). Modern Android reproduces the equal-byte replacement
+case (**2 pass / 1 fail**,2.132s), where an uncommitted new file remains.
+Both baselines and the original `failedRenameIsReportedInsteadOfSilentlyClaimingRestoreSuccess`
+assertion are preserved; this is not attributed to the Kotlin upgrade.
+
+The fix refuses success while a platform backup/new transaction entry remains,
+then retains checked fsync and bounded byte/length verification. Real-directory
+permission failures exercise the OS, followed by authoritative reopen and retry;
+no AtomicFile behavior is mocked. The complete import/publication suite passes
+**31/31 on API26**,69.240s, and **31/31 on API37**,80.102s, on disposable
+x86_64 emulators (4 KiB and16 KiB respectively). Two new cases cover different
+and identical replacement bytes. The fixed test APK was built with Kotlin2.2.20;
+these results do not qualify a subsequent2.4.21 build.
+
+Isolated baseline build29.727s; fixed build/storage lint16.750s. No new lint
+suppression, schema, backup format, key alias, production package or signing
+change. [Source/artifact evidence](evidence/atomic-publication-20261107.json).
+Full application and other library results retain their earlier source scope;
+final combined qualification is separate. AI assisted diagnosis, patch and tests.
