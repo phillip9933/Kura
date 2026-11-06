@@ -41,6 +41,18 @@ internal fun SettingsRow(title: String, subtitle: String, icon: ImageVector, act
         if(trailing!=null) trailing() else if(action!=null) Icon(Icons.Default.ChevronRight,null,Modifier.size(20.dp))
     }
 }
+
+/** Shared presentation for the optional host-owned updater, including the locked entry. */
+@Composable
+fun AppUpdatesSettingsRow(updateAvailable: Boolean, onClick: () -> Unit) {
+    SettingsRow(
+        title = "App updates",
+        subtitle = if (updateAvailable) "New version available · review update" else "Check for updates",
+        icon = Icons.Outlined.SystemUpdate,
+        action = onClick,
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class,ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(preferences: VaultPreferences, theme: Int, visibleTables: Set<String>, biometrics: Boolean, autoLock: Long,

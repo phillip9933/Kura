@@ -1,0 +1,59 @@
+{
+  "date": "2026-11-06",
+  "issue": 22,
+  "base_commit": "20c4ff3026ded42112e25acdd0b6a0278d76906a",
+  "scope": "Owned API37/16KiB disposable emulator, synthetic credentials and wallet only",
+  "source_sha256": {
+    "app/src/direct/kotlin/app/kura/nativeapp/AppUpdates.kt": "896d4d7b01419548803efd84cbdbcf424dd028d643f3194b8abb73d8be4d3ffd",
+    "feature/vault/src/main/kotlin/app/kura/feature/SettingsScreen.kt": "aadae8687db4bddac48c845c4c13455475ee4cb691404808e8208da7ea90055d",
+    "app/src/directAndroidTest/kotlin/app/kura/nativeapp/AppUpdateSettingsTest.kt": "54c276d1fb7d84b8d3029bd94b53ec9d182086ecf6dfcd2eb5371a5e0c268901",
+    "app/src/directAndroidTest/kotlin/app/kura/nativeapp/AppUpdatePopupTest.kt": "ae0358d851394a613967468ec90b0289c5e36d63a00c494db53322a6d8eea166",
+    "benchmark/src/androidTest/kotlin/app/kura/benchmark/UpdaterDiscoveryTest.kt": "e847d8f14d446ba09b6dda5560a0efde6d8e14b791fa628b088e6cea4e1a570e",
+    "benchmark/src/androidTest/AndroidManifest.xml": "09024f8f7cafca84e10354ec7161c758e04102638e2e94c15cbfe319f4119d3f"
+  },
+  "optimized_before": {
+    "passed": 1,
+    "seconds": 26.019
+  },
+  "optimized_after": {
+    "passed": 1,
+    "seconds": 25.689
+  },
+  "explicit_public_manual_check": {
+    "passed": 1,
+    "seconds": 17.931,
+    "automatic_checks": false,
+    "automatic_downloads": false
+  },
+  "interpretation": "Current optimized pre-change app exposes all controls. Historical missing production-phone entry was not reproduced; original small TextButton is replaced by a consistent full-width row and the version-dialog route is retained. No claim of an R8 defect or confirmed historical root cause.",
+  "failures_preserved": [
+    "Initial test APK lacked narrow package visibility; corrected only test manifest.",
+    "Second test needed to dismiss the real authentication-cancelled dialog; assertion retained after dismissal.",
+    "Manual-check run interrupted by stopped emulator; no result claimed. Two restart attempts failed before instrumentation because prototype package was missing; restored prototype and final test passed."
+  ],
+  "remaining": [
+    "Required independent review",
+    "Owner validation of replacement beta on affected phone",
+    "Final offline/enhanced full qualification"
+  ],
+  "ai_assisted": true,
+  "focused_updater_suite": {
+    "passed": 6,
+    "failed": 0,
+    "seconds": 28.524,
+    "coverage": [
+      "first-run automatic preferences",
+      "release asset identity",
+      "provider and permissions",
+      "popup Later/dismissal/reoffer",
+      "Settings and version dialog"
+    ]
+  },
+  "build_lint": {
+    "passed": true,
+    "seconds": 143,
+    "tasks": 544,
+    "executed": 48,
+    "up_to_date": 496
+  }
+}

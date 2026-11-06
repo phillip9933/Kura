@@ -65,9 +65,10 @@ fun AppUpdateEntry() {
     val context = LocalContext.current
     val application = remember { context.applicationContext as KuraUpdateApplication }
     val state by application.updateManager.state.collectAsState()
-    TextButton(onClick = { application.updatePanelVisible.value = true }) {
-        Text(if (state.available != null) "App updates · update available" else "App updates")
-    }
+    app.kura.feature.AppUpdatesSettingsRow(
+        updateAvailable = state.available != null,
+        onClick = { application.updatePanelVisible.value = true },
+    )
 }
 
 @Composable

@@ -65,7 +65,8 @@ class AppUpdatePopupTest {
             assertFalse(manager.state.value.offer)
             assertEquals(release, manager.state.value.available)
             assertEquals(release.tag, context.getSharedPreferences(kuraUpdateConfig.stateName, 0).getString("dismissed_tag", null))
-            device.findObject(By.text("App updates · update available")).click()
+            assertNotNull(device.wait(Until.findObject(By.text("New version available · review update")), 5000))
+            device.findObject(By.desc("App updates")).click()
             assertNotNull(device.wait(Until.findObject(By.text("Available: v99.0.0")), 5000))
             // A new offer arriving during a manual check must stay in this one panel.
             state.value = original.copy(available = release.copy(tag = "v99.0.1"), offer = true)

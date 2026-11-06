@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Make App updates a prominent settings row and expose update controls from the app-version dialog.
+
 - Rotate the photo before cropping, with live preset/custom-angle previews and edge detection on the oriented image.
 
 - Combine automatic edge detection and manual corner editing in one crop dialog, with a shaded mask, expandable fine-tuning and consistent primary/secondary actions.

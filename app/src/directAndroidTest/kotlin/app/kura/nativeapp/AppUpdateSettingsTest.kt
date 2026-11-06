@@ -6,6 +6,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -30,6 +33,21 @@ class AppUpdateSettingsTest {
         clickJourneyControl(device, "App updates")
         assertNotNull(device.wait(Until.findObject(By.text("Check for updates")), 5000))
         assertFalse((context.applicationContext as KuraUpdateApplication).updateManager.state.value.automaticChecks)
+        // Explicit opt-in keeps ordinary full-suite runs independent of public network availability.
+        if (InstrumentationRegistry.getArguments().getString("checkPublicUpdateSource") == "true") {
+            val manager = (context.applicationContext as KuraUpdateApplication).updateManager
+            val previous = manager.state.value.lastChecked
+            clickJourneyControl(device, "Check for updates")
+            val result = runBlocking {
+                withTimeout(45000) {
+                    manager.state.first { !it.checking && (it.lastChecked > previous || it.error != null) }
+                }
+            }
+            assertNull("Public metadata check failed: ${result.error}", result.error)
+            assertTrue(result.lastChecked > previous)
+            assertFalse(result.automaticChecks)
+            assertFalse(result.wifiDownload)
+        }
         clickJourneyControl(device, "Done")
         clickJourneyControl(device, "Close")
     }
