@@ -1,5 +1,24 @@
 # Testing
 
+## Full Beta 3 regression follow-up — 6 November 2026
+
+The owner deferred physical-device testing for now and will supply results later. The software-only follow-up in [PR #26](https://github.com/phillip9933/Kura/pull/26) changes one instrumentation fixture; production source remains unchanged from Beta 3, and both application APKs are byte-for-byte unchanged by the fixture correction. [Structured evidence](evidence/beta3-full-regression-20261106.json) records source b11d4f5, installed APK hashes, complete transcripts and previous failures.
+
+| Fresh execution | Result |
+| --- | --- |
+| Complete enhanced app suite, corrected fixture | **88 active passed, 0 failed, 4 opt-in skips / 92 cases**, 1025.389s |
+| Complete offline app suite, original fixture | **67 active passed, 0 failed, 4 opt-in skips / 71 cases**, 931.199s |
+| Corrected four-case refinement class | **4/4 enhanced**, 77.663s; **4/4 offline**, 78.623s |
+| Default-screen cold launches | **12/12 phase executions**: Cards/Passes/Identity × app/phone-only unlock × prepare/real force-stop/verify |
+| Phone-only cold process | **1/1 encrypted sentinel prerequisite, 2/2 prepare/force-stop/verify phases** |
+| [Instrumentation-source CI](https://github.com/phillip9933/Kura/actions/runs/42203474146) | **All four configurations passed; 59 fresh JVM executions each / 236 total**, 0 failures/errors/skips; lint 0 errors, warnings 58/62/62/65 |
+
+The original enhanced full run was **87 passed, 1 failed, 4 skipped**, 1075.524s: an immediate raw image-edit tap did not open Choose photo. An isolated original attempt completed its test body but crashed during fixture teardown with a BadTokenException after the picker had armed automatic resume authentication. Both attempts remain failures in the evidence. The correction uses the existing frame-settled click helper, asserts the image menu opens, and disarms automatic authentication before the fixture's artificial foreground teardown lock. No field, image, cancellation or draft-cleanup assertion was removed; normal application authentication is unchanged.
+
+The offline full run preceded this fixture correction; the affected four-case class was rerun afterward with an unchanged offline app APK. This is not a final-fixture full offline rerun. The four default opt-in skips are cold process, retained upgrade, screenshots and empty-vault timing; only cold process was selected separately in this follow-up. Phase executions and overlapping focused checks are not additional unique tests.
+
+Unchanged core device suites, installer/upgrade matrix and older-API checks retain their earlier source-scoped evidence; they were not rerun here. Physical-camera/arm64, hardware-key and production-package upgrade acceptance in #9/#10/#15 remain owner-deferred. Release tracker #13 stays Beta and latest stable remains 2.1.0. No personal phone, production-package destructive suite, private signing, app release or artifact replacement occurred. AI assisted analysis, fixture correction, execution and documentation.
+
 ## Owner-approved merge — 6 November 2026
 
 All four [PR-head CI jobs at 819d993](https://github.com/phillip9933/Kura/actions/runs/42192279428) passed before owner-approved PR #14 merged as a5dd32d. The merge tree matches the tested PR head; source after the Beta 3 tag differs only in documentation. The nine completed implementation issues are closed with acceptance/owner-sign-off evidence. No independent review is claimed; the owner removed that GitHub requirement.

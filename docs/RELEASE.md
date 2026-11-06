@@ -1,5 +1,11 @@
 # Release tooling
 
+## Software qualification follow-up — 6 November 2026
+
+The owner explicitly deferred physical-device testing and will supply results later. [PR #26](https://github.com/phillip9933/Kura/pull/26) corrects only an instrumentation fixture and records the completed software follow-up: enhanced full suite 88 active passes / 4 opt-in skips, offline full suite 67 active passes / 4 skips, affected corrected refinement class 4/4 in each build, 12 default-screen cold-launch phases and the separate phone-only prerequisite/cold-process phases. All four instrumentation-source CI configurations pass with 236 fresh JVM executions and no failures/errors/skips. [Testing](TESTING.md#full-beta-3-regression-follow-up--6-november-2026) retains exact source scopes and earlier failures.
+
+Application source and APK bytes are unchanged. Published Beta 3 (122), its tag, validation report and assets are unchanged; no new signing or release occurred. No implementation issue remains beyond the acceptance recorded in #9/#10/#15; those device/production-package checks are pending under the owner's deferral. #13 remains Beta, and stable promotion still requires the remaining acceptance and separate owner authorization. Latest stable remains 2.1.0.
+
 ## Owner-approved source closeout — 6 November 2026
 
 The owner chose personal sign-off and removed the required-review rule. [PR #14](https://github.com/phillip9933/Kura/pull/14) merged as a5dd32d after all four [PR-head CI configurations](https://github.com/phillip9933/Kura/actions/runs/42192279428) passed. No independent approving review is claimed. Issues #8, #16, #17, #18, #19, #20, #22, #23 and #24 are completed/closed and marked Done in the public Project.
