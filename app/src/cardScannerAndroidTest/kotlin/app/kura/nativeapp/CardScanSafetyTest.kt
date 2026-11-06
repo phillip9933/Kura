@@ -98,7 +98,7 @@ class CardScanSafetyTest {
     }
     private fun click(label: String) = clickJourneyControl(device, label)
     private fun crop() {
-        click("Use full image"); click("Use crop")
+        click("Full photo"); click("Use crop")
         assertNotNull(device.wait(Until.findObject(By.text("Autofill card details?")), 20000))
     }
     private fun assertColor(bytes: ByteArray, red: Boolean) {

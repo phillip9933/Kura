@@ -813,3 +813,44 @@ The isolated installer selection now passes **18 phase executions**: stable119â†
 At74480f9, the complete enhanced selection passes **87 active / 0 failed / 4 opt-in skips / 91 total**,1055.771s, with exact installed app/test hashes and a complete transcript. The default offline selection completes with **66 passed / 1 failed / 4 skips / 71 total**,928.976s: encrypted-pass export could not find its action. The saved hierarchy is still the filtered grid, proving its preceding direct raw tap had not opened the detail. That tap now uses the established frame-settled helper and asserts the pass-detail menu exists before export. All backup/password/SAF/restore/data assertions remain. The first cold-process verify also observed default UI memory before Compose initialization, while loaded presentation already correctly requested Cards; the ordinary regression already waited for initialization, but the cold branch did not. It now waits only for first initialization, never for a matching selected value, and retains both immediate presentation-order and exact first-selected-tab assertions.
 
 Corrected offline export passes1/1 in58.124s; cold prepare/force-stop/verify passes2/2 in7.668s/6.903s. Both enhanced/offline pair builds pass (50s/46s respectively). These changes affect two test methods only; application/debug/optimized bytes remain unchanged. Retain the complete enhanced74480f9 pass, repeat its affected backup journey and all cold phases on the final harness, and rerun the complete offline selection. Do not relabel the earlier failed offline run as a pass or claim the enhanced full selection executed at the subsequent test-only commit. [Scoped evidence](evidence/beta2-export-cold-observers-20261106.json). The final real OCR interruption cleanup also passes1/1 in6.948s with four orphaned workspace files plus an abandoned synthetic capture before relaunch; file count varies with interruption timing, and all owned temporary data is removed without publishing a draft. Earlier five-file observations remain historical. AI assisted observation and test synchronization; no application/security change or assertion removal.
+
+
+## Stationary card-mask qualification â€” 7 November 2026
+
+The crop revision replaces document corners/rotation popup with a fixed mask,
+pan/pinch and labelled zoom/movement/angle controls. Preview and confirmation
+stay outside the controls scroller. Geometry is shared with the actual native
+renderer; quarter turns use exact transforms to preserve boundary pixels. See
+[design](design.md), [integration](CARD-RECOGNITION.md#stationary-card-mask--7-november-2026)
+and [source-scoped evidence](evidence/card-mask-20261107.json). This is draft
+qualification, not a new published APK or owner approval.
+
+The old editor fails the real small-portrait photo/control visibility regression
+**1/1 as expected** (16.912s). V3 passes **7/7** focused layout/native crop cases
+(48.905s), including gradient landmarks, repeated-source rendering, resource
+bounds, exact quarter turns and crop/OCR re-entry. V4's revised pinned mode
+controls pass **3/3** small-portrait dark/200% cases (68.441s). Screenshots were
+visually inspected. V4 landscape/200% passes visibility but fails both OCR
+return journeys: the narrow offer dialog leaves a 9 dp scroll region. A wider
+landscape review dialog and an explicit minimum-review-space regression are now
+under qualification. The failure remains evidence, not a pass.
+
+V5 builds debug/test and unsigned release and runs **63 JVM tests, zero failures,
+errors or skips**; app lint has **0 errors/fatals and 28 warnings**, in202.398s.
+These checks precede the final review-dialog/test changes and are not presented
+as final-head qualification. V4's unused-layout lint error was fixed without a
+suppression. Earlier V2/V3 failures and incompatible disposable-debug-key install
+attempts remain recorded. A queued run after failed installation used the old
+V3 pair and is explicitly excluded from V4 results.
+
+Use a fresh, credential-free isolated build and disposable emulator; the
+prototype package guards remain required. Relevant selection:
+`CardCropLayoutTest,CardRotationTest,CardScannerIntegrationTest,CardScanSafetyTest`.
+Run both complete app selections and required build/packaging checks on final
+source. Screenshots may be captured only with `captureCropPreview=true` on the
+guarded synthetic prototype emulator; the fixture temporarily clears/restores
+secure-window flags. API29+ public window inspection is required for that extra
+pixel/screenshot assertion; older-API control/native-output checks still run.
+Physical/production acceptance and screen-reader coverage are not inferred from
+these emulator checks. No stable publication or beta removal occurred. AI
+assisted implementation, tests, design notes and verification.

@@ -161,72 +161,44 @@ class CardScannerIntegrationTest {
                 vm.pending.imageTarget = ImageTarget("passes", -1, "frontImagePath")
                 vm.pending.cropBytes = image()
             }
-            assertTrue(device.wait(Until.hasObject(By.text("Card edges detected. Check all four corners before continuing.")), 20_000))
+            assertNotNull(device.wait(Until.findObject(By.text("Use crop").enabled(true)), 20_000))
+            repeat(8) {
+                if (!device.hasObject(By.text("Card aligned automatically. Check that every detail fits."))) {
+                    device.findObject(By.desc("Crop adjustments"))?.scroll(Direction.DOWN, .35f)
+                    settleJourneyUi(device)
+                }
+            }
+            assertTrue(device.hasObject(By.text("Card aligned automatically. Check that every detail fits.")))
         }
         start()
-        clickJourneyControl(device, "Rotate: 0°")
+        clickJourneyControl(device, "Rotate")
         clickJourneyControl(device, "90°")
-        assertNotNull(device.wait(Until.findObject(By.desc("Rotated photo preview: 90°")), 5000))
-        clickJourneyControl(device, "Cancel")
-        assertTrue(device.hasObject(By.text("Rotate: 0°")))
-        clickJourneyControl(device, "Rotate: 0°")
-        clickJourneyControl(device, "270°")
-        assertNotNull(device.wait(Until.findObject(By.desc("Rotated photo preview: 270°")), 5000))
-        clickJourneyControl(device, "Apply rotation")
-        assertNotNull(device.wait(Until.findObject(By.text("Rotate: 270°")), 20000))
+        assertNotNull(device.wait(Until.findObject(By.checkable(true).checked(true).hasDescendant(By.text("90°"))), 5000))
         captureCropPreview("rotated-crop")
-        clickJourneyControl(device, "Rotate: 270°")
-        clickJourneyControl(device, "0°")
+        clickJourneyControl(device, "270°")
+        assertNotNull(device.wait(Until.findObject(By.checkable(true).checked(true).hasDescendant(By.text("270°"))), 5000))
         val angleSlider = device.findObject(By.desc("Photo rotation angle"))
         assertNotNull(angleSlider)
         val sliderBounds = angleSlider.visibleBounds
         device.swipe(sliderBounds.centerX(), sliderBounds.centerY(), sliderBounds.left + sliderBounds.width() * 2 / 3, sliderBounds.centerY(), 20)
-        assertTrue("Custom slider changes live preview", device.wait(Until.gone(By.desc("Rotated photo preview: 0°")), 5000))
-        captureCropPreview("rotation-picker")
+        assertTrue("Custom slider changes the live crop", device.wait(Until.gone(By.text("Fine rotation: 0.0°")), 5000))
+        captureCropPreview("rotation-controls")
         clickJourneyControl(device, "0°")
-        clickJourneyControl(device, "Apply rotation")
-        assertNotNull(device.wait(Until.findObject(By.text("Rotate: 0°")), 20000))
-        assertFalse("Fine-tuning starts collapsed", device.hasObject(By.desc("Corner horizontal position")))
-        assertFalse("There is no separate crop screen", device.hasObject(By.text("Use manual crop instead")))
-        clickJourneyControl(device, "Fine-tune")
-        repeat(6) {
-            if (!device.hasObject(By.desc("Corner horizontal position"))) {
-                device.findObject(By.scrollable(true))?.scroll(Direction.DOWN, .35f)
-                settleJourneyUi(device)
-            }
-        }
-        if (!device.hasObject(By.desc("Corner horizontal position"))) device.dumpWindowHierarchy(File(context.getExternalFilesDir(null), "crop-fine-tune-failure.xml"))
-        assertNotNull(device.wait(Until.findObject(By.desc("Corner horizontal position")), 5000))
-        clickJourneyControl(device, "Bottom right")
-        assertTrue(device.hasObject(By.text("Crop card image")))
-        clickJourneyControl(device, "Hide fine-tune")
-        clickJourneyControl(device, "Use full image")
-        clickJourneyControl(device, "Reset edges")
-        repeat(2) { device.findObject(By.scrollable(true))?.scroll(Direction.UP, .8f) }
-        settleJourneyUi(device)
-        assertNotNull("Scrolling through the photo must return to the crop instructions", device.findObject(By.text("Drag the corners to adjust the detected card edges.")))
-        val mask = device.findObject(By.desc("Drag the four card corners"))
+        assertNotNull(device.wait(Until.findObject(By.checkable(true).checked(true).hasDescendant(By.text("0°"))), 5000))
+        clickJourneyControl(device, "Zoom")
+        assertFalse("Document corner manipulation is no longer required", device.hasObject(By.desc("Corner horizontal position")))
+        assertFalse("There is no separate manual crop screen", device.hasObject(By.text("Use manual crop instead")))
+        clickJourneyControl(device, "Full photo")
+        clickJourneyControl(device, "Auto fit")
+        clickJourneyControl(device, "Zoom")
+        val mask = device.findObject(By.desc("Card crop preview"))
         assertNotNull(mask)
         val bounds = mask.visibleBounds
-        assertFalse("Crop preview must be visible for direct editing", bounds.isEmpty)
-        // Use the native proposal, rather than guessed fixture pixels, and exceed
-        // this Android version's touch slop without turning the gesture into scrolling.
-        val fixture = image()
-        val proposal = try { runBlocking { CardScanEngine(context).detect(fixture) } } finally { fixture.fill(0) }
-        val scale = minOf(bounds.width() / 1800f, bounds.height() / 1100f)
-        val left = bounds.left + (bounds.width() - 1800 * scale) / 2
-        val top = bounds.top + (bounds.height() - 1100 * scale) / 2
-        val x = (left + proposal.points[0].x * 1800 * scale).toInt()
-        val y = (top + proposal.points[0].y * 1100 * scale).toInt()
-        val distance = maxOf(64, android.view.ViewConfiguration.get(context).scaledTouchSlop * 3)
-        instrumentation.sendStatus(0, android.os.Bundle().apply { putString("stream", "Synthetic mask drag: bounds=$bounds; start=$x,$y; distance=$distance; proposal=$proposal\n") })
-        device.swipe(x, y, minOf(x + distance, bounds.right - 20), y + 4, 30)
-        val adjusted = device.wait(Until.findObject(By.text("Crop adjusted. Check all four corners.")), 5000)
-        if (adjusted == null) {
-            device.dumpWindowHierarchy(File(context.getExternalFilesDir(null), "crop-drag-failure.xml"))
-            captureCropPreview("crop-drag-failure")
-        }
-        assertNotNull("Dragging the mask must actually adjust the crop", adjusted)
+        assertFalse("The preview stays visible while adjusting", bounds.isEmpty)
+        val beforeZoom = requireNotNull(device.findObject(By.textStartsWith("Zoom:"))).text
+        assertTrue(device.findObject(UiSelector().description("Card crop preview")).pinchOut(50, 20))
+        assertTrue("Pinching the photo actually changes its scale", device.wait(Until.gone(By.text(beforeZoom)), 5000))
+        assertEquals("The mask viewport stays stationary", bounds, device.findObject(By.desc("Card crop preview")).visibleBounds)
         assertTrue("Crop confirmation stays reachable", device.findObject(By.text("Use crop")).isEnabled)
         captureCropPreview()
         click("Use crop")

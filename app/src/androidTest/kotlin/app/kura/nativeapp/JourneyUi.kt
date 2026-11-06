@@ -45,7 +45,8 @@ internal fun clickJourneyControl(device: UiDevice, label: String, beforeClick: (
                     return@repeat
                 }
             }
-            val scroll = device.findObject(By.scrollable(true))
+            val scroll = device.findObject(By.desc("Crop adjustments").scrollable(true))
+                ?: device.findObject(By.scrollable(true))
             if (scroll != null) scroll.scroll(if (attempt < 8) Direction.DOWN else Direction.UP, .5f)
             else device.wait(Until.hasObject(By.text(label)), 500)
         } catch (_: StaleObjectException) {

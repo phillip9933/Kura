@@ -1,0 +1,113 @@
+{
+  "date": "2026-11-07",
+  "status": "Draft crop revision; final-source qualification in progress; not a release",
+  "source_files": [
+    {
+      "path": "app/build.gradle.kts",
+      "sha256": "f0a3d704106fbd314e5f05295cefaf13327d7f872b4346b0a96d3644e40feb1d"
+    },
+    {
+      "path": "app/src/androidTest/kotlin/app/kura/nativeapp/JourneyUi.kt",
+      "sha256": "9da0b4263b438cb295e2cb48c4a8ed2ccf84873cc618b09f028092869cbc17e5"
+    },
+    {
+      "path": "app/src/cardScanner/kotlin/app/kura/nativeapp/CardCropEditor.kt",
+      "sha256": "336bda3001aabc776e214ad585c67644e421bfc8d13e1686300aa7aace330f48"
+    },
+    {
+      "path": "app/src/cardScanner/kotlin/app/kura/nativeapp/CardImageRotation.kt",
+      "sha256": null
+    },
+    {
+      "path": "app/src/cardScanner/kotlin/app/kura/nativeapp/EnhancedCardDialog.kt",
+      "sha256": "4e99ecaee266dc12da34ef0ffba944a459c28ae56ea43e2d6f2cbffd6e9ebacb"
+    },
+    {
+      "path": "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardCropLayoutTest.kt",
+      "sha256": "d3570c9ceafcc2e53b25bdd48accbfc4841160ebdbf554dcf6d12cc9aae8398c"
+    },
+    {
+      "path": "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardRotationTest.kt",
+      "sha256": "d7c4e8d09f47dfb1c119b4cc90e75ffca6ca7d9d4cb300298a36f96c078c9f9a"
+    },
+    {
+      "path": "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardScanSafetyTest.kt",
+      "sha256": "1a9f2da59a6d534262862f524ff72715526de2a6d3b3c883a523cf80e6f1e2d9"
+    },
+    {
+      "path": "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardScannerIntegrationTest.kt",
+      "sha256": "6479619bf4bd36634b1d8ebc0b3c3764a85a1e3fd636fd5176f34f4e470e1488"
+    },
+    {
+      "path": "core/model/src/main/kotlin/app/kura/nativecore/CardCrop.kt",
+      "sha256": "61f3e01c49f30577bb01f976cfb7e98a045b4ffadefe48740dd723bc068fb965"
+    },
+    {
+      "path": "core/model/src/test/kotlin/app/kura/nativecore/CardCropTest.kt",
+      "sha256": "30f568e3cbe05e8b18fe7cecc07a609bd72dde127713512087addb98281f6869"
+    }
+  ],
+  "verified_scopes": [
+    {
+      "scope": "Prior editor, corrected small-portrait visibility regression",
+      "result": "expected failure, 1/1",
+      "seconds": 16.912,
+      "artifact": "0015-before-layout.json"
+    },
+    {
+      "scope": "V3 crop geometry/native output/layout before large-text controls revision",
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 48.905,
+      "artifact": "0035-fixed-v3-layout-output.json"
+    },
+    {
+      "scope": "V4 crop controls, small portrait, dark, 200% text",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 68.441,
+      "artifact": "0066-v4-large-text-actual.json"
+    },
+    {
+      "scope": "V4 crop controls, small landscape, dark, 200% text; before wider review dialog",
+      "passed": 1,
+      "failed": 2,
+      "seconds": 92.664,
+      "artifact": "0070-v4-landscape-200.json",
+      "finding": "OCR offer scrolling region collapses to 9 dp; Adjust crop unreachable. Fix awaiting final-source rerun."
+    },
+    {
+      "scope": "V5 build before final review-dialog and test-source changes",
+      "jvm": {
+        "passed": 63,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "lint": {
+        "errors": 0,
+        "fatal": 0,
+        "app_warnings": 28
+      },
+      "debug_and_test_assembly": "pass",
+      "unsigned_release_assembly": "pass",
+      "seconds": 202.398
+    }
+  ],
+  "preserved_failures": [
+    "V2: one real quarter-turn boundary-pixel defect and two fixture queries; corrected without removing assertions.",
+    "V3: small portrait 200% re-entry lookup failed for an offscreen value; corrected with read-only scrolling.",
+    "V4: lint rejected an unused BoxWithConstraints scope; replaced with Box, no suppression.",
+    "Fresh disposable debug keys caused incompatible prototype updates; clean synthetic installs used. Job 0058 ran the old V3 pair and is not V4 evidence.",
+    "Initial V4 Bubblewrap launch denied before repository execution; the established isolated execution path was then used."
+  ],
+  "pending": [
+    "Final-source focus, keyboard, visual matrix, full enhanced regression and four-way CI",
+    "Screen-reader acceptance",
+    "Physical photographed-card/arm64/hardware-key and production-package acceptance",
+    "Owner crop review before publication"
+  ],
+  "privacy": "Synthetic fixtures only on a disposable prototype emulator. Production package, signing credentials and personal data were not used."
+}
