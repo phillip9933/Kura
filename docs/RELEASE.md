@@ -1,5 +1,11 @@
 # Release tooling
 
+## Owner-approved source closeout — 6 November 2026
+
+The owner chose personal sign-off and removed the required-review rule. [PR #14](https://github.com/phillip9933/Kura/pull/14) merged as a5dd32d after all four [PR-head CI configurations](https://github.com/phillip9933/Kura/actions/runs/42192279428) passed. No independent approving review is claimed. Issues #8, #16, #17, #18, #19, #20, #22, #23 and #24 are completed/closed and marked Done in the public Project.
+
+Four issues remain: physical unlock/data-safety acceptance #9/#10, representative physical scanner qualification #15, and RC/stable promotion #13. Stage remains Beta, latest testing release is 2.2.0-beta.3 (122), and latest stable remains 2.1.0. No stable publication or new signing occurred in this closeout. Existing tags, release assets and historical verification below are unchanged. Earlier review-gate statements below describe the policy at those publication steps; [maintainer approval](../CONTRIBUTING.md#maintainer-approval) records the owner's current workflow.
+
 ## Kura 2.2 beta.3 — published 6 November 2026
 
 The owner-authorized [2.2.0-beta.3 / 122](https://github.com/phillip9933/Kura/releases/tag/v2.2.0-beta.3) is published from tag/source 6fe858f on the PR branch. It includes the loading-screen updater fix from 7f1b257: update controls/dialogs wait for an open vault or an idle locked screen with no automatic unlock pending. Scanner 0.8.0-beta.1 and updater 0.2.2-beta.1 remain pinned. Enable **Include beta releases** in App updates, then **Check for updates**, to receive this testing build.
