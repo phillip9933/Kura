@@ -39,7 +39,7 @@ The Application owns a single update-panel visibility state. The root notice hos
 
 App updates includes an explicit Include beta releases checkbox. It selects the SDK BETA channel and persists that choice; clearing it selects STABLE. Stable-only remains the default. Automatic checks and Wi-Fi downloads remain independent opt-ins. Beta asset names retain their full version, for example `Kura-2.2.0-beta.1.apk`. Changing channels clears the prior offer/ready state through the SDK, so an APK from the old selection is not silently reused.
 
-The 2.2 beta uses updater 0.2.1, source `60b8fb82aa14ab0fc115ee9f9f96d3cc2c60f5fc`. Its reviewed runtime delta cancels obsolete queued downloads when no eligible release remains; public API/runtime dependency declarations are unchanged from 0.2.0. Outer archive and all seven inner pins were verified before vendoring. Upstream tests do not replace Kura's host/popup and retained-data acceptance.
+The initially published 2.2.0-beta.1 APK uses updater 0.2.1, source `60b8fb82aa14ab0fc115ee9f9f96d3cc2c60f5fc`. Its reviewed runtime delta cancels obsolete queued downloads when no eligible release remains; public API/runtime dependency declarations are unchanged from 0.2.0. Outer archive and all seven inner pins were verified before vendoring. Upstream tests do not replace Kura's host/popup and retained-data acceptance.
 
 ## Cache recovery and startup opt-in — 6 November 2026
 
@@ -52,3 +52,5 @@ Kura startup now normalizes a missing or wrong-typed automatic-check preference 
 The optional entry now uses the same full-width icon/title/subtitle/chevron row as other settings, with “Check for updates” visible beneath its title. It remains available while locked, under Settings → About and inside App Version & Trademark. An available version changes the subtitle, while the entry keeps a stable accessible name.
 
 An external test against the nondebuggable R8 prototype passed all three routes both before and after this change. The historical missing entry on the owner’s beta phone was **not reproduced**; this is a discoverability improvement, not proof of an R8/source-set defect. The explicit manual GitHub check passed with automatic checks/downloads still disabled. Popup Later/reoffer and first-run/provider/settings acceptance passed 6/6. See [exact evidence](evidence/updater-discovery-20261106.json); independent review and affected-phone validation remain separate.
+
+The owner-requested beta.2 candidate uses0.2.2-beta.1, versionCode121. Include beta releases remains an independent opt-in. The installer-acceptance harness accepts `-e baseVersionCode N` (default the compiled host code) and expects its generated candidate at N+1, so fixture versions are explicit rather than tied permanently to120→121. Neither this development harness nor its transport enters the release APK.

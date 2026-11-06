@@ -1,6 +1,12 @@
 # Release tooling
 
-## Kura 2.2 beta
+## Kura 2.2 beta.2 preparation
+
+The owner authorized a new testing beta on6 November2026 after the issue-closeout work. Target **2.2.0-beta.2 /121** combines `-PcardScanner=true -PdirectUpdates=true`, scanner0.8.0-beta.1 and updater0.2.2-beta.1. Publish an APK, SHA256SUMS and exact validation evidence; do not build/upload AABs. This is not stable promotion. Keep latest stable2.1.0 and branch protection unchanged; publish from the validated source branch/tag while required approving review is pending.
+
+Before publication, complete final paired enhanced/offline/core/optimized regression, relevant cold-process/retained-upgrade/installer checks, final-source CI, and APK signature/checksum/model/permissions/16KiB verification. Use the existing signing identity only for this owner-authorized beta and keep credentials off command lines/logs. Physical/production-package qualification remains explicit rather than being inferred from disposable prototype results. The unconfirmed legacy-backup report #21 is owner-shelved as not planned, not fixed.
+
+## Kura 2.2 beta.1 — historical
 
 The owner authorized source commit/push and GitHub publication on 5 November 2026. Version **2.2.0-beta.1**, code **120**, combines `-PcardScanner=true -PdirectUpdates=true`: API 26+, arm64-v8a/x86_64, offline English/Japanese OCR and opt-in GitHub updates. Base source builds remain offline/API 24. The beta retains known physical-device/photographed-card and production-upgrade acceptance gaps; it does not promote those gates to passed.
 

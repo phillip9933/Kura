@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 2.2.0-beta.2 — November 6, 2026
+
+- Upgrade the pinned updater to 0.2.2-beta.1, including recovery from a corrupted cached download and safe first-run opt-in handling.
+- Correct phone-only wake event delivery; automatic GitHub checks remain opt-in.
+- Publish APKs only; Google Play/AAB distribution is retired.
+
 - Add retake and advisory photo-quality feedback; preserve front/back destinations and user corrections during OCR review.
 - Reject expired camera/picker/permission results and clean interrupted scanner work without publishing a draft.
 - Let gestures outside crop handles scroll the dialog so the full preview remains reachable.

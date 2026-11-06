@@ -31,6 +31,7 @@ class InstallerAcceptanceTest {
     private val args get() = InstrumentationRegistry.getArguments()
     private val fixtures get() = File(context.getExternalFilesDir(null), "installer-fixtures")
     private val version get() = args.getString("payloadVersion") ?: "2.2.0-validation.1"
+    private val baseVersionCode get() = args.getString("baseVersionCode")?.toLong() ?: BuildConfig.VERSION_CODE.toLong()
     private fun waitFor(message: String, predicate: () -> Boolean) {
         val deadline = SystemClock.uptimeMillis() + 15000
         while (!predicate() && SystemClock.uptimeMillis() < deadline) SystemClock.sleep(25)
@@ -93,7 +94,7 @@ class InstallerAcceptanceTest {
         assertFalse(manager.state.value.ready)
         assertFalse(File(context.cacheDir, "updates/update.part").exists())
         runBlocking { assertNull(manager.prepareInstall()) }
-        assertEquals(120L, installedCode())
+        assertEquals(baseVersionCode, installedCode())
     }
     private fun openHost(normalPrototypeEntry: Boolean = false) {
         device.wakeUp()
@@ -182,7 +183,7 @@ class InstallerAcceptanceTest {
                 assertEquals(UpdateError.NETWORK, manager.state.value.error)
                 assertFalse(manager.state.value.checking)
                 assertFalse(manager.state.value.ready)
-                assertEquals(120L, installedCode())
+                assertEquals(baseVersionCode, installedCode())
             }
             "ready-seed" -> {
                 offer(File(fixtures, "candidate.apk")); runBlocking { manager.download() }
@@ -219,7 +220,7 @@ class InstallerAcceptanceTest {
                 device.pressBack()
                 returnToDialog()
                 assertFalse(context.packageManager.canRequestPackageInstalls())
-                assertEquals(120L, installedCode())
+                assertEquals(baseVersionCode, installedCode())
                 click("Install update")
                 val permission = device.wait(Until.findObject(By.checkable(true).pkg("com.android.settings")), 10000)
                 assertNotNull("Real Android install-source permission switch", permission)
@@ -227,11 +228,11 @@ class InstallerAcceptanceTest {
                 returnToDialog()
                 assertTrue(context.packageManager.canRequestPackageInstalls())
                 assertFalse(device.hasObject(By.pkg(Pattern.compile(".*packageinstaller.*"))))
-                assertEquals("Permission return must not install", 120L, installedCode())
+                assertEquals("Permission return must not install", baseVersionCode, installedCode())
                 click("Install update"); installerPrompt()
                 device.findObject(By.text(Pattern.compile("(?i)cancel")).pkg(Pattern.compile(".*packageinstaller.*"))).click()
                 returnToDialog(fromInstaller = true)
-                assertEquals("Installer cancellation must not claim success", 120L, installedCode())
+                assertEquals("Installer cancellation must not claim success", baseVersionCode, installedCode())
                 assertTrue(manager.state.value.ready)
             }
             "handoff" -> {
@@ -248,7 +249,7 @@ class InstallerAcceptanceTest {
             }
             "installed" -> {
                 waitFor("Installed version must come from PackageManager") { manager.state.value.installedVersion == version }
-                assertEquals(121L, installedCode())
+                assertEquals(baseVersionCode + 1, installedCode())
                 assertNull("Installed candidate must not remain offered", manager.state.value.available)
                 assertFalse(manager.state.value.ready)
             }
