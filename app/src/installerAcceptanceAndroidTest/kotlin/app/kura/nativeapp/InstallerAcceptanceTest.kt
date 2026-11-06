@@ -155,6 +155,13 @@ class InstallerAcceptanceTest {
         org.junit.Assume.assumeTrue(phase != null)
         guard()
         when (phase) {
+            "prepare-fixtures" -> {
+                // Android app-specific external directories must be created by
+                // the target UID, not a shell-owned staging directory.
+                assertTrue("Create generated APK fixture directory", fixtures.isDirectory || fixtures.mkdirs())
+                assertEquals(context.applicationInfo.uid, android.system.Os.stat(fixtures.absolutePath).st_uid)
+                assertTrue(fixtures.canRead() && fixtures.canWrite())
+            }
             "faults" -> {
                 for ((name, error) in listOf("wrong-package.apk" to UpdateError.WRONG_PACKAGE,
                     "wrong-signer.apk" to UpdateError.SIGNATURE_MISMATCH, "debug.apk" to UpdateError.DEBUG_APK)) {
