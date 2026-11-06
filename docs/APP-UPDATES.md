@@ -54,3 +54,11 @@ The optional entry now uses the same full-width icon/title/subtitle/chevron row 
 An external test against the nondebuggable R8 prototype passed all three routes both before and after this change. The historical missing entry on the owner’s beta phone was **not reproduced**; this is a discoverability improvement, not proof of an R8/source-set defect. The explicit manual GitHub check passed with automatic checks/downloads still disabled. Popup Later/reoffer and first-run/provider/settings acceptance passed 6/6. See [exact evidence](evidence/updater-discovery-20261106.json); independent review and affected-phone validation remain separate.
 
 The owner-requested beta.2 candidate uses0.2.2-beta.1, versionCode121. Include beta releases remains an independent opt-in. The installer-acceptance harness accepts `-e baseVersionCode N` (default the compiled host code) and expects its generated candidate at N+1, so fixture versions are explicit rather than tied permanently to120→121. Neither this development harness nor its transport enters the release APK.
+
+## Loading-screen follow-up — 6 November 2026
+
+The owner manually confirmed that Settings → App updates → Check for updates is visible and opens in published beta.2 (121). This verifies affected-phone discoverability; it does not establish the cause of the earlier beta1 disappearance or verify a new APK installation.
+
+The owner then reported that the loading background also showed the update entry and allowed a quick tap to open its dialog. The shared non-unlocked layout rendered the entry during authentication/opening, and the root hosted dialogs without a vault-transition gate. The follow-up suppresses both the entry and dialogs until the vault is open or the locked screen is idle with no automatic unlock pending. The automatic-unlock flag is observable so the first startup frame and lifecycle changes follow the same rule. A requested panel or available offer can appear once the transition settles; update access still requires no vault access. Networking and installation remain opt-in and user-confirmed.
+
+This is an unreleased change after beta.2. The published APK and validation report remain unchanged. Exact focused verification and the preserved failing pre-fix regression are recorded in [Testing](TESTING.md).

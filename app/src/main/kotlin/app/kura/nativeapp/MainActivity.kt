@@ -443,7 +443,11 @@ class MainActivity : FragmentActivity() {
                 val backupStatus by vm.autoBackupStatus.collectAsState()
                 val backupPasswordReady by vm.backupPasswordReady.collectAsState()
                 val error by vm.error.collectAsState()
-                AppUpdateNotice()
+                // The startup background also renders during authentication/opening. Keep
+                // updater UI out of those transitions, including the first auto-unlock frame.
+                val updatesReady = state is VaultState.Unlocked ||
+                    (state == VaultState.Locked && !busy && !vm.autoUnlockArmed)
+                if (updatesReady) AppUpdateNotice()
                 Surface(Modifier.fillMaxSize()) {
                     if(state is VaultState.Unlocked) {
                         Box(Modifier.fillMaxSize().drawWithContent {
@@ -493,7 +497,7 @@ class MainActivity : FragmentActivity() {
                                     .semantics {contentDescription="Unlock Kura"},colorFilter=androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onBackground))
                             Text("Kura",style=MaterialTheme.typography.displayLarge,modifier=Modifier.padding(top=20.dp))
                             Text("Privacy first pass wallet.",Modifier.padding(top=12.dp),style=MaterialTheme.typography.bodyLarge)
-                            AppUpdateEntry()
+                            if (updatesReady) AppUpdateEntry()
                         }
                     }
                     if(error != null) AlertDialog(onDismissRequest = { vm.error.value = null }, title = { Text("Could not complete operation") },

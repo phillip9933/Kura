@@ -1,0 +1,154 @@
+{
+  "date": "2026-11-06",
+  "issue": 22,
+  "base_head": "097582ad0d3d26b5f0add6bc8ccc392fd8ea9588",
+  "release_scope": "Unreleased follow-up. Published beta.2 APK/tag/validation remain unchanged. No signing or release publication in this follow-up.",
+  "owner_manual_phone_confirmation": {
+    "version": "2.2.0-beta.2 (121)",
+    "observation": "Settings → App updates → Check for updates is visible and opens.",
+    "scope_limit": "Owner report, not assistant-observed automation, download/install acceptance, or proof of the beta1 historical root cause."
+  },
+  "reported_followup": "App updates entry visible and quickly tappable on the loading background.",
+  "cause": "Entry shared across every non-Unlocked state; root dialogs lacked a transition gate. Initial automatic-unlock frame also needed suppression.",
+  "change": "Gate entry and dialogs to Unlocked or idle Locked with no pending automatic unlock; observe the automatic-unlock flag.",
+  "before": {
+    "active_passed": 0,
+    "failed": 1,
+    "time_seconds": 14.448,
+    "failure": "No update entry while the vault is opening",
+    "test_revision": "Initial regression version against unchanged application code; subsequent first-frame assertions added to fixed regression."
+  },
+  "startup_regression": {
+    "success": true,
+    "expected": 1,
+    "summary": [
+      "Time: 17.952",
+      "OK (1 test)"
+    ],
+    "app_sha256": "ad789d211070c74d2b804318f7167e658ace5d0d6bf9f2e082171f4867783e2a",
+    "test_sha256": "a3681aa14bd847871bfe7d5bf6f09b8164b75f270613bac223c2cbd69d93bfa8"
+  },
+  "existing_regressions": {
+    "success": true,
+    "active_passed": 7,
+    "failed": 0,
+    "intentional_skips": 1,
+    "total": 8,
+    "time_seconds": 90.796,
+    "results": [
+      {
+        "class": "app.kura.nativeapp.AppUpdatesIntegrationTest",
+        "test": "directManifestScopesProviderAndRequiresUserInstallPermission",
+        "code": 0
+      },
+      {
+        "class": "app.kura.nativeapp.AppUpdatesIntegrationTest",
+        "test": "releaseIdentityUsesOnlyKuraUniversalAssets",
+        "code": 0
+      },
+      {
+        "class": "app.kura.nativeapp.AppUpdatesIntegrationTest",
+        "test": "corruptAutomaticPreferenceDoesNotEnableNetworking",
+        "code": 0
+      },
+      {
+        "class": "app.kura.nativeapp.AppUpdatesIntegrationTest",
+        "test": "applicationRegistersWorkerSourceWithoutVaultAuthentication",
+        "code": 0
+      },
+      {
+        "class": "app.kura.nativeapp.AppUpdatePopupTest",
+        "test": "availableUpdatePromptsWhileLockedAndLaterKeepsManualAccess",
+        "code": 0
+      },
+      {
+        "class": "app.kura.nativeapp.AppUpdateSettingsTest",
+        "test": "settingsAndVersionDialogBothReachManualUpdateControls",
+        "code": 0
+      },
+      {
+        "class": "app.kura.nativeapp.AppUnlockJourneyTest",
+        "test": "phoneUnlockRetainsDataAndCanRestoreAppAuthentication",
+        "code": 0
+      },
+      {
+        "class": "app.kura.nativeapp.AppUnlockJourneyTest",
+        "test": "phoneUnlockColdProcessAcceptance",
+        "code": -4
+      }
+    ],
+    "observer_note": "Initial observer expected 7 total rather than 7 active plus the documented cold-process opt-in skip. Original observer result preserved; application/test output unchanged, no rerun."
+  },
+  "optimized_external_discovery": {
+    "success": true,
+    "expected": 1,
+    "summary": [
+      "Time: 25.676",
+      "OK (1 test)"
+    ]
+  },
+  "device": {
+    "owned_avd": "kura-release-20261105",
+    "serial": "emulator-5584",
+    "api": 37,
+    "page_size": 16384,
+    "package_scope": "Disposable prototype and prototype.benchmark only; real synthetic device credentials; no key/authentication substitution."
+  },
+  "builds": {
+    "fixed-build.log": {
+      "summary": [
+        "BUILD SUCCESSFUL in 1m 14s",
+        "497 actionable tasks: 34 executed, 463 up-to-date"
+      ]
+    },
+    "fixed-test-build.log": {
+      "summary": [
+        "BUILD SUCCESSFUL in 18s",
+        "151 actionable tasks: 4 executed, 147 up-to-date"
+      ]
+    },
+    "optimized-build.log": {
+      "summary": [
+        "BUILD SUCCESSFUL in 1m",
+        "279 actionable tasks: 9 executed, 270 up-to-date"
+      ]
+    },
+    "offline-build.log": {
+      "summary": [
+        "BUILD SUCCESSFUL in 1m 26s",
+        "497 actionable tasks: 82 executed, 415 up-to-date"
+      ]
+    }
+  },
+  "packaging": "Enhanced/direct and default offline permission/export/native/model/16KiB checks pass.",
+  "lint": {
+    "enhanced": {
+      "errors": 0,
+      "warnings": 65
+    },
+    "offline": {
+      "errors": 0,
+      "warnings": 58
+    }
+  },
+  "checks_not_rerun": [
+    "Full enhanced/offline suites",
+    "core instrumentation/JVM tests",
+    "installer/retained-upgrade matrix",
+    "API26 instrumentation",
+    "physical/arm64 device acceptance"
+  ],
+  "artifacts": {
+    "baseline-app.apk": "5b6f37b65ac581f189e2bf69eecf17999a3a3dd565e504dcda9b2ef9837beeeb",
+    "baseline-tests.apk": "de61d489a597599a8e900949228744cb5cd675edad2b4c146d4cebfe5d36c430",
+    "fixed-app.apk": "ad789d211070c74d2b804318f7167e658ace5d0d6bf9f2e082171f4867783e2a",
+    "fixed-tests.apk": "a3681aa14bd847871bfe7d5bf6f09b8164b75f270613bac223c2cbd69d93bfa8",
+    "fixed-unsigned.apk": "ac0f64875f85c94bdb7dcf3dd690d403456bde3999ad9e6b4b24d64dec7c45d7",
+    "fixed-benchmark.apk": "8a68630cac22faca79e823cfb1752bf7661c79261eed69a4ae3cee957dbbc9d6",
+    "benchmark-tests.apk": "355f328cf45c06a81b82ab969def951154bc60823ac3a7c717cc37097c1bac26",
+    "offline-app.apk": "cb32063644229088099ddf7f4f01dc3a759929094a042ba22fd8ac769fce4f6b",
+    "offline-tests.apk": "d6427189d00c8b858ce1c7879a6d706b855b6ae640710a3103e20fb4659aef1e",
+    "offline-unsigned.apk": "5916ea5094914e0e1d814b76a52a492c011ce9d23e0d6213e81c1151c90bc672"
+  },
+  "ai_assistance": "Diagnosis, code, test, verification and documentation."
+}

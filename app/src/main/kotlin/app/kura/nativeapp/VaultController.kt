@@ -2,6 +2,9 @@ package app.kura.nativeapp
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import app.kura.nativecore.*
 import app.kura.feature.VaultItem
@@ -14,7 +17,7 @@ import java.io.File
 
 class VaultController(app: Application) : AndroidViewModel(app) {
     val pending = PendingOperations()
-    var autoUnlockArmed = true
+    var autoUnlockArmed by mutableStateOf(true)
     val coordinator = VaultSessionCoordinator()
     val lifecycle = AndroidVaultLifecycle(app, coordinator)
     val store = VaultStore(app)

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep update buttons and dialogs off the startup/loading background; show them after opening finishes or on the settled lock screen.
+
 ## 2.2.0-beta.2 — November 6, 2026
 
 - Upgrade the pinned updater to 0.2.2-beta.1, including recovery from a corrupted cached download and safe first-run opt-in handling.

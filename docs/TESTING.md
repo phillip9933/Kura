@@ -1,5 +1,15 @@
 # Testing
 
+## Unreleased updater loading-screen follow-up — 6 November 2026
+
+The owner confirmed that published beta.2's Settings → App updates → Check for updates is visible and opens on the affected phone. This is a manual owner report, not a download/install check or a reproduction of the earlier beta1 disappearance. The subsequent loading-screen report was reproduced: the shared non-unlocked layout exposed the update entry while the vault was opening. The initial regression failed **1/1**,14.448s, before the fix.
+
+The follow-up gates both entry and dialogs until the vault is open or the lock screen is idle with no automatic unlock pending. The real-credential regression holds the store-open mutex after authentication, checks entry/offer/manual-panel suppression, releases opening and verifies manual access; it also covers the pending first frame and a busy locked screen. It passes **1/1**,17.952s. Existing updater integration/popup/settings and phone-only encrypted-wallet acceptance pass **7 active /0 failed /1 documented cold-process opt-in skip**,90.796s. The initial observer expected seven total rather than eight including that skip; both its original result and complete runner transcript remain preserved, with no test rerun or skipped check counted as passed. External nondebuggable R8 updater discovery passes **1/1**,25.676s, including locked, Settings and version-dialog routes.
+
+Enhanced/direct debug/test/unsigned-release build and lint pass: **497 tasks,34 executed /463 up-to-date**,1m14s;0 lint errors/65 warnings. Default offline equivalents pass: **497 tasks,82 executed /415 up-to-date**,1m26s;0 errors/58 warnings. Both permission/export/model/native/16KiB packaging checks pass. These are focused checks on owned disposable API37/16KiB emulators using prototype packages. Full suites, core/JVM, installer, API26 and physical-device checks were not rerun for this UI-only follow-up; their beta.2 evidence below remains historical and scoped to that release.
+
+[Structured evidence](evidence/updater-loading-20261106.json) includes hashes, exact scopes and the preserved failing baseline. Raw transcripts/APKs remain in `../outputs/updater-loading-20261106/`. This is an unreleased change after097582a, separate from the immutable beta.2 APK/tag/report. No signing, merge or new release occurred. Required independent review and remaining physical/data-safety gates remain. AI assisted diagnosis, implementation, tests and documentation.
+
 ## Published beta 2 qualification — 6 November 2026
 
 [Kura 2.2.0-beta.2 / 121](https://github.com/phillip9933/Kura/releases/tag/v2.2.0-beta.2) is published, APK-only, from bcb9f9a. [Public validation report](https://github.com/phillip9933/Kura/releases/download/v2.2.0-beta.2/release-validation.json) records exact hashes, source scopes, fresh/reused/skipped checks and preserved failures. Application code remains b07ef53; all later changes are test harnesses/docs, with byte-identical debug and optimized application artifacts verified.
