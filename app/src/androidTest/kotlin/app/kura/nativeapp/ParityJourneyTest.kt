@@ -13,22 +13,20 @@ class ParityJourneyTest {
  private val context get()=instrumentation.targetContext
  private val device=UiDevice.getInstance(instrumentation)
  private fun click(label:String) {
-  if(label in setOf("Edit","Delete","Archive","Unarchive","Share securely","Export encrypted pass","Export as .pkpass") && !device.hasObject(By.text(label)) && !device.hasObject(By.desc(label))) {
-   (device.findObject(By.desc("More pass actions")) ?: device.findObject(By.desc("More item actions")))?.let {it.click();device.waitForIdle()}
-  }
-  // Let a newly opened menu/dialog appear before attempting to scroll its parent.
-  device.wait(Until.hasObject(By.desc(label)),750).let { found->
-   if(!found) device.wait(Until.hasObject(By.text(label)),750)
+  if(!label.startsWith("Edit ")) {
+   clickJourneyControl(device,label)
+   return
   }
   var imageScrollAttempted=false
   repeat(12) {
+   settleJourneyUi(device)
    val node=device.findObject(By.desc(label)) ?: device.findObject(By.text(label))
    try {if(node!=null && !node.visibleBounds.isEmpty) {
     // Bring image pencils away from the clipped bottom edge before tapping.
     if(!imageScrollAttempted && label.startsWith("Edit ") && node.visibleBounds.bottom>device.displayHeight*4/5 && scrollContent(false)) {
     imageScrollAttempted=true
      device.waitForIdle()
-    } else {if(!label.startsWith("Edit ") || !clickImageEdit(label)) node.click();device.waitForIdle();return}
+    } else {if(!clickImageEdit(label)) node.click();settleJourneyUi(device);return}
    }} catch(_:StaleObjectException) {}
    scrollContent(label=="Enable Auto-Backup")
    device.waitForIdle()
