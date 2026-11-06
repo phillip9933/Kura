@@ -1,0 +1,547 @@
+{
+  "date": "2026-11-06",
+  "source_commit": "08d3f9ef3bb6536f74c9b392445a9037518448ef",
+  "same_tree_remote_main": "6ed466a8aa728d9acb8a6a8ce4fe845922b2716a",
+  "evidence_kind": "Static declarations, published SDK metadata, listed-file hashes and retained public APK entries; not a current resolved graph or security scan.",
+  "gradle_declarations": [
+    {
+      "source": "app/build.gradle.kts",
+      "line": 73,
+      "configuration": "implementation",
+      "declared_coordinate": "dev.offlinescan:scanner-core:0.8.0-beta.1"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 74,
+      "configuration": "implementation",
+      "declared_coordinate": "dev.offlinescan:scanner-processing-opencv:0.8.0-beta.1"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 75,
+      "configuration": "implementation",
+      "declared_coordinate": "dev.offlinescan:scanner-ocr-tesseract:0.8.0-beta.1"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 78,
+      "configuration": "implementation",
+      "declared_coordinate": "io.github.phillip9933:android-updater:0.2.2-beta.1"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 79,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.work:work-runtime:2.11.2"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 81,
+      "configuration": "coreLibraryDesugaring",
+      "declared_coordinate": "com.android.tools:desugar_jdk_libs:2.1.5"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 82,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.profileinstaller:profileinstaller:1.4.1"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 83,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.camera:camera-camera2:1.5.3"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 84,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.camera:camera-lifecycle:1.5.3"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 85,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.camera:camera-view:1.5.3"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 87,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.activity:activity-compose:1.10.1"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 88,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.fragment:fragment-ktx:1.8.9"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 89,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.2"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 90,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.lifecycle:lifecycle-runtime-compose:2.9.2"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 91,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.core:core-ktx:1.16.0"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 92,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.biometric:biometric:1.1.0"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 93,
+      "configuration": "implementation",
+      "declared_coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 94,
+      "configuration": "implementation",
+      "declared_coordinate": "com.google.zxing:core:3.5.3"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 96,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.lifecycle:lifecycle-process:2.9.2"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 97,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test:runner:1.6.2"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 98,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test.ext:junit:1.2.1"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 99,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test.uiautomator:uiautomator:2.3.0"
+    },
+    {
+      "source": "app/build.gradle.kts",
+      "line": 115,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "com.squareup.okhttp3:okhttp:4.12.0"
+    },
+    {
+      "source": "benchmark/build.gradle.kts",
+      "line": 10,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test:runner:1.6.2"
+    },
+    {
+      "source": "benchmark/build.gradle.kts",
+      "line": 11,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test.ext:junit:1.2.1"
+    },
+    {
+      "source": "benchmark/build.gradle.kts",
+      "line": 12,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test.uiautomator:uiautomator:2.3.0"
+    },
+    {
+      "source": "core/database/build.gradle.kts",
+      "line": 12,
+      "configuration": "api",
+      "declared_coordinate": "androidx.room:room-runtime:2.7.2"
+    },
+    {
+      "source": "core/database/build.gradle.kts",
+      "line": 13,
+      "configuration": "ksp",
+      "declared_coordinate": "androidx.room:room-compiler:2.7.2"
+    },
+    {
+      "source": "core/database/build.gradle.kts",
+      "line": 14,
+      "configuration": "implementation",
+      "declared_coordinate": "net.zetetic:sqlcipher-android:4.19.0"
+    },
+    {
+      "source": "core/database/build.gradle.kts",
+      "line": 15,
+      "configuration": "implementation",
+      "declared_coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
+    },
+    {
+      "source": "core/database/build.gradle.kts",
+      "line": 16,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test:runner:1.6.2"
+    },
+    {
+      "source": "core/database/build.gradle.kts",
+      "line": 17,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test.ext:junit:1.2.1"
+    },
+    {
+      "source": "core/import/build.gradle.kts",
+      "line": 8,
+      "configuration": "implementation",
+      "declared_coordinate": "org.bouncycastle:bcprov-jdk18on:1.86"
+    },
+    {
+      "source": "core/import/build.gradle.kts",
+      "line": 9,
+      "configuration": "implementation",
+      "declared_coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
+    },
+    {
+      "source": "core/import/build.gradle.kts",
+      "line": 10,
+      "configuration": "testImplementation",
+      "declared_coordinate": "junit:junit:4.13.2"
+    },
+    {
+      "source": "core/import/build.gradle.kts",
+      "line": 10,
+      "configuration": "testImplementation",
+      "declared_coordinate": "org.json:json:20250517"
+    },
+    {
+      "source": "core/import/build.gradle.kts",
+      "line": 11,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test:runner:1.6.2"
+    },
+    {
+      "source": "core/import/build.gradle.kts",
+      "line": 11,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test.ext:junit:1.2.1"
+    },
+    {
+      "source": "core/model/build.gradle.kts",
+      "line": 4,
+      "configuration": "implementation",
+      "declared_coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2"
+    },
+    {
+      "source": "core/model/build.gradle.kts",
+      "line": 5,
+      "configuration": "testImplementation",
+      "declared_coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2"
+    },
+    {
+      "source": "core/model/build.gradle.kts",
+      "line": 6,
+      "configuration": "testImplementation",
+      "declared_coordinate": "junit:junit:4.13.2"
+    },
+    {
+      "source": "core/security/build.gradle.kts",
+      "line": 11,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.biometric:biometric:1.1.0"
+    },
+    {
+      "source": "core/security/build.gradle.kts",
+      "line": 12,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.lifecycle:lifecycle-process:2.9.2"
+    },
+    {
+      "source": "core/security/build.gradle.kts",
+      "line": 13,
+      "configuration": "implementation",
+      "declared_coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
+    },
+    {
+      "source": "core/security/build.gradle.kts",
+      "line": 14,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test:runner:1.6.2"
+    },
+    {
+      "source": "core/security/build.gradle.kts",
+      "line": 15,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test.ext:junit:1.2.1"
+    },
+    {
+      "source": "core/storage/build.gradle.kts",
+      "line": 7,
+      "configuration": "implementation",
+      "declared_coordinate": "org.bouncycastle:bcprov-jdk18on:1.86"
+    },
+    {
+      "source": "core/storage/build.gradle.kts",
+      "line": 8,
+      "configuration": "implementation",
+      "declared_coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
+    },
+    {
+      "source": "core/storage/build.gradle.kts",
+      "line": 9,
+      "configuration": "testImplementation",
+      "declared_coordinate": "junit:junit:4.13.2"
+    },
+    {
+      "source": "core/storage/build.gradle.kts",
+      "line": 10,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test:runner:1.6.2"
+    },
+    {
+      "source": "core/storage/build.gradle.kts",
+      "line": 10,
+      "configuration": "androidTestImplementation",
+      "declared_coordinate": "androidx.test.ext:junit:1.2.1"
+    },
+    {
+      "source": "feature/vault/build.gradle.kts",
+      "line": 10,
+      "configuration": "coreLibraryDesugaring",
+      "declared_coordinate": "com.android.tools:desugar_jdk_libs:2.1.5"
+    },
+    {
+      "source": "feature/vault/build.gradle.kts",
+      "line": 11,
+      "configuration": "api",
+      "declared_coordinate": "androidx.compose:compose-bom:2025.12.01"
+    },
+    {
+      "source": "feature/vault/build.gradle.kts",
+      "line": 12,
+      "configuration": "api",
+      "declared_coordinate": "androidx.compose.material3:material3"
+    },
+    {
+      "source": "feature/vault/build.gradle.kts",
+      "line": 12,
+      "configuration": "api",
+      "declared_coordinate": "androidx.compose.foundation:foundation"
+    },
+    {
+      "source": "feature/vault/build.gradle.kts",
+      "line": 13,
+      "configuration": "api",
+      "declared_coordinate": "androidx.compose.ui:ui"
+    },
+    {
+      "source": "feature/vault/build.gradle.kts",
+      "line": 14,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.compose.material:material-icons-extended:1.7.8"
+    },
+    {
+      "source": "feature/vault/build.gradle.kts",
+      "line": 15,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.activity:activity-compose:1.10.1"
+    },
+    {
+      "source": "feature/vault/build.gradle.kts",
+      "line": 16,
+      "configuration": "implementation",
+      "declared_coordinate": "androidx.core:core-ktx:1.16.0"
+    },
+    {
+      "source": "feature/vault/build.gradle.kts",
+      "line": 17,
+      "configuration": "implementation",
+      "declared_coordinate": "com.google.zxing:core:3.5.3"
+    },
+    {
+      "source": "feature/vault/build.gradle.kts",
+      "line": 18,
+      "configuration": "implementation",
+      "declared_coordinate": "uk.org.okapibarcode:okapibarcode:0.5.6"
+    },
+    {
+      "source": "feature/vault/build.gradle.kts",
+      "line": 19,
+      "configuration": "implementation",
+      "declared_coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"
+    }
+  ],
+  "distinct_declared_coordinates": 37,
+  "build_declarations": {
+    "agp": "9.1.1",
+    "kotlin_jvm_and_compose_plugins": "2.2.20",
+    "ksp": "2.3.12",
+    "gradle": "9.3.1",
+    "gradle_distribution_sha256": "b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06",
+    "jdk_toolchain": "21",
+    "bytecode_target": "17",
+    "compile_sdk": "37.0",
+    "build_tools": "36.0.0",
+    "scope": "Declared versions; no build-plugin transitive resolution this pass."
+  },
+  "vendored_pom_declarations": [
+    {
+      "source": "third_party/android-updater/maven/io/github/phillip9933/android-updater/0.2.2-beta.1/android-updater-0.2.2-beta.1.pom",
+      "coordinate": "io.github.phillip9933:android-updater:0.2.2-beta.1",
+      "declared_dependencies": [
+        "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2",
+        "com.squareup.okhttp3:okhttp:4.12.0",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.2.20",
+        "androidx.core:core:1.16.0",
+        "androidx.work:work-runtime:2.11.2",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1"
+      ]
+    },
+    {
+      "source": "third_party/card-scanner/maven/dev/offlinescan/scanner-camera/0.8.0-beta.1/scanner-camera-0.8.0-beta.1.pom",
+      "coordinate": "dev.offlinescan:scanner-camera:0.8.0-beta.1",
+      "declared_dependencies": [
+        "dev.offlinescan:scanner-core:0.8.0-beta.1",
+        "androidx.camera:camera-view:1.4.2",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.2.20",
+        "dev.offlinescan:scanner-processing-opencv:0.8.0-beta.1",
+        "androidx.camera:camera-camera2:1.4.2",
+        "androidx.camera:camera-lifecycle:1.4.2",
+        "androidx.lifecycle:lifecycle-runtime-ktx:2.8.7"
+      ]
+    },
+    {
+      "source": "third_party/card-scanner/maven/dev/offlinescan/scanner-core/0.8.0-beta.1/scanner-core-0.8.0-beta.1.pom",
+      "coordinate": "dev.offlinescan:scanner-core:0.8.0-beta.1",
+      "declared_dependencies": [
+        "org.jetbrains.kotlin:kotlin-stdlib:2.2.20"
+      ]
+    },
+    {
+      "source": "third_party/card-scanner/maven/dev/offlinescan/scanner-export/0.8.0-beta.1/scanner-export-0.8.0-beta.1.pom",
+      "coordinate": "dev.offlinescan:scanner-export:0.8.0-beta.1",
+      "declared_dependencies": [
+        "dev.offlinescan:scanner-core:0.8.0-beta.1",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.2.20"
+      ]
+    },
+    {
+      "source": "third_party/card-scanner/maven/dev/offlinescan/scanner-ocr-tesseract/0.8.0-beta.1/scanner-ocr-tesseract-0.8.0-beta.1.pom",
+      "coordinate": "dev.offlinescan:scanner-ocr-tesseract:0.8.0-beta.1",
+      "declared_dependencies": [
+        "dev.offlinescan:scanner-core:0.8.0-beta.1",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.2.20",
+        "androidx.annotation:annotation:1.3.0"
+      ]
+    },
+    {
+      "source": "third_party/card-scanner/maven/dev/offlinescan/scanner-processing-opencv/0.8.0-beta.1/scanner-processing-opencv-0.8.0-beta.1.pom",
+      "coordinate": "dev.offlinescan:scanner-processing-opencv:0.8.0-beta.1",
+      "declared_dependencies": [
+        "dev.offlinescan:scanner-core:0.8.0-beta.1",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.2.20",
+        "androidx.exifinterface:exifinterface:1.4.1",
+        "com.microsoft.onnxruntime:onnxruntime-android:1.24.1"
+      ]
+    },
+    {
+      "source": "third_party/card-scanner/maven/dev/offlinescan/scanner-ui-compose/0.8.0-beta.1/scanner-ui-compose-0.8.0-beta.1.pom",
+      "coordinate": "dev.offlinescan:scanner-ui-compose:0.8.0-beta.1",
+      "declared_dependencies": [
+        "dev.offlinescan:scanner-core:0.8.0-beta.1",
+        "androidx.compose.material3:material3:(not declared)",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.2.20",
+        "dev.offlinescan:scanner-processing-opencv:0.8.0-beta.1",
+        "dev.offlinescan:scanner-camera:0.8.0-beta.1",
+        "dev.offlinescan:scanner-export:0.8.0-beta.1",
+        "androidx.compose.ui:ui:(not declared)",
+        "androidx.compose.foundation:foundation:(not declared)",
+        "androidx.activity:activity-compose:1.10.1",
+        "androidx.lifecycle:lifecycle-runtime-compose:2.8.7",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1",
+        "androidx.exifinterface:exifinterface:1.4.1"
+      ]
+    }
+  ],
+  "vendored_listed_file_integrity": [
+    {
+      "bundle": "third_party/android-updater",
+      "source_revision": "da2c9f30f3a9f4199d0e9cc1428be4519c954aa1",
+      "listed_files": 7,
+      "all_listed_sha256_match": true,
+      "scope": "Listed files only; not a vulnerability scan, independent rebuild or resolved Kura graph."
+    },
+    {
+      "bundle": "third_party/card-scanner",
+      "source_revision": "8d9a451c27ed87d20110d25dcedb81001e0f521f",
+      "listed_files": 185,
+      "all_listed_sha256_match": true,
+      "scope": "Listed files only; not a vulnerability scan, independent rebuild or resolved Kura graph."
+    }
+  ],
+  "native_declared_provenance": {
+    "source": "third_party/card-scanner/THIRD-PARTY-NOTICES.md",
+    "opencv": "4.12.0 (source-built core/imgproc/JNI; Java wrappers retained)",
+    "onnxruntime_android": "1.24.1 (declared in scanner-processing-opencv POM)",
+    "tesseract_wrapper": "Tesseract4Android 4.9.0 bindings, rebuilt native dependencies",
+    "tesseract": "5.5.3 plus documented local parser patches",
+    "leptonica": "1.85.0",
+    "libjpeg": "9f",
+    "libpng": "1.6.59",
+    "ndk_runtime": "28.2.13676358",
+    "models": "tessdata_fast revision 87416418657359cb625c412a48b6e1d6d41c29bd; model hashes checked in packaging smoke",
+    "scope": "Upstream provenance declarations, not fresh native rebuild or advisory verification."
+  },
+  "public_artifact_entries": {
+    "tag": "v2.2.0-beta.3",
+    "apk_sha256": "827b8dcd70a9fd41c3e146692eed9edbe218159603fc888c4a96dbcdfd6cb910",
+    "native_libraries": [
+      "lib/arm64-v8a/libandroidx.graphics.path.so",
+      "lib/arm64-v8a/libc++_shared.so",
+      "lib/arm64-v8a/libimage_processing_util_jni.so",
+      "lib/arm64-v8a/libjpeg.so",
+      "lib/arm64-v8a/libleptonica.so",
+      "lib/arm64-v8a/libonnxruntime.so",
+      "lib/arm64-v8a/libonnxruntime4j_jni.so",
+      "lib/arm64-v8a/libopencv_java4.so",
+      "lib/arm64-v8a/libpngx.so",
+      "lib/arm64-v8a/libsqlcipher.so",
+      "lib/arm64-v8a/libsurface_util_jni.so",
+      "lib/arm64-v8a/libtesseract.so",
+      "lib/x86_64/libandroidx.graphics.path.so",
+      "lib/x86_64/libc++_shared.so",
+      "lib/x86_64/libimage_processing_util_jni.so",
+      "lib/x86_64/libjpeg.so",
+      "lib/x86_64/libleptonica.so",
+      "lib/x86_64/libonnxruntime.so",
+      "lib/x86_64/libonnxruntime4j_jni.so",
+      "lib/x86_64/libopencv_java4.so",
+      "lib/x86_64/libpngx.so",
+      "lib/x86_64/libsqlcipher.so",
+      "lib/x86_64/libsurface_util_jni.so",
+      "lib/x86_64/libtesseract.so"
+    ],
+    "scope": "Actual ZIP entries in the retained checksum-matched public APK. Entries do not establish upstream component versions."
+  },
+  "historical_scan": {
+    "source": "docs/security-dependencies.json",
+    "date": "2026-09-29",
+    "configuration": ":app:releaseRuntimeClasspath",
+    "maven_packages": 138,
+    "result": "No matches reported then; historical only, not re-queried. Excludes current native/build/CI scope."
+  },
+  "current_scans": {
+    "resolved_gradle_graph": "All four supported flag combinations resolve in the isolated public mirror; see dependency-resolution-20261106.json for selected versions and limitations.",
+    "dependency_advisory_scan": "OSV queried 319 selected Maven tuples plus four action releases: seven build-plugin versions / 11 advisory records, zero truncation. Not a source/native completeness verdict.",
+    "secret_scan": "not run",
+    "static_security_scan": "not run",
+    "platform_alerts": "not verified",
+    "scope": "No tools installed, scanners enabled, repository contents uploaded or account grants changed."
+  }
+}

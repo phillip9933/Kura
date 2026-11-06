@@ -38,6 +38,11 @@ Build from the repository root. Commands below use the Unix wrapper; substitute 
 
 The paths in the table identify modules/classes, not shell file paths; the [architecture code map](docs/ARCHITECTURE.md#code-map) links to exact sources. [Testing](docs/TESTING.md) explains the full disposable-emulator runner and known failures. Tests should protect behavior or a meaningful failure boundary; do not add tests that merely duplicate an implementation.
 
+APK verification also requires the Android SDK Command-Line Tools' `apkanalyzer`
+on PATH or in `cmdline-tools/latest/bin`. See [APK verification](docs/PACKAGING.md)
+for the compiled-fixture regression command and supplied-artifact policy. Run
+repository-controlled checks only in the approved disposable environment.
+
 ## Structure and code style
 
 Keep UI rendering in `feature/vault`, Android launchers in `app`, and import/storage behavior in the core modules. Module dependencies are currently acyclic. Do not expose a new implementation dependency with `api` merely to make a downstream compile error disappear; declare the actual owner/dependency deliberately. Package names and compatibility keys are stable even when they contain historical terminology.

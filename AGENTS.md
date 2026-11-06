@@ -2,6 +2,10 @@
 
 Kura is an offline Kotlin/Jetpack Compose Android wallet. Read [README](README.md) for setup, [Architecture](docs/ARCHITECTURE.md) for ownership and [Contributing](CONTRIBUTING.md) for the change/test map. This file is the shared agent entry point; do not create competing copies of these instructions.
 
+## Central guidance for local owner work
+
+Resolve an absolute `APP_GUIDELINES_ROOT` supplied by the trusted launch environment, or use `/home/phil/Projects/App_Guidelines` on the confirmed laptop. Explicitly read `agent-guidelines.md`, `local-agent-setup.md` and the task-relevant guides before edits or repository-code execution. This pointer does not load them automatically. If a required file is missing or inaccessible, report the exact blocker and stop changes/execution; authorized read-only inspection may continue. Preserve the project rules below. Record the central revision actually read in task evidence; do not copy its guides here or make application builds/ordinary CI depend on the private path.
+
 ## Boundaries
 
 - Follow the owner-managed [maintainer approval](CONTRIBUTING.md#maintainer-approval) workflow. Record owner sign-off when supplied; independent review is required only when explicitly requested. Physical/data-safety acceptance and release authorization remain separate gates. Historical approval is not blanket future approval.

@@ -1,5 +1,5 @@
 """Verify native ELF load alignment and APK permissions without installing release."""
-import argparse, struct, zipfile, subprocess, pathlib, os
+import argparse, struct, zipfile, subprocess, pathlib, os, shutil
 import xml.etree.ElementTree as ET
 root = pathlib.Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
@@ -31,8 +31,14 @@ with zipfile.ZipFile(apk) as archive:
             assert hashlib.sha256(archive.read(name)).hexdigest() == expected
         abis = {n.split("/")[1] for n in archive.namelist() if n.startswith("lib/") and n.endswith(".so")}
         assert abis == {"arm64-v8a", "x86_64"}, abis
-# Check the merged manifest from this release build, including library-contributed components.
-manifest = ET.parse(root / "app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml").getroot()
+# Inspect the manifest packaged in the supplied APK, including library components.
+# A checkout's generated manifest may belong to another build or distribution.
+analyzer_name = "apkanalyzer.bat" if os.name == "nt" else "apkanalyzer"
+analyzer = pathlib.Path(shutil.which(analyzer_name) or pathlib.Path(sdk_home) / "cmdline-tools/latest/bin" / analyzer_name)
+if not analyzer.is_file():
+    parser.error("APK manifest verification requires Android SDK Command-Line Tools: apkanalyzer on PATH or in cmdline-tools/latest/bin")
+manifest_xml = subprocess.check_output([str(analyzer), "manifest", "print", str(apk)], text=True)
+manifest = ET.fromstring(manifest_xml)
 a = "{http://schemas.android.com/apk/res/android}"
 providers = manifest.findall("application/provider")
 update_providers = [p for p in providers if p.get(a + "authorities") == "app.kura.wallet.android-updates"]

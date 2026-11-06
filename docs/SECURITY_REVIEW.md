@@ -2,6 +2,11 @@
 
 Scope: local Kura 2.0.0 development source, version code 117, after native-only consolidation. This is a manual engineering review with automated regression validation, **not an independent audit, penetration test or certification**. No production key, user vault or real personal backup was used.
 
+The [6 November dependency baseline](DEPENDENCY-BASELINE.md) inventories current
+declarations, vendor integrity and unverified scan coverage. This September
+review and its OSV result remain historical; they do not cover the current
+scanner/updater/native/build/CI dependency set.
+
 ## Findings and disposition
 
 | ID | Priority | Finding | Disposition |
