@@ -9,6 +9,9 @@ Start with the root [README](../README.md) to build the app and [Contributing](.
 | [Testing](TESTING.md) | Commands, device constraints and dated validation evidence |
 | [Security policy](../SECURITY.md) | Threat model, privacy boundaries and reporting |
 | [Security review](SECURITY_REVIEW.md) | Findings and remaining security release gates |
+| [Dependency baseline](DEPENDENCY-BASELINE.md) | Dated declarations, vendor integrity and security-scan coverage gaps |
+| [APK verification](PACKAGING.md) | Supplied-artifact manifest policy, SDK prerequisites and regression command |
+| [CI verification](CI-VERIFICATION.md) | Immutable action inputs, token scope and actual check boundaries |
 | [Code review](CODE_REVIEW.md) | Cleanup decisions and maintainability follow-ups |
 | [App updates](APP-UPDATES.md) | Optional direct-update distribution, permissions and acceptance |
 | [Release preparation](RELEASE.md) | Signing continuity, packaging and store gates |
