@@ -133,7 +133,7 @@
   },
   "checks_not_rerun": [
     "Full enhanced/offline suites",
-    "core instrumentation/JVM tests",
+    "core instrumentation",
     "installer/retained-upgrade matrix",
     "API26 instrumentation",
     "physical/arm64 device acceptance"
@@ -150,5 +150,75 @@
     "offline-tests.apk": "d6427189d00c8b858ce1c7879a6d706b855b6ae640710a3103e20fb4659aef1e",
     "offline-unsigned.apk": "5916ea5094914e0e1d814b76a52a492c011ce9d23e0d6213e81c1151c90bc672"
   },
-  "ai_assistance": "Diagnosis, code, test, verification and documentation."
+  "ai_assistance": "Diagnosis, code, test, verification and documentation.",
+  "ci": {
+    "source": "7f1b257484e48b052942c71daff54a00ce3e8958",
+    "run": "https://github.com/phillip9933/Kura/actions/runs/42181216040",
+    "success": true,
+    "variants": [
+      {
+        "variant": "android-verification-reports-updates-false-scanner-false",
+        "jvm": {
+          "tests": 59,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 58
+        }
+      },
+      {
+        "variant": "android-verification-reports-updates-false-scanner-true",
+        "jvm": {
+          "tests": 59,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 62
+        }
+      },
+      {
+        "variant": "android-verification-reports-updates-true-scanner-false",
+        "jvm": {
+          "tests": 59,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 62
+        }
+      },
+      {
+        "variant": "android-verification-reports-updates-true-scanner-true",
+        "jvm": {
+          "tests": 59,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 65
+        }
+      }
+    ],
+    "fresh_task_execution": [
+      {
+        "task": ":core:model:test",
+        "fresh_executions": 4
+      },
+      {
+        "task": ":core:import:testDebugUnitTest",
+        "fresh_executions": 4
+      },
+      {
+        "task": ":core:import:testLowMemory",
+        "fresh_executions": 4
+      }
+    ],
+    "total_jvm": 236
+  }
 }
