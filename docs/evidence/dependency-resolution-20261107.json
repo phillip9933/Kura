@@ -629,7 +629,7 @@
       "org.jetbrains.kotlin:kotlin-util-klib-metadata:2.2.20",
       "org.jetbrains.kotlin:kotlin-util-klib:2.2.20"
     ],
-    "limits": "Scope differs from the older16-configuration export; differences are not all source upgrades."
+    "limits": "Scope differs from the older sixteen-configuration export; differences are not all source upgrades."
   },
   "osv": {
     "endpoint": "https://api.osv.dev/v1/querybatch",
@@ -649,7 +649,7 @@
     "runtime_test_matches": 0,
     "classification": "Existing build-tool debt remains unresolved; no reachability/exploitability conclusion or automatic override.",
     "private_triage": "Detailed package/advisory mapping retained outside Git.",
-    "old_baseline": "The6November query has319 Maven tuples plus4 actions and11 records/7 build-only versions; retained as historical, not overwritten."
+    "old_baseline": "The 6 November query has 319 Maven tuples plus four actions and 11 records across seven build-only versions; retained as historical, not overwritten."
   },
   "limitations": [
     "Opt-in installer-test and supplemental processor/lint configurations are not comprehensive.",

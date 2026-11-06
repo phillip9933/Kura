@@ -1,5 +1,61 @@
 # Testing
 
+## Combined candidate qualification — 7 November 2026
+
+The atomic-publication fix, fixed-mask crop editor, stable scanner 0.8.0/updater
+0.2.2 and Kotlin JVM/Compose 2.4.21 are qualified on review branches. Runtime
+application source is `3c50ed1`; final build/external driver source is `1f544dd`.
+[Source, APK hashes, counts and limitations](evidence/kotlin-runtime-20261107.json)
+record the exact correspondence. Application code/resources/native payloads are
+identical between those builds; disposable debug signatures differ, and the
+optimized APK's source-revision metadata changes. Full signed-APK byte identity
+is not claimed.
+
+| Fresh verification | Result |
+| --- | --- |
+| [Final four-way CI](https://github.com/phillip9933/Kura/actions/runs/42268577334) at `1f544dd` | 63 JVM tests per configuration; **252 passed**, no failures/errors/skips. Lint warnings: 58 offline, 62 updater, 64 scanner, 67 both; no errors/fatals. Build, unsigned release, manifest/16 KiB packaging and installer-harness compilation pass. |
+| Complete enhanced app selection, API 37 / 16 KiB | **92 passed, 0 failed, 4 existing opt-in skips / 96 cases**, 945.314 s |
+| Modern core security / database / import-publication | **7/7, 12/12, 31/31** passed; no skips |
+| API 26 / 4 KiB core | **49 passed, 0 failed, 1 existing API-specific skip** across 50 cases; import-publication passes 31/31 |
+| API 26 scanner / crop / OCR | **18/18** passed, 102.358 s |
+| Small portrait / landscape at 200% text | **4/4 each**, 72.837 s / 83.268 s; screenshots inspected and keyboard controls exercised |
+| Real OCR process interruption | Six workspace files and a synthetic capture confirmed before force-stop; prepare deliberately interrupted, **not a passed test**. Reopen cleanup/no-draft-publication verification passes **1/1**, 5.065 s. |
+| Phone-only encrypted-wallet prerequisite and cold reopening | API 26: ordinary journey **1/1**, cold prepare/verify **2/2 phase executions**. API 37: prerequisite **1/1**, cold phases **2/2**. Real force-stops; no clear/uninstall between those phases. |
+| External nondebuggable/R8 journeys | **4/4** passed, 97.877 s: authenticated fixtures/lock/reopen, denied camera/cancelled picker, repeated real unlocks, and manual update discovery |
+| Separate pre-Kotlin storage PR | [Exact-head manual CI](https://github.com/phillip9933/Kura/actions/runs/42265709472) at `80a2ea7`: four builds, **252 JVM passes**, no failures/errors/skips; local Kotlin 2.2.20 import suites **31/31 on each API** remain a separate scope. |
+
+The four full-app skips are cold-process, retained-upgrade, store capture and
+empty-vault timing opt-ins. Relevant cold phases run separately above; fresh
+store capture, empty-vault tracing and version-upgrade acceptance are not claimed.
+The failing pre-upgrade baselines and unchanged denied-publication assertion
+remain in [atomic-publication evidence](evidence/atomic-publication-20261107.json).
+The earlier Kotlin candidate's API 26 failure retains its separate scope below.
+Independent AI patch review found no blocking issue; it is not human sign-off.
+
+The optimized test transition is **same-version debug to optimized**, using
+`app.kura.wallet.prototype`, version **2.2.0-beta.3-dev (122)** before and after,
+source `3c50ed1`, the same verified disposable CI signer and UID 10249. Actual
+installed base-APK hashes match the inspected CI inputs. The operation is
+`adb install -r -t`, not the Android update-confirmation UI. The R8 fixture
+loader changes synthetic records; this transition is not independent evidence
+of all pre-existing-record retention, beta-to-stable upgrade, production identity
+or installer acceptance. Earlier genuine version-change/installer phases retain
+their own source/date below. Production signing material was not accessed.
+
+The final CI dependency graph matches the scanned graph in all nine scopes and
+four configurations, including external artifact hashes. The **318-query OSV
+result is reused**, not rerun: ten records across six build-only package
+versions; no returned match in collected app compile/runtime/test scopes.
+[Coverage and unresolved debt](DEPENDENCY-BASELINE.md) remain explicit.
+
+**Still unverified:** owner crop review, screen-reader spoken feedback,
+photographed-card/arm64 and hardware/production-package acceptance. Physical
+tests are deferred, not passed or waived. Stable metadata, tagged release CI,
+production signing and published-artifact verification remain separate. No stable
+release, main merge or beta deletion occurred. Both owned emulators were stopped
+after verification; original local changes and recovery history remain intact.
+AI assisted implementation, independent patch review, tests and documentation.
+
 ## APK verifier regression — 6 November 2026
 
 The local maintenance diff based on `08d3f9e` reads manifest security policy from
@@ -953,11 +1009,11 @@ qualified. No production signing, release or physical acceptance is inferred.
 
 ### Atomic publication recovery — 7 November 2026
 
-A real API26 run exposed a false-success file publication: the base bytes matched
+A real API 26 run exposed a false-success file publication: the base bytes matched
 the replacement while the legacy backup remained authoritative. A pre-Kotlin
 2.2.20 baseline with the unchanged helper reproduces all three selected cases
-(**0 pass / 3 fail**,1.985s). Modern Android reproduces the equal-byte replacement
-case (**2 pass / 1 fail**,2.132s), where an uncommitted new file remains.
+(**0 pass / 3 fail**, 1.985s). Modern Android reproduces the equal-byte replacement
+case (**2 pass / 1 fail**, 2.132s), where an uncommitted new file remains.
 Both baselines and the original `failedRenameIsReportedInsteadOfSilentlyClaimingRestoreSuccess`
 assertion are preserved; this is not attributed to the Kotlin upgrade.
 
@@ -965,30 +1021,30 @@ The fix refuses success while a platform backup/new transaction entry remains,
 then retains checked fsync and bounded byte/length verification. Real-directory
 permission failures exercise the OS, followed by authoritative reopen and retry;
 no AtomicFile behavior is mocked. The complete import/publication suite passes
-**31/31 on API26**,69.240s, and **31/31 on API37**,80.102s, on disposable
-x86_64 emulators (4 KiB and16 KiB respectively). Two new cases cover different
-and identical replacement bytes. The fixed test APK was built with Kotlin2.2.20;
-these results do not qualify a subsequent2.4.21 build.
+**31/31 on API 26**, 69.240s, and **31/31 on API 37**, 80.102s, on disposable
+x86_64 emulators (4 KiB and 16 KiB respectively). Two new cases cover different
+and identical replacement bytes. The fixed test APK was built with Kotlin 2.2.20;
+these results do not qualify a subsequent 2.4.21 build.
 
-Isolated baseline build29.727s; fixed build/storage lint16.750s. No new lint
+Isolated baseline build 29.727s; fixed build/storage lint 16.750s. No new lint
 suppression, schema, backup format, key alias, production package or signing
 change. [Source/artifact evidence](evidence/atomic-publication-20261107.json).
 Full application and other library results retain their earlier source scope;
 final combined qualification is separate. AI assisted diagnosis, patch and tests.
 
 
-### Kotlin2.4.21 candidate before atomic-publication fix
+### Kotlin 2.4.21 candidate before atomic-publication fix
 
-The CI-built APKs from `c54787d` (manual run42254897153) pass the modern
-API37/16KiB complete app selection: **92pass /0fail /4existing opt-in skips**,
-96terminal cases,941.553s. Core security7/7, database12/12 and import29/29
-pass. OnAPI26/4KiB, scanner18/18, phone-unlock/data1/1 and database12/12
-pass; security has6pass/1API-specific skip. Import has28pass/1real failure,
+The CI-built APKs from `c54787d` (manual run 42254897153) pass the modern
+API 37/16 KiB complete app selection: **92 passed / 0 failed / 4 existing opt-in skips**,
+96 terminal cases, 941.553s. Core security 7/7, database 12/12 and import 29/29
+pass. On API 26/4 KiB, scanner 18/18, phone-unlock/data 1/1 and database 12/12
+pass; security has 6 passed / 1 API-specific skip. Import has 28 passed / 1 real failure,
 which prompted the separately recorded atomic-publication fix above.
 
 These APKs predate that fix; they are not final combined-candidate acceptance.
 Four existing full-app skips are cold-process, retained-upgrade, store capture
 and empty-vault timing opt-ins. No physical/arm64, production-identity or
 signed-artifact claim is made. Raw transcripts and verified APK hashes remain
-in task outputs; failed API26 evidence is retained. Independent AI patch review
+in task outputs; failed API 26 evidence is retained. Independent AI patch review
 of the atomic fix found no blocking issue, not human maintainer sign-off.

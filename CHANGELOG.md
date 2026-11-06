@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Changed
+- Keep the card photo visible while adjusting the mask, pan, zoom, rotation and proportions, including small screens and large text.
+- Pin scanner 0.8.0 and updater 0.2.2 stable libraries.
+
+### Fixed
+- Report incomplete atomic file commits instead of claiming success before a later read rolls them back.
+
+### Build information
+- Use Kotlin JVM/Compose 2.4.21 with the existing AGP, Gradle and KSP toolchain.
+
 ## 2.2.0-beta.3 — November 6, 2026
 
 - Keep update buttons and dialogs off the startup/loading background; show them after opening finishes or on the settled lock screen.

@@ -151,18 +151,18 @@ before merging; the original build-scoped debt and scan gaps remain visible.
 
 ## Combined Kotlin/stable-SDK graph — 7 November 2026
 
-[Exact-head CI42260877620](https://github.com/phillip9933/Kura/actions/runs/42260877620)
+[Exact-head CI 42260877620](https://github.com/phillip9933/Kura/actions/runs/42260877620)
 at `4e0199b` exports actual selections and external Maven artifact SHA-256 values
 for **nine scopes in each of four configurations**. These cover app debug/release
 compile/runtime, default Android-test compile/runtime, model/import JVM-test
 runtime and root build-plugin classpath. This is a new, narrower named scope,
 not a relabelling of the earlier sixteen-configuration export.
 
-Kotlin JVM/Compose and selected standard library are2.4.21; scanner0.8.0 and
-updater0.2.2 are stable pins. Root build tools have119 components; app release
-runtime remains139/149/143/153 across offline/updater/scanner/both. The downloaded
-CI reports pass252 fresh JVM tests, no failures/errors/skips; lint has0 errors
-and58/62/64/67 warnings. [Inventory, hashes and scope](evidence/dependency-resolution-20261107.json).
+Kotlin JVM/Compose and selected standard library are 2.4.21; scanner 0.8.0 and
+updater 0.2.2 are stable pins. Root build tools have 119 components; app release
+runtime remains 139 / 149 / 143 / 153 across offline/updater/scanner/both. The downloaded
+CI reports pass 252 fresh JVM tests, no failures/errors/skips; lint has 0 errors
+and 58 / 62 / 64 / 67 warnings. [Inventory, hashes and scope](evidence/dependency-resolution-20261107.json).
 
 A fresh OSV batch lookup of **318 unique selected Maven tuples** returned
 **10 records across six build-tool package versions**, no truncated queries.
@@ -171,11 +171,21 @@ was returned for the collected app compile/runtime or test scopes. This does
 not prove absence of unknown/unindexed vulnerabilities or safe native binaries.
 Existing build-tool debt remains unresolved and needs scoped maintenance; it
 was neither suppressed nor upgraded by an untested classpath override. Detailed
-triage stays outside Git. The four CI actions retain their separate6November
-scan; they were not included in these318 queries. Only public Maven names and
-versions were sent toOSV from a separate client without source, home or credentials.
+triage stays outside Git. The four CI actions retain their separate 6 November
+scan; they were not included in these 318 queries. Only public Maven names and
+versions were sent to OSV from a separate client without source, home or credentials.
 
 This export still excludes comprehensive opt-in installer, processor/lint,
 embedded Gradle/JDK/SDK and native coverage. It is not a shipped/R8 SBOM. The
 subsequent atomic-publication fix changes no dependency declarations, but its
 final CI inventory must be compared before reusing this advisory result.
+
+
+### Final graph correspondence
+
+The fixed candidate's CI at `3c50ed1` and the final external-driver build at
+`1f544dd` export the same selected modules and external artifact hashes as
+`4e0199b` in every one of the nine scopes/four configurations. The 318-query
+7 November result therefore remains applicable within that exact scope as
+**reused evidence**. It is not a second scan or a claim that every older scope
+was recollected. [Final CI and runtime correspondence](evidence/kotlin-runtime-20261107.json).

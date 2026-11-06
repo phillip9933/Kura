@@ -86,8 +86,9 @@ Each flag combination runs `tools/export-dependency-resolution.gradle` after
 normal build/packaging validation. It records app debug/release compile and
 runtime scopes, default Android-test compile/runtime, core model/import JVM
 test runtime, and the root buildscript classpath: nine named scopes per
-configuration. The four app scopes across four combinations retain the earlier
-16-configuration app coverage; test/build scopes are additional.
+configuration. The 6 November export resolved sixteen configurations per
+combination; the new collector explicitly covers the nine scopes listed above.
+Each export retains its own scope definitions and date.
 
 Reports under `build/reports/dependencies/resolution.json` contain exact selected
 Maven coordinates and external artifact hashes, source revision, flags and
@@ -112,9 +113,22 @@ The exported optimized app uses `app.kura.wallet.prototype`, while the external
 benchmark driver historically defaults to `.prototype.benchmark`. Supply
 `-e targetPackage app.kura.wallet.prototype` when testing the exported optimized
 APK. All four external journeys accept that explicit synthetic identity; the
-production identity remains excluded. The external test APK targets API37, so its
+production identity remains excluded. The external test APK targets API 37, so its
 manifest explicitly declares visibility for the three allowed prototype targets
 before PackageManager checks. Updater discovery and optimized fixture
 journeys require a nondebuggable app, and the fixture journey explicitly checks
 emulator hardware. This selects an existing release-style prototype build; it
 does not change application code, signing or authentication behavior.
+
+
+### Recorded qualification
+
+[Final manual run 42268577334](https://github.com/phillip9933/Kura/actions/runs/42268577334)
+and [PR run 42268543563](https://github.com/phillip9933/Kura/actions/runs/42268543563)
+at `1f544dd` pass all four configurations. Downloaded manual reports confirm
+252 fresh JVM passes, no failures/errors/skips and no lint errors/fatals.
+The seven exported APKs were inspected for package, signer and instrumentation
+targets; the external driver declares exactly the three prototype query targets.
+Runtime uses the source-correspondent `3c50ed1` app pair and the final `1f544dd`
+self-targeted driver, with signatures recorded separately. Four optimized
+external journeys pass. [Complete scoped evidence](evidence/kotlin-runtime-20261107.json).

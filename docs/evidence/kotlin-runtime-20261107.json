@@ -1,0 +1,645 @@
+{
+  "date": "2026-11-07",
+  "timezone": "Asia/Tokyo",
+  "application_source": "3c50ed1b3ffe067bc70fffd588abe63ad5a3c0bf",
+  "final_build_and_external_driver_source": "1f544dd7f86e9485ade75731cba85bb77a2dc2c0",
+  "source_and_payload_correspondence": {
+    "application_source": "3c50ed1b3ffe067bc70fffd588abe63ad5a3c0bf",
+    "final_driver_and_build_head": "1f544dd7f86e9485ade75731cba85bb77a2dc2c0",
+    "all_application_code_resources_native_payloads_equal": true,
+    "full_signed_apk_identity_claimed": false,
+    "signatures": "Different disposable CI debug signers are recorded per artifact. Runtime uses the same-signer 3c50ed1 app pair and the independently signed, self-targeted 1f544dd driver.",
+    "results": [
+      {
+        "apk": "app-debug-androidTest.apk",
+        "changed_zip_payload_entries": []
+      },
+      {
+        "apk": "app-debug.apk",
+        "changed_zip_payload_entries": []
+      },
+      {
+        "apk": "app-optimized.apk",
+        "changed_zip_payload_entries": [
+          "META-INF/version-control-info.textproto"
+        ]
+      },
+      {
+        "apk": "benchmark-debug-androidTest.apk",
+        "changed_zip_payload_entries": [
+          "AndroidManifest.xml",
+          "classes3.dex"
+        ]
+      },
+      {
+        "apk": "database-debug-androidTest.apk",
+        "changed_zip_payload_entries": []
+      },
+      {
+        "apk": "import-debug-androidTest.apk",
+        "changed_zip_payload_entries": []
+      },
+      {
+        "apk": "security-debug-androidTest.apk",
+        "changed_zip_payload_entries": []
+      }
+    ]
+  },
+  "current_ci": {
+    "head": "1f544dd7f86e9485ade75731cba85bb77a2dc2c0",
+    "run": 42268577334,
+    "results": [
+      {
+        "configuration": "android-verification-reports-updates-false-scanner-false",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 58
+        },
+        "resolution_sha256": "9d9bbaab09b229cc7c5d03aa088fd00014957fc2dec0b99527a944ac58274f38",
+        "nine_scopes_components_and_external_artifact_hashes_equal_4e": true
+      },
+      {
+        "configuration": "android-verification-reports-updates-false-scanner-true",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 64
+        },
+        "resolution_sha256": "1579c4b5b78ff3ccb93b9a3b14eb97a64e58b32ef5a47c3c08e84fc185a3a9f1",
+        "nine_scopes_components_and_external_artifact_hashes_equal_4e": true
+      },
+      {
+        "configuration": "android-verification-reports-updates-true-scanner-false",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 62
+        },
+        "resolution_sha256": "2860ce87957deb23c0e22c4fc90c399a86744956d57aa9a7a41fec16074b778b",
+        "nine_scopes_components_and_external_artifact_hashes_equal_4e": true
+      },
+      {
+        "configuration": "android-verification-reports-updates-true-scanner-true",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 67
+        },
+        "resolution_sha256": "481c236b9e58b6e9f65c730f75c0e746528077d40ce25b9decc0483c208af30f",
+        "nine_scopes_components_and_external_artifact_hashes_equal_4e": true
+      }
+    ],
+    "advisory_evidence": "318-query OSV result reused, not rerun: all selected modules and external artifact hashes match the scanned graph in all nine scopes/four configurations."
+  },
+  "separate_pre_kotlin_storage_pr_ci": {
+    "run": 42265709472,
+    "exact_source": "80a2ea71677123ddd8229cbc19216562b3bf05d4",
+    "compiler": "2.2.20",
+    "configs": [
+      {
+        "config": "android-verification-reports-updates-false-scanner-false",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 58
+        }
+      },
+      {
+        "config": "android-verification-reports-updates-false-scanner-true",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 64
+        }
+      },
+      {
+        "config": "android-verification-reports-updates-true-scanner-false",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 62
+        }
+      },
+      {
+        "config": "android-verification-reports-updates-true-scanner-true",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 67
+        }
+      }
+    ],
+    "scope": "Manual CI at the exact pre-upgrade storage PR #32 head. Combined Kotlin integration and local Android instrumentation are recorded separately."
+  },
+  "exact_crop_head_ci": {
+    "exact_head": "f81ac05e68c3fad57469a80ccb992674fae0514b",
+    "run": 42255967297,
+    "configs": [
+      {
+        "config": "android-verification-reports-updates-false-scanner-false",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 58
+        }
+      },
+      {
+        "config": "android-verification-reports-updates-false-scanner-true",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 64
+        }
+      },
+      {
+        "config": "android-verification-reports-updates-true-scanner-false",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 62
+        }
+      },
+      {
+        "config": "android-verification-reports-updates-true-scanner-true",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 67
+        }
+      }
+    ]
+  },
+  "exact_stable_sdk_head_ci": {
+    "exact_head": "b5a387841a6d95264fcb385269df5fc399315bca",
+    "run": 42264313138,
+    "configs": [
+      {
+        "config": "android-verification-reports-updates-false-scanner-false",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 58
+        }
+      },
+      {
+        "config": "android-verification-reports-updates-false-scanner-true",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 64
+        }
+      },
+      {
+        "config": "android-verification-reports-updates-true-scanner-false",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 62
+        }
+      },
+      {
+        "config": "android-verification-reports-updates-true-scanner-true",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Warning": 67
+        }
+      }
+    ]
+  },
+  "runtime": {
+    "modern_api": 37,
+    "modern_page_bytes": 16384,
+    "modern_core": {
+      "security_passed": 7,
+      "database_passed": 12,
+      "import_publication_passed": 31,
+      "failed": 0,
+      "skipped": 0
+    },
+    "modern_app_and_postchecks": [
+      {
+        "job": "0160-fixed-3c-full-app",
+        "raw": "emulator-home-fixed/results/0160-fixed-3c-full-app.json",
+        "terminal_cases": 96,
+        "counts": {
+          "0": 92,
+          "-4": 4
+        },
+        "seconds": [
+          "945.314"
+        ]
+      },
+      {
+        "job": "0165-fixed-3c-portrait200",
+        "raw": "emulator-home-fixed/results/0165-fixed-3c-portrait200.json",
+        "terminal_cases": 4,
+        "counts": {
+          "0": 4
+        },
+        "seconds": [
+          "72.837"
+        ]
+      },
+      {
+        "job": "0168-fixed-3c-landscape200",
+        "raw": "emulator-home-fixed/results/0168-fixed-3c-landscape200.json",
+        "terminal_cases": 4,
+        "counts": {
+          "0": 4
+        },
+        "seconds": [
+          "83.268"
+        ]
+      },
+      {
+        "case": "Real OCR prepare interruption",
+        "workspace_files_before_stop": 6,
+        "capture_file_confirmed": true,
+        "deliberately_interrupted": true,
+        "passed_test": false,
+        "verify_follows": true
+      },
+      {
+        "job": "0177-fixed-3c-death-verify",
+        "raw": "emulator-home-fixed/results/0177-fixed-3c-death-verify.json",
+        "terminal_cases": 1,
+        "counts": {
+          "0": 1
+        },
+        "seconds": [
+          "5.065"
+        ]
+      },
+      {
+        "job": "0178-fixed-3c-phone-prerequisite",
+        "raw": "emulator-home-fixed/results/0178-fixed-3c-phone-prerequisite.json",
+        "terminal_cases": 1,
+        "counts": {
+          "0": 1
+        },
+        "seconds": [
+          "56.133"
+        ]
+      },
+      {
+        "job": "0180-fixed-3c-phone-prepare",
+        "raw": "emulator-home-fixed/results/0180-fixed-3c-phone-prepare.json",
+        "terminal_cases": 1,
+        "counts": {
+          "0": 1
+        },
+        "seconds": [
+          "7.606"
+        ]
+      },
+      {
+        "job": "0182-fixed-3c-phone-verify",
+        "raw": "emulator-home-fixed/results/0182-fixed-3c-phone-verify.json",
+        "terminal_cases": 1,
+        "counts": {
+          "0": 1
+        },
+        "seconds": [
+          "26.464"
+        ]
+      }
+    ],
+    "older_api": {
+      "source": "3c50ed1b3ffe067bc70fffd588abe63ad5a3c0bf",
+      "api": 26,
+      "page_size": 4096,
+      "results": [
+        {
+          "job": "0028-fixed-3c-core-security",
+          "raw": "emulator-kotlin-api26-ready/results/0028-fixed-3c-core-security.json",
+          "terminal_cases": 7,
+          "counts": {
+            "0": 6,
+            "-4": 1
+          },
+          "time": [
+            "0.094"
+          ],
+          "skip_cases": [
+            "app.kura.nativecore.HardwareVaultKeyTest.perOperationKeyRejectsCryptoWithoutAuthentication"
+          ]
+        },
+        {
+          "job": "0029-fixed-3c-core-database",
+          "raw": "emulator-kotlin-api26-ready/results/0029-fixed-3c-core-database.json",
+          "terminal_cases": 12,
+          "counts": {
+            "0": 12
+          },
+          "time": [
+            "23.282"
+          ],
+          "skip_cases": []
+        },
+        {
+          "job": "0030-fixed-3c-core-import",
+          "raw": "emulator-kotlin-api26-ready/results/0030-fixed-3c-core-import.json",
+          "terminal_cases": 31,
+          "counts": {
+            "0": 31
+          },
+          "time": [
+            "69.372"
+          ],
+          "skip_cases": []
+        },
+        {
+          "job": "0031-fixed-3c-scanner-18",
+          "raw": "emulator-kotlin-api26-ready/results/0031-fixed-3c-scanner-18.json",
+          "terminal_cases": 18,
+          "counts": {
+            "0": 18
+          },
+          "time": [
+            "102.358"
+          ],
+          "skip_cases": []
+        },
+        {
+          "job": "0032-fixed-3c-phone-unlock",
+          "raw": "emulator-kotlin-api26-ready/results/0032-fixed-3c-phone-unlock.json",
+          "terminal_cases": 1,
+          "counts": {
+            "0": 1
+          },
+          "time": [
+            "59.014"
+          ],
+          "skip_cases": []
+        },
+        {
+          "job": "0034-fixed-3c-cold-prepare",
+          "raw": "emulator-kotlin-api26-ready/results/0034-fixed-3c-cold-prepare.json",
+          "terminal_cases": 1,
+          "counts": {
+            "0": 1
+          },
+          "time": [
+            "6.168"
+          ],
+          "skip_cases": []
+        },
+        {
+          "job": "0036-fixed-3c-cold-verify",
+          "raw": "emulator-kotlin-api26-ready/results/0036-fixed-3c-cold-verify.json",
+          "terminal_cases": 1,
+          "counts": {
+            "0": 1
+          },
+          "time": [
+            "24.671"
+          ],
+          "skip_cases": []
+        }
+      ],
+      "retained_cold_data": "No clear/uninstall between ordinary prerequisite, prepare, real force-stop and verify.",
+      "limitations": "Disposable x86_64 emulator, not physical/hardware-backed/production acceptance.",
+      "setup_observation": {
+        "raw": "emulator-kotlin-api26-ready/results/0021-fixed-3c-fresh-remove-benchmarktest.json",
+        "exit_code": 255,
+        "classification": "Benchmark self-test package was not present on this fresh API26 fixture; subsequent guarded installation succeeded. Not a passing uninstall or test result."
+      },
+      "emulator_teardown": "Owned API 26 wrapper exited successfully after its queued stop; guest data and logs retained."
+    },
+    "optimized_external": {
+      "status": "passed",
+      "application_source": "3c50ed1b3ffe067bc70fffd588abe63ad5a3c0bf",
+      "driver_source": "1f544dd7f86e9485ade75731cba85bb77a2dc2c0",
+      "raw": "emulator-home-fixed/results/0190-fixed-3c-optimized-full-four.json",
+      "terminal_cases": 4,
+      "counts": {
+        "0": 4
+      },
+      "seconds": [
+        "97.877"
+      ],
+      "uid_retained": true,
+      "no_app_uninstall_or_clear": "The same CI signer is used for the debug-to-optimized app replacement; only the external self-test APK is uninstalled separately.",
+      "limits": "Prototype/emulator only; not production-identity or version-code upgrade acceptance."
+    }
+  },
+  "application_artifacts": {
+    "source_head": "3c50ed1b3ffe067bc70fffd588abe63ad5a3c0bf",
+    "workflow_run": 42264370130,
+    "apks": [
+      {
+        "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+        "package": "app.kura.wallet.prototype.test",
+        "bytes": 696053,
+        "sha256": "17465f1b6c21cb2c2968de17b3eab114476d757db60c545f1f60e2169b6aaeac",
+        "certificate_sha256": "42400b717f0cc651270e89292715f7dab9bcba26a2dad0efaf19098d2c74d5e1",
+        "debuggable": true,
+        "instrumentation_target": "app.kura.wallet.prototype"
+      },
+      {
+        "path": "app/build/outputs/apk/debug/app-debug.apk",
+        "package": "app.kura.wallet.prototype",
+        "bytes": 140054492,
+        "sha256": "16b7f6c85e1d2ea2b42b2431b576daab9d0390cc62ac67082407dd2c02b6ac41",
+        "certificate_sha256": "42400b717f0cc651270e89292715f7dab9bcba26a2dad0efaf19098d2c74d5e1",
+        "debuggable": true,
+        "instrumentation_target": null
+      },
+      {
+        "path": "app/build/outputs/apk/optimized/app-optimized.apk",
+        "package": "app.kura.wallet.prototype",
+        "bytes": 116816891,
+        "sha256": "cea52f6cfef3a266a442c55b497db300cbbd705550a7c198f96846c45018af47",
+        "certificate_sha256": "42400b717f0cc651270e89292715f7dab9bcba26a2dad0efaf19098d2c74d5e1",
+        "debuggable": false,
+        "instrumentation_target": null
+      },
+      {
+        "path": "benchmark/build/outputs/apk/androidTest/debug/benchmark-debug-androidTest.apk",
+        "package": "app.kura.prototype.benchmarktest",
+        "bytes": 1857168,
+        "sha256": "4a872d78c13d2068b7fe57da422f294f02b151cd268df47a37321b8e2e8c9a01",
+        "certificate_sha256": "42400b717f0cc651270e89292715f7dab9bcba26a2dad0efaf19098d2c74d5e1",
+        "debuggable": true,
+        "instrumentation_target": "app.kura.prototype.benchmarktest"
+      },
+      {
+        "path": "core/database/build/outputs/apk/androidTest/debug/database-debug-androidTest.apk",
+        "package": "app.kura.prototype.database.test",
+        "bytes": 12294100,
+        "sha256": "83abc710275b092640db52bf688412cf5dbea1e1a38b8719d933f40815a5ba96",
+        "certificate_sha256": "42400b717f0cc651270e89292715f7dab9bcba26a2dad0efaf19098d2c74d5e1",
+        "debuggable": true,
+        "instrumentation_target": "app.kura.prototype.database.test"
+      },
+      {
+        "path": "core/import/build/outputs/apk/androidTest/debug/import-debug-androidTest.apk",
+        "package": "app.kura.prototype.importer.test",
+        "bytes": 15011314,
+        "sha256": "b24d980064e3ce9acb84257247101c6e6e8fd8919e0f9c60dd6af857ce51b974",
+        "certificate_sha256": "42400b717f0cc651270e89292715f7dab9bcba26a2dad0efaf19098d2c74d5e1",
+        "debuggable": true,
+        "instrumentation_target": "app.kura.prototype.importer.test"
+      },
+      {
+        "path": "core/security/build/outputs/apk/androidTest/debug/security-debug-androidTest.apk",
+        "package": "app.kura.prototype.security.test",
+        "bytes": 3945664,
+        "sha256": "445305cbb1e8b9de8779ba0242bec5da9cca69536a41855608e56639f21a3f90",
+        "certificate_sha256": "42400b717f0cc651270e89292715f7dab9bcba26a2dad0efaf19098d2c74d5e1",
+        "debuggable": true,
+        "instrumentation_target": "app.kura.prototype.security.test"
+      }
+    ]
+  },
+  "final_driver_artifact": {
+    "path": "benchmark/build/outputs/apk/androidTest/debug/benchmark-debug-androidTest.apk",
+    "package": "app.kura.prototype.benchmarktest",
+    "bytes": 1857308,
+    "sha256": "433d84cd610559843c5089a80b2024ca00a57698ea39e9ca123f9ac2ace83539",
+    "certificate_sha256": "17be7be019d43758b343629b4abad4055816843ea2a0054e2003178112280c1c",
+    "debuggable": true,
+    "declared_wallet_query_targets": [
+      "app.kura.wallet.prototype",
+      "app.kura.wallet.prototype.benchmark",
+      "app.kura.wallet.prototype.profile"
+    ],
+    "instrumentation_target": "app.kura.prototype.benchmarktest"
+  },
+  "actual_installed_transition": {
+    "before": {
+      "package": "app.kura.wallet.prototype",
+      "version_code": 122,
+      "version_name": "2.2.0-beta.3-dev",
+      "source_revision": "3c50ed1b3ffe067bc70fffd588abe63ad5a3c0bf",
+      "actual_installed_apk_sha256": "16b7f6c85e1d2ea2b42b2431b576daab9d0390cc62ac67082407dd2c02b6ac41",
+      "certificate_sha256": "42400b717f0cc651270e89292715f7dab9bcba26a2dad0efaf19098d2c74d5e1",
+      "debuggable": true,
+      "actual_installed_bytes_match_ci": true,
+      "evidence": [
+        "emulator-home-fixed/results/0182b-before-optimized-package.json",
+        "emulator-home-fixed/results/0182c-before-optimized-apk-path.json",
+        "emulator-home-fixed/results/0182d-pull-before-optimized-apk.json"
+      ],
+      "signer_evidence": "Actual installed base APK SHA-256 equals the CI artifact whose APK signature/certificate was verified in the isolated inspector.",
+      "transition_classification": "Same-version debug-to-optimized prototype replacement. Not beta-to-stable, production-package or Android-installer acceptance.",
+      "uid": 10249
+    },
+    "after": {
+      "package": "app.kura.wallet.prototype",
+      "version_code": 122,
+      "version_name": "2.2.0-beta.3-dev",
+      "source_revision": "3c50ed1b3ffe067bc70fffd588abe63ad5a3c0bf",
+      "uid": 10249,
+      "debuggable": false,
+      "actual_installed_apk_sha256": "cea52f6cfef3a266a442c55b497db300cbbd705550a7c198f96846c45018af47",
+      "certificate_sha256": "42400b717f0cc651270e89292715f7dab9bcba26a2dad0efaf19098d2c74d5e1",
+      "actual_installed_bytes_match_ci": true
+    },
+    "installation_operation": [
+      "install",
+      "-r",
+      "-t",
+      "/inputs/fixed-3c-optimized.apk"
+    ],
+    "transition": "Same-version debug-to-optimized prototype replacement. Version code and name unchanged; UID and signing identity retained.",
+    "limits": [
+      "Not a beta-to-stable or version-code upgrade.",
+      "Not production-package or user-confirmed Android-installer acceptance.",
+      "The R8 fixture loader deliberately changes synthetic records; this check does not independently establish all pre-existing-record retention.",
+      "Production signing material was not accessed."
+    ]
+  },
+  "dependency_advisory_evidence": {
+    "lookup_date": "2026-11-07",
+    "public_maven_queries": 318,
+    "truncated_queries": 0,
+    "matching_build_only_versions": 6,
+    "matching_records": 10,
+    "collected_app_compile_runtime_test_matches": 0,
+    "reused_for_final_graph": true,
+    "basis": "All nine scopes in each of four final configurations have identical selected modules and external Maven artifact hashes to the scanned graph. This is reused evidence, not another lookup.",
+    "limits": "Existing build-tool debt is unresolved. This is not a shipped/R8 SBOM or comprehensive native, embedded-tool, supplemental compiler/lint or installer-test scan."
+  },
+  "independent_patch_review": {
+    "type": "AI-assisted independent read-only review",
+    "scope": "Atomic publication helper, both new real-filesystem regressions, callers and raw baseline/fixed results",
+    "blocking_findings": 0,
+    "human_approval": false
+  },
+  "historical_and_unverified": [
+    "Earlier offline full-app and actual installer/version-upgrade executions retain their original source/date; they were not rerun here.",
+    "The current optimized replacement keeps version code 122 and name 2.2.0-beta.3-dev. It is not beta-to-stable, production-identity or Android-installer acceptance.",
+    "Keyboard and screenshot checks are complete; TalkBack is installed but spoken-feedback navigation is unrun.",
+    "Physical cards/arm64 camera accuracy, hardware-backed key behavior and production-package retained upgrade acceptance remain unverified.",
+    "Owner crop review and the separate physical/production acceptance decision remain pending.",
+    "Stable version metadata, tagged CI release build, production signing and published-artifact verification have not started."
+  ],
+  "preservation": "Original dirty checkout, recovery history and existing beta assets retained; no main merge or release publication."
+}
