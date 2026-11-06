@@ -112,7 +112,9 @@ The exported optimized app uses `app.kura.wallet.prototype`, while the external
 benchmark driver historically defaults to `.prototype.benchmark`. Supply
 `-e targetPackage app.kura.wallet.prototype` when testing the exported optimized
 APK. All four external journeys accept that explicit synthetic identity; the
-production identity remains excluded. Updater discovery and optimized fixture
+production identity remains excluded. The external test APK targets API37, so its
+manifest explicitly declares visibility for the three allowed prototype targets
+before PackageManager checks. Updater discovery and optimized fixture
 journeys require a nondebuggable app, and the fixture journey explicitly checks
 emulator hardware. This selects an existing release-style prototype build; it
 does not change application code, signing or authentication behavior.
