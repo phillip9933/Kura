@@ -767,11 +767,9 @@ class MainActivity : FragmentActivity() {
     @Composable private fun CropDialog() {
         val bytes = cropBytes ?: return
         val targetColumn=vm.pending.imageTarget?.column
-        var manualCrop by remember(bytes) { mutableStateOf(false) }
-        if (enhancedCardScanning && !manualCrop && targetColumn in setOf("frontImagePath", "backImagePath")) {
+        if (enhancedCardScanning && targetColumn in setOf("frontImagePath", "backImagePath")) {
             EnhancedCardDialog(vm, bytes, vm.pending.imageTarget!!,
-                dismiss = { bytes.fill(0); cropBytes = null; vm.pending.imageTarget = null },
-                manual = { manualCrop = true })
+                dismiss = { bytes.fill(0); cropBytes = null; vm.pending.imageTarget = null })
             return
         }
         val cropAspect=when(targetColumn) {"kuraLogo"->1f;"frontImagePath","backImagePath"->1.586f;else->0f}

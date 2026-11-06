@@ -2,6 +2,10 @@ package app.kura.nativeapp
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -37,7 +41,7 @@ internal const val enhancedCardScanning = true
 private enum class CardStep { CROP, OFFER, REVIEW }
 
 @Composable internal fun EnhancedCardDialog(vm: VaultController, bytes: ByteArray, target: ImageTarget,
-    dismiss: () -> Unit, manual: () -> Unit) {
+    dismiss: () -> Unit) {
     val context = LocalContext.current
     val engine = remember(context) { CardScanEngine(context) }
     val scope = rememberCoroutineScope()
@@ -49,6 +53,8 @@ private enum class CardStep { CROP, OFFER, REVIEW }
     var step by remember(bytes) { mutableStateOf(CardStep.CROP) }
     var corners by remember(bytes) { mutableStateOf(Quad.FULL) }
     var selectedCorner by remember { mutableIntStateOf(0) }
+    var fineTune by remember { mutableStateOf(false) }
+    var detectedCorners by remember(bytes) { mutableStateOf(Quad.FULL) }
     var rotation by remember { mutableIntStateOf(0) }
     var busy by remember { mutableStateOf(true) }
     var status by remember { mutableStateOf("Detecting card edges…") }
@@ -62,9 +68,10 @@ private enum class CardStep { CROP, OFFER, REVIEW }
     LaunchedEffect(bytes) {
         try {
             corners = vm.work { engine.detect(bytes) }
+            detectedCorners = corners
             status = if (corners == Quad.FULL) "Edges uncertain. Adjust the four corners or use the full image." else "Card edges detected. Check all four corners before continuing."
         } catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { status = "Automatic crop unavailable. Adjust corners or use manual crop." }
+        catch (_: Exception) { status = "Automatic detection unavailable. Drag the corners or use the full image." }
         finally { busy = false }
     }
     fun currentForm() = target.id == -1L && identity != null && form.identity == identity && vm.pending.uiMemory.form === form
@@ -92,26 +99,87 @@ private enum class CardStep { CROP, OFFER, REVIEW }
             finally { busy = false }
         }
     }
-    KuraDialog(dismiss) {
-        Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(when (step) { CardStep.CROP -> "Crop card image"; CardStep.OFFER -> "Autofill card details?"; CardStep.REVIEW -> "Review recognized details" }, style = MaterialTheme.typography.headlineSmall)
-            if (step == CardStep.CROP) {
-                CardCorners(bytes, corners, !busy) { corners = it }
-                Text(status)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("Top left", "Top right", "Bottom right", "Bottom left").forEachIndexed { index, label ->
-                        TextButton(enabled = !busy, onClick = { selectedCorner = index }) { Text(label) }
+    val contentHeight = (LocalConfiguration.current.screenHeightDp * .58f).dp
+    val validCrop = runCatching { Geometry.requireValid(corners) }.isSuccess
+    AlertDialog(
+        onDismissRequest = dismiss,
+        title = { Text(when (step) {
+            CardStep.CROP -> "Crop card image"
+            CardStep.OFFER -> "Autofill card details?"
+            CardStep.REVIEW -> "Review recognized details"
+        }) },
+        text = {
+            Column(Modifier.heightIn(max = contentHeight).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (step == CardStep.CROP) {
+                    Text("Drag the corners to adjust the detected card edges.")
+                    CardCorners(bytes, corners, !busy) { corners = it; status = "Crop adjusted. Check all four corners." }
+                    Text(status, style = MaterialTheme.typography.bodySmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(enabled = !busy, onClick = { corners = detectedCorners }, modifier = Modifier.weight(1f)) { Text("Reset edges") }
+                        OutlinedButton(enabled = !busy, onClick = { corners = Quad.FULL }, modifier = Modifier.weight(1f)) { Text("Use full image") }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(enabled = !busy, onClick = { rotation = (rotation + 1) % 4 }, modifier = Modifier.weight(1f)) { Text("Rotate result: ${rotation * 90}°") }
+                        OutlinedButton(enabled = !busy, onClick = { fineTune = !fineTune }, modifier = Modifier.weight(1f)) { Text(if (fineTune) "Hide fine-tune" else "Fine-tune") }
+                    }
+                    if (fineTune) {
+                        Text("Fine-tune a corner", style = MaterialTheme.typography.labelLarge)
+                        listOf(listOf(0, 1), listOf(3, 2)).forEach { row ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                row.forEach { index ->
+                                    FilterChip(selected = selectedCorner == index, enabled = !busy,
+                                        onClick = { selectedCorner = index }, modifier = Modifier.weight(1f),
+                                        label = { Text(listOf("Top left", "Top right", "Bottom right", "Bottom left")[index]) })
+                                }
+                            }
+                        }
+                        Text("Horizontal", style = MaterialTheme.typography.labelMedium)
+                        Slider(corners.points[selectedCorner].x.toFloat(), { x -> corners = corners.replace(selectedCorner, Point(x.toDouble(), corners.points[selectedCorner].y)) },
+                            enabled = !busy, modifier = Modifier.semantics { contentDescription = "Corner horizontal position" })
+                        Text("Vertical", style = MaterialTheme.typography.labelMedium)
+                        Slider(corners.points[selectedCorner].y.toFloat(), { y -> corners = corners.replace(selectedCorner, Point(corners.points[selectedCorner].x, y.toDouble())) },
+                            enabled = !busy, modifier = Modifier.semantics { contentDescription = "Corner vertical position" })
+                    }
+                    if (!validCrop) Text("Keep the corners in order around the card.", color = MaterialTheme.colorScheme.error)
+                } else {
+                    cropped?.let { CardPreview(it) }
+                    if (step == CardStep.OFFER) {
+                        Text("Recognize text on this device and review suggestions for empty fields. Your card is saved only when you save the form.")
+                        if (currentForm()) OutlinedButton(enabled = !busy, onClick = {
+                            busy = true; error = null
+                            scope.launch {
+                                try {
+                                    suggestions = vm.work { engine.recognize(cropped!!, fields) }
+                                    suggestions.forEach { edits[it.field.key] = it.value; selected[it.field.key] = true }
+                                    step = CardStep.REVIEW
+                                } catch (cancelled: CancellationException) { throw cancelled }
+                                catch (_: Exception) { error = "Text recognition could not finish. You can still use the image and enter details manually." }
+                                finally { busy = false }
+                            }
+                        }, modifier = Modifier.fillMaxWidth()) { Text("Review autofill") }
+                        OutlinedButton(enabled = !busy, onClick = { cropped?.fill(0); cropped = null; step = CardStep.CROP }, modifier = Modifier.fillMaxWidth()) { Text("Adjust crop") }
+                    } else {
+                        Text("Check every suggestion. Existing values are kept; only selected empty fields will be filled.")
+                        if (suggestions.isEmpty()) Text("No values matched empty existing fields. You can continue with the image alone.")
+                        suggestions.forEach { suggestion ->
+                            val key = suggestion.field.key
+                            Row {
+                                Checkbox(selected[key] == true, { selected[key] = it }, enabled = !busy)
+                                OutlinedTextField(edits[key].orEmpty(), { edits[key] = it }, label = { Text(suggestion.field.label) },
+                                    enabled = !busy, modifier = Modifier.weight(1f), isError = selected[key] == true && !validSuggestion(target.table, form, preferences, key, edits[key].orEmpty()))
+                            }
+                        }
+                        OutlinedButton(enabled = !busy, onClick = { saveImage(false) }, modifier = Modifier.fillMaxWidth()) { Text("Keep image without autofill") }
                     }
                 }
-                Text("Selected corner: ${selectedCorner + 1}")
-                Slider(corners.points[selectedCorner].x.toFloat(), { x -> corners = corners.replace(selectedCorner, Point(x.toDouble(), corners.points[selectedCorner].y)) },
-                    enabled = !busy, modifier = Modifier.semantics { contentDescription = "Corner horizontal position" })
-                Slider(corners.points[selectedCorner].y.toFloat(), { y -> corners = corners.replace(selectedCorner, Point(corners.points[selectedCorner].x, y.toDouble())) },
-                    enabled = !busy, modifier = Modifier.semantics { contentDescription = "Corner vertical position" })
-                TextButton(enabled = !busy, onClick = { rotation = (rotation + 1) % 4 }) { Text("Rotate after crop: ${rotation * 90}°") }
-                TextButton(enabled = !busy, onClick = { corners = Quad.FULL }) { Text("Use full image") }
-                Button(enabled = !busy && runCatching { Geometry.requireValid(corners) }.isSuccess, onClick = {
+                if (busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text("Working on this device…", style = MaterialTheme.typography.bodySmall) }
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+        },
+        confirmButton = {
+            when (step) {
+                CardStep.CROP -> Button(enabled = !busy && validCrop, onClick = {
                     busy = true; error = null
                     scope.launch {
                         try {
@@ -122,49 +190,17 @@ private enum class CardStep { CROP, OFFER, REVIEW }
                                 step = CardStep.OFFER
                             } finally { owned?.fill(0) }
                         } catch (cancelled: CancellationException) { throw cancelled }
-                        catch (_: Exception) { error = "Could not crop this image. Adjust corners or use manual crop." }
+                        catch (_: Exception) { error = "Could not crop this image. Adjust the corners or use the full image." }
                         finally { busy = false }
                     }
                 }) { Text("Use crop") }
-                TextButton(enabled = !busy, onClick = manual) { Text("Use manual crop instead") }
-            } else {
-                cropped?.let { CardPreview(it) }
-                if (step == CardStep.OFFER) {
-                    Text("Optionally recognize English/Japanese text on this device and suggest values for empty fields already in this form. You can edit every suggestion before applying it.")
-                    Text("Check the crop for glare, blur and clipped text. Cancel to retake or choose another photo.")
-                    if (currentForm()) Button(enabled = !busy, onClick = {
-                        busy = true; error = null
-                        scope.launch {
-                            try {
-                                suggestions = vm.work { engine.recognize(cropped!!, fields) }
-                                suggestions.forEach { edits[it.field.key] = it.value; selected[it.field.key] = true }
-                                step = CardStep.REVIEW
-                            } catch (cancelled: CancellationException) { throw cancelled }
-                            catch (_: Exception) { error = "Text recognition could not finish. You can still use the image and enter details manually." }
-                            finally { busy = false }
-                        }
-                    }) { Text("Review autofill") }
-                    Button(enabled = !busy, onClick = { saveImage(false) }) { Text("Use image only") }
-                    TextButton(enabled = !busy, onClick = { cropped?.fill(0); cropped = null; step = CardStep.CROP }) { Text("Adjust crop") }
-                } else {
-                    Text("Check names, dates and every character. OCR can confuse 8/3, O/0 and I/1. Filled fields are kept; conflicting or unlabelled values require manual entry.")
-                    if (suggestions.isEmpty()) Text("No unambiguous values matched empty existing fields. Continue with the image and enter details manually.")
-                    suggestions.forEach { suggestion ->
-                        val key = suggestion.field.key
-                        Row { Checkbox(selected[key] == true, { selected[key] = it }, enabled = !busy)
-                            OutlinedTextField(edits[key].orEmpty(), { edits[key] = it }, label = { Text(suggestion.field.label) },
-                                enabled = !busy, modifier = Modifier.weight(1f), isError = selected[key] == true && !validSuggestion(target.table, form, preferences, key, edits[key].orEmpty())) }
-                    }
-                    Button(enabled = !busy && suggestions.filter { selected[it.field.key] == true }.all { validSuggestion(target.table, form, preferences, it.field.key, edits[it.field.key].orEmpty()) },
-                        onClick = { saveImage(true) }) { Text("Apply selected details and use image") }
-                    TextButton(enabled = !busy, onClick = { saveImage(false) }) { Text("Keep image without autofill") }
-                }
+                CardStep.OFFER -> Button(enabled = !busy, onClick = { saveImage(false) }) { Text("Use image only") }
+                CardStep.REVIEW -> Button(enabled = !busy && suggestions.filter { selected[it.field.key] == true }.all { validSuggestion(target.table, form, preferences, it.field.key, edits[it.field.key].orEmpty()) },
+                    onClick = { saveImage(true) }) { Text("Apply selected details and use image") }
             }
-            if (busy) { CircularProgressIndicator(); Text("Working on this device… Cancel discards this import.") }
-            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            TextButton(onClick = dismiss) { Text("Cancel import") }
-        }
-    }
+        },
+        dismissButton = { TextButton(onClick = dismiss) { Text("Cancel import") } },
+    )
 }
 
 internal fun recognitionFields(table: String, form: FormMemory, preferences: VaultPreferences): List<CardField> {
@@ -211,14 +247,19 @@ private fun Quad.replace(index: Int, point: Point): Quad {
 @Composable private fun CardCorners(bytes: ByteArray, corners: Quad, enabled: Boolean, change: (Quad) -> Unit) {
     val bitmap = imagePreview(bytes) ?: return
     val latest by rememberUpdatedState(corners)
-    Canvas(Modifier.fillMaxWidth().height(260.dp).semantics { contentDescription = "Drag the four card corners" }.pointerInput(bitmap, enabled) {
+    val accent = MaterialTheme.colorScheme.primary
+    Canvas(Modifier.fillMaxWidth().height(240.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest).semantics { contentDescription = "Drag the four card corners" }.pointerInput(bitmap, enabled) {
         var corner = 0
         fun position(point: Point): Offset {
             val scale = minOf(size.width.toFloat() / bitmap.width, size.height.toFloat() / bitmap.height)
             val width = bitmap.width * scale; val height = bitmap.height * scale
             return Offset((size.width - width) / 2 + point.x.toFloat() * width, (size.height - height) / 2 + point.y.toFloat() * height)
         }
-        if (enabled) detectDragGestures(onDragStart = { point -> corner = latest.points.indices.minBy { (position(latest.points[it]) - point).getDistance() } }) { pointer, _ ->
+        if (enabled) detectDragGestures(onDragStart = { point ->
+            val nearest = latest.points.indices.minBy { (position(latest.points[it]) - point).getDistance() }
+            corner = nearest.takeIf { (position(latest.points[it]) - point).getDistance() <= 44.dp.toPx() } ?: -1
+        }) { pointer, _ ->
+            if (corner < 0) return@detectDragGestures
             pointer.consume()
             val scale = minOf(size.width.toFloat() / bitmap.width, size.height.toFloat() / bitmap.height)
             val width = bitmap.width * scale; val height = bitmap.height * scale
@@ -232,7 +273,16 @@ private fun Quad.replace(index: Int, point: Point): Quad {
         drawImage(bitmap.asImageBitmap(), dstOffset = IntOffset(left.toInt(), top.toInt()), dstSize = IntSize(width.toInt(), height.toInt()))
         val points = corners.points.map { Offset(left + it.x.toFloat() * width, top + it.y.toFloat() * height) }
         val path = Path().apply { moveTo(points[0].x, points[0].y); points.drop(1).forEach { lineTo(it.x, it.y) }; close() }
-        drawPath(path, Color.Cyan, style = Stroke(3.dp.toPx()))
-        points.forEach { drawCircle(Color.Cyan, 7.dp.toPx(), it) }
+        val shade = Path().apply {
+            fillType = androidx.compose.ui.graphics.PathFillType.EvenOdd
+            addRect(androidx.compose.ui.geometry.Rect(0f, 0f, size.width, size.height))
+            addPath(path)
+        }
+        drawPath(shade, Color.Black.copy(alpha = .45f))
+        drawPath(path, accent, style = Stroke(2.dp.toPx()))
+        points.forEach {
+            drawCircle(Color.White, 10.dp.toPx(), it)
+            drawCircle(accent, 7.dp.toPx(), it)
+        }
     }
 }

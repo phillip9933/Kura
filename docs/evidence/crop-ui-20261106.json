@@ -1,0 +1,25 @@
+{
+  "success": true,
+  "cases": 4,
+  "duration_seconds": 29.059,
+  "installed_apk_sha256": {
+    "app.kura.wallet.prototype": "ed9b70768f9352cf12ce44b790d5e24018607b6369d7557710cf1f2d2e987059",
+    "app.kura.wallet.prototype.test": "ac89e162dbe0c05c07cf291b24d645dc56cbe0cb901f5fa6c072b06e844b76dd"
+  },
+  "source_sha256": {
+    "app/src/cardScanner/kotlin/app/kura/nativeapp/EnhancedCardDialog.kt": "76049621a140e0ad94fa6d668af5dff34280352fddbf925c0fddaa36886aa002",
+    "app/src/main/kotlin/app/kura/nativeapp/MainActivity.kt": "17d9d140e2b6bad5b1508686a8a22611b9b3fc69b1b25b97adbcc5243eba2a2a",
+    "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardScannerIntegrationTest.kt": "6e02cebcb8f6a605477be37689835a380cc586a5037fbf502589d3be36439d65"
+  },
+  "scope": "Owned API37/16KiB disposable emulator, synthetic card only; no real camera or personal data",
+  "remaining": [
+    "Required independent review",
+    "Broader UI/device/font qualification",
+    "CI and full regression on latest source"
+  ],
+  "preserved_failure": "First run:3 passes/1 UI failure (offscreen fine-tuning slider assertion). Bounded scrolling retained the assertion; intermediate rerun4/4 in26.183s; final4/4 in29.059s also asserts actual drag feedback.",
+  "ai_assisted": true,
+  "offline_app_test_compilation": "passed",
+  "enhanced_build_lint": "passed,42s,278tasks,16executed",
+  "issue": "https://github.com/phillip9933/Kura/issues/24"
+}

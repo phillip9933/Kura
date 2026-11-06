@@ -99,6 +99,33 @@ class CardScannerIntegrationTest {
         }
         return vm
     }
+    private fun captureCropPreview() {
+        if (InstrumentationRegistry.getArguments().getString("captureCropPreview") != "true") return
+        disposable()
+        val windows = mutableListOf<Pair<android.view.View, Int>>()
+        instrumentation.runOnMainSync {
+            android.view.inspector.WindowInspector.getGlobalWindowViews().forEach { view ->
+                val params = view.layoutParams as? android.view.WindowManager.LayoutParams ?: return@forEach
+                windows += view to params.flags
+                params.flags = params.flags and android.view.WindowManager.LayoutParams.FLAG_SECURE.inv()
+                view.context.getSystemService(android.view.WindowManager::class.java).updateViewLayout(view, params)
+            }
+        }
+        try {
+            settleJourneyUi(device)
+            val bitmap = requireNotNull(instrumentation.uiAutomation.takeScreenshot())
+            try { File(context.getExternalFilesDir(null), "crop-dialog.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) } }
+            finally { bitmap.recycle() }
+        } finally {
+            instrumentation.runOnMainSync {
+                windows.forEach { (view, flags) ->
+                    val params = view.layoutParams as android.view.WindowManager.LayoutParams
+                    params.flags = flags
+                    view.context.getSystemService(android.view.WindowManager::class.java).updateViewLayout(view, params)
+                }
+            }
+        }
+    }
     @Test fun optionalAutofillReviewsExistingFieldsAndEncryptsOnlyAfterConfirmation() {
         disposable()
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -137,6 +164,37 @@ class CardScannerIntegrationTest {
             assertTrue(device.wait(Until.hasObject(By.text("Card edges detected. Check all four corners before continuing.")), 20_000))
         }
         start()
+        assertFalse("Fine-tuning starts collapsed", device.hasObject(By.desc("Corner horizontal position")))
+        assertFalse("There is no separate crop screen", device.hasObject(By.text("Use manual crop instead")))
+        clickJourneyControl(device, "Fine-tune")
+        repeat(6) {
+            if (!device.hasObject(By.desc("Corner horizontal position"))) {
+                device.findObject(By.scrollable(true))?.scroll(Direction.DOWN, .35f)
+                settleJourneyUi(device)
+            }
+        }
+        if (!device.hasObject(By.desc("Corner horizontal position"))) device.dumpWindowHierarchy(File(context.getExternalFilesDir(null), "crop-fine-tune-failure.xml"))
+        assertNotNull(device.wait(Until.findObject(By.desc("Corner horizontal position")), 5000))
+        clickJourneyControl(device, "Bottom right")
+        assertTrue(device.hasObject(By.text("Crop card image")))
+        clickJourneyControl(device, "Hide fine-tune")
+        clickJourneyControl(device, "Use full image")
+        clickJourneyControl(device, "Reset edges")
+        repeat(2) { device.findObject(By.scrollable(true))?.scroll(Direction.UP, .8f) }
+        settleJourneyUi(device)
+        val mask = device.findObject(By.desc("Drag the four card corners"))
+        assertNotNull(mask)
+        val bounds = mask.visibleBounds
+        assertFalse("Crop preview must be visible for direct editing", bounds.isEmpty)
+        // Fixture edges near .067,.1; map through the image's fitted 1800:1100 bounds.
+        val scale = minOf(bounds.width() / 1800f, bounds.height() / 1100f)
+        val left = bounds.left + (bounds.width() - 1800 * scale) / 2
+        val top = bounds.top + (bounds.height() - 1100 * scale) / 2
+        val x = (left + 120 * scale).toInt(); val y = (top + 110 * scale).toInt()
+        device.swipe(x, y, x + 30, y + 20, 15)
+        assertNotNull("Dragging the mask must actually adjust the crop", device.wait(Until.findObject(By.text("Crop adjusted. Check all four corners.")), 5000))
+        assertTrue("Crop confirmation stays reachable", device.findObject(By.text("Use crop")).isEnabled)
+        captureCropPreview()
         click("Use crop")
         assertTrue(device.wait(Until.hasObject(By.text("Autofill card details?")), 20_000))
         click("Cancel import")
