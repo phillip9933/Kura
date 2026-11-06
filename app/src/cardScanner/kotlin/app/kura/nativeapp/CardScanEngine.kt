@@ -7,6 +7,7 @@ import app.kura.nativecore.CardSuggestion
 import dev.offlinescan.core.*
 import dev.offlinescan.ocr.TesseractTextRecognizer
 import dev.offlinescan.processing.OpenCvProcessor
+import dev.offlinescan.processing.DocumentQuality
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -20,31 +21,43 @@ internal class CardScanEngine(private val context: Context) {
     private val config = ScanConfig(mode = ScanMode.CARD, maxPages = 1, maxInputPixels = 16_000_000,
         maxOutputDimension = 2048, maxRenderPixels = 4_000_000, maxWorkingBytes = 96_000_000)
 
-    private suspend fun <T> workspace(bytes: ByteArray, block: (File, File, Cancellation) -> T): T = withContext(Dispatchers.IO) {
-        require(bytes.size in 1..10 * 1024 * 1024)
-        val job = currentCoroutineContext()
-        val cancellation = Cancellation { job.ensureActive() }
-        val root = File(context.cacheDir.canonicalFile, "card-scans")
-        check(root.canonicalFile == root.absoluteFile)
-        check(root.isDirectory || root.mkdirs())
-        val directory = File(root, UUID.randomUUID().toString())
-        check(directory.mkdir())
+    private suspend fun <T> workspace(bytes: ByteArray, block: (File, File, Cancellation) -> T): T {
+        var owned: ByteArray? = null
         try {
-            cancellation.check()
-            val input = File(directory, "input.jpg")
-            input.outputStream().use { it.write(bytes) }
-            cancellation.check()
-            block(directory, input, cancellation).also { result ->
-                try { cancellation.check() } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                    if (result is ByteArray) result.fill(0)
-                    throw cancelled
-                }
+            val result = withContext(Dispatchers.IO) {
+                if (bytes.isEmpty()) throw ScanException(ScanError(ErrorCode.INVALID_IMAGE, "Photo is empty"))
+                if (bytes.size > 10 * 1024 * 1024) throw ScanException(ScanError(ErrorCode.RESOURCE_LIMIT, "Photo exceeds the input budget"))
+                val job = currentCoroutineContext()
+                val cancellation = Cancellation { job.ensureActive() }
+                val root = File(context.cacheDir.canonicalFile, "card-scans")
+                check(root.canonicalFile == root.absoluteFile)
+                check(root.isDirectory || root.mkdirs())
+                val directory = File(root, UUID.randomUUID().toString())
+                check(directory.mkdir())
+                try {
+                    cancellation.check()
+                    val input = File(directory, "input.jpg")
+                    input.outputStream().use { it.write(bytes) }
+                    cancellation.check()
+                    block(directory, input, cancellation).also {
+                        if (it is ByteArray) owned = it
+                        cancellation.check()
+                    }
+                } finally { directory.deleteRecursively() }
             }
-        } finally { directory.deleteRecursively() }
+            // Keep crop bytes owned across withContext's prompt cancellation window.
+            // Only the successful return transfers them to the caller.
+            owned = null
+            return result
+        } finally { owned?.fill(0) }
     }
 
     suspend fun detect(bytes: ByteArray): Quad = workspace(bytes) { _, input, cancellation ->
         OpenCvProcessor().detect(input, config, cancellation).corners ?: Quad.FULL
+    }
+
+    suspend fun quality(bytes: ByteArray, corners: Quad): DocumentQuality = workspace(bytes) { _, input, cancellation ->
+        OpenCvProcessor().assessQuality(input, corners, config, cancellation)
     }
 
     suspend fun crop(bytes: ByteArray, corners: Quad, rotation: Int): ByteArray = workspace(bytes) { directory, input, cancellation ->

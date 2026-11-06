@@ -204,17 +204,29 @@ class CardScannerIntegrationTest {
         clickJourneyControl(device, "Reset edges")
         repeat(2) { device.findObject(By.scrollable(true))?.scroll(Direction.UP, .8f) }
         settleJourneyUi(device)
+        assertNotNull("Scrolling through the photo must return to the crop instructions", device.findObject(By.text("Drag the corners to adjust the detected card edges.")))
         val mask = device.findObject(By.desc("Drag the four card corners"))
         assertNotNull(mask)
         val bounds = mask.visibleBounds
         assertFalse("Crop preview must be visible for direct editing", bounds.isEmpty)
-        // Fixture edges near .067,.1; map through the image's fitted 1800:1100 bounds.
+        // Use the native proposal, rather than guessed fixture pixels, and exceed
+        // this Android version's touch slop without turning the gesture into scrolling.
+        val fixture = image()
+        val proposal = try { runBlocking { CardScanEngine(context).detect(fixture) } } finally { fixture.fill(0) }
         val scale = minOf(bounds.width() / 1800f, bounds.height() / 1100f)
         val left = bounds.left + (bounds.width() - 1800 * scale) / 2
         val top = bounds.top + (bounds.height() - 1100 * scale) / 2
-        val x = (left + 120 * scale).toInt(); val y = (top + 110 * scale).toInt()
-        device.swipe(x, y, x + 30, y + 20, 15)
-        assertNotNull("Dragging the mask must actually adjust the crop", device.wait(Until.findObject(By.text("Crop adjusted. Check all four corners.")), 5000))
+        val x = (left + proposal.points[0].x * 1800 * scale).toInt()
+        val y = (top + proposal.points[0].y * 1100 * scale).toInt()
+        val distance = maxOf(64, android.view.ViewConfiguration.get(context).scaledTouchSlop * 3)
+        instrumentation.sendStatus(0, android.os.Bundle().apply { putString("stream", "Synthetic mask drag: bounds=$bounds; start=$x,$y; distance=$distance; proposal=$proposal\n") })
+        device.swipe(x, y, minOf(x + distance, bounds.right - 20), y + 4, 30)
+        val adjusted = device.wait(Until.findObject(By.text("Crop adjusted. Check all four corners.")), 5000)
+        if (adjusted == null) {
+            device.dumpWindowHierarchy(File(context.getExternalFilesDir(null), "crop-drag-failure.xml"))
+            captureCropPreview("crop-drag-failure")
+        }
+        assertNotNull("Dragging the mask must actually adjust the crop", adjusted)
         assertTrue("Crop confirmation stays reachable", device.findObject(By.text("Use crop")).isEnabled)
         captureCropPreview()
         click("Use crop")

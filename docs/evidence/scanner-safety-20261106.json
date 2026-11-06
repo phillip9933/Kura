@@ -1,0 +1,98 @@
+{
+  "date": "2026-11-06",
+  "issues": [
+    15,
+    24,
+    23
+  ],
+  "base_commit": "a56b0fa",
+  "source_sha256_lf": {
+    "app/src/main/kotlin/app/kura/nativeapp/MainActivity.kt": "99eee97b1fe984822f825bee5e11935098d350e52bf797a75cace5f8f0fa8e00",
+    "app/src/main/kotlin/app/kura/nativeapp/PendingOperations.kt": "cb52c76b1572d65e14c7c135a74adc487585f651628af1aba55614dabb30d65c",
+    "app/src/main/kotlin/app/kura/nativeapp/ImageImportRequest.kt": "323cc1c182a7307528c4873e37e28989b5388e9569888945ebfb3d658bd77109",
+    "app/src/main/kotlin/app/kura/nativeapp/VaultController.kt": "8cda21835c9b9ded1f71adc24b15b707f3e0a99d60572730a737481b2fe06d16",
+    "app/src/cardScanner/kotlin/app/kura/nativeapp/CardScanEngine.kt": "d818b7045d441cc223cfa8c4d961b0e3373944c64a38b58efab8e0efb92a574c",
+    "app/src/cardScanner/kotlin/app/kura/nativeapp/CardScanQuality.kt": "f4963a91714b3720ecca9711dccb37d2eac0473e46e33eea8ca1d27a6625fc3f",
+    "app/src/cardScanner/kotlin/app/kura/nativeapp/EnhancedCardDialog.kt": "b21fa05f02228d422091628f74f0ad613a0914be22bd77b4cb134da811802040",
+    "app/src/basicScanner/kotlin/app/kura/nativeapp/EnhancedCardDialog.kt": "6569b0027f74e7f47e682c4ee98c1e54b94ac36abbef6f674bb6af683f3456a6",
+    "feature/vault/src/main/kotlin/app/kura/feature/VaultUiMemory.kt": "374fc161aa196db57e2176b032543452b9a9db05faa663ce61bbe0cc3c65486c",
+    "app/src/androidTest/kotlin/app/kura/nativeapp/ImageImportRequestTest.kt": "a4c52e4c8e855b93eb6ab4f1a113fd6924f68162e6f1700ac59c16aad466e576",
+    "app/src/androidTest/kotlin/app/kura/nativeapp/LaunchSelectionTest.kt": "8b0edb4bc40bcd540e70633184d8a302fc4b6fdd7676da30603f5ee18291f92f",
+    "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardScanSafetyTest.kt": "731a0382de7df0594d305adc7d1c37f07d17755ea9cb27eb72614ae623c43122",
+    "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardScannerIntegrationTest.kt": "dc4501477dc6a7f4f6ca6889f74fd380bb2862934214c21154d4d79dce998117"
+  },
+  "artifact_sha256": {
+    "app/build/outputs/apk/debug/app-debug.apk": "b9e307b69376b072379b83168b9070172c500228a4da2c41e52bcaf7606a3f87",
+    "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "8eaf4ae6e2227c6d02a58d3069826d282546df426f682dc4478bf216afd35f6a"
+  },
+  "scope": "Development enhanced/direct prototype code120 on owned disposable API26 and API37/16KiB emulators, real synthetic credential2468; not production-package or physical qualification. Public beta1 bytes/tag unchanged. Final beta2 metadata/full qualification follows.",
+  "platforms": {
+    "api26": {
+      "passed": 17,
+      "failed": 0,
+      "seconds": 113.387,
+      "log": "scanner-final-api26-17.log"
+    },
+    "api37_16k": {
+      "passed": 17,
+      "failed": 0,
+      "seconds": 120.66,
+      "log": "scanner-final-api37-17.log"
+    }
+  },
+  "targeted_draft_lifetime": {
+    "passed": 3,
+    "failed": 0,
+    "seconds": 7.316,
+    "log": "draft-generation-fixed-tests.log"
+  },
+  "process_death": {
+    "result": {
+      "prepare": "intentionally force-stopped during active OCR; not counted as pass",
+      "interruption_marker_observed": true,
+      "orphan_files_before_relaunch": 5,
+      "abandoned_capture_before_relaunch": true,
+      "verify_passed": 1,
+      "verify_result": "S: id=AndroidJUnitRunner\nINSTRUMENTATION_STATUS: numtests=1\nINSTRUMENTATION_STATUS: stream=.\nINSTRUMENTATION_STATUS: test=lockDuringRecognitionDiscardsDraftAndRejectsExpiredGeneration\nINSTRUMENTATION_STATUS_CODE: 0\nINSTRUMENTATION_RESULT: stream=\n\nTime: 6.387\n\nOK (1 test)\n\n\nINSTRUMENTATION_CODE: -1\n"
+    },
+    "source_note": "Run before the final draft-lifetime addition; cleanup/recognizer code unchanged. Final beta qualification will repeat this opt-in."
+  },
+  "reproduced_bugs": [
+    "Preview-wide drag detector consumed non-handle scroll gestures, leaving the canvas clipped. Fixed by hit-testing pointer-down before claiming drag motion; both platforms pass scroll + actual handle edit + OCR + encrypted save.",
+    "Queued image write attached to a replacement draft. Baseline failed in7.078s. Capture original form lifetime before queued work; publish ownership on Main and delete unadopted files; strengthened same-object/schema reuse passes."
+  ],
+  "coverage": [
+    "Native focus/brightness advisory with real optical blur and blank-card non-blur policy",
+    "Geometry-edge warning, retake/back-destination and actual camera cancellation",
+    "Typed invalid/oversized image errors and workspace cleanup",
+    "Populated name/barcode and late correction preserved through OCR Apply",
+    "Front/back decrypted pixel association, separate Save, encrypted backup/stage retained values/images",
+    "Real lock during OCR, expired generation/form result refusal",
+    "All three launch defaults, hidden-tab fallback and navigation retention",
+    "Preset/custom rotation and bounded image allocation",
+    "English/Japanese bundled model OCR and native processing cancellation"
+  ],
+  "preserved_failures": [
+    "scanner-safety-focused-tests.log:12 pass/2 fail (immutable test bitmap cleanup and missing short OCR observation window); fixed fixtures/observation, no assertion removal",
+    "scanner-blur-tests.log:resizing-only fixture retained sharp edges; replaced with a real separable blur, product thresholds unchanged",
+    "api26-scanner-startup-tests.log and api26-scanner-startup-final-tests.log:11 pass/4 fail; external Camera first-use location prompt blocked later UI cases",
+    "api26-retake-diagnostic.log:Google permission package uses Android resource namespace; corrected test selects actual resource, denies location and disables camera tagging",
+    "api26-final-16-tests.log:15 pass/1 real crop-scroll interaction failure; api26-drag-focused-tests.log retained the clipped geometry before production fix",
+    "draft-owner-baseline-tests.log:reproduced stale photo attachment to replacement form"
+  ],
+  "build_lint": {
+    "passed": true,
+    "seconds": 60,
+    "tasks": 278,
+    "executed": 34,
+    "up_to_date": 244
+  },
+  "remaining": [
+    "Required independent approving review/merge",
+    "Final paired full suites and four-distribution CI",
+    "Final beta metadata/artifact/upgrade-installer verification",
+    "Physical photographed-card/arm64/hardware-key and representative mobile resource acceptance; no spare phone available"
+  ],
+  "duplicate_warning": "Considered; excluded from2.2 rather than treating recognition as a reliable merge key. No automatic merge/replacement/new fields.",
+  "ai_assisted": true
+}

@@ -37,14 +37,27 @@ class LaunchSelectionTest {
         return vm
     }
 
+    private fun legacyCredential(timeout: Long) = when {
+        Build.VERSION.SDK_INT < 30 -> device.wait(Until.findObject(By.res("com.android.settings", "password_entry")), timeout)
+        Build.VERSION.SDK_INT <= 35 -> device.wait(Until.findObject(By.res(java.util.regex.Pattern.compile("com\\.android\\.systemui:id/(lockPassword|pinEntry)"))), timeout)
+        else -> null
+    }
+
     private fun launch() {
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        assertNotNull(device.wait(Until.findObject(By.text("2").pkg("com.android.systemui")), 15000))
+        if (Build.VERSION.SDK_INT <= 35) assertNotNull(legacyCredential(15000))
+        else assertNotNull(device.wait(Until.findObject(By.text("2").pkg("com.android.systemui")), 15000))
     }
 
     private fun authorize() {
-        listOf("2", "4", "6", "8").forEach { device.findObject(By.text(it).pkg("com.android.systemui")).click() }
-        device.findObject(By.desc("Enter").pkg("com.android.systemui")).click()
+        if (Build.VERSION.SDK_INT <= 35) {
+            requireNotNull(legacyCredential(5000)).click()
+            device.executeShellCommand("input text 2468")
+            device.pressEnter()
+        } else {
+            listOf("2", "4", "6", "8").forEach { device.findObject(By.text(it).pkg("com.android.systemui")).click() }
+            device.findObject(By.desc("Enter").pkg("com.android.systemui")).click()
+        }
     }
 
     private fun ready(vm: VaultController) = runBlocking {

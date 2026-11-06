@@ -15,6 +15,11 @@ class PendingOperations {
     var attachmentTarget: app.kura.feature.VaultItem? = null
     var attachmentExport: Pair<org.json.JSONObject,ByteArray>? = null
     var imageTarget: ImageTarget? = null
+    // Keep invalidated metadata until its Android result returns. Reusing a launcher
+    // earlier would make an old result indistinguishable from a new request.
+    internal var cameraRequest: ImageImportRequest? = null
+    internal var imagePickerRequest: ImageImportRequest? = null
+    internal var cameraPermissionRequest: Pair<ImageImportRequest, String>? = null
     var authentication: kotlinx.coroutines.CancellableContinuation<javax.crypto.Cipher>? = null
     var credential: kotlinx.coroutines.CancellableContinuation<Boolean>? = null
     var shareTarget by mutableStateOf<app.kura.feature.VaultItem?>(null)
@@ -44,6 +49,7 @@ class PendingOperations {
         if (guard?.operation != ExternalOperation.AUTHENTICATION) { guard?.close(); guard = null }
         discardDraft();uiMemory.clear();attachmentTarget=null;attachmentExport?.second?.fill(0);attachmentExport=null;AttachmentContent.clear()
         liveScan = false; imageTarget = null
+        cameraRequest?.invalidate(); imagePickerRequest?.invalidate(); cameraPermissionRequest?.first?.invalidate()
         pkpassTarget=null;pkpassBytes?.fill(0);pkpassBytes=null
         shareTarget=null;sharedChunks=null;transferRecord=null;transferInput=null;transferCollector.close();transferProgress="";autoPassword=false;deleteConfirmation=false
         stage?.close(); stage = null

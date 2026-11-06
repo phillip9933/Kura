@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add retake and advisory photo-quality feedback; preserve front/back destinations and user corrections during OCR review.
+- Reject expired camera/picker/permission results and clean interrupted scanner work without publishing a draft.
+- Let gestures outside crop handles scroll the dialog so the full preview remains reachable.
+
 - Honor the saved launch section before displaying the unlocked wallet, including cold starts and phone-only unlock.
 
 - Make App updates a prominent settings row and expose update controls from the app-version dialog.

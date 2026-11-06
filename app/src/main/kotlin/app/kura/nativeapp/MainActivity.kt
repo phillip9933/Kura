@@ -168,19 +168,26 @@ class MainActivity : FragmentActivity() {
         }
     }
     private val imagePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val request = vm.pending.imagePickerRequest
+        vm.pending.imagePickerRequest = null
+        if (request == null || !request.isCurrent(vm.state.value, vm.pending)) {
+            lifecycleScope.launch { finishGuard(request?.guard) }
+            return@registerForActivityResult
+        }
         vm.launch {
             try {
-                if(uri!=null && vm.pending.imageTarget!=null) {
-                    var owned:ByteArray?=null
+                if (uri != null) {
+                    var owned: ByteArray? = null
                     try {
                         vm.work {
-                            val raw=contentResolver.openInputStream(uri)!!.use {Envelope.readBounded(it,10*1024*1024)}
-                            owned=try {CapturedImageScanner.crop(raw,1f,.5f,.5f)} finally {raw.fill(0)}
+                            check(request.isCurrent(vm.state.value, vm.pending)) { "Image import expired" }
+                            val raw = contentResolver.openInputStream(uri)!!.use { Envelope.readBounded(it, 10 * 1024 * 1024) }
+                            owned = try { CapturedImageScanner.crop(raw, 1f, .5f, .5f) } finally { raw.fill(0) }
                         }
-                        cropBytes=owned;owned=null
-                    } finally {owned?.fill(0)}
-                } else vm.pending.imageTarget=null
-            } finally {finishGuard()}
+                        if (request.isCurrent(vm.state.value, vm.pending)) { cropBytes = owned; owned = null }
+                    } finally { owned?.fill(0) }
+                } else if (vm.pending.imageTarget == request.target) vm.pending.imageTarget = null
+            } finally { finishGuard(request.guard) }
         }
     }
     private val attachmentPicker=registerForActivityResult(ActivityResultContracts.OpenDocument()) {uri->
@@ -214,8 +221,22 @@ class MainActivity : FragmentActivity() {
                     catch(e:Exception) {AttachmentContent.clear();finishGuard();throw e}
                 }
             }
-            else->{vm.pending.imageTarget=ImageTarget(item.table,item.id,column)
-                if(source=="camera") requestCamera(if(column=="barcodeValue") "live" else "capture") else external(ExternalOperation.PICKER) {imagePicker.launch(arrayOf("image/*"))}
+            else -> {
+                if (vm.state.value !is VaultState.Unlocked) return
+                if (guard != null || vm.pending.imagePickerRequest != null || vm.pending.cameraRequest != null || vm.pending.cameraPermissionRequest != null) {
+                    vm.error.value = "Finish or cancel the previous image request first."
+                    return
+                }
+                vm.pending.imageTarget = ImageTarget(item.table, item.id, column)
+                if (source == "camera") requestCamera(if (column == "barcodeValue") "live" else "capture")
+                else {
+                    val request = newImageRequest()
+                    vm.pending.imagePickerRequest = request
+                    if (!external(ExternalOperation.PICKER) {
+                        request.guard = guard
+                        imagePicker.launch(arrayOf("image/*"))
+                    }) vm.pending.imagePickerRequest = null
+                }
             }
         }
     }
@@ -237,36 +258,74 @@ class MainActivity : FragmentActivity() {
         }
     }
     private val camera = registerForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
+        val request = vm.pending.cameraRequest
+        vm.pending.cameraRequest = null
+        if (request == null || !request.isCurrent(vm.state.value, vm.pending)) {
+            request?.file?.delete()
+            if (request != null && capture === request.file) capture = null
+            lifecycleScope.launch { finishGuard(request?.guard) }
+            return@registerForActivityResult
+        }
         vm.launch {
             try {
-                if(ok) {
-                    var owned:ByteArray?=null
+                if (ok) {
+                    var owned: ByteArray? = null
                     try {
                         vm.work {
-                            val raw=capture!!.inputStream().use {Envelope.readBounded(it,10*1024*1024)}
-                            owned=if(vm.pending.imageTarget!=null) try {CapturedImageScanner.crop(raw,1f,.5f,.5f)} finally {raw.fill(0)} else raw
+                            check(request.isCurrent(vm.state.value, vm.pending)) { "Photo capture expired" }
+                            val raw = requireNotNull(request.file).inputStream().use { Envelope.readBounded(it, 10 * 1024 * 1024) }
+                            owned = if (request.target != null) try { CapturedImageScanner.crop(raw, 1f, .5f, .5f) } finally { raw.fill(0) } else raw
                         }
-                        cropBytes=owned;owned=null
-                    } finally {owned?.fill(0)}
-                } else vm.pending.imageTarget=null
-            } finally { capture?.delete(); capture = null; finishGuard() }
+                        if (request.isCurrent(vm.state.value, vm.pending)) { cropBytes = owned; owned = null }
+                    } finally { owned?.fill(0) }
+                } else if (vm.pending.imageTarget == request.target) vm.pending.imageTarget = null
+            } finally {
+                request.file?.delete()
+                if (capture === request.file) capture = null
+                finishGuard(request.guard)
+            }
         }
     }
     private var recovery by mutableStateOf<List<VaultStore.GenerationInfo>?>(null)
     private var discard by mutableStateOf<VaultStore.GenerationInfo?>(null)
     private val cameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        vm.launch {
-            finishGuard()
-            if(granted && vm.state.value is VaultState.Unlocked) {
-                if(vm.pending.cameraMode == "capture") captureImage() else vm.pending.liveScan = true
-            } else if(!granted) {vm.pending.imageTarget=null;vm.error.value = "Camera permission was not granted"}
+        val pending = vm.pending.cameraPermissionRequest
+        vm.pending.cameraPermissionRequest = null
+        val request = pending?.first
+        val current = request?.isCurrent(vm.state.value, vm.pending) == true
+        lifecycleScope.launch {
+            finishGuard(request?.guard)
+            if (current && request != null && pending != null && request.isCurrentAfterPermission(vm.state.value, vm.pending)) {
+                if (granted) {
+                    if (pending.second == "capture") captureImage() else vm.pending.liveScan = true
+                } else {
+                    vm.pending.imageTarget = null
+                    vm.error.value = "Camera permission was not granted"
+                }
+            }
         }
     }
+    private fun newImageRequest(file: File? = null): ImageImportRequest {
+        val state = vm.state.value as? VaultState.Unlocked ?: error("Unlock Kura before importing an image")
+        return ImageImportRequest(state.token, vm.pending.imageTarget, vm.pending.uiMemory.form, file)
+    }
     private fun requestCamera(mode: String) {
+        if (vm.state.value !is VaultState.Unlocked) return
+        if (vm.pending.cameraRequest != null || vm.pending.cameraPermissionRequest != null) {
+            vm.error.value = "Finish or cancel the previous camera request first."
+            return
+        }
         vm.pending.cameraMode = mode
-        if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            if(mode == "capture") captureImage() else vm.pending.liveScan = true
-        } else external(ExternalOperation.CAMERA) { cameraPermission.launch(android.Manifest.permission.CAMERA) }
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            if (mode == "capture") captureImage() else vm.pending.liveScan = true
+        } else {
+            val request = newImageRequest()
+            vm.pending.cameraPermissionRequest = request to mode
+            if (!external(ExternalOperation.CAMERA) {
+                request.guard = guard
+                cameraPermission.launch(android.Manifest.permission.CAMERA)
+            }) vm.pending.cameraPermissionRequest = null
+        }
     }
     private fun scanned(result: com.google.zxing.Result) {
         vm.pending.liveScan = false
@@ -619,18 +678,38 @@ class MainActivity : FragmentActivity() {
             credential.launch(hardware.credentialIntent())
         }
     }
-    private fun external(operation: ExternalOperation, action: () -> Unit) {
-        try {
-            check(guard == null) { "An external operation is already active" }
+    private fun external(operation: ExternalOperation, action: () -> Unit): Boolean {
+        if (guard != null) {
+            vm.error.value = "An external operation is already active"
+            return false
+        }
+        return try {
             guard = vm.lifecycle.begin(operation)
             action()
-        } catch(e: Exception) { guard?.close(); guard = null; vm.error.value = e.message }
+            true
+        } catch (e: Exception) {
+            guard?.close(); guard = null; vm.error.value = e.message
+            false
+        }
     }
-    private suspend fun finishGuard() { guard?.let { vm.lifecycle.complete(it) }; guard = null }
+    private suspend fun finishGuard(expected: ExternalOperationRegistry.Guard? = guard) {
+        if (expected == null) return
+        if (guard === expected) { vm.lifecycle.complete(expected); guard = null }
+        else expected.close()
+    }
     private fun captureImage() {
-        capture = File(cacheDir, "capture").apply { mkdirs() }.let { File.createTempFile("scan-", ".jpg", it) }
-        val uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".files", capture!!)
-        external(ExternalOperation.CAMERA) { camera.launch(uri) }
+        if (vm.pending.cameraRequest != null) {
+            vm.error.value = "Finish or cancel the previous camera request first."
+            return
+        }
+        val file = File(cacheDir, "capture").apply { mkdirs() }.let { File.createTempFile("scan-", ".jpg", it) }
+        val request = newImageRequest(file)
+        capture = file
+        vm.pending.cameraRequest = request
+        val uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".files", file)
+        if (!external(ExternalOperation.CAMERA) { request.guard = guard; camera.launch(uri) }) {
+            vm.pending.cameraRequest = null; capture = null; file.delete()
+        }
     }
     @Composable private fun ImportConfirmation() {
         val staged = pendingStage ?: return
@@ -768,8 +847,16 @@ class MainActivity : FragmentActivity() {
         val bytes = cropBytes ?: return
         val targetColumn=vm.pending.imageTarget?.column
         if (enhancedCardScanning && targetColumn in setOf("frontImagePath", "backImagePath")) {
-            EnhancedCardDialog(vm, bytes, vm.pending.imageTarget!!,
-                dismiss = { bytes.fill(0); cropBytes = null; vm.pending.imageTarget = null })
+            val target = vm.pending.imageTarget!!
+            EnhancedCardDialog(vm, bytes, target,
+                dismiss = { bytes.fill(0); cropBytes = null; vm.pending.imageTarget = null },
+                retake = {
+                    if (vm.state.value is VaultState.Unlocked && cropBytes === bytes && vm.pending.imageTarget == target) {
+                        bytes.fill(0); cropBytes = null
+                        // Preserve the selected front/back destination across the new capture.
+                        requestCamera("capture")
+                    }
+                })
             return
         }
         val cropAspect=when(targetColumn) {"kuraLogo"->1f;"frontImagePath","backImagePath"->1.586f;else->0f}

@@ -8,7 +8,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -37,6 +40,7 @@ import dev.offlinescan.core.Point
 import dev.offlinescan.core.Quad
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -44,12 +48,13 @@ internal const val enhancedCardScanning = true
 private enum class CardStep { CROP, OFFER, REVIEW }
 
 @Composable internal fun EnhancedCardDialog(vm: VaultController, bytes: ByteArray, target: ImageTarget,
-    dismiss: () -> Unit) {
+    dismiss: () -> Unit, retake: () -> Unit) {
     val context = LocalContext.current
     val engine = remember(context) { CardScanEngine(context) }
     val scope = rememberCoroutineScope()
     val form = remember(bytes) { vm.pending.uiMemory.form }
     val identity = remember(bytes) { form.identity }
+    val formGeneration = remember(bytes) { form.generation }
     val presentation by vm.presentation.collectAsState()
     val preferences = presentation.preferences
     val fields = remember(bytes) { recognitionFields(target.table, form, preferences) }
@@ -66,7 +71,9 @@ private enum class CardStep { CROP, OFFER, REVIEW }
     val rotationOwner = remember(bytes) { arrayOfNulls<ByteArray>(1) }
     DisposableEffect(rotationOwner) { onDispose { rotationOwner[0]?.fill(0); rotationOwner[0] = null } }
     var busy by remember { mutableStateOf(true) }
+    var saving by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf("Detecting card edges…") }
+    var photoWarnings by remember(bytes) { mutableStateOf<List<String>>(emptyList()) }
     var error by remember { mutableStateOf<String?>(null) }
     var cropped by remember(bytes) { mutableStateOf<ByteArray?>(null) }
     var suggestions by remember { mutableStateOf<List<CardSuggestion>>(emptyList()) }
@@ -80,13 +87,13 @@ private enum class CardStep { CROP, OFFER, REVIEW }
             detectedCorners = corners
             status = if (corners == Quad.FULL) "Edges uncertain. Adjust the four corners or use the full image." else "Card edges detected. Check all four corners before continuing."
         } catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { status = "Automatic detection unavailable. Drag the corners or use the full image." }
+        catch (failure: Exception) { status = cardScanFailureMessage(failure, "Automatic detection unavailable. Drag the corners or use the full image.") }
         finally { busy = false }
     }
-    fun currentForm() = target.id == -1L && identity != null && form.identity == identity && vm.pending.uiMemory.form === form
+    fun currentForm() = target.id == -1L && identity != null && form.identity == identity && form.generation == formGeneration && vm.pending.uiMemory.form === form
     fun saveImage(apply: Boolean) {
         val image = cropped ?: return
-        busy = true; error = null
+        busy = true; saving = true; error = null
         scope.launch {
             try {
                 if (target.id == -1L) check(currentForm())
@@ -105,13 +112,24 @@ private enum class CardStep { CROP, OFFER, REVIEW }
                 dismiss()
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { error = "Could not use this scan. Your existing card details are unchanged." }
-            finally { busy = false }
+            finally { saving = false; busy = false }
         }
     }
     val contentHeight = (LocalConfiguration.current.screenHeightDp * .58f).dp
     val validCrop = runCatching { Geometry.requireValid(corners) }.isSuccess
+    LaunchedEffect(workingBytes, corners, step) {
+        photoWarnings = emptyList()
+        if (step != CardStep.CROP || !validCrop) return@LaunchedEffect
+        // Avoid decoding another raster for each pointer movement. Cancellation also
+        // cancels the session-owned worker and removes its private workspace.
+        delay(300)
+        try {
+            photoWarnings = vm.work { cardPhotoWarnings(engine.quality(workingBytes, corners), corners) }
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { /* Advisory only: manual crop/image import stays available. */ }
+    }
     AlertDialog(
-        onDismissRequest = dismiss,
+        onDismissRequest = { if (!saving) dismiss() },
         title = { Text(when (step) {
             CardStep.CROP -> "Crop card image"
             CardStep.OFFER -> "Autofill card details?"
@@ -124,6 +142,8 @@ private enum class CardStep { CROP, OFFER, REVIEW }
                     Text("Drag the corners to adjust the detected card edges.")
                     CardCorners(workingBytes, corners, !busy) { corners = it; status = "Crop adjusted. Check all four corners." }
                     Text(status, style = MaterialTheme.typography.bodySmall)
+                    photoWarnings.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                    Text("Check that text is readable and all printed details fit inside the mask.", style = MaterialTheme.typography.bodySmall)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(enabled = !busy, onClick = { corners = detectedCorners }, modifier = Modifier.weight(1f)) { Text("Reset edges") }
                         OutlinedButton(enabled = !busy, onClick = { corners = Quad.FULL }, modifier = Modifier.weight(1f)) { Text("Use full image") }
@@ -151,6 +171,7 @@ private enum class CardStep { CROP, OFFER, REVIEW }
                             enabled = !busy, modifier = Modifier.semantics { contentDescription = "Corner vertical position" })
                     }
                     if (!validCrop) Text("Keep the corners in order around the card.", color = MaterialTheme.colorScheme.error)
+                    OutlinedButton(enabled = !busy, onClick = retake, modifier = Modifier.fillMaxWidth()) { Text("Retake photo") }
                 } else {
                     cropped?.let { CardPreview(it) }
                     if (step == CardStep.OFFER) {
@@ -163,7 +184,7 @@ private enum class CardStep { CROP, OFFER, REVIEW }
                                     suggestions.forEach { edits[it.field.key] = it.value; selected[it.field.key] = true }
                                     step = CardStep.REVIEW
                                 } catch (cancelled: CancellationException) { throw cancelled }
-                                catch (_: Exception) { error = "Text recognition could not finish. You can still use the image and enter details manually." }
+                                catch (failure: Exception) { error = cardScanFailureMessage(failure, "Text recognition could not finish. You can still use the image and enter details manually.") }
                                 finally { busy = false }
                             }
                         }, modifier = Modifier.fillMaxWidth()) { Text("Review autofill") }
@@ -199,7 +220,7 @@ private enum class CardStep { CROP, OFFER, REVIEW }
                                 step = CardStep.OFFER
                             } finally { owned?.fill(0) }
                         } catch (cancelled: CancellationException) { throw cancelled }
-                        catch (_: Exception) { error = "Could not crop this image. Adjust the corners or use the full image." }
+                        catch (failure: Exception) { error = cardScanFailureMessage(failure, "Could not crop this image. Adjust the corners or use the full image.") }
                         finally { busy = false }
                     }
                 }) { Text("Use crop") }
@@ -208,7 +229,7 @@ private enum class CardStep { CROP, OFFER, REVIEW }
                     onClick = { saveImage(true) }) { Text("Apply selected details and use image") }
             }
         },
-        dismissButton = { TextButton(onClick = dismiss) { Text("Cancel import") } },
+        dismissButton = { TextButton(enabled = !saving, onClick = dismiss) { Text("Cancel import") } },
     )
     if (rotationPicker) {
         AlertDialog(
@@ -303,22 +324,31 @@ private fun Quad.replace(index: Int, point: Point): Quad {
     val latest by rememberUpdatedState(corners)
     val accent = MaterialTheme.colorScheme.primary
     Canvas(Modifier.fillMaxWidth().height(240.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest).semantics { contentDescription = "Drag the four card corners" }.pointerInput(bitmap, enabled) {
-        var corner = 0
         fun position(point: Point): Offset {
             val scale = minOf(size.width.toFloat() / bitmap.width, size.height.toFloat() / bitmap.height)
             val width = bitmap.width * scale; val height = bitmap.height * scale
             return Offset((size.width - width) / 2 + point.x.toFloat() * width, (size.height - height) / 2 + point.y.toFloat() * height)
         }
-        if (enabled) detectDragGestures(onDragStart = { point ->
-            val nearest = latest.points.indices.minBy { (position(latest.points[it]) - point).getDistance() }
-            corner = nearest.takeIf { (position(latest.points[it]) - point).getDistance() <= 44.dp.toPx() } ?: -1
-        }) { pointer, _ ->
-            if (corner < 0) return@detectDragGestures
-            pointer.consume()
-            val scale = minOf(size.width.toFloat() / bitmap.width, size.height.toFloat() / bitmap.height)
-            val width = bitmap.width * scale; val height = bitmap.height * scale
-            change(latest.replace(corner, Point(((pointer.position.x - (size.width - width) / 2) / width).coerceIn(0f, 1f).toDouble(),
-                ((pointer.position.y - (size.height - height) / 2) / height).coerceIn(0f, 1f).toDouble())))
+        if (enabled) awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false)
+            val corner = latest.points.indices.minBy { (position(latest.points[it]) - down.position).getDistance() }
+            // Hit-test the initial touch before claiming motion. A drag elsewhere on
+            // the photo belongs to the surrounding scrollable dialog.
+            if ((position(latest.points[corner]) - down.position).getDistance() > 44.dp.toPx()) return@awaitEachGesture
+            fun move(point: Offset) {
+                val scale = minOf(size.width.toFloat() / bitmap.width, size.height.toFloat() / bitmap.height)
+                val width = bitmap.width * scale; val height = bitmap.height * scale
+                change(latest.replace(corner, Point(((point.x - (size.width - width) / 2) / width).coerceIn(0f, 1f).toDouble(),
+                    ((point.y - (size.height - height) / 2) / height).coerceIn(0f, 1f).toDouble())))
+            }
+            val accepted = awaitTouchSlopOrCancellation(down.id) { pointer, _ ->
+                pointer.consume()
+                move(pointer.position)
+            }
+            if (accepted != null) drag(accepted.id) { pointer ->
+                pointer.consume()
+                move(pointer.position)
+            }
         }
     }) {
         val scale = minOf(size.width / bitmap.width, size.height / bitmap.height)

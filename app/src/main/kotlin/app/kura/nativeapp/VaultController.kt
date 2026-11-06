@@ -274,15 +274,42 @@ class VaultController(app: Application) : AndroidViewModel(app) {
             store.insert(opened,table,row);committed=true
         };refresh()} finally {if(!committed) images.values.forEach {it.delete()}}
     }
-    suspend fun imageChange(target:ImageTarget,bytes:ByteArray?) {
-        work {opened->
-            if(target.id==-1L) {
+    suspend fun imageChange(target: ImageTarget, bytes: ByteArray?) {
+        // Capture before waiting for session work: another draft can use the same schema/id.
+        val form = pending.uiMemory.form.takeIf { target.id == -1L }
+        val identity = form?.identity
+        val formGeneration = form?.generation
+        work { opened ->
+            if (target.id == -1L) {
                 require(target.column in app.kura.feature.editableImageColumns)
-                val media=EncryptedMediaStorage(File(opened.directory,"media"))
-                val created=bytes?.let {media.validateImage(it);media.write(java.util.UUID.randomUUID().toString()+".jpg.enc",it,opened.key)}
-                pending.draftImages.remove(target.column)?.delete()
-                if(created!=null) pending.draftImages[target.column]=created
-            } else store.setItemImage(opened,target.table,target.id,target.column,bytes)
+                val media = EncryptedMediaStorage(File(opened.directory, "media"))
+                var created: File? = null
+                var replaced: File? = null
+                var adopted = false
+                try {
+                    created = bytes?.let {
+                        media.validateImage(it)
+                        media.write(java.util.UUID.randomUUID().toString() + ".jpg.enc", it, opened.key)
+                    }
+                    // Serialize UI ownership with lock/discard; cancellation before this
+                    // publication must delete the newly encrypted, unadopted file.
+                    withContext(Dispatchers.Main.immediate) {
+                        currentCoroutineContext().ensureActive()
+                        if (state.value !is VaultState.Unlocked || form == null || identity == null ||
+                            pending.uiMemory.form !== form || form.identity != identity || form.generation != formGeneration) {
+                            throw CancellationException("Photo draft expired")
+                        }
+                        replaced = pending.draftImages.remove(target.column)
+                        created?.let { pending.draftImages[target.column] = it }
+                        adopted = true
+                    }
+                } finally {
+                    withContext(NonCancellable + Dispatchers.IO) {
+                        replaced?.delete()
+                        if (!adopted) created?.delete()
+                    }
+                }
+            } else store.setItemImage(opened, target.table, target.id, target.column, bytes)
         }
         refresh()
     }
