@@ -1,5 +1,46 @@
 # Testing
 
+## APK verifier regression — 6 November 2026
+
+The local maintenance diff based on `08d3f9e` reads manifest security policy from
+its supplied APK using Android's `apkanalyzer`, never from a generated checkout
+manifest. [APK verification](PACKAGING.md) documents prerequisites and the
+compiled-fixture command. No app source or dependency version changes are part
+of this correction.
+
+The final eight-method fixture compiled real unsigned synthetic manifests with
+SDK build-tools 36.0.0 and platform 37.0. Against the preserved original verifier:
+**8 methods, 9 assertion failures, 0 errors/skips**, 0.828s. This includes three
+application-flag subcases. Against the final verifier: **8 passed, 0 failures,
+0 skips**, 3.794s. A benign checkout cannot hide an unsafe packaged manifest;
+a contradictory/absent checkout cannot reject a valid packaged manifest.
+
+A separate read-only smoke check passed against the retained public Beta 3 APK,
+SHA-256 `827b8dcd70a9fd41c3e146692eed9edbe218159603fc888c4a96dbcdfd6cb910`:
+manifest/provider/permission policy, model hashes, baseline profiles, public
+certificate continuity and native/ZIP 16 KiB alignment. This was not a rebuild,
+new signing operation, installation or app regression run. An initial smoke
+attempt reached signature verification but stopped because the isolated PATH
+omitted Java; the corrected environment passed, with the earlier log retained.
+
+Repository-controlled checks ran only after confinement checks in fresh Linux
+namespaces: network unreachable, host home/auth/Git/signing paths absent, curated
+read-only code and existing SDK/JDK inputs, and disposable writable areas.
+Python 3.14, JDK 21 and SDK Command-Line Tools 23.0 were used; no tools were
+installed. Windows execution is not verified by these Linux checks.
+
+Both local workflow files also pass static PyYAML 6.0.3 parsing and comparisons
+of the retained triggers, four-way matrix, Gradle tasks and artifact uploads.
+Controlled data examples with write permission, a floating action or persisted
+checkout credentials were refused by the static assessment. This does not
+execute GitHub Actions or verify effective token/branch-rule enforcement.
+
+The workflow diff remains local and unexecuted on GitHub. Full JVM/app/device
+suites were not rerun for this tooling-only change; earlier results below retain
+their original source scope. [Dependency baseline](DEPENDENCY-BASELINE.md) and
+[CI inputs](CI-VERIFICATION.md) record the separate supply-chain boundaries.
+AI assisted diagnosis, the regression/fix and verification documentation.
+
 ## Full Beta 3 regression follow-up — 6 November 2026
 
 The owner deferred physical-device testing for now and will supply results later. The software-only follow-up in [PR #26](https://github.com/phillip9933/Kura/pull/26) changes one instrumentation fixture; production source remains unchanged from Beta 3, and both application APKs are byte-for-byte unchanged by the fixture correction. [Structured evidence](evidence/beta3-full-regression-20261106.json) records source b11d4f5, installed APK hashes, complete transcripts and previous failures.
