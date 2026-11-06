@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Honor the saved launch section before displaying the unlocked wallet, including cold starts and phone-only unlock.
+
 - Make App updates a prominent settings row and expose update controls from the app-version dialog.
 
 - Rotate the photo before cropping, with live preset/custom-angle previews and edge detection on the oriented image.

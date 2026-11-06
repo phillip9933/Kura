@@ -50,9 +50,23 @@ class VaultController(app: Application) : AndroidViewModel(app) {
         startupCleanup.await()
         token = coordinator.unlock(auth) { key ->
             databaseRuntime.await()
-            store.open(key).also { vault = it }
+            val opened = store.open(key)
+            try {
+                // VaultScreen initializes its navigation memory on its first Unlocked render.
+                // Load launch preferences while Opening, before that state can be observed.
+                val settings = traced("Kura.settings") { PresentationSettings.parse(store.settings(opened)) }
+                currentCoroutineContext().ensureActive()
+                presentation.value = settings
+                vault = opened
+                opened
+            } catch (failure: Throwable) {
+                // The coordinator owns resources only after this opener returns successfully.
+                withContext(NonCancellable) {
+                    try { opened.close() } catch (cleanup: Throwable) { failure.addSuppressed(cleanup) }
+                }
+                throw failure
+            }
         }
-        presentation.value = work { traced("Kura.settings") { PresentationSettings.parse(store.settings(it)) } }
         localPrefs.edit().putInt("appearance",presentation.value.theme).apply()
         backupPasswordReady.value=work {opened->traced("Kura.backupSecret") {store.deviceSecret(opened,"auto-backup-password.enc")?.let {bytes->try {bytes.isNotEmpty()} finally {bytes.fill(0)}} ?: false}}
         refresh()

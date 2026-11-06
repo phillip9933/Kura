@@ -1,0 +1,103 @@
+{
+  "date": "2026-11-06",
+  "issue": 23,
+  "source_sha256": {
+    "app/src/main/kotlin/app/kura/nativeapp/VaultController.kt": "1b9b448af23a265966773ce2f92c2e526a3563a23d93682b941b3d93f5f8c3ca",
+    "app/src/androidTest/kotlin/app/kura/nativeapp/LaunchSelectionTest.kt": "cf39ea7b7f78e70289a4f4186bbeb40329b441da9ec5b8cae79cf4dbfa091722"
+  },
+  "reproduced_before_fix": "With real Android authentication and the operations mutex held before credential acceptance, a fresh Activity/ViewModel published Unlocked with default passes while encrypted settings requested wallets. Regression failed as expected in11.720s.",
+  "fix": "Load and publish presentation settings while Opening, before coordinator publishes Unlocked; opener closes its database resources if preparation fails. Navigation remains session-owned.",
+  "after_fix": {
+    "normal_regression": {
+      "passed": 1,
+      "failed": 0,
+      "seconds": 42.13,
+      "coverage": [
+        "all three defaults",
+        "hidden Cards fallback to Passes",
+        "only Identity visible fallback",
+        "real Cards to Identity navigation retained through preference update/refresh"
+      ]
+    },
+    "initial_targeted_pass": {
+      "passed": 1,
+      "seconds": 35.17,
+      "note": "Before navigation assertion was strengthened to actual UI taps"
+    },
+    "cold_process_phases": [
+      {
+        "name": "launch-0-app-prepare",
+        "passed": true,
+        "seconds": 7.885
+      },
+      {
+        "name": "launch-0-app-verify",
+        "passed": true,
+        "seconds": 6.046
+      },
+      {
+        "name": "launch-1-app-prepare",
+        "passed": true,
+        "seconds": 7.017
+      },
+      {
+        "name": "launch-1-app-verify",
+        "passed": true,
+        "seconds": 6.157
+      },
+      {
+        "name": "launch-2-app-prepare",
+        "passed": true,
+        "seconds": 6.139
+      },
+      {
+        "name": "launch-2-app-verify",
+        "passed": true,
+        "seconds": 5.621
+      },
+      {
+        "name": "launch-0-phone-prepare",
+        "passed": true,
+        "seconds": 10.22
+      },
+      {
+        "name": "launch-0-phone-verify",
+        "passed": true,
+        "seconds": 3.331
+      },
+      {
+        "name": "launch-1-phone-prepare",
+        "passed": true,
+        "seconds": 10.429
+      },
+      {
+        "name": "launch-1-phone-verify",
+        "passed": true,
+        "seconds": 3.001
+      },
+      {
+        "name": "launch-2-phone-prepare",
+        "passed": true,
+        "seconds": 10.986
+      },
+      {
+        "name": "launch-2-phone-verify",
+        "passed": true,
+        "seconds": 3.364
+      }
+    ]
+  },
+  "build_lint": {
+    "passed": true,
+    "seconds": 44,
+    "tasks": 278,
+    "executed": 14,
+    "up_to_date": 264
+  },
+  "scope": "Synthetic API37/16KiB disposable prototype, no injected master keys; real credential acceptance and phone-only device wrapper; force-stop between each prepare/verify pair. Fresh full/older-platform/optimized qualification follows.",
+  "remaining": [
+    "Required independent review",
+    "Final paired suites and older-platform/optimized acceptance"
+  ],
+  "ai_assisted": true
+}
