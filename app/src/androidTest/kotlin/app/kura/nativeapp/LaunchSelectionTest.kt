@@ -180,6 +180,12 @@ class LaunchSelectionTest {
                     ready(vm)
                     val expected = listOf("wallets", "passes", "identities")[index]
                     assertEquals(expected, vm.presentation.value.initialTable)
+                    instrumentation.runOnMainSync {
+                        println("COLD_LAUNCH_UI initialized=${vm.pending.uiMemory.initialized} table=${vm.pending.uiMemory.table.value} requested=$expected")
+                    }
+                    // Unlocked publishes settings before the first Compose frame.
+                    // Wait for initialization, never for the expected selected value.
+                    runBlocking { withTimeout(5000) { while (!vm.pending.uiMemory.initialized) delay(25) } }
                     assertEquals(expected, table(vm))
                 } finally {
                     // Test-owned optional wrapper only; original authenticated envelope is retained.

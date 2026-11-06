@@ -151,7 +151,10 @@ class BackupJourneyTest {
         assertNotNull("Restored search preference must remain available", search)
         search!!.text = "Kura Test Transit 0"
         assertTrue(device.wait(Until.hasObject(By.desc("Open Kura Test Transit 0")),15000))
-        device.findObject(By.desc("Open Kura Test Transit 0")).click()
+        // Search results can publish semantics before their final grid bounds.
+        // Use the same frame-settled real tap as the other journeys.
+        click("Open Kura Test Transit 0")
+        assertNotNull("Export requires the opened pass detail", device.wait(Until.findObject(By.desc("More pass actions")), 5000))
         click("Export encrypted pass")
         assertTrue(device.wait(Until.hasObject(By.text("Encrypt pass")),5000))
         password()

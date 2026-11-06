@@ -1,0 +1,54 @@
+{
+  "application_unchanged": true,
+  "enhanced_full": {
+    "git_head": "74480f9b83f4a14cce9ea0e27e9f256bef1790b8",
+    "passed": 87,
+    "failed": 0,
+    "assumption_skips": 4,
+    "total": 91,
+    "duration_seconds": 1055.771,
+    "success": true
+  },
+  "offline_prior_complete": {
+    "passed": 66,
+    "failed": 1,
+    "assumption_skips": 4,
+    "total": 71,
+    "duration_seconds": 928.976,
+    "failed_cases": [
+      "app.kura.nativeapp.BackupJourneyTest#systemDocumentExportAndConfirmedRestoreRoundTrip"
+    ]
+  },
+  "observations": {
+    "export": "Saved failure hierarchy remains the filtered pass grid, not the detail screen; a direct raw tap bypassed the established frame-settling helper",
+    "cold_launch": "Loaded presentation already requested wallets; test read default UI memory before first initialization. Wait only for initialized, never for expected value; retain settings-order assertion"
+  },
+  "corrected_focused": [
+    {
+      "case": "offline-export-focused",
+      "success": true,
+      "summary": [
+        "Time: 58.124",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "cold-ui-boundary-prepare",
+      "success": true,
+      "summary": [
+        "Time: 7.668",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "cold-ui-boundary-verify",
+      "success": true,
+      "summary": [
+        "Time: 6.903",
+        "OK (1 test)"
+      ]
+    }
+  ],
+  "assertions_removed": false,
+  "full_enhanced_reuse": "Application bytes unchanged; subsequent changes touch two test methods only. Repeat affected backup journey and all cold phases on final harness, retain complete enhanced87/87 evidence as74480f9."
+}
