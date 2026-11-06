@@ -1,0 +1,794 @@
+{
+  "date": "2026-11-06",
+  "scope": "Software-only Beta 3 qualification; owner deferred physical testing and will supply results later.",
+  "release": {
+    "version": "2.2.0-beta.3",
+    "version_code": 122,
+    "source": "6fe858fd59e5d2d2ab916f84b4d035ee019d8a3f",
+    "url": "https://github.com/phillip9933/Kura/releases/tag/v2.2.0-beta.3",
+    "published_apk_sha256": "827b8dcd70a9fd41c3e146692eed9edbe218159603fc888c4a96dbcdfd6cb910",
+    "artifacts_changed": false,
+    "signing_used": false
+  },
+  "source_scope": {
+    "source": "b11d4f5bcbb1bfb69db4f95b5e527927f24acf0c",
+    "production_source_unchanged_from_beta3": true,
+    "changed_paths": [
+      "AGENTS.md",
+      "CONTRIBUTING.md",
+      "app/src/androidTest/kotlin/app/kura/nativeapp/RefinementJourneyTest.kt",
+      "docs/APP-UPDATES.md",
+      "docs/RELEASE.md",
+      "docs/TESTING.md"
+    ],
+    "original_app_sha256": "c44c2b98ea57890e56fd5a8ab4bcf945243085287c4ef574f63b482f2733a184",
+    "corrected_build_app_sha256": "c44c2b98ea57890e56fd5a8ab4bcf945243085287c4ef574f63b482f2733a184",
+    "app_bytes_unchanged": true,
+    "test_sha256": "029d7e852fa01702bd71b4e11b45be87eeb10a468cebe0c324ec5f138b8d0968"
+  },
+  "fixture_correction": {
+    "source": "b11d4f5bcbb1bfb69db4f95b5e527927f24acf0c",
+    "path": "app/src/androidTest/kotlin/app/kura/nativeapp/RefinementJourneyTest.kt",
+    "changes": [
+      "Use the shared frame-settled click helper for the image edit action and assert the photo menu opens.",
+      "Disarm automatic resume authentication only before the fixture forces a foreground teardown lock."
+    ],
+    "assertions_removed": false,
+    "diagnostic": "Picker return left autoUnlockArmed=true before artificial fixture teardown; isolated original test body completed but teardown crashed with BadTokenException.",
+    "production_code_changed": false
+  },
+  "initial_failure_preserved": {
+    "git_head": "44e65d4f26fe8ad312926699b4f00ea3d17df106",
+    "source_main_sha256_normalized_lf": "a408fa62cd69ddbf61092b52f7f28561f79b518825572439ae2cda4eb837ae11",
+    "status": "complete",
+    "source_main_sha256": "5d0fafe560a531ef2cbb6b90838baeca76ef7afe26601300e62eff597dd9112b",
+    "configuration": "enhanced",
+    "expected_cases": 92,
+    "fixture_scope": "owned disposable prototype only",
+    "start_epoch": 1793959279.3261635,
+    "phone_unlocked_before_start": true,
+    "previous_biometric_session_absent": true,
+    "installed_apk_sha256": {
+      "app.kura.wallet.prototype": "c44c2b98ea57890e56fd5a8ab4bcf945243085287c4ef574f63b482f2733a184",
+      "app.kura.wallet.prototype.test": "6473d643993ec53fa1224312e342f69f524b782e0d36893512418ff4db27d53c"
+    },
+    "package_broadcasts_idle": true,
+    "no_reinstall_before_instrumentation": true,
+    "log": "enhanced-full.log",
+    "passed": 87,
+    "failed": 1,
+    "assumption_skips": 4,
+    "last_case": "app.kura.nativeapp.UnlockTimingTest#emptyVaultUnlockTrace",
+    "failed_cases": [
+      "app.kura.nativeapp.RefinementJourneyTest#dynamicManualEntryColorCalendarAndDraftImage"
+    ],
+    "skipped_cases": [
+      "app.kura.nativeapp.AppUnlockJourneyTest#phoneUnlockColdProcessAcceptance",
+      "app.kura.nativeapp.ReleaseUpgradeTest#retainedSyntheticWalletAcrossPrototypeUpgrade",
+      "app.kura.nativeapp.StoreScreenshotsTest#captureStoreListing",
+      "app.kura.nativeapp.UnlockTimingTest#emptyVaultUnlockTrace"
+    ],
+    "success": false,
+    "adb_exit_code": 0,
+    "total": 92,
+    "duration_seconds": 1075.524,
+    "transcript_complete": true,
+    "end_epoch": 1793960362.8647833
+  },
+  "isolated_original_failure_preserved": {
+    "success": false,
+    "unmodified_beta3_test_apk": true,
+    "summary": []
+  },
+  "complete_enhanced_corrected": {
+    "git_head": "b11d4f5bcbb1bfb69db4f95b5e527927f24acf0c",
+    "source_main_sha256_normalized_lf": "a408fa62cd69ddbf61092b52f7f28561f79b518825572439ae2cda4eb837ae11",
+    "status": "complete",
+    "source_main_sha256": "5d0fafe560a531ef2cbb6b90838baeca76ef7afe26601300e62eff597dd9112b",
+    "configuration": "enhanced",
+    "expected_cases": 92,
+    "fixture_scope": "owned disposable prototype only",
+    "start_epoch": 1793961090.3375647,
+    "phone_unlocked_before_start": true,
+    "previous_biometric_session_absent": true,
+    "installed_apk_sha256": {
+      "app.kura.wallet.prototype": "c44c2b98ea57890e56fd5a8ab4bcf945243085287c4ef574f63b482f2733a184",
+      "app.kura.wallet.prototype.test": "029d7e852fa01702bd71b4e11b45be87eeb10a468cebe0c324ec5f138b8d0968"
+    },
+    "package_broadcasts_idle": true,
+    "no_reinstall_before_instrumentation": true,
+    "log": "enhanced-full.log",
+    "passed": 88,
+    "failed": 0,
+    "assumption_skips": 4,
+    "last_case": "app.kura.nativeapp.UnlockTimingTest#emptyVaultUnlockTrace",
+    "failed_cases": [],
+    "skipped_cases": [
+      "app.kura.nativeapp.AppUnlockJourneyTest#phoneUnlockColdProcessAcceptance",
+      "app.kura.nativeapp.ReleaseUpgradeTest#retainedSyntheticWalletAcrossPrototypeUpgrade",
+      "app.kura.nativeapp.StoreScreenshotsTest#captureStoreListing",
+      "app.kura.nativeapp.UnlockTimingTest#emptyVaultUnlockTrace"
+    ],
+    "success": true,
+    "adb_exit_code": 0,
+    "total": 92,
+    "duration_seconds": 1025.389,
+    "transcript_complete": true,
+    "end_epoch": 1793962117.184953
+  },
+  "complete_offline_original": {
+    "git_head": "44e65d4f26fe8ad312926699b4f00ea3d17df106",
+    "source_main_sha256_normalized_lf": "a408fa62cd69ddbf61092b52f7f28561f79b518825572439ae2cda4eb837ae11",
+    "status": "complete",
+    "source_main_sha256": "5d0fafe560a531ef2cbb6b90838baeca76ef7afe26601300e62eff597dd9112b",
+    "configuration": "offline",
+    "expected_cases": 71,
+    "fixture_scope": "owned disposable prototype only",
+    "start_epoch": 1793959599.931306,
+    "phone_unlocked_before_start": true,
+    "previous_biometric_session_absent": true,
+    "installed_apk_sha256": {
+      "app.kura.wallet.prototype": "6e4af482497c1db16d97ee3641ec87aaa4838e44f012d1c5f00e8d98227365c9",
+      "app.kura.wallet.prototype.test": "0180d6111103d83b8d7225504d2f81d1e29bca3d53412c385a4a7fd40ff46be6"
+    },
+    "package_broadcasts_idle": true,
+    "no_reinstall_before_instrumentation": true,
+    "log": "offline-full.log",
+    "passed": 67,
+    "failed": 0,
+    "assumption_skips": 4,
+    "last_case": "app.kura.nativeapp.UnlockTimingTest#emptyVaultUnlockTrace",
+    "failed_cases": [],
+    "skipped_cases": [
+      "app.kura.nativeapp.AppUnlockJourneyTest#phoneUnlockColdProcessAcceptance",
+      "app.kura.nativeapp.ReleaseUpgradeTest#retainedSyntheticWalletAcrossPrototypeUpgrade",
+      "app.kura.nativeapp.StoreScreenshotsTest#captureStoreListing",
+      "app.kura.nativeapp.UnlockTimingTest#emptyVaultUnlockTrace"
+    ],
+    "success": true,
+    "adb_exit_code": 0,
+    "total": 71,
+    "duration_seconds": 931.199,
+    "transcript_complete": true,
+    "end_epoch": 1793960538.9897757
+  },
+  "corrected_focused": {
+    "enhanced": {
+      "success": true,
+      "active_passed": 4,
+      "summary": [
+        "Time: 77.663",
+        "OK (4 tests)"
+      ]
+    },
+    "offline": {
+      "success": true,
+      "active_passed": 4,
+      "summary": [
+        "Time: 78.623",
+        "OK (4 tests)"
+      ],
+      "app_bytes_unchanged": true,
+      "app_sha256": "6e4af482497c1db16d97ee3641ec87aaa4838e44f012d1c5f00e8d98227365c9",
+      "test_sha256": "590a837612fa3c824bc9ca0dd846b35f804137f62fee8167f6a5f0f1cd02a69f"
+    }
+  },
+  "offline_scope": "Full 67-pass suite used original fixture. Corrected affected four-case class passed separately; application APK remained byte-for-byte unchanged. No final-fixture full offline rerun claimed.",
+  "startup_cold_acceptance": {
+    "summary": {
+      "success": true,
+      "launch_phase_executions": 12,
+      "phone_prerequisite": 1,
+      "phone_cold_phase_executions": 2
+    },
+    "launch_phases": [
+      {
+        "name": "launch-0-app-prepare",
+        "passed": true,
+        "seconds": 6.407
+      },
+      {
+        "name": "launch-0-app-verify",
+        "passed": true,
+        "seconds": 5.801
+      },
+      {
+        "name": "launch-1-app-prepare",
+        "passed": true,
+        "seconds": 6.442
+      },
+      {
+        "name": "launch-1-app-verify",
+        "passed": true,
+        "seconds": 5.907
+      },
+      {
+        "name": "launch-2-app-prepare",
+        "passed": true,
+        "seconds": 6.447
+      },
+      {
+        "name": "launch-2-app-verify",
+        "passed": true,
+        "seconds": 5.891
+      },
+      {
+        "name": "launch-0-phone-prepare",
+        "passed": true,
+        "seconds": 10.199
+      },
+      {
+        "name": "launch-0-phone-verify",
+        "passed": true,
+        "seconds": 3.003
+      },
+      {
+        "name": "launch-1-phone-prepare",
+        "passed": true,
+        "seconds": 10.238
+      },
+      {
+        "name": "launch-1-phone-verify",
+        "passed": true,
+        "seconds": 3.032
+      },
+      {
+        "name": "launch-2-phone-prepare",
+        "passed": true,
+        "seconds": 10.432
+      },
+      {
+        "name": "launch-2-phone-verify",
+        "passed": true,
+        "seconds": 2.933
+      }
+    ],
+    "phone_phases": [
+      {
+        "phase": "phone-sentinel-prerequisite",
+        "success": true,
+        "seconds": 57.577
+      },
+      {
+        "phase": "phone-cold-prepare",
+        "success": true,
+        "seconds": 9.058
+      },
+      {
+        "phase": "phone-cold-verify",
+        "success": true,
+        "seconds": 27.163
+      }
+    ],
+    "scope": "12 default-screen phase executions (three screens, two unlock modes, prepare/real force-stop/verify), plus one sentinel prerequisite and two phone-only cold phases. These are phases, not 15 unique tests."
+  },
+  "ci": {
+    "url": "https://github.com/phillip9933/Kura/actions/runs/42203474146",
+    "result": {
+      "conclusion": "success",
+      "headSha": "b11d4f5bcbb1bfb69db4f95b5e527927f24acf0c",
+      "jobs": [
+        {
+          "completedAt": "2026-11-06T10:45:43Z",
+          "conclusion": "success",
+          "databaseId": 127844214629,
+          "name": "verify (true, false)",
+          "startedAt": "2026-11-06T10:32:44Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-06T10:32:46Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-06T10:32:45Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:48Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 2,
+              "startedAt": "2026-11-06T10:32:46Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:48Z",
+              "conclusion": "success",
+              "name": "Run actions/setup-java@v4",
+              "number": 3,
+              "startedAt": "2026-11-06T10:32:48Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:54Z",
+              "conclusion": "success",
+              "name": "Run android-actions/setup-android@v3",
+              "number": 4,
+              "startedAt": "2026-11-06T10:32:48Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:56Z",
+              "conclusion": "success",
+              "name": "Install Android build tools",
+              "number": 5,
+              "startedAt": "2026-11-06T10:32:54Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:37Z",
+              "conclusion": "success",
+              "name": "Unit tests, lint and unsigned build",
+              "number": 6,
+              "startedAt": "2026-11-06T10:32:56Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:38Z",
+              "conclusion": "success",
+              "name": "Verify permissions and 16 KiB packaging",
+              "number": 7,
+              "startedAt": "2026-11-06T10:45:37Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:38Z",
+              "conclusion": "skipped",
+              "name": "Compile opt-in installer acceptance harness",
+              "number": 8,
+              "startedAt": "2026-11-06T10:45:38Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:40Z",
+              "conclusion": "success",
+              "name": "Run actions/upload-artifact@v4",
+              "number": 9,
+              "startedAt": "2026-11-06T10:45:38Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:40Z",
+              "conclusion": "success",
+              "name": "Post Run actions/setup-java@v4",
+              "number": 17,
+              "startedAt": "2026-11-06T10:45:40Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:41Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 18,
+              "startedAt": "2026-11-06T10:45:40Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:41Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 19,
+              "startedAt": "2026-11-06T10:45:41Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/phillip9933/Kura/actions/runs/42203474146/job/127844214629"
+        },
+        {
+          "completedAt": "2026-11-06T10:42:34Z",
+          "conclusion": "success",
+          "databaseId": 127844214735,
+          "name": "verify (true, true)",
+          "startedAt": "2026-11-06T10:32:43Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-06T10:32:45Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-06T10:32:44Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:47Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 2,
+              "startedAt": "2026-11-06T10:32:45Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:47Z",
+              "conclusion": "success",
+              "name": "Run actions/setup-java@v4",
+              "number": 3,
+              "startedAt": "2026-11-06T10:32:47Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:54Z",
+              "conclusion": "success",
+              "name": "Run android-actions/setup-android@v3",
+              "number": 4,
+              "startedAt": "2026-11-06T10:32:47Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:55Z",
+              "conclusion": "success",
+              "name": "Install Android build tools",
+              "number": 5,
+              "startedAt": "2026-11-06T10:32:54Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:42:02Z",
+              "conclusion": "success",
+              "name": "Unit tests, lint and unsigned build",
+              "number": 6,
+              "startedAt": "2026-11-06T10:32:55Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:42:03Z",
+              "conclusion": "success",
+              "name": "Verify permissions and 16 KiB packaging",
+              "number": 7,
+              "startedAt": "2026-11-06T10:42:02Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:42:30Z",
+              "conclusion": "success",
+              "name": "Compile opt-in installer acceptance harness",
+              "number": 8,
+              "startedAt": "2026-11-06T10:42:03Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:42:32Z",
+              "conclusion": "success",
+              "name": "Run actions/upload-artifact@v4",
+              "number": 9,
+              "startedAt": "2026-11-06T10:42:30Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:42:32Z",
+              "conclusion": "success",
+              "name": "Post Run actions/setup-java@v4",
+              "number": 17,
+              "startedAt": "2026-11-06T10:42:32Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:42:32Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 18,
+              "startedAt": "2026-11-06T10:42:32Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:42:32Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 19,
+              "startedAt": "2026-11-06T10:42:32Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/phillip9933/Kura/actions/runs/42203474146/job/127844214735"
+        },
+        {
+          "completedAt": "2026-11-06T10:41:45Z",
+          "conclusion": "success",
+          "databaseId": 127844214819,
+          "name": "verify (false, false)",
+          "startedAt": "2026-11-06T10:32:43Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-06T10:32:45Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-06T10:32:44Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:46Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 2,
+              "startedAt": "2026-11-06T10:32:45Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:46Z",
+              "conclusion": "success",
+              "name": "Run actions/setup-java@v4",
+              "number": 3,
+              "startedAt": "2026-11-06T10:32:46Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:55Z",
+              "conclusion": "success",
+              "name": "Run android-actions/setup-android@v3",
+              "number": 4,
+              "startedAt": "2026-11-06T10:32:46Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:56Z",
+              "conclusion": "success",
+              "name": "Install Android build tools",
+              "number": 5,
+              "startedAt": "2026-11-06T10:32:55Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:41:41Z",
+              "conclusion": "success",
+              "name": "Unit tests, lint and unsigned build",
+              "number": 6,
+              "startedAt": "2026-11-06T10:32:56Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:41:42Z",
+              "conclusion": "success",
+              "name": "Verify permissions and 16 KiB packaging",
+              "number": 7,
+              "startedAt": "2026-11-06T10:41:41Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:41:42Z",
+              "conclusion": "skipped",
+              "name": "Compile opt-in installer acceptance harness",
+              "number": 8,
+              "startedAt": "2026-11-06T10:41:42Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:41:43Z",
+              "conclusion": "success",
+              "name": "Run actions/upload-artifact@v4",
+              "number": 9,
+              "startedAt": "2026-11-06T10:41:42Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:41:43Z",
+              "conclusion": "success",
+              "name": "Post Run actions/setup-java@v4",
+              "number": 17,
+              "startedAt": "2026-11-06T10:41:43Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:41:43Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 18,
+              "startedAt": "2026-11-06T10:41:43Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:41:44Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 19,
+              "startedAt": "2026-11-06T10:41:43Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/phillip9933/Kura/actions/runs/42203474146/job/127844214819"
+        },
+        {
+          "completedAt": "2026-11-06T10:45:55Z",
+          "conclusion": "success",
+          "databaseId": 127844214906,
+          "name": "verify (false, true)",
+          "startedAt": "2026-11-06T10:32:43Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completedAt": "2026-11-06T10:32:45Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "startedAt": "2026-11-06T10:32:44Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:46Z",
+              "conclusion": "success",
+              "name": "Run actions/checkout@v4",
+              "number": 2,
+              "startedAt": "2026-11-06T10:32:45Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:46Z",
+              "conclusion": "success",
+              "name": "Run actions/setup-java@v4",
+              "number": 3,
+              "startedAt": "2026-11-06T10:32:46Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:57Z",
+              "conclusion": "success",
+              "name": "Run android-actions/setup-android@v3",
+              "number": 4,
+              "startedAt": "2026-11-06T10:32:46Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:32:58Z",
+              "conclusion": "success",
+              "name": "Install Android build tools",
+              "number": 5,
+              "startedAt": "2026-11-06T10:32:57Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:50Z",
+              "conclusion": "success",
+              "name": "Unit tests, lint and unsigned build",
+              "number": 6,
+              "startedAt": "2026-11-06T10:32:58Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:51Z",
+              "conclusion": "success",
+              "name": "Verify permissions and 16 KiB packaging",
+              "number": 7,
+              "startedAt": "2026-11-06T10:45:50Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:51Z",
+              "conclusion": "skipped",
+              "name": "Compile opt-in installer acceptance harness",
+              "number": 8,
+              "startedAt": "2026-11-06T10:45:51Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:53Z",
+              "conclusion": "success",
+              "name": "Run actions/upload-artifact@v4",
+              "number": 9,
+              "startedAt": "2026-11-06T10:45:51Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:53Z",
+              "conclusion": "success",
+              "name": "Post Run actions/setup-java@v4",
+              "number": 17,
+              "startedAt": "2026-11-06T10:45:53Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:53Z",
+              "conclusion": "success",
+              "name": "Post Run actions/checkout@v4",
+              "number": 18,
+              "startedAt": "2026-11-06T10:45:53Z",
+              "status": "completed"
+            },
+            {
+              "completedAt": "2026-11-06T10:45:53Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 19,
+              "startedAt": "2026-11-06T10:45:53Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://github.com/phillip9933/Kura/actions/runs/42203474146/job/127844214906"
+        }
+      ],
+      "status": "completed"
+    },
+    "test_reports": [
+      {
+        "configuration": "android-verification-reports-updates-false-scanner-false",
+        "test_report_count": 11,
+        "tests": 59,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "lint": [
+          {
+            "report": "app/build/reports/lint-results-debug.xml",
+            "counts": {
+              "Warning": 58
+            }
+          }
+        ]
+      },
+      {
+        "configuration": "android-verification-reports-updates-false-scanner-true",
+        "test_report_count": 11,
+        "tests": 59,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "lint": [
+          {
+            "report": "app/build/reports/lint-results-debug.xml",
+            "counts": {
+              "Warning": 62
+            }
+          }
+        ]
+      },
+      {
+        "configuration": "android-verification-reports-updates-true-scanner-false",
+        "test_report_count": 11,
+        "tests": 59,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "lint": [
+          {
+            "report": "app/build/reports/lint-results-debug.xml",
+            "counts": {
+              "Warning": 62
+            }
+          }
+        ]
+      },
+      {
+        "configuration": "android-verification-reports-updates-true-scanner-true",
+        "test_report_count": 11,
+        "tests": 59,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "lint": [
+          {
+            "report": "app/build/reports/lint-results-debug.xml",
+            "counts": {
+              "Warning": 65
+            }
+          }
+        ]
+      }
+    ],
+    "fresh_jvm_executions": 236,
+    "scope": "Task logs and downloaded XML verify 59 fresh JVM executions in each of four configurations, 236 total, zero failures/errors/skips. Lint has zero errors and 58/62/62/65 warnings. CI builds/compiles Android tests; Android execution results are recorded separately above."
+  },
+  "skips": "Four opt-ins: phone-only cold process, retained upgrade, store screenshots, empty-vault timing. Cold-process acceptance ran separately above. Skips are not passes.",
+  "not_rerun": [
+    "Unchanged core device suites",
+    "Installer/upgrade matrix",
+    "Older API checks",
+    "Physical camera/arm64 resource qualification",
+    "Production-package retained upgrades"
+  ],
+  "remaining": {
+    "issues": [
+      9,
+      10,
+      15,
+      13
+    ],
+    "physical_testing": "Owner-deferred, pending; not passed or failed.",
+    "stage": "Beta",
+    "latest_stable": "2.1.0",
+    "stable_promotion": "Requires remaining acceptance and separate owner authorization."
+  },
+  "safety": "Owned disposable API 37.2 / 16 KiB emulators; prototype package and synthetic fixtures only. No personal phone, production-package destructive suite, credentials, private backups, new signing or release.",
+  "raw_evidence": "Project outputs/beta3-full-regression-20261106 contains complete transcripts, failure hierarchy, installed APK hash guards and phase logs.",
+  "ai_assistance": "Analysis, test fixture correction, execution and evidence/documentation."
+}
