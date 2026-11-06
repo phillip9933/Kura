@@ -63,8 +63,8 @@ change or effective merge-gate enforcement is claimed.
 
 The verification workflow accepts `export-prototype-apks`, default false. Only
 a manual dispatch selecting it and the combined scanner/updater configuration
-compiles the three core instrumentation APKs and uploads the prototype app/test
-pair plus core tests. That job's ordinary validation and packaging checks
+builds the core instrumentation, R8-optimized prototype and external benchmark
+driver APKs. It uploads these with the prototype debug app/default test pair. That job's ordinary validation and packaging checks
 must succeed first; the complete four-way matrix remains part of qualification. Export runs before opt-in installer-harness compilation so
 the saved app test APK is the default suite. No production signing key, release
 APK or signing material enters this artifact; retention is seven days.

@@ -57,9 +57,9 @@ jobs:
           if [ "$DIRECT_UPDATES" = "true" ]; then args+=(--direct-updates); fi
           if [ "$CARD_SCANNER" = "true" ]; then args+=(--card-scanner); fi
           python3 tools/verify-native-packaging.py "${args[@]}"
-      - name: Compile core instrumentation for manual runtime acceptance
+      - name: Build supplemental runtime acceptance APKs
         if: github.event_name == 'workflow_dispatch' && inputs.export-prototype-apks && matrix.direct-updates && matrix.card-scanner
-        run: ./gradlew :core:security:assembleDebugAndroidTest :core:database:assembleDebugAndroidTest :core:import:assembleDebugAndroidTest -PdirectUpdates=$DIRECT_UPDATES -PcardScanner=$CARD_SCANNER --max-workers=2 --console=plain
+        run: ./gradlew :core:security:assembleDebugAndroidTest :core:database:assembleDebugAndroidTest :core:import:assembleDebugAndroidTest :app:assembleOptimized :benchmark:assembleDebugAndroidTest -PdirectUpdates=$DIRECT_UPDATES -PcardScanner=$CARD_SCANNER --max-workers=2 --console=plain
       - name: Export prototype and core-test APKs
         if: github.event_name == 'workflow_dispatch' && inputs.export-prototype-apks && matrix.direct-updates && matrix.card-scanner
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -70,6 +70,8 @@ jobs:
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            app/build/outputs/apk/optimized/app-optimized.apk
+            benchmark/build/outputs/apk/androidTest/debug/*.apk
             core/security/build/outputs/apk/androidTest/debug/*.apk
             core/database/build/outputs/apk/androidTest/debug/*.apk
             core/import/build/outputs/apk/androidTest/debug/*.apk
