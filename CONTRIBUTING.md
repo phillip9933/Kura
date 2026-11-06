@@ -60,6 +60,12 @@ Report the app version/code, Android version, device, font scale, theme and step
 
 PRs should explain the problem, final behavior, tests run and remaining limits. Update affected docs. CI runs JVM tests, lint and unsigned build checks; it does not replace emulator, physical-device or upgrade testing. The manual release-candidate workflow only uploads unsigned artifacts and does not publish.
 
+## Maintainer approval
+
+Kura is owner-managed. On 6 November 2026 the owner chose personal maintainer sign-off and removed GitHub's required-review rule. Owner sign-off is sufficient unless independent review is explicitly requested; record the decision without calling it an independent approving review. GitHub does not count an author's own review as an approval. Check the current repository rules before merging.
+
+This does not waive appropriate CI, acceptance evidence, physical-device/data-safety gates or explicit release authorization. A previous approval or release authorization is not blanket approval for future work. Keep source completion separate from stable promotion.
+
 The 2.0 source and signed GitHub release are authorized for publication. Store-console submissions remain separate; the user is updating the pending F-Droid submission.
 
 Contributions are licensed under [AGPL-3.0](LICENSE). Follow the [Code of Conduct](CODE_OF_CONDUCT.md).

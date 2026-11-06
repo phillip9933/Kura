@@ -4,6 +4,8 @@ Kura is an offline Kotlin/Jetpack Compose Android wallet. Read [README](README.m
 
 ## Boundaries
 
+- Follow the owner-managed [maintainer approval](CONTRIBUTING.md#maintainer-approval) workflow. Record owner sign-off when supplied; independent review is required only when explicitly requested. Physical/data-safety acceptance and release authorization remain separate gates. Historical approval is not blanket future approval.
+
 - Source publication, a signed 2.0 GitHub release (APK/AAB), its version tag and retirement of old downloads were explicitly authorized on 2026-09-29. Store-console submission and messages on the user's behalf remain separate actions requiring authorization and access.
 - Release application ID is `app.kura.wallet`; debug is `app.kura.wallet.prototype`. Preserve signing identity, database schemas, backup formats and Keystore aliases. Historical `Flutter`/`payments` strings can be compatibility keys, not dead code.
 - The default offline build must not request INTERNET. The owner authorized an optional direct-update build on 2026-10-24: GitHub release metadata/APK traffic only, isolated from vault data, with opt-in checks and foreground user-confirmed installation. Never add analytics or telemetry or log keys, passwords, personal records or image contents. See docs/APP-UPDATES.md.

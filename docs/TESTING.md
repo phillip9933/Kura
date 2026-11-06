@@ -1,5 +1,11 @@
 # Testing
 
+## Owner-approved merge — 6 November 2026
+
+All four [PR-head CI jobs at 819d993](https://github.com/phillip9933/Kura/actions/runs/42192279428) passed before owner-approved PR #14 merged as a5dd32d. The merge tree matches the tested PR head; source after the Beta 3 tag differs only in documentation. The nine completed implementation issues are closed with acceptance/owner-sign-off evidence. No independent review is claimed; the owner removed that GitHub requirement.
+
+This update changes guidance/documentation only. No device or JVM suite was rerun for these text changes. Beta 3's exact release-source 236 fresh JVM executions and nine Android checks below remain scoped to that build. Physical-camera/arm64, hardware-key/production-package data-safety and RC/stable acceptance remain open in #9/#10/#15/#13; owner approval does not turn those into passed tests. Earlier failures and publication/review snapshots remain preserved below.
+
 ## Published beta 3 qualification — 6 November 2026
 
 [Kura 2.2.0-beta.3 / 122](https://github.com/phillip9933/Kura/releases/tag/v2.2.0-beta.3) is published from 6fe858f, including the loading-screen fix from 7f1b257. Compared with a511398, only version metadata and release documentation changed. The signed release, debug/test APKs and lint passed in 1m 30s: **498 tasks, 84 executed / 414 up-to-date**, 0 lint errors / 65 warnings. Signature continuity against checksum-matched public beta.2 and production identity/model/permission/provider/baseline-profile/ELF+ZIP 16 KiB verification pass.
