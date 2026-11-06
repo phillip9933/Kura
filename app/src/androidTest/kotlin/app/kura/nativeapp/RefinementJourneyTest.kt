@@ -81,6 +81,12 @@ class RefinementJourneyTest {
   vm.preference("controlRowPosition","top")
  }
  private fun finish(vm:VaultController,saved:String,owned:List<Pair<String,Long>> = emptyList()) {
+  // A picker return arms normal resume authentication. This fixture forces a
+  // foreground lock during teardown, so disarm that artificial reopen first.
+  instrumentation.runOnMainSync {
+   println("REFINEMENT_CLEANUP_AUTO_UNLOCK_ARMED="+vm.autoUnlockArmed)
+   vm.autoUnlockArmed=false
+  }
   runBlocking {owned.forEach {(table,id)->vm.items.value.firstOrNull {it.table==table && it.id==id}?.let {vm.deletePass(it)}};vm.work {vm.store.saveSettings(it,JSONObject(saved))};vm.lock()}
   device.pressHome()
  }
@@ -218,7 +224,6 @@ class RefinementJourneyTest {
    val bytes=java.io.ByteArrayOutputStream().also {bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)}.toByteArray();bitmap.recycle()
    try {runBlocking {vm.imageChange(ImageTarget("passes",-1,"frontImagePath"),bytes)}} finally {bytes.fill(0)}
    assertEquals("Image staging must retain the form",context.packageName,device.currentPackageName)
-   val replacement=UiSelector().description("Edit Front image")
    // Pan along the form margin so editable fields do not consume the scroll gesture.
    repeat(16) {
     if(!device.hasObject(By.desc("Edit Front image"))) {
@@ -226,7 +231,11 @@ class RefinementJourneyTest {
     }
    }
    assertTrue(device.hasObject(By.desc("Edit Front image")))
-   device.findObject(replacement).click();device.waitForIdle();click("Choose photo")
+   // Staging the image changes Compose layout; resolve the edit control again
+   // after frame publication instead of tapping a cached accessibility rectangle.
+   click("Edit Front image")
+   assertTrue("Image actions must open before choosing a photo",device.wait(Until.hasObject(By.text("Choose photo")),5000))
+   click("Choose photo")
    // GET_CONTENT may use the system picker, chooser, or a user-selected provider.
    until {device.currentPackageName!=context.packageName}
    repeat(3) {if(device.currentPackageName!=context.packageName) {device.pressBack();device.waitForIdle()}}
