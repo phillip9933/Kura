@@ -104,3 +104,15 @@ embedded Gradle/JDK/SDK libraries and native components are not exhaustively
 covered. The collector API was exercised against real Gradle configurations in
 a credential-free offline probe; the final Kotlin graph requires its own CI
 report and advisory reconciliation.
+
+
+### External optimized driver target
+
+The exported optimized app uses `app.kura.wallet.prototype`, while the external
+benchmark driver historically defaults to `.prototype.benchmark`. Supply
+`-e targetPackage app.kura.wallet.prototype` when testing the exported optimized
+APK. All four external journeys accept that explicit synthetic identity; the
+production identity remains excluded. Updater discovery and optimized fixture
+journeys require a nondebuggable app, and the fixture journey explicitly checks
+emulator hardware. This selects an existing release-style prototype build; it
+does not change application code, signing or authentication behavior.
