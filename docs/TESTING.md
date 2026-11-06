@@ -975,3 +975,20 @@ suppression, schema, backup format, key alias, production package or signing
 change. [Source/artifact evidence](evidence/atomic-publication-20261107.json).
 Full application and other library results retain their earlier source scope;
 final combined qualification is separate. AI assisted diagnosis, patch and tests.
+
+
+### Kotlin2.4.21 candidate before atomic-publication fix
+
+The CI-built APKs from `c54787d` (manual run42254897153) pass the modern
+API37/16KiB complete app selection: **92pass /0fail /4existing opt-in skips**,
+96terminal cases,941.553s. Core security7/7, database12/12 and import29/29
+pass. OnAPI26/4KiB, scanner18/18, phone-unlock/data1/1 and database12/12
+pass; security has6pass/1API-specific skip. Import has28pass/1real failure,
+which prompted the separately recorded atomic-publication fix above.
+
+These APKs predate that fix; they are not final combined-candidate acceptance.
+Four existing full-app skips are cold-process, retained-upgrade, store capture
+and empty-vault timing opt-ins. No physical/arm64, production-identity or
+signed-artifact claim is made. Raw transcripts and verified APK hashes remain
+in task outputs; failed API26 evidence is retained. Independent AI patch review
+of the atomic fix found no blocking issue, not human maintainer sign-off.
