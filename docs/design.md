@@ -73,6 +73,17 @@ release acceptance remain separate. The owner accepted the horizontal crop's
 appearance in the local card-mask-fix testing build on 7 November 2026; that
 feedback does not constitute physical/data-safety or stable-release acceptance.
 
+## Card-detail image slots
+
+Manual cards keep both labelled front/back slots visible on their details
+screen. Each missing side independently offers the existing edit icon with
+Choose photo and Take photo, even when the other side already has an image.
+Cancelling capture/selection leaves the record unchanged. An existing image
+opens its viewer; replacement/removal continues through Edit card. Imported
+pass images retain their read-only details presentation and do not gain empty
+front/back placeholders. These controls reuse the existing Material image menu
+and image-import ownership/confirmation path.
+
 ## Visual review gallery
 
 These are unedited captures of synthetic cards from a disposable emulator.

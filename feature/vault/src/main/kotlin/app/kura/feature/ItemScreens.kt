@@ -241,12 +241,10 @@ fun ItemImages(item:VaultItem,load:suspend(String)->ByteArray?,image:(VaultItem,
     var enlarged by remember {mutableStateOf<Pair<String,String>?>(null)}
     var removing by remember {mutableStateOf<String?>(null)}
     val slots=itemImageSlots(item)
-    val existing=slots.filter {it.third.isNotBlank()}
-    val shown=if(editable || existing.isEmpty()) slots else existing
-    if(shown.isNotEmpty()) Card {
+    if(slots.isNotEmpty()) Card {
         Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
             Text(if(isImportedPass(item)) "Pass images" else "Card images",style=MaterialTheme.typography.titleMedium)
-            shown.chunked(2).forEach {pair->Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+            slots.chunked(2).forEach {pair->Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                 pair.forEach {(column,label,path)->Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(6.dp)) {
                     Text(label,style=MaterialTheme.typography.labelMedium)
                     Box(Modifier.fillMaxWidth().aspectRatio(1.586f).clipToBounds(),contentAlignment=Alignment.Center) {
@@ -254,7 +252,7 @@ fun ItemImages(item:VaultItem,load:suspend(String)->ByteArray?,image:(VaultItem,
                             if(path.isNotBlank()) Box(Modifier.clickable {enlarged=path to label}.semantics {contentDescription="View "+label}) {VaultImage(path,label,load,Modifier.fillMaxSize())}
                             else Box(contentAlignment=Alignment.Center) {Icon(Icons.Outlined.Photo,null)}
                         }
-                        if(editable || existing.isEmpty()) MediaEditMenu(label,path.isNotBlank(),{image(item,column,"picker")},{image(item,column,"camera")},{removing=column},Modifier.align(Alignment.BottomEnd).padding(4.dp))
+                        if(editable || path.isBlank()) MediaEditMenu(label,path.isNotBlank(),{image(item,column,"picker")},{image(item,column,"camera")},{removing=column},Modifier.align(Alignment.BottomEnd).padding(4.dp))
                     }
                 }}
                 if(pair.size==1) Spacer(Modifier.weight(1f))

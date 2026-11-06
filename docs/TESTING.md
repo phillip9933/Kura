@@ -1085,3 +1085,38 @@ emulators were stopped. No source was committed/pushed and no release published.
 Broader full-suite results remain historical; physical/arm64, production-package
 runtime, new screen-reader and actual version-code upgrade acceptance were not
 run for this patch. AI assisted the fix, regression and verification.
+
+### Missing-side image actions in card details — 7 November 2026
+
+The details view previously hid every empty image slot once any image existed.
+The new real-UI/picker regression fails before the fix (**0 passed / 1 expected
+failure**, 22.971s) on the reported front-present/back-missing case. The view now
+retains both manual-card image slots and decides whether to show the edit menu
+from that individual slot. Existing photos remain viewable; replacement/removal
+continues through the card editor. Imported-pass details retain their read-only
+image presentation.
+
+Fresh API 37 / 16 KiB results on a disposable prototype installation:
+
+- Small portrait/light at 100% text: **5/5**, 93.769s, no failures/skips.
+  Selection: the four-state missing-side regression, existing staged-image
+  edits, imported read-only details and both image-request ownership cases.
+  The new case covers neither/front-only/back-only/both images, correct record
+  and side in the system picker, and unchanged record fields after cancellation.
+- The same four-state regression at 200% text/dark: **1/1 portrait**, 38.942s,
+  and **1/1 landscape**, 58.240s. Image slots and accessible add-photo controls
+  were visually inspected in the normal and large-text captures.
+
+Debug application/test APKs, debug lint and unsigned release build pass in
+75.800s; lint has 0 errors / 30 warnings. The local signed production APK retains
+the accepted horizontal crop changes, scanner and direct updater, with unchanged
+2.2.0-beta.3 / 122 metadata. Release certificate, manifest restrictions, OCR
+models, baseline profiles and 16 KiB packaging checks pass. Signing stayed
+separate from credential-free build/test/verifier execution; the owned emulator
+was stopped. [Source/artifact evidence](evidence/card-detail-image-actions-20261107.json).
+
+Broader suite results remain historical. No fresh API 26, physical/arm64,
+screen-reader, production-package runtime or version-code upgrade qualification
+is claimed. No commit, push or release was performed. AI assisted implementation
+and verification. The owner's preceding crop-appearance acceptance is scoped to
+that local UI review, not stable-release/data-safety acceptance.

@@ -235,6 +235,49 @@ class OrganizationJourneyTest {
    assertEquals(back,JSONObject(vm.items.value.single {it.stableKey()==member.stableKey()}.json).getString("backImagePath"))
   } finally {finish(vm,saved,owned(vm))}
  }
+ @Test fun missingCardSidesRemainAddableFromDetailsIndependently() {
+  check(context.packageName == "app.kura.wallet.prototype")
+  val vm = start()
+  val saved = runBlocking { vm.work { vm.store.settings(it).toString() } }
+  try {
+   configure(vm)
+   val front = photo(vm, android.graphics.Color.CYAN)
+   val back = photo(vm, android.graphics.Color.MAGENTA)
+   val cases = listOf("Neither" to JSONObject(),
+    "Front" to JSONObject().put("frontImagePath", front),
+    "Back" to JSONObject().put("backImagePath", back),
+    "Both" to JSONObject().put("frontImagePath", front).put("backImagePath", back))
+   click("Cards")
+   for ((name, row) in cases) {
+    val item = fixture(vm, "Organize Images $name", row.put("type", "storeCard"))
+    device.wait(Until.findObject(By.clazz("android.widget.EditText")), 5000)!!.text = item.title
+    click("Open ${item.title}")
+    for ((column, label) in listOf("frontImagePath" to "Front image", "backImagePath" to "Back image")) {
+     if (row.optString(column).isNotBlank()) {
+      assertNotNull("Existing $label is viewable", findJourneyNode(device, By.desc("View $label")))
+      assertFalse("Existing images are edited through the card editor", device.hasObject(By.desc("Edit $label")))
+     } else {
+      assertNotNull("Missing $label stays addable from details when $name is populated",
+       findJourneyNode(device, By.desc("Edit $label")))
+      snapshot("detail-images-$name")
+      click("Edit $label")
+      assertNotNull(device.findObject(By.text("Take photo")))
+      click("Choose photo")
+      assertTrue(device.wait(Until.hasObject(By.pkg("com.google.android.documentsui")), 10000) ||
+       device.hasObject(By.pkg("com.android.documentsui")))
+      assertEquals(column, vm.pending.imagePickerRequest?.target?.column)
+      assertEquals(item.id, vm.pending.imagePickerRequest?.target?.id)
+      device.pressBack()
+      assertNotNull(device.wait(Until.findObject(By.desc("Edit $label")), 10000))
+      assertEquals("Cancelling the picker preserves image fields", item.json,
+       vm.items.value.single { it.table == item.table && it.id == item.id }.json)
+     }
+    }
+    click("Close")
+   }
+  } finally { finish(vm, saved, owned(vm)) }
+ }
+
  @Test fun frontImageRulesCropMasksAndEphemeralAttachmentRead() {
   val row=JSONObject().put("type","storeCard").put("sourceType","manual").put("frontImagePath","front.enc").put("backImagePath","back.enc")
   val item=VaultItem("passes",1,"Member","","",false,row.toString())
