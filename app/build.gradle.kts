@@ -4,7 +4,7 @@ plugins { id("com.android.application"); id("org.jetbrains.kotlin.plugin.compose
 val cardScanner = providers.gradleProperty("cardScanner").orNull == "true"
 val directUpdates = providers.gradleProperty("directUpdates").orNull == "true"
 android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) { minorApiLevel = 0 } }
- defaultConfig { applicationId = "app.kura.wallet"; minSdk = if (directUpdates || cardScanner) 26 else 24; targetSdk = 36; versionCode = 122; versionName = "2.2.0-beta.3"
+ defaultConfig { applicationId = "app.kura.wallet"; minSdk = if (directUpdates || cardScanner) 26 else 24; targetSdk = 36; versionCode = 123; versionName = "2.2.0"
 
  if (cardScanner) ndk { abiFilters += setOf("arm64-v8a", "x86_64") }
  testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }

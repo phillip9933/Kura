@@ -1,5 +1,31 @@
 # Release tooling
 
+## Android 2.2.0 preparation — unpublished
+
+The proposed stable source version is **2.2.0 / 123**, following published
+Beta 3 / 122. This is preparation only: no stable tag, tagged CI release build,
+publication, latest promotion or beta cleanup has occurred. Preserve existing
+beta assets, tags and recovery histories until replacement verification and
+the separately authorized cleanup decision.
+
+The newer horizontal ID-1 crop default and independent missing-side photo
+actions are covered by focused local regressions in [Testing](TESTING.md).
+The owner reported physical testing of these two UI changes using the local
+Beta 3 / 122 build. The local APK SHA-256 is
+`325e948720d0d74285c488f4814b70096d456990e71650394cfd17eae8aaf153`.
+Its source inputs match the candidate before the intentional version-only
+change to 2.2.0 / 123; UI behavior is unchanged. This is owner-reported UI
+testing, not complete hardware-key, encrypted-data, production upgrade or
+screen-reader acceptance. Independent AI patch review found no blocking issue;
+it is not independent human approval.
+
+The earlier complete app/CI results predate these two patches. Final candidate
+qualification and the remaining acceptance/publication decisions must be
+recorded separately. Publishable APK bytes must come from CI at the final
+authorized tag; the locally built testing APK must not be republished as the
+production release. Retain the APK-only distribution, existing signing identity,
+checksums, verification evidence and opt-in update policy.
+
 ## Software qualification follow-up — 6 November 2026
 
 The owner explicitly deferred physical-device testing and will supply results later. [PR #26](https://github.com/phillip9933/Kura/pull/26) corrects only an instrumentation fixture and records the completed software follow-up: enhanced full suite 88 active passes / 4 opt-in skips, offline full suite 67 active passes / 4 skips, affected corrected refinement class 4/4 in each build, 12 default-screen cold-launch phases and the separate phone-only prerequisite/cold-process phases. All four instrumentation-source CI configurations pass with 236 fresh JVM executions and no failures/errors/skips. [Testing](TESTING.md#full-beta-3-regression-follow-up--6-november-2026) retains exact source scopes and earlier failures.

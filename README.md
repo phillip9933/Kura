@@ -32,7 +32,7 @@ Making it public does not mean it is a polished production product or suitable f
 
 Kura 2.0 is rebuilt in **Kotlin and Jetpack Compose**, using Material 3. The rewrite removes the Flutter engine and plugin bridges so startup, authentication and camera/file-picker handoffs can be managed directly through Android's lifecycle and security APIs.
 
-Requires Android 7.0 or later, a secure device lock and supported hardware-backed key storage. Download the **APK** to install Kura. GitHub releases are APK-only; Google Play publication is no longer planned.
+The 2.2 APK with card scanning and direct updates requires **Android 8.0 / API 26 or later** and a 64-bit arm64-v8a or x86_64 device. The older 2.1 APK and default offline source build retain Android 7.0 / API 24 support. All builds require a secure device lock and supported hardware-backed key storage. Download the **APK** to install Kura. GitHub releases are APK-only; Google Play publication is no longer planned.
 
 Kura stores card references and barcodes; it does not make NFC payments. Imported pass issuer signatures are not verified. Sharing files or opening links hands data to another app. Read the [security and privacy details](SECURITY.md).
 
@@ -56,4 +56,4 @@ Licensed under [AGPL-3.0](LICENSE).
 
 ## Optional card scanning
 
-The enhanced-scanning development build (`-PcardScanner=true`) adds automatic card-edge cropping and optional offline English/Japanese OCR into existing empty form fields, with editable review before saving. It uses scanner 0.8.0 and requires Android API 26+ on 64-bit devices. The base build retains API 24 support. See [card scanning](docs/CARD-RECOGNITION.md) for controls, privacy, build flags and known limitations.
+The enhanced-scanning build (`-PcardScanner=true`) adds automatic card-edge cropping and optional offline English/Japanese OCR into existing empty form fields, with editable review before saving. It uses scanner 0.8.0 and requires Android API 26+ on 64-bit devices. The base build retains API 24 support. See [card scanning](docs/CARD-RECOGNITION.md) for controls, privacy, build flags and known limitations.
