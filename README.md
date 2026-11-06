@@ -32,7 +32,7 @@ Making it public does not mean it is a polished production product or suitable f
 
 Kura 2.0 is rebuilt in **Kotlin and Jetpack Compose**, using Material 3. The rewrite removes the Flutter engine and plugin bridges so startup, authentication and camera/file-picker handoffs can be managed directly through Android's lifecycle and security APIs.
 
-Requires Android 7.0 or later, a secure device lock and supported hardware-backed key storage. Download the **APK** to install Kura; the **AAB** is the package for Google Play submission. Store listings are pending.
+Requires Android 7.0 or later, a secure device lock and supported hardware-backed key storage. Download the **APK** to install Kura. GitHub releases are APK-only; Google Play publication is no longer planned.
 
 Kura stores card references and barcodes; it does not make NFC payments. Imported pass issuer signatures are not verified. Sharing files or opening links hands data to another app. Read the [security and privacy details](SECURITY.md).
 

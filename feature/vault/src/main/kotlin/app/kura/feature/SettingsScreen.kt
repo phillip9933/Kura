@@ -233,7 +233,7 @@ fun SettingsScreen(preferences: VaultPreferences, theme: Int, visibleTables: Set
             confirmButton={TextButton(enabled=name.isNotBlank() && name.length<=100,onClick={preference("renameCategory:"+section,JSONObject().put("old",old).put("name",name).toString());renaming=null}) {Text("Rename")}},
             dismissButton={TextButton(onClick={renaming=null}) {Text("Cancel")}})
     }
-    information?.let {AlertDialog(onDismissRequest={information=null},title={Text("Kura")},text={Text(it)},confirmButton={TextButton(onClick={information=null}) {Text("Close")}})}
+    information?.let {AlertDialog(onDismissRequest={information=null},title={Text("Kura")},text={Column { Text(it); updateSettings() }},confirmButton={TextButton(onClick={information=null}) {Text("Close")}})}
 }
 @Composable
 private fun SettingsToggle(title:String,subtitle:String,key:String,prefs:VaultPreferences,set:(String,Any)->Unit,icon:ImageVector,default:Boolean=true) {
