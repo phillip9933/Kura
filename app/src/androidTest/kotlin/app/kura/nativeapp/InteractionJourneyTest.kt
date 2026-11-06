@@ -13,18 +13,7 @@ class InteractionJourneyTest {
  private val instrumentation=InstrumentationRegistry.getInstrumentation()
  private val context get()=instrumentation.targetContext
  private val device=UiDevice.getInstance(instrumentation)
- private fun click(label:String) {
-  if(label in setOf("Edit","Delete","Archive","Unarchive","Share securely","Export encrypted pass","Export as .pkpass") && !device.hasObject(By.text(label)) && !device.hasObject(By.desc(label))) {
-   (device.findObject(By.desc("More pass actions")) ?: device.findObject(By.desc("More item actions")))?.let {it.click();device.waitForIdle()}
-  }
-  repeat(16) { attempt->
-   val node=device.findObject(By.desc(label)) ?: device.findObject(By.text(label))
-   try {if(node!=null && !node.visibleBounds.isEmpty) {node.click();device.waitForIdle();return}} catch(_:StaleObjectException) {}
-   device.findObject(By.scrollable(true))?.scroll(if(attempt<8) Direction.DOWN else Direction.UP,.5f)
-  }
-  device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null),"ux-missing-control.xml"))
-  error("Missing control: "+label)
- }
+ private fun click(label: String) = clickJourneyControl(device, label)
  private fun start():VaultController {
   check(android.os.Build.HARDWARE in setOf("ranchu","goldfish"))
   device.wakeUp();context.startActivity(Intent(context,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
@@ -108,10 +97,22 @@ class InteractionJourneyTest {
    click("Settings");click("Navigation & Layout")
    click("Search Style: Search Button")
    until {vm.presentation.value.preferences.searchStyle=="icon"}
-   assertFalse(device.hasObject(By.text("Search Position")))
+   assertTrue("Search position must hide after choosing button style", device.wait(Until.gone(By.text("Search Position")), 5000))
    click("Search Style: Search Bar")
    until {vm.presentation.value.preferences.searchStyle!="icon"}
-   assertTrue(device.wait(Until.hasObject(By.text("Search Position")),5000))
+   // Reinserting this row can put it below the viewport after the layout shrank.
+   repeat(4) {
+    device.waitForIdle()
+    if(android.os.Build.VERSION.SDK_INT>=34) instrumentation.uiAutomation.clearCache()
+    if(!device.hasObject(By.text("Search Position")))
+     device.findObject(By.scrollable(true))?.scroll(Direction.DOWN,.3f)
+   }
+   val searchPositionShown=device.wait(Until.hasObject(By.text("Search Position")),5000)
+   if(!searchPositionShown) {
+    device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null),"search-position-failure.xml"))
+    snapshot("search-position-failure")
+   }
+   assertTrue("Search position must render for style="+vm.presentation.value.preferences.searchStyle,searchPositionShown)
    click("Search Position: Bottom");until {vm.presentation.value.preferences.searchPosition=="bottom"}
    snapshot("interaction109-search-settings")
    click("Search Style: Search Button");click("Back");click("Done")
@@ -167,7 +168,12 @@ class InteractionJourneyTest {
    device.waitForIdle()
    assertNotNull(device.wait(Until.findObject(By.descContains("Grid review 1")),5000))
    snapshot("interaction109-photo-expiry")
-   val card=device.findObject(By.descContains("Open Grid review 1")).visibleBounds
+   // Screenshot protection updates can invalidate the accessibility snapshot.
+   device.waitForIdle()
+   if (android.os.Build.VERSION.SDK_INT >= 34) instrumentation.uiAutomation.clearCache()
+   val preview = device.wait(Until.findObject(By.desc("Open Grid review 1")), 10000)
+   assertNotNull("Photo preview must remain present after screenshot capture", preview)
+   val card=preview!!.visibleBounds
    val blankY=card.bottom+100
    device.swipe(device.displayWidth/2,blankY,device.displayWidth/2,blankY,120)
    assertTrue(device.wait(Until.hasObject(By.text("Sort / Reorder")),5000))

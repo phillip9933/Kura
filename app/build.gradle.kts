@@ -1,10 +1,14 @@
 import java.util.Properties
 import java.io.File
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.plugin.compose") }
+val cardScanner = providers.gradleProperty("cardScanner").orNull == "true"
+val directUpdates = providers.gradleProperty("directUpdates").orNull == "true"
 android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) { minorApiLevel = 0 } }
- defaultConfig { applicationId = "app.kura.wallet"; minSdk = 24; targetSdk = 36; versionCode = 119; versionName = "2.1.0"
+ defaultConfig { applicationId = "app.kura.wallet"; minSdk = if (directUpdates || cardScanner) 26 else 24; targetSdk = 36; versionCode = 122; versionName = "2.2.0-beta.3"
 
+ if (cardScanner) ndk { abiFilters += setOf("arm64-v8a", "x86_64") }
  testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
+
 
  buildTypes {
     debug { applicationIdSuffix = ".prototype"; versionNameSuffix = "-dev"; buildConfigField("boolean","PROTOTYPE","true") }
@@ -38,6 +42,10 @@ android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) {
     }
  }
 
+    if (directUpdates) buildTypes.forEach { type ->
+        sourceSets.getByName(type.name).manifest.srcFile("src/direct/AndroidManifest.xml")
+    }
+
     dependenciesInfo { includeInApk = false; includeInBundle = false }
     // Release stays unsigned unless the existing signing identity is explicitly supplied.
     providers.gradleProperty("releaseSigningProperties").orNull?.let { suppliedPath ->
@@ -61,11 +69,20 @@ android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) {
 }
 kotlin { jvmToolchain(21); compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 dependencies {
+ if (cardScanner) {
+    implementation("dev.offlinescan:scanner-core:0.8.0-beta.1")
+    implementation("dev.offlinescan:scanner-processing-opencv:0.8.0-beta.1")
+    implementation("dev.offlinescan:scanner-ocr-tesseract:0.8.0-beta.1")
+ }
+ if (directUpdates) {
+    implementation("io.github.phillip9933:android-updater:0.2.2-beta.1")
+    implementation("androidx.work:work-runtime:2.11.2")
+ }
  coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
  implementation("androidx.profileinstaller:profileinstaller:1.4.1")
- implementation("androidx.camera:camera-camera2:1.4.2")
- implementation("androidx.camera:camera-lifecycle:1.4.2")
- implementation("androidx.camera:camera-view:1.4.2")
+ implementation("androidx.camera:camera-camera2:1.5.3")
+ implementation("androidx.camera:camera-lifecycle:1.5.3")
+ implementation("androidx.camera:camera-view:1.5.3")
  implementation(project(":feature:vault")); implementation(project(":core:import"))
  implementation("androidx.activity:activity-compose:1.10.1")
  implementation("androidx.fragment:fragment-ktx:1.8.9")
@@ -80,4 +97,20 @@ dependencies {
  androidTestImplementation("androidx.test:runner:1.6.2")
  androidTestImplementation("androidx.test.ext:junit:1.2.1")
  androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+}
+
+android.sourceSets.getByName("main").kotlin.srcDir(if (directUpdates) "src/direct/kotlin" else "src/offline/kotlin")
+if (directUpdates) android.sourceSets.getByName("androidTest").kotlin.srcDir("src/directAndroidTest/kotlin")
+
+android.sourceSets.getByName("main").kotlin.srcDir(if (cardScanner) "src/cardScanner/kotlin" else "src/basicScanner/kotlin")
+if (cardScanner) {
+    android.sourceSets.getByName("main").assets.srcDir("src/cardScanner/assets")
+    android.sourceSets.getByName("androidTest").kotlin.srcDir("src/cardScannerAndroidTest/kotlin")
+}
+
+// Opt-in instrumentation only: no installer fixtures or fault transport enter an app APK.
+if (providers.gradleProperty("installerAcceptance").orNull == "true") {
+    require(directUpdates) { "Installer acceptance requires the direct-update variant" }
+    android.sourceSets.getByName("androidTest").kotlin.srcDir("src/installerAcceptanceAndroidTest/kotlin")
+    dependencies { androidTestImplementation("com.squareup.okhttp3:okhttp:4.12.0") }
 }

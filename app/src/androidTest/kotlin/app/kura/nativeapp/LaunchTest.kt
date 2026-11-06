@@ -109,7 +109,7 @@ class LaunchTest {
 
         click("Done")
         click("Passes")
-        UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(20)
+        if (device.hasObject(By.scrollable(true))) UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(20)
         assertTrue(device.wait(Until.hasObject(By.desc("Open Kura Test Transit 0")), 15000))
         val activity = arrayOfNulls<android.app.Activity>(1)
         instrumentation.runOnMainSync {
@@ -140,7 +140,7 @@ class LaunchTest {
                 " UI_WORK_P95_MS=" + percentile(uiWork) + " PSS_KIB=" + android.os.Debug.getPss() + "\n")
         })
 
-        UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(20)
+        if (device.hasObject(By.scrollable(true))) UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(20)
         device.waitForIdle()
         val visiblePass = device.findObject(UiSelector().description("Open Kura Test Transit 0"))
         assertTrue("Expected the first pass after returning to the top",visiblePass.waitForExists(10000))
@@ -169,7 +169,9 @@ class LaunchTest {
         click("Cancel")
         click("Add"); click("Scan for Sharing or Import")
         device.wait(Until.findObject(By.textContains("While using")), 4000)?.click()
-        assertTrue("Camera never produced frames", device.wait(Until.hasObject(By.text("Camera active")), 20000))
+        val cameraActive = device.wait(Until.hasObject(By.text("Camera active")), 20000)
+        if (!cameraActive) device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null), "release-camera-failure.xml"))
+        assertTrue("Camera never produced frames: " + device.findObject(By.textStartsWith("Camera unavailable"))?.text, cameraActive)
         click("Close scanner")
         click("Add"); click("Import File")
         assertTrue(device.wait(Until.hasObject(By.pkg("com.google.android.documentsui")), 10000) || device.hasObject(By.pkg("com.android.documentsui")))
@@ -180,7 +182,7 @@ class LaunchTest {
         context.startActivity(Intent(context,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         authorize()
         click("Passes")
-        UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(20)
+        if (device.hasObject(By.scrollable(true))) UiScrollable(UiSelector().scrollable(true)).scrollToBeginning(20)
         assertTrue(device.wait(Until.hasObject(By.desc("Open Kura Test Transit 0")), 15000))
         val controller=arrayOfNulls<VaultController>(1)
         instrumentation.runOnMainSync {

@@ -1,0 +1,278 @@
+{
+  "date": "2026-11-05",
+  "application_diff_base": "8518741487c9a969a1fa60e5ee299fcb9c473b44",
+  "source_main_sha256_normalized_lf": "c9c5844d5d7597ec6ca48a3ed849f6eea1b0842f073f334d89da64cf5606c6a3",
+  "change": "Receive only system-protected USER_PRESENT across SystemUI UID boundaries while retaining bounded resume/keyguard/idle/no-pending-authentication checks.",
+  "runtime_systemui_uid_on_api35": 10180,
+  "android_primary_sources": [
+    "https://developer.android.com/develop/background-work/background-tasks/broadcasts",
+    "https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r1/packages/SystemUI/AndroidManifest.xml",
+    "https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r1/core/res/AndroidManifest.xml",
+    "https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-15.0.0_r1/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java"
+  ],
+  "protected_event_spoof_refusal": "A real app-UID Context.sendBroadcast(USER_PRESENT) is rejected with SecurityException while the phone is locked; verified inside each regular API26/API35 journey.",
+  "api35_focused": [
+    {
+      "case": "protected-wake-api35-1",
+      "passed": true,
+      "summary": [
+        "Time: 51.253",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "protected-wake-api35-2",
+      "passed": true,
+      "summary": [
+        "Time: 50.381",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "protected-wake-api35-3",
+      "passed": true,
+      "summary": [
+        "Time: 50.251",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "protected-wake-api35-cold-prepare",
+      "passed": true,
+      "summary": [
+        "Time: 7.392",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "protected-wake-api35-cold-verify",
+      "passed": true,
+      "summary": [
+        "Time: 24.629",
+        "OK (1 test)"
+      ]
+    }
+  ],
+  "api26_focused": {
+    "passed": true,
+    "profile": "fresh/no hardware keyboard",
+    "summary": [
+      "Time: 63.566",
+      "OK (1 test)"
+    ]
+  },
+  "optimized_complete_suite": {
+    "passed": true,
+    "summary": [
+      "Time: 77.545",
+      "OK (3 tests)"
+    ]
+  },
+  "prior_failed_and_recovered_run_evidence": "stable-readiness-20261105.json",
+  "complete_regression_record": "https://github.com/phillip9933/Kura/issues/16",
+  "current_ci_record": "https://github.com/phillip9933/Kura/pull/14/checks",
+  "full_run_local_log": "<project>/outputs/stable-readiness-20261105/app-full-protected.log",
+  "full_run_capture": "Line-flushed transcript and separate progress/result JSON; final outcomes are recorded against this source on issue16.",
+  "lint": {
+    "errors": 0,
+    "warnings": 61,
+    "log": "/tmp/kura-stable-system-wake-build.log"
+  },
+  "stable_ready": false,
+  "release_stage": "Beta",
+  "remaining_release_gates": [
+    "Required approving review",
+    "Physical photographed-card/arm64/hardware-key and latency/memory acceptance; no spare phone available",
+    "Production-package retained-data and actual Kura installer/interruption acceptance",
+    "Dedicated scanner lock/process-death/front-back/source-conflict qualification",
+    "Final stable version/code and signed/checksummed artifacts after promotion gates pass"
+  ],
+  "infrastructure_limits": [
+    "API26 reused profiles intermittently failed package-service/install setup after reboot; those attempts did not start tests. The fresh-profile protected-event journey passed.",
+    "Prior full-run buffered desktop output was lost; the recovered zero-failure JUnit summary and its log-rotation limits remain preserved in the prior evidence."
+  ],
+  "production_signing_activated": false,
+  "new_release_published": false,
+  "ai_assistance": true,
+  "application_code_commit": "0d4a093bc57b9a4fceeb11219b6da0ab3a4aef5e",
+  "application_code_ci": {
+    "run": "https://github.com/phillip9933/Kura/actions/runs/42008716884",
+    "source": "0d4a093bc57b9a4fceeb11219b6da0ab3a4aef5e",
+    "conclusion": "success",
+    "configurations": [
+      {
+        "configuration": "android-verification-reports-updates-false-scanner-false",
+        "jvm": {
+          "tests": 59,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Error": 0,
+          "Fatal": 0,
+          "Warning": 57
+        }
+      },
+      {
+        "configuration": "android-verification-reports-updates-false-scanner-true",
+        "jvm": {
+          "tests": 59,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Error": 0,
+          "Fatal": 0,
+          "Warning": 58
+        }
+      },
+      {
+        "configuration": "android-verification-reports-updates-true-scanner-false",
+        "jvm": {
+          "tests": 59,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Error": 0,
+          "Fatal": 0,
+          "Warning": 61
+        }
+      },
+      {
+        "configuration": "android-verification-reports-updates-true-scanner-true",
+        "jvm": {
+          "tests": 59,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Error": 0,
+          "Fatal": 0,
+          "Warning": 61
+        }
+      }
+    ]
+  },
+  "full_run_before_remaining_helper_sync": {
+    "git_head": "0d4a093bc57b9a4fceeb11219b6da0ab3a4aef5e",
+    "source_main_sha256_normalized_lf": "c9c5844d5d7597ec6ca48a3ed849f6eea1b0842f073f334d89da64cf5606c6a3",
+    "status": "complete",
+    "source_main_sha256": "a0435f86f097928a5c3f585c2081b4e53edfedafae67ee5d39b71bf3806a70dc",
+    "fixture_scope": "owned disposable prototype only",
+    "start_epoch": 1793874258.9529269,
+    "phone_unlocked_before_start": true,
+    "previous_biometric_session_absent": true,
+    "installed_apk_sha256": {
+      "app.kura.wallet.prototype": "21a3438661e19e1a98ffb4f44d25148f7c1fbf5401d7ef3ad9050e042beff632",
+      "app.kura.wallet.prototype.test": "2947200071d51f29dd74e6c6f25400a953c7e91ba799d24ab4acb528082ca2f8"
+    },
+    "package_broadcasts_idle": true,
+    "no_reinstall_before_instrumentation": true,
+    "log": "app-full-protected.log",
+    "passed": 71,
+    "failed": 1,
+    "assumption_skips": 4,
+    "last_case": "app.kura.nativeapp.UnlockTimingTest#emptyVaultUnlockTrace",
+    "failed_cases": [
+      "app.kura.nativeapp.RefinementJourneyTest#selectedSettingsScrollAndBottomControlsStayReachable"
+    ],
+    "skipped_cases": [
+      "app.kura.nativeapp.AppUnlockJourneyTest#phoneUnlockColdProcessAcceptance",
+      "app.kura.nativeapp.ReleaseUpgradeTest#retainedSyntheticWalletAcrossPrototypeUpgrade",
+      "app.kura.nativeapp.StoreScreenshotsTest#captureStoreListing",
+      "app.kura.nativeapp.UnlockTimingTest#emptyVaultUnlockTrace"
+    ],
+    "success": false,
+    "adb_exit_code": 0,
+    "total": 76,
+    "duration_seconds": 886.883,
+    "transcript_complete": true,
+    "end_epoch": 1793875147.285082
+  },
+  "initial_credential_attempt": {
+    "git_head": "0d4a093bc57b9a4fceeb11219b6da0ab3a4aef5e",
+    "source_main_sha256_normalized_lf": "c9c5844d5d7597ec6ca48a3ed849f6eea1b0842f073f334d89da64cf5606c6a3",
+    "status": "complete",
+    "source_main_sha256": "a0435f86f097928a5c3f585c2081b4e53edfedafae67ee5d39b71bf3806a70dc",
+    "fixture_scope": "owned disposable prototype only",
+    "start_epoch": 1793873593.8386903,
+    "log": "app-full-protected.log",
+    "passed": 23,
+    "failed": 1,
+    "assumption_skips": 1,
+    "last_case": "app.kura.nativeapp.InteractionJourneyTest#expiryModeAndStableManualDialog",
+    "failed_cases": [
+      "app.kura.nativeapp.AppUnlockJourneyTest#phoneUnlockRetainsDataAndCanRestoreAppAuthentication"
+    ],
+    "skipped_cases": [
+      "app.kura.nativeapp.AppUnlockJourneyTest#phoneUnlockColdProcessAcceptance"
+    ],
+    "success": false,
+    "adb_exit_code": 0,
+    "total": 25,
+    "duration_seconds": null,
+    "transcript_complete": true,
+    "end_epoch": 1793873850.3635514
+  },
+  "controlled_fresh_authentication": {
+    "passed": true,
+    "summary": [
+      "Time: 56.102",
+      "OK (1 test)"
+    ]
+  },
+  "controlled_setup": {
+    "phone_unlocked": true,
+    "installed_apk_matches_current_build": true,
+    "apk_sha256": "21a3438661e19e1a98ffb4f44d25148f7c1fbf5401d7ef3ad9050e042beff632",
+    "biometric_session_absent": true,
+    "broadcast_idle_response": "Test idle passed\nAll broadcast queues are idle!\nTest idle failed due to 7fec2d 3373:com.google.android.documentsui/u0a113 not runnable because EMPTY\nTest idle passed\nAll broadcast queues are idle!\n",
+    "no_reinstall_before_instrumentation": true
+  },
+  "remaining_helper_refresh": {
+    "classes": [
+      "RefinementJourneyTest",
+      "FormReviewJourneyTest",
+      "UiFixJourneyTest"
+    ],
+    "change": "Use the same wait-for-idle, API34+ cache refresh and bounded missing-control wait already validated in Interaction/Organization helpers. No app code or assertions changed.",
+    "failed_snapshot": "protected-refinement-missing-control.xml showed the main card grid after the cached Settings click, not the expected Settings page.",
+    "focused_verification": {
+      "log": "refinement-helper-synchronized.log",
+      "passed": 1,
+      "failed": 0,
+      "duration_seconds": 31.478
+    }
+  },
+  "date_control_followup": {
+    "head": "0bbca541e82cbeac7b305194fa5aa7dafc6823eb",
+    "complete_run": {
+      "passed": 71,
+      "failed": 1,
+      "assumption_skips": 4,
+      "transcript": "before-date-scroll-app-full-protected.log",
+      "result": "before-date-scroll-protected-full-results.json"
+    },
+    "failure": "UiFixJourneyTest second date picker never opened; saved control bounds [963,1836][1017,1866] were clipped at viewport bottom. Monthly date value and settings assertions passed.",
+    "change": "Explicitly scroll the form before opening Full date; preserve assertions and app source.",
+    "final_acceptance": "https://github.com/phillip9933/Kura/issues/16",
+    "first_focused_attempt": {
+      "log": "date-scroll-focused.log",
+      "passed": 0,
+      "failed": 1,
+      "failure": "Immediate Backup page hasObject assertion at line134, before date control. No in-test snapshot existed; post-test snapshot showed launcher and cannot establish cause.",
+      "change": "Bounded observable waits preserve all three Backup page control assertions and dump in-test failure hierarchy."
+    },
+    "focused_verification": {
+      "log": "date-scroll-focused2.log",
+      "passed": 1,
+      "failed": 0,
+      "duration_seconds": 49.55
+    }
+  }
+}

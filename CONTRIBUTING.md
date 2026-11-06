@@ -21,7 +21,7 @@ work; use the external `benchmark` driver on a disposable emulator for optimized
 app journeys. Packaged baseline profiles guide Android's compilation; sideloading
 an APK does not guarantee that compilation has completed immediately.
 
-Do not add network access or telemetry. Treat imports, document-provider streams, image metadata and backup contents as untrusted. Keep SQL identifiers allowlisted and values bound. Preserve application ID, signing continuity and legacy data compatibility unless a separately reviewed migration changes them.
+Only the explicit direct-update build may use networking for public GitHub app updates; never pass vault data to it. Do not add other network access or telemetry. Treat imports, document-provider streams, image metadata and backup contents as untrusted. Keep SQL identifiers allowlisted and values bound. Preserve application ID, signing continuity and legacy data compatibility unless a separately reviewed migration changes them.
 
 ## Choose tests by change
 

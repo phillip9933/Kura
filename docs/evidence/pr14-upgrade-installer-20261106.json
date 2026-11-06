@@ -1,0 +1,168 @@
+{
+  "date": "2026-11-06",
+  "scope": "owned disposable prototype on API37, 16384-byte pages; synthetic fixtures only",
+  "updater": {
+    "version": "0.2.2-beta.1",
+    "source": "da2c9f30f3a9f4199d0e9cc1428be4519c954aa1",
+    "merge": "5ae22b4f118839b05d84726c584c91018b10d3b7",
+    "bundle_sha256": "cc650431e3e429ae951eb227a97e77c356422bf032d8dbc1ccb989e4a09f4407",
+    "aar_sha256": "30bdad7bcdc32081ed0469bd5fbb62146c5cf7286f92d305bef5cb83cb341c75",
+    "host_pass": 56,
+    "export_pass": 9,
+    "dependency_rejection_pass": 4,
+    "native_api26_pass": 15,
+    "native_api35_pass": 15,
+    "release": "https://github.com/phillip9933/android-app-updater/releases/tag/v0.2.2-beta.1"
+  },
+  "actual_installer": {
+    "confirmed_real_android_update_button": true,
+    "before": {
+      "code": 120,
+      "uid": 10230
+    },
+    "after": {
+      "code": 121,
+      "uid": 10230
+    },
+    "same_uid": true,
+    "no_adb_install_for_this_hop": true,
+    "no_data_clear_or_uninstall_between_seed_and_verify": true
+  },
+  "phone_only_upgrade": [
+    {
+      "case": "old-beta-phone-only-seed",
+      "success": true,
+      "summary": [
+        "Time: 10.073",
+        "OK (1 test)"
+      ]
+    },
+    {
+      "case": "new-sdk-phone-only-retained-verify",
+      "success": true,
+      "summary": [
+        "Time: 2.94",
+        "OK (1 test)"
+      ]
+    }
+  ],
+  "phone_only_identity": {
+    "before": "package:app.kura.wallet.prototype versionCode:120 uid:10230\npackage:app.kura.wallet.prototype.test versionCode:0 uid:10231\npackage:app.kura.wallet.prototype.benchmark versionCode:120 uid:10235\n",
+    "after": "package:app.kura.wallet.prototype versionCode:121 uid:10230\npackage:app.kura.wallet.prototype.test versionCode:0 uid:10231\npackage:app.kura.wallet.prototype.benchmark versionCode:120 uid:10235\n",
+    "baseline_sha256": "bb0b0f80c129ddcec621ad8d6ddb7091cd86c393e948918b92e62fb94aca724b",
+    "baseline_source": "ad4203410e9ff15814754eee9f2dd7d6356e9b1d",
+    "prototype_only": true,
+    "no_clear_or_uninstall_between_seed_verify": true
+  },
+  "source_sha256": {
+    "app/src/direct/kotlin/app/kura/nativeapp/AppUpdates.kt": "4368e262a57a7eb22f22e3ad7ce538aa5323e46e93016e0993942f2e4e6363dc",
+    "app/src/androidTest/kotlin/app/kura/nativeapp/ReleaseUpgradeTest.kt": "03b6738aa8d521f1213ec6e14d7fdcfa312d60438970a9500529eaf7cf8902dc",
+    "app/src/installerAcceptanceAndroidTest/kotlin/app/kura/nativeapp/InstallerAcceptanceTest.kt": "3a5d5b0ee2a92dd0e9ea310b00dfe87faec989f72e8f429901fc15ee8fde8572"
+  },
+  "enhanced_full": {
+    "result_record": "https://github.com/phillip9933/Kura/pull/14",
+    "local_transcript": "<project>/outputs/pr14-upgrade-installer-20261105/enhanced-full.log",
+    "local_results": "<project>/outputs/pr14-upgrade-installer-20261105/enhanced-results.json",
+    "expected_cases": 77,
+    "note": "Result is recorded in PR14 after completion; no prospective pass asserted in this source snapshot."
+  },
+  "offline_full": "reused prior 64 pass, 0 failures, 4 opt-in skips; offline runtime unchanged",
+  "remaining": [
+    "independent required PR approval",
+    "production-identity upgrade/installer",
+    "physical photographed cards, arm64, hardware keys",
+    "dedicated scanner lifecycle/source-conflict acceptance",
+    "final stable artifact qualification"
+  ],
+  "secrets_or_production_signing_used": false,
+  "ai_assisted": true,
+  "fresh_opt_in_phase_executions": [
+    {
+      "phase": "final-rejection-interruption-cancel",
+      "passed": 1,
+      "duration_seconds": 3.857
+    },
+    {
+      "phase": "final-corrupt-cache-recovery",
+      "passed": 1,
+      "duration_seconds": 1.946
+    },
+    {
+      "phase": "final-corrupt-optin-seed",
+      "passed": 1,
+      "duration_seconds": 0.033
+    },
+    {
+      "phase": "final-corrupt-optin-verify",
+      "passed": 1,
+      "duration_seconds": 0.034
+    },
+    {
+      "phase": "final-real-offline-failure",
+      "passed": 1,
+      "duration_seconds": 0.077
+    },
+    {
+      "phase": "final-ready-seed",
+      "passed": 1,
+      "duration_seconds": 1.979
+    },
+    {
+      "phase": "final-ready-recreated",
+      "passed": 1,
+      "duration_seconds": 1.1
+    },
+    {
+      "phase": "final-119-seed",
+      "passed": 1,
+      "duration_seconds": 7.052
+    },
+    {
+      "phase": "final-120-retained-verify",
+      "passed": 1,
+      "duration_seconds": 7.274
+    },
+    {
+      "phase": "prototype-prohibition-control",
+      "passed": 1,
+      "duration_seconds": 9.293
+    },
+    {
+      "phase": "permission-cancel-observable-return",
+      "passed": 1,
+      "duration_seconds": 25.831
+    },
+    {
+      "phase": "actual-installer-handoff-final",
+      "passed": 1,
+      "duration_seconds": 11.316
+    },
+    {
+      "phase": "after-real-installer-retained-wallet-final",
+      "passed": 1,
+      "duration_seconds": 6.942
+    },
+    {
+      "phase": "after-real-installer-updater-state-final",
+      "passed": 1,
+      "duration_seconds": 0.033
+    },
+    {
+      "phase": "old-beta-phone-only-seed",
+      "passed": 1,
+      "duration_seconds": 10.073
+    },
+    {
+      "phase": "new-sdk-phone-only-retained-verify",
+      "passed": 1,
+      "duration_seconds": 2.94
+    }
+  ],
+  "tested_application_source_commit": "9113d87a05ef8b0fee77574b1666525b5524c372",
+  "source_capture_note": "Full-run driver captured pre-commit parent e18c1fe with then-uncommitted changes; exact installed APK hashes and normalized source hashes bind the built source committed as 9113d87. No source changed during the run.",
+  "ci": {
+    "application_source_run": "https://github.com/phillip9933/Kura/actions/runs/42058241347",
+    "final_head_checks": "https://github.com/phillip9933/Kura/pull/14/checks",
+    "note": "Follow final-head checks and downloaded reports; no prospective pass asserted."
+  }
+}

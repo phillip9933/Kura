@@ -21,7 +21,8 @@ class HardwareVaultKey(
     private val context: Context,
     private val alias: String = "app.kura.wallet.native.master.v1",
     private val allowSoftwareForTests: Boolean = false,
-    private val biometricOnly: Boolean = false
+    private val biometricOnly: Boolean = false,
+    private val requireAuthentication: Boolean = true
 ) {
     private val store get() = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
     fun exists() = store.containsAlias(alias)
@@ -32,11 +33,14 @@ class HardwareVaultKey(
         fun generate(strongBox: Boolean) {
             val builder = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
                 .setKeySize(256).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).setUserAuthenticationRequired(true)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).setUserAuthenticationRequired(requireAuthentication)
                 .setRandomizedEncryptionRequired(true)
-            if (Build.VERSION.SDK_INT >= 30)
+            // Android 12–14 have platform bugs with unlocked-device keys. Older OSes
+            // use the explicit Keyguard checks below; Android 15+ adds Keystore enforcement.
+            if (!requireAuthentication && Build.VERSION.SDK_INT >= 35) builder.setUnlockedDeviceRequired(true)
+            if (requireAuthentication && Build.VERSION.SDK_INT >= 30)
                 builder.setUserAuthenticationParameters(0, if (biometricOnly) KeyProperties.AUTH_BIOMETRIC_STRONG else KeyProperties.AUTH_BIOMETRIC_STRONG or KeyProperties.AUTH_DEVICE_CREDENTIAL)
-            else {
+            else if (requireAuthentication) {
                 // API 24–29 cannot combine a CryptoObject with device credential in BiometricPrompt.
                 // A short Keystore-enforced credential window is used; prompt success alone never yields plaintext.
                 @Suppress("DEPRECATION")
@@ -64,10 +68,17 @@ class HardwareVaultKey(
     }
     private fun checkHardware(key: SecretKey) {
         val info = SecretKeyFactory.getInstance("AES", "AndroidKeyStore").getKeySpec(key, KeyInfo::class.java) as KeyInfo
-        require(info.isUserAuthenticationRequired)
+        require(info.isUserAuthenticationRequired == requireAuthentication)
         check(allowSoftwareForTests || securityLevel() != "Software") { "Hardware-backed Keystore required" }
     }
+    private fun checkDeviceUnlocked() {
+        if (!requireAuthentication) {
+            val keyguard = context.getSystemService(KeyguardManager::class.java)
+            check(keyguard.isDeviceSecure && !keyguard.isDeviceLocked) { "Unlock your phone first" }
+        }
+    }
     fun cipher(encrypt: Boolean, iv: ByteArray? = null): Cipher {
+        checkDeviceUnlocked()
         checkHardware(key())
         return Cipher.getInstance("AES/GCM/NoPadding").apply {
             if (encrypt) init(Cipher.ENCRYPT_MODE, key())
@@ -75,6 +86,7 @@ class HardwareVaultKey(
         }
     }
     fun cryptoObject(encrypt: Boolean, iv: ByteArray? = null): BiometricPrompt.CryptoObject {
+        check(requireAuthentication) { "This key uses phone unlock instead of an app prompt" }
         check(Build.VERSION.SDK_INT >= 30 || biometricOnly) { "Use credential intent on API 24–29" }
         return BiometricPrompt.CryptoObject(cipher(encrypt, iv))
     }
@@ -84,7 +96,9 @@ class HardwareVaultKey(
             .createConfirmDeviceCredentialIntent("Unlock Kura", "Authorize the hardware vault key") ?: error("Device credential unavailable")
     }
     /** Called with the exact cipher returned by a successful CryptoObject prompt. */
-    fun unwrap(cipher: Cipher, wrapped: ByteArray): ByteArray =
-        cipher.doFinal(wrapped).also { if(it.size != 32) { it.fill(0); error("Invalid wrapped master key") } }
+    fun unwrap(cipher: Cipher, wrapped: ByteArray): ByteArray {
+        checkDeviceUnlocked()
+        return cipher.doFinal(wrapped).also { if(it.size != 32) { it.fill(0); error("Invalid wrapped master key") } }
+    }
     fun wrap(cipher: Cipher, master: SensitiveBytes): ByteArray = master.useBytes { require(it.size == 32); cipher.doFinal(it) }
 }

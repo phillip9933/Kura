@@ -68,6 +68,7 @@ class SectionJourneyTest {
         val controller=vm!!
         val saved=runBlocking {controller.work {controller.store.settings(it).toString()}}
         val marker="Section fixture "+java.util.UUID.randomUUID().toString().take(8)
+        val emptyCategory="Empty category " + marker
         val ids=mutableListOf<Long>()
         try {
             runBlocking {
@@ -77,7 +78,7 @@ class SectionJourneyTest {
                 controller.preference("isPassSearchEnabled",true);controller.preference("passSearchStyle","alwaysOn")
                 controller.preference("showUpcomingPasses",true)
                 controller.preference("isExpiryNotificationEnabled",false)
-                controller.preference("paymentsCategories",org.json.JSONArray(app.kura.feature.defaultCategories.getValue("wallets")).toString())
+                controller.preference("paymentsCategories",org.json.JSONArray(app.kura.feature.defaultCategories.getValue("wallets") + emptyCategory).toString())
                 controller.preference("paymentsGridColumns",1);controller.preference("passesGridColumns",1)
                 controller.work {vault->
                     for((type,suffix) in listOf("loyaltyCard" to "Loyalty","eventTicket" to "Event","corporateBadge" to "Identity")) {
@@ -106,7 +107,7 @@ class SectionJourneyTest {
             assertFalse(device.hasObject(By.text("Upcoming")))
             snapshot("sections-cards")
             click("All Categories")
-            assertFalse(device.hasObject(By.text("Membership"))) // configured, but no active membership fixture
+            assertFalse(device.hasObject(By.text(emptyCategory))) // configured but unpopulated, independent of other suites
             device.pressBack()
             click("Open "+marker+" Loyalty")
             click("Pass barcode")

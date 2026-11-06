@@ -122,10 +122,14 @@ class ParityJourneyTest {
     val bitmap=android.graphics.Bitmap.createBitmap(8,5,android.graphics.Bitmap.Config.ARGB_8888)
     val output=java.io.ByteArrayOutputStream();bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,output);bitmap.eraseColor(0);bitmap.recycle()
     val bytes=output.toByteArray()
+    instrumentation.runOnMainSync {
+     vm.pending.uiMemory.form.initialize("identities", null, "identities", vm.presentation.value.preferences)
+    }
     try {vm.imageChange(ImageTarget("identities",-1,"frontImagePath"),bytes);vm.imageChange(ImageTarget("identities",-1,"backImagePath"),bytes)}
     finally {bytes.fill(0)}
     val draft=vm.pending.takeDraft();assertEquals(2,draft.size)
     vm.saveRecord("identities",JSONObject().put("name","Parity draft identity").toString(),draft)
+    instrumentation.runOnMainSync { vm.pending.uiMemory.form.clear() }
     val identity=vm.items.value.single {it.title=="Parity draft identity"};ids+=identity.table to identity.id
     assertTrue(JSONObject(identity.json).getString("frontImagePath").endsWith(".enc"));assertTrue(draft.values.all {it.isFile})
    }

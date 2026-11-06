@@ -16,6 +16,9 @@ class VaultUiMemory {
  fun clear() {initialized=false;table.value="passes";adding.value=false;addCardKind.value=null;editing.value=null;form.clear();clearManual()}
 }
 class FormMemory {
+ /** Identifies this draft lifetime even when the same mutable form/schema is reused. */
+ var generation: Long = 0
+  private set
  var identity:String?=null
  var defaultClassification:String?=null
  var original=JSONObject()
@@ -27,7 +30,20 @@ class FormMemory {
  val revision=mutableIntStateOf(0)
  val values=mutableStateMapOf<String,String>()
  val customValues=mutableStateMapOf<String,String>()
- fun clear() {identity=null;defaultClassification=null;original=JSONObject();groups=JSONObject();customArray=null;removedImages.clear();values.clear();customValues.clear();revision.intValue=0}
+ fun clear() {
+  generation++
+  identity=null
+  defaultClassification=null
+  original=JSONObject()
+  groups=JSONObject()
+  customArray=null
+  section.value="passes"
+  category.value=""
+  removedImages.clear()
+  values.clear()
+  customValues.clear()
+  revision.intValue=0
+ }
  fun initialize(table:String,item:VaultItem?,initialSection:String,prefs:VaultPreferences) {
   val key=table+":"+(item?.id ?: "new")
   if(identity==key) return

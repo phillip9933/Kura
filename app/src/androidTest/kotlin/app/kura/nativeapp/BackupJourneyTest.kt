@@ -9,21 +9,7 @@ import org.junit.Test
 class BackupJourneyTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val device = UiDevice.getInstance(instrumentation)
-    private fun click(text: String) {
-        if(text in setOf("Edit","Delete","Archive","Unarchive","Share securely","Export encrypted pass","Export as .pkpass") && !device.hasObject(By.text(text)) && !device.hasObject(By.desc(text))) {
-            (device.findObject(By.desc("More pass actions")) ?: device.findObject(By.desc("More item actions")))?.let {it.click();device.waitForIdle()}
-        }
-        if(text=="Settings") assertTrue(device.wait(Until.hasObject(By.desc("Settings")),10000))
-        repeat(8) { attempt->
-            val target = device.findObject(By.desc(text)) ?: device.findObject(By.text(text))
-            try { if(target != null && !target.visibleBounds.isEmpty) {
-                target.click(); device.waitForIdle(); return }
-            } catch (_: StaleObjectException) {}
-            val scroll = device.findObject(By.scrollable(true))
-            if(scroll != null) scroll.scroll(if(attempt<4) Direction.DOWN else Direction.UP,.8f) else device.wait(Until.hasObject(By.text(text)),2000)
-        }
-        error("Missing UI: " + text)
-    }
+ private fun click(label: String) = clickJourneyControl(device, label)
     private fun authorize() {
         // Real system credential UI; no auth bypass or test master key injection.
         val pin = device.wait(Until.findObject(By.text("2").pkg("com.android.systemui")), 15000)
@@ -34,10 +20,44 @@ class BackupJourneyTest {
     }
 
     private fun password() {
-        val input = device.findObject(UiSelector().className("android.widget.EditText"))
-        assertTrue(input.waitForExists(15000))
-        input.setText("Synthetic backup test password")
-        click("Continue")
+        // Directly setting pending state can precede Compose displaying the modal.
+        // Wait for it so the background search field cannot receive the password.
+        var modal = device.wait(Until.findObject(By.text(java.util.regex.Pattern.compile("Decrypt backup|Encrypt backup|Encrypt pass"))), 15000)
+        assertNotNull("Backup password dialog must be visible", modal)
+        while (modal != null && modal.findObject(By.clazz("android.widget.EditText")) == null) modal = modal.parent
+        assertNotNull("Password input must belong to the dialog", modal)
+        modal!!.findObject(By.clazz("android.widget.EditText")).text = "Synthetic backup test password"
+        device.waitForIdle()
+        if (device.hasObject(By.pkg("com.google.android.inputmethod.latin"))) {
+            device.pressBack()
+            assertTrue(device.wait(Until.gone(By.pkg("com.google.android.inputmethod.latin")), 5000))
+        }
+        // Compose may publish the enabled button after the text-input event completes.
+        // Re-query until the real clickable control is enabled, retaining the assertion.
+        var proceed: UiObject2? = null
+        val deadline = android.os.SystemClock.uptimeMillis() + 10000
+        while (proceed == null && android.os.SystemClock.uptimeMillis() < deadline) {
+            var button = device.findObject(By.text("Continue"))
+            while (button != null && !button.isClickable) button = button.parent
+            proceed = button?.takeIf { it.isEnabled }
+            if (proceed == null) android.os.SystemClock.sleep(50)
+        }
+        assertNotNull("Password confirmation must become clickable and enabled", proceed)
+        proceed!!.click()
+        device.waitForIdle()
+    }
+    private fun assertRestoreConfirmation() {
+        val shown = device.wait(Until.hasObject(By.text("Replace vault records?")), 20000)
+        val activity = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+        var failure: String? = null
+        instrumentation.runOnMainSync {
+            activity.getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED)
+                .filterIsInstance<MainActivity>().firstOrNull()?.let {
+                    val vm = androidx.lifecycle.ViewModelProvider(it)[VaultController::class.java]
+                    failure = "error=${vm.error.value}, busy=${vm.busy.value}, state=${vm.state.value::class.simpleName}, passwordAction=${vm.pending.passwordAction}, staged=${vm.pending.restoreDirectory != null}"
+                }
+        }
+        assertTrue("Restore confirmation missing; operation error: $failure", shown)
     }
     @Test fun missingImagesWarnBeforeConfirmationAndCancelPreservesVault() {
         check(android.os.Build.HARDWARE in setOf("ranchu", "goldfish"))
@@ -76,7 +96,7 @@ class BackupJourneyTest {
                 vm.pending.passwordAction = "restore"
             }
             password()
-            assertTrue(device.wait(Until.hasObject(By.text("Replace vault records?")), 20000))
+            assertRestoreConfirmation()
             assertTrue(device.hasObject(By.textContains("missing 1 image reference")))
             assertEquals(before, vm.store.active())
             click("Cancel")
@@ -97,6 +117,17 @@ class BackupJourneyTest {
         val context = instrumentation.targetContext
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
         authorize()
+        lateinit var vm: VaultController
+        instrumentation.runOnMainSync {
+            val owner = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+                .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED).filterIsInstance<MainActivity>().single()
+            vm = androidx.lifecycle.ViewModelProvider(owner)[VaultController::class.java]
+        }
+        kotlinx.coroutines.runBlocking {
+            vm.preference("isPassSearchEnabled", true)
+            vm.preference("passSearchStyle", "alwaysOn")
+            vm.preference("showUpcomingPasses", false)
+        }
         removeUiGalleryFixtures()
         click("Settings"); click("Load synthetic fixtures")
         click("Settings"); click("Backup & Storage"); click("Create Backup"); password()
@@ -113,11 +144,17 @@ class BackupJourneyTest {
         document.click()
         assertTrue(device.wait(Until.hasObject(By.text("Decrypt backup")),15000))
         password()
-        assertTrue(device.wait(Until.hasObject(By.text("Replace vault records?")),20000))
+        assertRestoreConfirmation()
         click("Restore"); authorize()
         click("Passes")
-        assertTrue(device.wait(Until.hasObject(By.text("Kura Test Transit 0")),15000))
-        device.findObject(UiSelector().description("Open Kura Test Transit 0")).click()
+        val search = device.wait(Until.findObject(By.clazz("android.widget.EditText")), 10000)
+        assertNotNull("Restored search preference must remain available", search)
+        search!!.text = "Kura Test Transit 0"
+        assertTrue(device.wait(Until.hasObject(By.desc("Open Kura Test Transit 0")),15000))
+        // Search results can publish semantics before their final grid bounds.
+        // Use the same frame-settled real tap as the other journeys.
+        click("Open Kura Test Transit 0")
+        assertNotNull("Export requires the opened pass detail", device.wait(Until.findObject(By.desc("More pass actions")), 5000))
         click("Export encrypted pass")
         assertTrue(device.wait(Until.hasObject(By.text("Encrypt pass")),5000))
         password()

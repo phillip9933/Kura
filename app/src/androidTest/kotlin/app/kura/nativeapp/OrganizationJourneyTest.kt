@@ -13,18 +13,7 @@ class OrganizationJourneyTest {
  private val instrumentation=InstrumentationRegistry.getInstrumentation()
  private val context get()=instrumentation.targetContext
  private val device=UiDevice.getInstance(instrumentation)
- private fun click(label:String) {
-  if(label in setOf("Edit","Delete","Archive","Unarchive","Share securely","Export encrypted pass","Export as .pkpass") && !device.hasObject(By.text(label)) && !device.hasObject(By.desc(label))) {
-   (device.findObject(By.desc("More pass actions")) ?: device.findObject(By.desc("More item actions")))?.let {it.click();device.waitForIdle()}
-  }
-  repeat(16) { attempt->
-   val node=device.findObject(By.desc(label)) ?: device.findObject(By.text(label))
-   try {if(node!=null && !node.visibleBounds.isEmpty) {node.click();device.waitForIdle();return}} catch(_:StaleObjectException) {}
-   device.findObject(By.scrollable(true))?.scroll(if(attempt<8) Direction.DOWN else Direction.UP,.5f)
-  }
-  device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null),"ux-missing-control.xml"))
-  error("Missing control: "+label)
- }
+ private fun click(label: String) = clickJourneyControl(device, label)
  private fun start():VaultController {
   check(android.os.Build.HARDWARE in setOf("ranchu","goldfish"))
   device.wakeUp();context.startActivity(Intent(context,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
@@ -266,28 +255,36 @@ class OrganizationJourneyTest {
   val transparentBytes=java.io.ByteArrayOutputStream().also {transparent.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)}.toByteArray();transparent.recycle()
   val normalized=CapturedImageScanner.crop(transparentBytes,1f,.5f,.5f)
   try {val decoded=android.graphics.BitmapFactory.decodeByteArray(normalized,0,normalized.size);assertEquals(0,android.graphics.Color.alpha(decoded.getPixel(0,0)));decoded.recycle()} finally {normalized.fill(0);transparentBytes.fill(0)}
+  // Exercise the real foreground vault lifetime. A headless publish can be
+  // revoked correctly by the preceding Activity's delayed pending cleanup.
+  val vm = start()
   val bytes="Private attachment".toByteArray()
-  val uri=AttachmentContent.publish(context,"Notes.txt","text/plain",bytes)
-  assertEquals("text/plain",context.contentResolver.getType(uri))
-  context.contentResolver.openInputStream(uri)!!.use {assertEquals("Private attachment",it.readBytes().toString(Charsets.UTF_8))}
-  if(android.os.Build.VERSION.SDK_INT>=26) context.contentResolver.openFileDescriptor(uri,"r")!!.use {fd->
-   android.system.Os.lseek(fd.fileDescriptor,3,android.system.OsConstants.SEEK_SET)
-   val part=ByteArray(4);assertEquals(4,android.system.Os.read(fd.fileDescriptor,part,0,4));assertEquals("vate",part.toString(Charsets.UTF_8));part.fill(0)
+  try {
+   val uri=AttachmentContent.publish(context,"Notes.txt","text/plain",bytes)
+   assertEquals("text/plain",context.contentResolver.getType(uri))
+   context.contentResolver.openInputStream(uri)!!.use {assertEquals("Private attachment",it.readBytes().toString(Charsets.UTF_8))}
+   if(android.os.Build.VERSION.SDK_INT>=26) context.contentResolver.openFileDescriptor(uri,"r")!!.use {fd->
+    android.system.Os.lseek(fd.fileDescriptor,3,android.system.OsConstants.SEEK_SET)
+    val part=ByteArray(4);assertEquals(4,android.system.Os.read(fd.fileDescriptor,part,0,4));assertEquals("vate",part.toString(Charsets.UTF_8));part.fill(0)
+   }
+   AttachmentContent.clear();assertTrue(bytes.all {it==0.toByte()});assertTrue(runCatching {context.contentResolver.openInputStream(uri)}.isFailure)
+  } finally {
+   AttachmentContent.clear();bytes.fill(0)
+   runBlocking { vm.lock() };device.pressHome()
   }
-  AttachmentContent.clear();assertTrue(bytes.all {it==0.toByte()});assertTrue(runCatching {context.contentResolver.openInputStream(uri)}.isFailure)
  }
  @Test fun logoEditorAttachmentsAndHiddenSearchStyle() {
   val vm=start();val saved=runBlocking {vm.work {vm.store.settings(it).toString()}}
   try {
    configure(vm)
    val front=photo(vm,android.graphics.Color.CYAN)
-   var member=fixture(vm,"Organize Member editor",JSONObject().put("type","storeCard").put("frontImagePath",front).put("barcodeValue","ABC123").put("barcodeFormat","CODE_128"))
-   runBlocking {
-    val bytes=vm.image(front)
-    try {vm.imageChange(ImageTarget("passes",-1,"kuraLogo"),bytes)} finally {bytes.fill(0)}
-    vm.edit(member,member.json,vm.pending.takeDraft())
-    vm.attach(member,"Notes.txt","text/plain","Test note".toByteArray())
-   }
+   // Seed an already saved logo from the encrypted fixture image. No editor
+   // exists yet, so this setup must not manufacture an ownerless photo draft.
+   val memberRow = JSONObject().put("type", "storeCard").put("frontImagePath", front)
+    .put("barcodeValue", "ABC123").put("barcodeFormat", "CODE_128")
+   app.kura.nativecore.ItemMedia.put("passes", memberRow, JSONObject().put("logo", front))
+   var member = fixture(vm, "Organize Member editor", memberRow)
+   runBlocking { vm.attach(member, "Notes.txt", "text/plain", "Test note".toByteArray()) }
    member=vm.items.value.single {it.id==member.id && it.table=="passes"}
    assertTrue(app.kura.nativecore.ItemMedia.logo(member.table,JSONObject(member.json)).isNotBlank())
    click("Cards");device.wait(Until.findObject(By.clazz("android.widget.EditText")),5000)!!.text="Organize Member editor"
@@ -309,7 +306,7 @@ class OrganizationJourneyTest {
    click("Edit Front image");assertTrue(device.hasObject(By.text("Remove image")));device.pressBack();snapshot("card112-edit-images")
    click("Cancel");click("Settings");click("Navigation & Layout");click("Show Search")
    until {!vm.presentation.value.preferences.search}
-   assertFalse(device.hasObject(By.text("Search Style")));click("Back");click("Done")
+   assertTrue("Search style must hide after disabling search", device.wait(Until.gone(By.text("Search Style")), 5000));click("Back");click("Done")
   } finally {finish(vm,saved,owned(vm))}
  }
 
@@ -391,7 +388,7 @@ class OrganizationJourneyTest {
    assertTrue(value.top<format.top && format.top<details.top)
    snapshot("cardface114-editor");click("Cancel");click("Settings")
    assertTrue(device.wait(Until.hasObject(By.text("Use biometrics to unlock")),5000))
-   assertTrue(device.hasObject(By.textContains("Authentication is always required")))
+   assertTrue(device.hasObject(By.text("Require app unlock")))
    assertFalse(device.hasObject(By.text("Require Biometrics")))
   } finally {finish(vm,saved,owned(vm))}
  }

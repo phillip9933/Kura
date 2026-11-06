@@ -2,6 +2,9 @@ package app.kura.nativeapp
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import app.kura.nativecore.*
 import app.kura.feature.VaultItem
@@ -14,7 +17,7 @@ import java.io.File
 
 class VaultController(app: Application) : AndroidViewModel(app) {
     val pending = PendingOperations()
-    var autoUnlockArmed = true
+    var autoUnlockArmed by mutableStateOf(true)
     val coordinator = VaultSessionCoordinator()
     val lifecycle = AndroidVaultLifecycle(app, coordinator)
     val store = VaultStore(app)
@@ -50,9 +53,23 @@ class VaultController(app: Application) : AndroidViewModel(app) {
         startupCleanup.await()
         token = coordinator.unlock(auth) { key ->
             databaseRuntime.await()
-            store.open(key).also { vault = it }
+            val opened = store.open(key)
+            try {
+                // VaultScreen initializes its navigation memory on its first Unlocked render.
+                // Load launch preferences while Opening, before that state can be observed.
+                val settings = traced("Kura.settings") { PresentationSettings.parse(store.settings(opened)) }
+                currentCoroutineContext().ensureActive()
+                presentation.value = settings
+                vault = opened
+                opened
+            } catch (failure: Throwable) {
+                // The coordinator owns resources only after this opener returns successfully.
+                withContext(NonCancellable) {
+                    try { opened.close() } catch (cleanup: Throwable) { failure.addSuppressed(cleanup) }
+                }
+                throw failure
+            }
         }
-        presentation.value = work { traced("Kura.settings") { PresentationSettings.parse(store.settings(it)) } }
         localPrefs.edit().putInt("appearance",presentation.value.theme).apply()
         backupPasswordReady.value=work {opened->traced("Kura.backupSecret") {store.deviceSecret(opened,"auto-backup-password.enc")?.let {bytes->try {bytes.isNotEmpty()} finally {bytes.fill(0)}} ?: false}}
         refresh()
@@ -260,15 +277,42 @@ class VaultController(app: Application) : AndroidViewModel(app) {
             store.insert(opened,table,row);committed=true
         };refresh()} finally {if(!committed) images.values.forEach {it.delete()}}
     }
-    suspend fun imageChange(target:ImageTarget,bytes:ByteArray?) {
-        work {opened->
-            if(target.id==-1L) {
+    suspend fun imageChange(target: ImageTarget, bytes: ByteArray?) {
+        // Capture before waiting for session work: another draft can use the same schema/id.
+        val form = pending.uiMemory.form.takeIf { target.id == -1L }
+        val identity = form?.identity
+        val formGeneration = form?.generation
+        work { opened ->
+            if (target.id == -1L) {
                 require(target.column in app.kura.feature.editableImageColumns)
-                val media=EncryptedMediaStorage(File(opened.directory,"media"))
-                val created=bytes?.let {media.validateImage(it);media.write(java.util.UUID.randomUUID().toString()+".jpg.enc",it,opened.key)}
-                pending.draftImages.remove(target.column)?.delete()
-                if(created!=null) pending.draftImages[target.column]=created
-            } else store.setItemImage(opened,target.table,target.id,target.column,bytes)
+                val media = EncryptedMediaStorage(File(opened.directory, "media"))
+                var created: File? = null
+                var replaced: File? = null
+                var adopted = false
+                try {
+                    created = bytes?.let {
+                        media.validateImage(it)
+                        media.write(java.util.UUID.randomUUID().toString() + ".jpg.enc", it, opened.key)
+                    }
+                    // Serialize UI ownership with lock/discard; cancellation before this
+                    // publication must delete the newly encrypted, unadopted file.
+                    withContext(Dispatchers.Main.immediate) {
+                        currentCoroutineContext().ensureActive()
+                        if (state.value !is VaultState.Unlocked || form == null || identity == null ||
+                            pending.uiMemory.form !== form || form.identity != identity || form.generation != formGeneration) {
+                            throw CancellationException("Photo draft expired")
+                        }
+                        replaced = pending.draftImages.remove(target.column)
+                        created?.let { pending.draftImages[target.column] = it }
+                        adopted = true
+                    }
+                } finally {
+                    withContext(NonCancellable + Dispatchers.IO) {
+                        replaced?.delete()
+                        if (!adopted) created?.delete()
+                    }
+                }
+            } else store.setItemImage(opened, target.table, target.id, target.column, bytes)
         }
         refresh()
     }
@@ -327,10 +371,17 @@ class VaultController(app: Application) : AndroidViewModel(app) {
             }
             if(store.rows(opened,"identities").isEmpty()) store.insert(opened,"identities",
                 JSONObject().put("name","Sample identity").put("value","TEST-000001").put("cardType","National ID"))
-            if (store.rows(opened, "passes").isEmpty()) repeat(100) { i ->
-                store.insert(opened, "passes", JSONObject().put("type", "boardingPass").put("organizationName", "Kura Test Transit " + i)
-                    .put("description", "Synthetic fixture").put("barcodeFormat", "PKBarcodeFormatQR").put("barcodeValue", "KURA-TEST-" + i)
-                    .put("transitType", "PKTransitTypeTrain").put("fields", """{"primaryFields":[{"label":"FROM","value":"Tokyo"},{"label":"TO","value":"Kyoto"}],"backFields":[{"label":"Notice","value":"Synthetic test pass"}]}"""))
+            val existingPassNames = store.rows(opened, "passes")
+                .mapTo(mutableSetOf()) { it.optString("organizationName") }
+            repeat(100) { index ->
+                val title = "Kura Test Transit $index"
+                if (title !in existingPassNames) {
+                    store.insert(opened, "passes", JSONObject()
+                        .put("type", "boardingPass").put("organizationName", title)
+                        .put("description", "Synthetic fixture").put("barcodeFormat", "PKBarcodeFormatQR")
+                        .put("barcodeValue", "KURA-TEST-$index").put("transitType", "PKTransitTypeTrain")
+                        .put("fields", """{"primaryFields":[{"label":"FROM","value":"Tokyo"},{"label":"TO","value":"Kyoto"}],"backFields":[{"label":"Notice","value":"Synthetic test pass"}]}"""))
+                }
             }
         }; refresh()
     }

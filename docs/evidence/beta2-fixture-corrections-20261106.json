@@ -1,0 +1,26 @@
+{
+  "enhanced": {
+    "unique_passed": 80,
+    "unique_failed": 2,
+    "unique_skipped": 2,
+    "failures": [
+      "app.kura.nativeapp.OrganizationJourneyTest#logoEditorAttachmentsAndHiddenSearchStyle",
+      "app.kura.nativeapp.ParityJourneyTest#mixedSectionRenameOrderDraftImagesAndSecureSharing"
+    ],
+    "complete_pass": false,
+    "termination": "BadTokenException while starting next Activity/Compose dialog; no passing complete result. Preserve crash transcript."
+  },
+  "offline": {
+    "unique_passed": 5,
+    "unique_failed": 3,
+    "unique_skipped": 1,
+    "failures": [
+      "app.kura.nativeapp.AppUnlockJourneyTest#phoneUnlockRetainsDataAndCanRestoreAppAuthentication",
+      "app.kura.nativeapp.BackupJourneyTest#missingImagesWarnBeforeConfirmationAndCancelPreservesVault",
+      "app.kura.nativeapp.BackupJourneyTest#systemDocumentExportAndConfirmedRestoreRoundTrip"
+    ],
+    "complete_pass": false,
+    "termination": "Stopped after initial phone keyguard swipe failure and cascading authorization failures; no passing complete result."
+  },
+  "correction": "Explicit synthetic form lifetime for draft image fixtures; encrypted saved-logo metadata for saved fixture; bounded real keyguard swipe retries. No app-code or assertion removal."
+}

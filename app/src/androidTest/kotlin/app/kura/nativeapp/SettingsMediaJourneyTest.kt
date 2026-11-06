@@ -179,7 +179,11 @@ class SettingsMediaJourneyTest {
             if(!exists) device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null),"image-picker.xml"))
             assertTrue("Published image fixture must appear in system picker",exists);picked.click()
             assertTrue(device.wait(Until.hasObject(By.text("Crop card image")),10000))
-            click("Save image")
+            if (enhancedCardScanning) {
+                click("Use crop")
+                assertTrue(device.wait(Until.hasObject(By.text("Autofill card details?")), 20000))
+                click("Use image only")
+            } else click("Save image")
             var path:String?=null
             repeat(30) {
                 if(path==null) {Thread.sleep(200);path=runBlocking {vm.work {opened->vm.store.rows(opened,"passes",recordId).single().optString("frontImagePath").takeUnless {it=="null" || it.isBlank()}}}}

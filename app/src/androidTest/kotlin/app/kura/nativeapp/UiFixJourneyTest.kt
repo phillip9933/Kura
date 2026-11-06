@@ -13,18 +13,7 @@ class UiFixJourneyTest {
  private val instrumentation=InstrumentationRegistry.getInstrumentation()
  private val context get()=instrumentation.targetContext
  private val device=UiDevice.getInstance(instrumentation)
- private fun click(label:String) {
-  if(label in setOf("Edit","Delete","Archive","Unarchive","Share securely","Export encrypted pass","Export as .pkpass") && !device.hasObject(By.text(label)) && !device.hasObject(By.desc(label))) {
-   (device.findObject(By.desc("More pass actions")) ?: device.findObject(By.desc("More item actions")))?.let {it.click();device.waitForIdle()}
-  }
-  repeat(16) { attempt->
-   val node=device.findObject(By.desc(label)) ?: device.findObject(By.text(label))
-   try {if(node!=null && !node.visibleBounds.isEmpty) {node.click();device.waitForIdle();return}} catch(_:StaleObjectException) {}
-   device.findObject(By.scrollable(true))?.scroll(if(attempt<8) Direction.DOWN else Direction.UP,.5f)
-  }
-  device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null),"ux-missing-control.xml"))
-  error("Missing control: "+label)
- }
+ private fun click(label: String) = clickJourneyControl(device, label)
  private fun start():VaultController {
   check(android.os.Build.HARDWARE in setOf("ranchu","goldfish"))
   device.wakeUp();context.startActivity(Intent(context,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
@@ -76,8 +65,12 @@ class UiFixJourneyTest {
     val bitmap=android.graphics.Bitmap.createBitmap(8,5,android.graphics.Bitmap.Config.ARGB_8888)
     val output=java.io.ByteArrayOutputStream();bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,output);bitmap.recycle()
     val bytes=output.toByteArray()
+    instrumentation.runOnMainSync {
+     vm.pending.uiMemory.form.initialize("identities", null, "identities", vm.presentation.value.preferences)
+    }
     try {vm.imageChange(ImageTarget("identities",-1,"frontImagePath"),bytes)} finally {bytes.fill(0)}
     vm.saveRecord("identities",JSONObject().put("name","UX identity").put("value","ID-123").put("cardType","Passport").toString(),vm.pending.takeDraft())
+    instrumentation.runOnMainSync { vm.pending.uiMemory.form.clear() }
     vm.items.value.filter {it.title.startsWith("UX ")}.forEach {ids+=it.table to it.id}
    }
    for((table,label,title) in listOf(Triple("wallets","Cards","UX payment"),Triple("passes","Passes","UX pass"),Triple("identities","Identity","UX identity"))) {
@@ -100,8 +93,14 @@ class UiFixJourneyTest {
     val card=device.wait(Until.findObject(By.desc("Open "+title)),5000)!!
     card.longClick()
     assertTrue(device.wait(Until.hasObject(By.text("Edit")),5000))
-    assertTrue(device.hasObject(By.text("Archive")));assertTrue(device.hasObject(By.text("Delete")))
-    click("Edit");assertTrue(device.wait(Until.hasObject(By.text("Edit item")),5000));click("Cancel")
+    assertTrue("Archive action must be available", device.hasObject(By.text("Archive")))
+    assertTrue("Delete action must be visible without expanding the sheet",
+        device.wait(Until.hasObject(By.text("Delete")), 5000))
+    click("Edit")
+    val editing = device.wait(Until.hasObject(By.text("Edit item")), 5000)
+    if (!editing) device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null), "release-edit-failure.xml"))
+    assertTrue("Edit form must open for $table / $title", editing)
+    click("Cancel")
     click("Open "+title)
     click(if(table=="passes") "Pass barcode" else "Item barcode")
     assertTrue(device.wait(Until.hasObject(By.text("Rotate")),5000))
@@ -121,7 +120,11 @@ class UiFixJourneyTest {
    }
    click("Settings");click("Backup & Storage")
    assertFalse(device.hasObject(By.text("Backup Location")));assertFalse(device.hasObject(By.text("Backup Retention")))
-   assertTrue(device.hasObject(By.text("Create Backup")));assertTrue(device.hasObject(By.text("Restore Backup")));assertTrue(device.hasObject(By.text("Delete All Data")))
+   for (label in listOf("Create Backup", "Restore Backup", "Delete All Data")) {
+    val ready = device.wait(Until.hasObject(By.text(label)), 5000)
+    if (!ready) device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null), "ux-backup-missing-control.xml"))
+    assertTrue("Backup page must show $label", ready)
+   }
    snapshot("ux-backup-disabled")
    click("Enable Auto-Backup");assertTrue(device.wait(Until.hasObject(By.text("Set up automatic backups")),5000))
    click("Enable backups")
@@ -131,7 +134,13 @@ class UiFixJourneyTest {
    click("Back")
    for((table,label) in listOf("wallets" to "Cards Settings","passes" to "Passes Settings","identities" to "Identity Settings")) {
     click(label)
-    assertTrue(device.hasObject(By.text("Manage Categories")));assertTrue(device.hasObject(By.text("Manage Custom Fields")))
+    val categoriesReady = device.wait(Until.hasObject(By.text("Manage Categories")), 10000)
+    val fieldsReady = device.wait(Until.hasObject(By.text("Manage Custom Fields")), 10000)
+    if (!categoriesReady || !fieldsReady) {
+        device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null), "stable-settings-failure.xml"))
+    }
+    assertTrue("Category controls must appear on $label", categoriesReady)
+    assertTrue("Custom-field controls must appear on $label", fieldsReady)
     assertFalse(device.hasObject(By.text("Edit Categories")));assertFalse(device.hasObject(By.text("Add Custom Field")))
     click("Manage Categories");assertTrue(device.wait(Until.hasObject(By.text(vm.presentation.value.preferences.categories(table).first())),5000))
     click("Back");click("Manage Custom Fields");click("Add Custom Field")
@@ -157,6 +166,9 @@ class UiFixJourneyTest {
    assertEquals("2030-12-01",vm.pending.uiMemory.form.customValues["Renewal"])
    assertEquals("12/30",customDisplayValue(CustomField("Renewal","date","MM/yy"),vm.pending.uiMemory.form.customValues["Renewal"].orEmpty(),"USD"))
    instrumentation.runOnMainSync {vm.pending.uiMemory.form.customValues["Full date"]="1985-01-02"}
+   // The preceding monthly field leaves this control clipped below the viewport.
+   device.findObject(By.scrollable(true))!!.scroll(Direction.DOWN,.5f)
+   device.waitForIdle()
    click("Choose date for Full date");click("Set date")
    assertEquals("1985-01-02",vm.pending.uiMemory.form.customValues["Full date"])
    assertTrue(customDisplayValue(CustomField("Full date","date","dd/MM/yy"),vm.pending.uiMemory.form.customValues["Full date"].orEmpty(),"USD").matches(Regex("\\d{2}/\\d{2}/\\d{2}")))

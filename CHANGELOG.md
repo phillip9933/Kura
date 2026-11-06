@@ -1,5 +1,43 @@
 # Changelog
 
+## Unreleased
+
+## 2.2.0-beta.3 — November 6, 2026
+
+- Keep update buttons and dialogs off the startup/loading background; show them after opening finishes or on the settled lock screen.
+
+## 2.2.0-beta.2 — November 6, 2026
+
+- Upgrade the pinned updater to 0.2.2-beta.1, including recovery from a corrupted cached download and safe first-run opt-in handling.
+- Correct phone-only wake event delivery; automatic GitHub checks remain opt-in.
+- Publish APKs only; Google Play/AAB distribution is retired.
+
+- Add retake and advisory photo-quality feedback; preserve front/back destinations and user corrections during OCR review.
+- Reject expired camera/picker/permission results and clean interrupted scanner work without publishing a draft.
+- Let gestures outside crop handles scroll the dialog so the full preview remains reachable.
+
+- Honor the saved launch section before displaying the unlocked wallet, including cold starts and phone-only unlock.
+
+- Make App updates a prominent settings row and expose update controls from the app-version dialog.
+
+- Rotate the photo before cropping, with live preset/custom-angle previews and edge detection on the oriented image.
+
+- Combine automatic edge detection and manual corner editing in one crop dialog, with a shaded mask, expandable fine-tuning and consistent primary/secondary actions.
+
+## 2.2.0-beta.1 — November 5, 2026
+
+- Automatic card-edge detection and editable perspective crop in the enhanced-scanning build.
+- Optional offline English/Japanese OCR with editable suggestions for existing empty card fields. Confirm the form before saving; leading zeros and original recognized characters are retained.
+- Updater 0.2.1 cancels obsolete queued downloads after host upgrades.
+- GitHub update checks and a foreground new-version popup, with opt-in automatic checks/downloads and an explicit beta-release option.
+- Optional phone-unlock-only access while retaining encrypted wallet storage and the original authenticated wrapper; wait for phone unlock when waking instead of requesting a second app PIN.
+- Keep card action menus fully expanded so Edit/Delete are visible.
+- Updated CameraX to 1.5.3 to handle newer Android camera dynamic-range profiles.
+- Removed the donation row/link from settings and its unused icon profile entries.
+- Pinned SDK/model integrity checks, line-ending protection and a four-distribution verification matrix.
+
+The GitHub beta combines enhanced scanning and direct updates (Android API 26+, arm64-v8a/x86_64). The source default retains offline/API 24 support. Scanner 0.8.0-beta.1 remains subject to photographed-card accuracy limits; verify OCR suggestions before saving. Physical-device/full release acceptance remains open. AI assistance and exact validation are recorded in docs/TESTING.md.
+
 ## 2.1.0 — October 3, 2026
 
 ### Faster access to your wallet

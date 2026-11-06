@@ -1,0 +1,152 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "dev.offlinescan",
+    "module": "scanner-camera",
+    "version": "0.8.0-beta.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "dev.offlinescan",
+          "module": "scanner-core",
+          "version": {
+            "requires": "0.8.0-beta.1"
+          }
+        },
+        {
+          "group": "androidx.camera",
+          "module": "camera-view",
+          "version": {
+            "requires": "1.4.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "scanner-camera-0.8.0-beta.1.aar",
+          "url": "scanner-camera-0.8.0-beta.1.aar",
+          "size": 55774,
+          "sha512": "195c5d973fe4b4ea1afb8fe28b2e4a41da67295d7cfb86bcf265ab8cbac957836f30ad37ce918167cf559bf4dc9116ff4adb5969aa5f400b1c53a69cf687e4d0",
+          "sha256": "96d9fcbecd3fdff394e7807c822767440fc340bf15b9036d20a3e41e94240772",
+          "sha1": "b0a5d5b6b3db44f895c2180f6dd95caa66a3a910",
+          "md5": "224e03fd6e3f7bab681d19d9226e3b42"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "dev.offlinescan",
+          "module": "scanner-processing-opencv",
+          "version": {
+            "requires": "0.8.0-beta.1"
+          }
+        },
+        {
+          "group": "androidx.camera",
+          "module": "camera-camera2",
+          "version": {
+            "requires": "1.4.2"
+          }
+        },
+        {
+          "group": "androidx.camera",
+          "module": "camera-lifecycle",
+          "version": {
+            "requires": "1.4.2"
+          }
+        },
+        {
+          "group": "androidx.lifecycle",
+          "module": "lifecycle-runtime-ktx",
+          "version": {
+            "requires": "2.8.7"
+          }
+        },
+        {
+          "group": "dev.offlinescan",
+          "module": "scanner-core",
+          "version": {
+            "requires": "0.8.0-beta.1"
+          }
+        },
+        {
+          "group": "androidx.camera",
+          "module": "camera-view",
+          "version": {
+            "requires": "1.4.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "scanner-camera-0.8.0-beta.1.aar",
+          "url": "scanner-camera-0.8.0-beta.1.aar",
+          "size": 55774,
+          "sha512": "195c5d973fe4b4ea1afb8fe28b2e4a41da67295d7cfb86bcf265ab8cbac957836f30ad37ce918167cf559bf4dc9116ff4adb5969aa5f400b1c53a69cf687e4d0",
+          "sha256": "96d9fcbecd3fdff394e7807c822767440fc340bf15b9036d20a3e41e94240772",
+          "sha1": "b0a5d5b6b3db44f895c2180f6dd95caa66a3a910",
+          "md5": "224e03fd6e3f7bab681d19d9226e3b42"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "scanner-camera-0.8.0-beta.1-sources.jar",
+          "url": "scanner-camera-0.8.0-beta.1-sources.jar",
+          "size": 13527,
+          "sha512": "b4e18c2e1a986c2fa560853c48c971f09c87f9b2b70a4dc2eb380520ae0dbc039439267869f9aedfc4bdc29c257e62d0985c60dae17465fcd5b359f4ab036967",
+          "sha256": "6f960892dd9a7f84250f8bcfa9e4d89c6ed883dffaaf68fde14ea21f30b10524",
+          "sha1": "5523cee40383c818c17892c9e2a15b55e352e222",
+          "md5": "be1a1443c3eed6fa34e0994c248f7278"
+        }
+      ]
+    }
+  ]
+}

@@ -53,6 +53,35 @@ class MainActivity : FragmentActivity() {
     private val envelope by lazy { AtomicFile(File(noBackupFilesDir, "native-key-envelope")) }
     private val oldBiometric by lazy { HardwareVaultKey(this, "app.kura.wallet.native.master.biometric.v1", BuildConfig.PROTOTYPE && Build.HARDWARE in setOf("ranchu", "goldfish"), biometricOnly = true) }
     private val biometricEnvelope by lazy { AtomicFile(File(noBackupFilesDir, "native-biometric-envelope")) }
+    private val deviceUnlock by lazy { DeviceUnlock(this, BuildConfig.PROTOTYPE && Build.HARDWARE in setOf("ranchu", "goldfish")) }
+    private var requireAppUnlock by mutableStateOf(true)
+    private var userPresentRegistered = false
+    private var phoneWakeRetry: Job? = null
+    private val userPresentReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+            if (intent?.action != android.content.Intent.ACTION_USER_PRESENT) return
+            phoneWakeRetry?.cancel()
+            phoneWakeRetry = lifecycleScope.launch {
+                // USER_PRESENT can precede Activity resume or keyguard-state publication.
+                // Wait briefly for both boundaries; never open a background or locked phone.
+                repeat(50) {
+                    if (!deviceUnlock.enabled || vm.state.value is VaultState.Unlocked) return@launch
+                    if (lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED) &&
+                        vm.state.value == VaultState.Locked && !vm.busy.value &&
+                        vm.pending.authentication == null && vm.pending.credential == null && phoneUnlocked()) {
+                        vm.error.value = null
+                        unlock()
+                        return@launch
+                    }
+                    delay(100)
+                }
+            }
+        }
+    }
+    private fun phoneUnlocked(): Boolean {
+        val keyguard = getSystemService(android.app.KeyguardManager::class.java)
+        return keyguard.isDeviceSecure && !keyguard.isDeviceLocked
+    }
     private class CredentialFallback : Exception()
     private var guard: ExternalOperationRegistry.Guard?
         get() = vm.pending.guard
@@ -139,19 +168,26 @@ class MainActivity : FragmentActivity() {
         }
     }
     private val imagePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val request = vm.pending.imagePickerRequest
+        vm.pending.imagePickerRequest = null
+        if (request == null || !request.isCurrent(vm.state.value, vm.pending)) {
+            lifecycleScope.launch { finishGuard(request?.guard) }
+            return@registerForActivityResult
+        }
         vm.launch {
             try {
-                if(uri!=null && vm.pending.imageTarget!=null) {
-                    var owned:ByteArray?=null
+                if (uri != null) {
+                    var owned: ByteArray? = null
                     try {
                         vm.work {
-                            val raw=contentResolver.openInputStream(uri)!!.use {Envelope.readBounded(it,10*1024*1024)}
-                            owned=try {CapturedImageScanner.crop(raw,1f,.5f,.5f)} finally {raw.fill(0)}
+                            check(request.isCurrent(vm.state.value, vm.pending)) { "Image import expired" }
+                            val raw = contentResolver.openInputStream(uri)!!.use { Envelope.readBounded(it, 10 * 1024 * 1024) }
+                            owned = try { CapturedImageScanner.crop(raw, 1f, .5f, .5f) } finally { raw.fill(0) }
                         }
-                        cropBytes=owned;owned=null
-                    } finally {owned?.fill(0)}
-                } else vm.pending.imageTarget=null
-            } finally {finishGuard()}
+                        if (request.isCurrent(vm.state.value, vm.pending)) { cropBytes = owned; owned = null }
+                    } finally { owned?.fill(0) }
+                } else if (vm.pending.imageTarget == request.target) vm.pending.imageTarget = null
+            } finally { finishGuard(request.guard) }
         }
     }
     private val attachmentPicker=registerForActivityResult(ActivityResultContracts.OpenDocument()) {uri->
@@ -185,8 +221,22 @@ class MainActivity : FragmentActivity() {
                     catch(e:Exception) {AttachmentContent.clear();finishGuard();throw e}
                 }
             }
-            else->{vm.pending.imageTarget=ImageTarget(item.table,item.id,column)
-                if(source=="camera") requestCamera(if(column=="barcodeValue") "live" else "capture") else external(ExternalOperation.PICKER) {imagePicker.launch(arrayOf("image/*"))}
+            else -> {
+                if (vm.state.value !is VaultState.Unlocked) return
+                if (guard != null || vm.pending.imagePickerRequest != null || vm.pending.cameraRequest != null || vm.pending.cameraPermissionRequest != null) {
+                    vm.error.value = "Finish or cancel the previous image request first."
+                    return
+                }
+                vm.pending.imageTarget = ImageTarget(item.table, item.id, column)
+                if (source == "camera") requestCamera(if (column == "barcodeValue") "live" else "capture")
+                else {
+                    val request = newImageRequest()
+                    vm.pending.imagePickerRequest = request
+                    if (!external(ExternalOperation.PICKER) {
+                        request.guard = guard
+                        imagePicker.launch(arrayOf("image/*"))
+                    }) vm.pending.imagePickerRequest = null
+                }
             }
         }
     }
@@ -208,36 +258,74 @@ class MainActivity : FragmentActivity() {
         }
     }
     private val camera = registerForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
+        val request = vm.pending.cameraRequest
+        vm.pending.cameraRequest = null
+        if (request == null || !request.isCurrent(vm.state.value, vm.pending)) {
+            request?.file?.delete()
+            if (request != null && capture === request.file) capture = null
+            lifecycleScope.launch { finishGuard(request?.guard) }
+            return@registerForActivityResult
+        }
         vm.launch {
             try {
-                if(ok) {
-                    var owned:ByteArray?=null
+                if (ok) {
+                    var owned: ByteArray? = null
                     try {
                         vm.work {
-                            val raw=capture!!.inputStream().use {Envelope.readBounded(it,10*1024*1024)}
-                            owned=if(vm.pending.imageTarget!=null) try {CapturedImageScanner.crop(raw,1f,.5f,.5f)} finally {raw.fill(0)} else raw
+                            check(request.isCurrent(vm.state.value, vm.pending)) { "Photo capture expired" }
+                            val raw = requireNotNull(request.file).inputStream().use { Envelope.readBounded(it, 10 * 1024 * 1024) }
+                            owned = if (request.target != null) try { CapturedImageScanner.crop(raw, 1f, .5f, .5f) } finally { raw.fill(0) } else raw
                         }
-                        cropBytes=owned;owned=null
-                    } finally {owned?.fill(0)}
-                } else vm.pending.imageTarget=null
-            } finally { capture?.delete(); capture = null; finishGuard() }
+                        if (request.isCurrent(vm.state.value, vm.pending)) { cropBytes = owned; owned = null }
+                    } finally { owned?.fill(0) }
+                } else if (vm.pending.imageTarget == request.target) vm.pending.imageTarget = null
+            } finally {
+                request.file?.delete()
+                if (capture === request.file) capture = null
+                finishGuard(request.guard)
+            }
         }
     }
     private var recovery by mutableStateOf<List<VaultStore.GenerationInfo>?>(null)
     private var discard by mutableStateOf<VaultStore.GenerationInfo?>(null)
     private val cameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        vm.launch {
-            finishGuard()
-            if(granted && vm.state.value is VaultState.Unlocked) {
-                if(vm.pending.cameraMode == "capture") captureImage() else vm.pending.liveScan = true
-            } else if(!granted) {vm.pending.imageTarget=null;vm.error.value = "Camera permission was not granted"}
+        val pending = vm.pending.cameraPermissionRequest
+        vm.pending.cameraPermissionRequest = null
+        val request = pending?.first
+        val current = request?.isCurrent(vm.state.value, vm.pending) == true
+        lifecycleScope.launch {
+            finishGuard(request?.guard)
+            if (current && request != null && pending != null && request.isCurrentAfterPermission(vm.state.value, vm.pending)) {
+                if (granted) {
+                    if (pending.second == "capture") captureImage() else vm.pending.liveScan = true
+                } else {
+                    vm.pending.imageTarget = null
+                    vm.error.value = "Camera permission was not granted"
+                }
+            }
         }
     }
+    private fun newImageRequest(file: File? = null): ImageImportRequest {
+        val state = vm.state.value as? VaultState.Unlocked ?: error("Unlock Kura before importing an image")
+        return ImageImportRequest(state.token, vm.pending.imageTarget, vm.pending.uiMemory.form, file)
+    }
     private fun requestCamera(mode: String) {
+        if (vm.state.value !is VaultState.Unlocked) return
+        if (vm.pending.cameraRequest != null || vm.pending.cameraPermissionRequest != null) {
+            vm.error.value = "Finish or cancel the previous camera request first."
+            return
+        }
         vm.pending.cameraMode = mode
-        if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            if(mode == "capture") captureImage() else vm.pending.liveScan = true
-        } else external(ExternalOperation.CAMERA) { cameraPermission.launch(android.Manifest.permission.CAMERA) }
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            if (mode == "capture") captureImage() else vm.pending.liveScan = true
+        } else {
+            val request = newImageRequest()
+            vm.pending.cameraPermissionRequest = request to mode
+            if (!external(ExternalOperation.CAMERA) {
+                request.guard = guard
+                cameraPermission.launch(android.Manifest.permission.CAMERA)
+            }) vm.pending.cameraPermissionRequest = null
+        }
     }
     private fun scanned(result: com.google.zxing.Result) {
         vm.pending.liveScan = false
@@ -319,9 +407,15 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         biometricPrompt = createBiometricPrompt()
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        requireAppUnlock = !deviceUnlock.enabled
         biometricPreference = prefs.getBoolean("biometrics", true)
         autoLockPreference=prefs.getLong("autoLock",0)
         vm.lifecycle.setAutoLockMillis(autoLockPreference)
+        // USER_PRESENT is system-protected and sent by SystemUI's separate UID.
+        // Receive that single system action across builds; keyguard/lifecycle checks still gate opening.
+        ContextCompat.registerReceiver(this, userPresentReceiver,
+            android.content.IntentFilter(android.content.Intent.ACTION_USER_PRESENT), ContextCompat.RECEIVER_EXPORTED)
+        userPresentRegistered = true
         lifecycleScope.launch {
             vm.state.collectLatest { state ->
                 if(state !is VaultState.Unlocked) {
@@ -349,6 +443,11 @@ class MainActivity : FragmentActivity() {
                 val backupStatus by vm.autoBackupStatus.collectAsState()
                 val backupPasswordReady by vm.backupPasswordReady.collectAsState()
                 val error by vm.error.collectAsState()
+                // The startup background also renders during authentication/opening. Keep
+                // updater UI out of those transitions, including the first auto-unlock frame.
+                val updatesReady = state is VaultState.Unlocked ||
+                    (state == VaultState.Locked && !busy && !vm.autoUnlockArmed)
+                if (updatesReady) AppUpdateNotice()
                 Surface(Modifier.fillMaxSize()) {
                     if(state is VaultState.Unlocked) {
                         Box(Modifier.fillMaxSize().drawWithContent {
@@ -387,7 +486,8 @@ class MainActivity : FragmentActivity() {
                             backupPasswordReady=backupPasswordReady,uiMemory=vm.pending.uiMemory,onPkpass={vm.pending.pkpassTarget=it},onShare={vm.pending.shareTarget=it},backupStatus=backupStatus,
                             onBackupFolder={external(ExternalOperation.SAF_EXPORT) {backupFolderPicker.launch(android.provider.DocumentsContract.buildDocumentUri("com.android.externalstorage.documents","primary:Documents"))}},
                             onBackupPassword={vm.pending.autoPassword=true},onBackupNow={vm.launch {vm.automaticBackupNow()}},
-                            onPurge={vm.pending.deleteConfirmation=true})
+                            onPurge={vm.pending.deleteConfirmation=true},updateSettings={AppUpdateEntry()},
+                            requireAppUnlock=requireAppUnlock,onRequireAppUnlock=::changeAppUnlock)
                         }
                     } else {
                         Column(Modifier.fillMaxSize().safeDrawingPadding().padding(32.dp),verticalArrangement=Arrangement.Center,
@@ -397,6 +497,7 @@ class MainActivity : FragmentActivity() {
                                     .semantics {contentDescription="Unlock Kura"},colorFilter=androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onBackground))
                             Text("Kura",style=MaterialTheme.typography.displayLarge,modifier=Modifier.padding(top=20.dp))
                             Text("Privacy first pass wallet.",Modifier.padding(top=12.dp),style=MaterialTheme.typography.bodyLarge)
+                            if (updatesReady) AppUpdateEntry()
                         }
                     }
                     if(error != null) AlertDialog(onDismissRequest = { vm.error.value = null }, title = { Text("Could not complete operation") },
@@ -430,7 +531,8 @@ class MainActivity : FragmentActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
                 combine(vm.state,vm.busy) {state,busy->state to busy}.collect { (state,busy)->
-                    if(state==VaultState.Locked && !busy && vm.autoUnlockArmed && vm.pending.authentication==null && vm.pending.credential==null) {
+                    if(state==VaultState.Locked && !busy && vm.autoUnlockArmed && vm.pending.authentication==null && vm.pending.credential==null &&
+                        (!deviceUnlock.enabled || phoneUnlocked())) {
                         vm.autoUnlockArmed=false;unlock()
                     }
                 }
@@ -449,46 +551,87 @@ class MainActivity : FragmentActivity() {
                 withContext(Dispatchers.Main.immediate) {
                     authenticationGuard = vm.lifecycle.begin(ExternalOperation.AUTHENTICATION)
                 }
-                hardware.provision()
-                val existing = if(envelope.baseFile.exists()) envelope.openRead().use { JSONObject(Envelope.readBounded(it, 2048).toString(Charsets.UTF_8)) } else null
-                if (Build.VERSION.SDK_INT < 30 && existing != null && biometricPreference && biometricEnvelope.baseFile.exists()) {
-                    val biometricMaster = try {
-                        val document = biometricEnvelope.openRead().use { JSONObject(Envelope.readBounded(it, 2048).toString(Charsets.UTF_8)) }
-                        val cipher = authenticate(oldBiometric.cryptoObject(false, Envelope.decode(document.getString("iv"))))
-                        oldBiometric.unwrap(cipher, Envelope.decode(document.getString("wrapped")))
-                    } catch (_: CredentialFallback) { null }
-                    catch (_: android.security.keystore.KeyPermanentlyInvalidatedException) { null }
-                    if (biometricMaster != null) return@authentication biometricMaster
-                }
-                val iv = existing?.let { Envelope.decode(it.getString("iv")) }
-                val cipher = if(Build.VERSION.SDK_INT >= 30) {
-                    val crypto = hardware.cryptoObject(existing == null, iv)
-                    authenticate(crypto)
-                } else {
-                    check(confirmCredential()) { "Authentication cancelled" }
-                    hardware.cipher(existing == null, iv)
-                }
-                if(existing != null) {
-                    android.os.Trace.beginSection("Kura.unwrap")
-                    val master = try {
-                        hardware.unwrap(cipher, Envelope.decode(existing.getString("wrapped")))
-                    } finally { android.os.Trace.endSection() }
-                    try { enrollOldBiometric(master); master } catch(e: Throwable) { master.fill(0); throw e }
-                }
-                else {
-                    // Existing native keys are unwrapped above; old installations migrate by backup import.
-                    val master = ByteArray(32).also(SecureRandom()::nextBytes)
+                if (deviceUnlock.enabled) {
+                    // A wake can resume this activity before keyguard dismissal. Do not
+                    // turn that transient locked-phone refusal into a second app prompt.
+                    check(phoneUnlocked()) { "Unlock your phone first" }
                     try {
-                        val encrypted = SensitiveBytes(master.copyOf()).use { hardware.wrap(cipher, it) }
-                        val document = JSONObject().put("iv", Envelope.encode(cipher.iv)).put("wrapped", Envelope.encode(encrypted))
-                        VerifiedAtomicWrite.write(envelope,document.toString().toByteArray())
-                        enrollOldBiometric(master)
-                        master
-                    } catch(e: Throwable) { master.fill(0); throw e }
+                        return@authentication deviceUnlock.open()
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        // Keep the original authenticated wrapper as a recovery path.
+                    }
                 }
+                authenticatedMaster()
             }
         } finally { withContext(Dispatchers.Main.immediate) { authenticationGuard?.let { vm.lifecycle.complete(it) } } }
     }
+    private suspend fun authenticatedMaster(): ByteArray {
+        hardware.provision()
+        val existing = if(envelope.baseFile.exists()) envelope.openRead().use { JSONObject(Envelope.readBounded(it, 2048).toString(Charsets.UTF_8)) } else null
+        if (Build.VERSION.SDK_INT < 30 && existing != null && biometricPreference && biometricEnvelope.baseFile.exists()) {
+            val biometricMaster = try {
+                val document = biometricEnvelope.openRead().use { JSONObject(Envelope.readBounded(it, 2048).toString(Charsets.UTF_8)) }
+                val cipher = authenticate(oldBiometric.cryptoObject(false, Envelope.decode(document.getString("iv"))))
+                oldBiometric.unwrap(cipher, Envelope.decode(document.getString("wrapped")))
+            } catch (_: CredentialFallback) { null }
+            catch (_: android.security.keystore.KeyPermanentlyInvalidatedException) { null }
+            if (biometricMaster != null) return biometricMaster
+        }
+        val iv = existing?.let { Envelope.decode(it.getString("iv")) }
+        val cipher = if(Build.VERSION.SDK_INT >= 30) {
+            val crypto = hardware.cryptoObject(existing == null, iv)
+            authenticate(crypto)
+        } else {
+            check(confirmCredential()) { "Authentication cancelled" }
+            hardware.cipher(existing == null, iv)
+        }
+        return if(existing != null) {
+            android.os.Trace.beginSection("Kura.unwrap")
+            val master = try {
+                hardware.unwrap(cipher, Envelope.decode(existing.getString("wrapped")))
+            } finally { android.os.Trace.endSection() }
+            try { enrollOldBiometric(master); master } catch(e: Throwable) { master.fill(0); throw e }
+        }
+        else {
+            // Existing native keys are unwrapped above; old installations migrate by backup import.
+            val master = ByteArray(32).also(SecureRandom()::nextBytes)
+            try {
+                val encrypted = SensitiveBytes(master.copyOf()).use { hardware.wrap(cipher, it) }
+                val document = JSONObject().put("iv", Envelope.encode(cipher.iv)).put("wrapped", Envelope.encode(encrypted))
+                VerifiedAtomicWrite.write(envelope,document.toString().toByteArray())
+                enrollOldBiometric(master)
+                master
+            } catch(e: Throwable) { master.fill(0); throw e }
+        }
+    }
+
+    private fun changeAppUnlock(required: Boolean) {
+        if (vm.busy.value) return
+        vm.launch {
+            if (required == requireAppUnlock) return@launch
+            try {
+                if (required) {
+                    val authenticationGuard = vm.lifecycle.begin(ExternalOperation.AUTHENTICATION)
+                    try {
+                        vm.work { opened ->
+                            val master = authenticatedMaster()
+                            try {
+                                check(opened.key.useBytes { java.security.MessageDigest.isEqual(it, master) }) { "Vault key changed" }
+                                deviceUnlock.disable()
+                            } finally { master.fill(0) }
+                        }
+                    } finally { vm.lifecycle.complete(authenticationGuard) }
+                } else {
+                    vm.work { opened -> deviceUnlock.enable(opened.key) }
+                }
+            } finally {
+                requireAppUnlock = !deviceUnlock.enabled
+            }
+        }
+    }
+
     private fun createBiometricPrompt() = BiometricPrompt(this, ContextCompat.getMainExecutor(this),
         object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
@@ -539,18 +682,38 @@ class MainActivity : FragmentActivity() {
             credential.launch(hardware.credentialIntent())
         }
     }
-    private fun external(operation: ExternalOperation, action: () -> Unit) {
-        try {
-            check(guard == null) { "An external operation is already active" }
+    private fun external(operation: ExternalOperation, action: () -> Unit): Boolean {
+        if (guard != null) {
+            vm.error.value = "An external operation is already active"
+            return false
+        }
+        return try {
             guard = vm.lifecycle.begin(operation)
             action()
-        } catch(e: Exception) { guard?.close(); guard = null; vm.error.value = e.message }
+            true
+        } catch (e: Exception) {
+            guard?.close(); guard = null; vm.error.value = e.message
+            false
+        }
     }
-    private suspend fun finishGuard() { guard?.let { vm.lifecycle.complete(it) }; guard = null }
+    private suspend fun finishGuard(expected: ExternalOperationRegistry.Guard? = guard) {
+        if (expected == null) return
+        if (guard === expected) { vm.lifecycle.complete(expected); guard = null }
+        else expected.close()
+    }
     private fun captureImage() {
-        capture = File(cacheDir, "capture").apply { mkdirs() }.let { File.createTempFile("scan-", ".jpg", it) }
-        val uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".files", capture!!)
-        external(ExternalOperation.CAMERA) { camera.launch(uri) }
+        if (vm.pending.cameraRequest != null) {
+            vm.error.value = "Finish or cancel the previous camera request first."
+            return
+        }
+        val file = File(cacheDir, "capture").apply { mkdirs() }.let { File.createTempFile("scan-", ".jpg", it) }
+        val request = newImageRequest(file)
+        capture = file
+        vm.pending.cameraRequest = request
+        val uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".files", file)
+        if (!external(ExternalOperation.CAMERA) { request.guard = guard; camera.launch(uri) }) {
+            vm.pending.cameraRequest = null; capture = null; file.delete()
+        }
     }
     @Composable private fun ImportConfirmation() {
         val staged = pendingStage ?: return
@@ -626,7 +789,7 @@ class MainActivity : FragmentActivity() {
         } finally {vm.lifecycle.complete(authenticationGuard)}
         vm.purgeNative()
         withContext(Dispatchers.IO) {
-            hardware.delete();oldBiometric.delete();envelope.delete();biometricEnvelope.delete()
+            deviceUnlock.disable();hardware.delete();oldBiometric.delete();envelope.delete();biometricEnvelope.delete()
             val base=cacheDir.canonicalFile
             val roots=listOf("pass-staging","backup-staging","capture","auto-backup").map {File(base,it)}
             for(root in roots) if(root.exists()) {
@@ -636,7 +799,7 @@ class MainActivity : FragmentActivity() {
                 files.forEach {check(it.delete())}
             }
         }
-        vm.pending.close();biometricPreference=true;autoLockPreference=0;vm.lifecycle.setAutoLockMillis(0)
+        vm.pending.close();requireAppUnlock=true;biometricPreference=true;autoLockPreference=0;vm.lifecycle.setAutoLockMillis(0)
     }
 
     @Composable private fun PasswordDialog() {
@@ -687,6 +850,19 @@ class MainActivity : FragmentActivity() {
     @Composable private fun CropDialog() {
         val bytes = cropBytes ?: return
         val targetColumn=vm.pending.imageTarget?.column
+        if (enhancedCardScanning && targetColumn in setOf("frontImagePath", "backImagePath")) {
+            val target = vm.pending.imageTarget!!
+            EnhancedCardDialog(vm, bytes, target,
+                dismiss = { bytes.fill(0); cropBytes = null; vm.pending.imageTarget = null },
+                retake = {
+                    if (vm.state.value is VaultState.Unlocked && cropBytes === bytes && vm.pending.imageTarget == target) {
+                        bytes.fill(0); cropBytes = null
+                        // Preserve the selected front/back destination across the new capture.
+                        requestCamera("capture")
+                    }
+                })
+            return
+        }
         val cropAspect=when(targetColumn) {"kuraLogo"->1f;"frontImagePath","backImagePath"->1.586f;else->0f}
         var fraction by remember { mutableFloatStateOf(1f) }
         var horizontal by remember { mutableFloatStateOf(.5f) }
@@ -771,6 +947,7 @@ class MainActivity : FragmentActivity() {
             }) { Text(if(vm.pending.imageTarget?.column=="barcodeValue") "Use barcode" else if(vm.pending.imageTarget!=null) "Save image" else "Scan") } }, dismissButton = { TextButton(onClick = { bytes.fill(0); cropBytes = null; vm.pending.imageTarget=null }) { Text("Cancel") } })
     }
     override fun onDestroy() {
+        if (userPresentRegistered) unregisterReceiver(userPresentReceiver)
         if (isFinishing) vm.pending.close()
         super.onDestroy()
     }

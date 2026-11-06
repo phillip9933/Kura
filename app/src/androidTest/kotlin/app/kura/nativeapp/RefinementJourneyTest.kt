@@ -13,18 +13,7 @@ class RefinementJourneyTest {
  private val instrumentation=InstrumentationRegistry.getInstrumentation()
  private val context get()=instrumentation.targetContext
  private val device=UiDevice.getInstance(instrumentation)
- private fun click(label:String) {
-  if(label in setOf("Edit","Delete","Archive","Unarchive","Share securely","Export encrypted pass","Export as .pkpass") && !device.hasObject(By.text(label)) && !device.hasObject(By.desc(label))) {
-   (device.findObject(By.desc("More pass actions")) ?: device.findObject(By.desc("More item actions")))?.let {it.click();device.waitForIdle()}
-  }
-  repeat(16) { attempt->
-   val node=device.findObject(By.desc(label)) ?: device.findObject(By.text(label))
-   try {if(node!=null && !node.visibleBounds.isEmpty) {node.click();device.waitForIdle();return}} catch(_:StaleObjectException) {}
-   device.findObject(By.scrollable(true))?.scroll(if(attempt<8) Direction.DOWN else Direction.UP,.5f)
-  }
-  device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null),"ux-missing-control.xml"))
-  error("Missing control: "+label)
- }
+ private fun click(label: String) = clickJourneyControl(device, label)
  private fun start():VaultController {
   check(android.os.Build.HARDWARE in setOf("ranchu","goldfish"))
   device.wakeUp();context.startActivity(Intent(context,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
@@ -114,12 +103,24 @@ class RefinementJourneyTest {
    runBlocking {vm.preference("isPassSearchEnabled",true);vm.preference("searchBarPosition","bottom");vm.preference("passSearchStyle","alwaysOn")}
    device.waitForIdle()
    assertFalse(android.graphics.Rect.intersects(device.findObject(By.desc("Settings")).visibleBounds,device.findObject(By.desc("Add")).visibleBounds))
-   click("Settings");click("General Display");click("App Theme")
+   click("Settings")
+   var parentRow: android.graphics.Rect? = null
+   clickJourneyControl(device, "General Display") { parentRow = android.graphics.Rect(it.visibleBounds) }
+   click("App Theme")
    device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null),"refinement-theme.xml"))
    until {runCatching {device.findObject(By.text("Dark"))?.let {it.isSelected || it.isChecked || it.parent?.isSelected==true || it.parent?.isChecked==true}==true}.getOrDefault(false)}
    snapshot("refinement-selected-theme")
    click("Cancel");click("Back")
-   assertNotNull("Parent scroll position is retained",device.wait(Until.findObject(By.text("General Display")),5000))
+   settleJourneyUi(device)
+   // The clicked row can be partly visible while its child title is offscreen.
+   // Check the same semantic row and its exact bounds without scrolling again.
+   val restoredParent = device.wait(Until.findObject(By.desc("General Display")),5000)
+   if (restoredParent == null || restoredParent.visibleBounds != parentRow) {
+    device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null), "refinement-parent-scroll.xml"))
+   }
+   println("SETTINGS_PARENT before=$parentRow after=${restoredParent?.visibleBounds}")
+   assertNotNull("Parent scroll position is retained", restoredParent)
+   assertEquals("Parent row must return at the same scroll position", parentRow, restoredParent!!.visibleBounds)
    click("Expiry Alerts");assertNotNull(device.wait(Until.findObject(By.text("Show Expiry Indicators")),5000))
    assertTrue(vm.presentation.value.preferences.bool("showExpiryIndicators",false));assertFalse(vm.presentation.value.preferences.bool("isExpiryNotificationEnabled"))
    click("Back");click("Navigation & Layout")
@@ -128,7 +129,15 @@ class RefinementJourneyTest {
    assertFalse(device.hasObject(By.text("Cancel")))
    click("Back");click("App Version & Trademark")
    click("Close")
-   assertNotNull(device.wait(Until.findObject(By.textContains("(${BuildConfig.VERSION_CODE})")),5000))
+   // The About row can be only partly visible after the helper reaches its title.
+   // Its version subtitle must be scrolled into view before testing reachability.
+   val settingsScroll = device.findObject(By.scrollable(true))
+   assertNotNull("Settings must remain scrollable after closing information", settingsScroll)
+   settingsScroll!!.scroll(Direction.DOWN, .5f)
+   settleJourneyUi(device)
+   val version = device.wait(Until.findObject(By.textContains("(${BuildConfig.VERSION_CODE})")),5000)
+   if (version == null) device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null), "version-label-failure.xml"))
+   assertNotNull("Version label must remain visible after closing information", version)
    click("Done")
    instrumentation.runOnMainSync {
     val activity=androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED).filterIsInstance<MainActivity>().single()
