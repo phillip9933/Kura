@@ -889,3 +889,23 @@ coverage and semantic queries are not a claim of full accessibility conformance.
 Complete enhanced regression and the final harness CI are in progress. Physical
 and production-package acceptance remain deferred. No version/signing/release
 change or beta removal is included.
+
+### Complete run and Parity click synchronization
+
+The V8 complete enhanced selection finishes **91 passed / 1 failed / 4 intentional
+opt-in skips, 96 total**, in 947.006s. Every crop/scanner case passes. The failure
+is ParityJourneyTest's secure-sharing journey: after setting the result search
+and clicking Open, its old helper cannot find More pass actions. The preserved
+hierarchy still shows the search-results list with Open Parity loyalty; the
+detail screen was never reached. The complete run is not a pass.
+
+Parity's normal controls now use the existing shared click helper, which waits
+for Compose frames and refreshes accessibility nodes before coordinate input.
+Its image-pencil semantic action/scroll handling and all assertions remain.
+The application APK is unchanged. All three Parity journeys pass **3/3** in
+62.526s: secure sharing/import cancellation and record counts, large-font draft
+recreation/image-picker cancellation, and real SAF automatic backup/retention.
+The V9 test APK hash/source are in the evidence. The full selection is rerunning
+on that harness; the earlier failure remains recorded. The four default skips
+are cold-process, prototype retained-upgrade, store screenshot and empty-vault
+timing opt-ins, not new exclusions.
