@@ -1,0 +1,82 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "dev.offlinescan",
+    "module": "scanner-core",
+    "version": "0.8.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "scanner-core-0.8.0.jar",
+          "url": "scanner-core-0.8.0.jar",
+          "size": 68727,
+          "sha512": "7fb873f1a6ebd7b933f68b54f8a5d287074ac5331d0a57be83ed4a372b5b1167234c275763615c6fba5efed3a51a50b495c1051a93d1e8801dee3ce8d5ebd33f",
+          "sha256": "74b1ac37d09e7a4d297aa24270fc232b9431fe41eead5a3105b5bbd3bc1f18e3",
+          "sha1": "ca51e7ef1ff86aea66a5052d3655f027f9a0642a",
+          "md5": "9d05844e2190f912228f1d0dcdec0889"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "scanner-core-0.8.0.jar",
+          "url": "scanner-core-0.8.0.jar",
+          "size": 68727,
+          "sha512": "7fb873f1a6ebd7b933f68b54f8a5d287074ac5331d0a57be83ed4a372b5b1167234c275763615c6fba5efed3a51a50b495c1051a93d1e8801dee3ce8d5ebd33f",
+          "sha256": "74b1ac37d09e7a4d297aa24270fc232b9431fe41eead5a3105b5bbd3bc1f18e3",
+          "sha1": "ca51e7ef1ff86aea66a5052d3655f027f9a0642a",
+          "md5": "9d05844e2190f912228f1d0dcdec0889"
+        }
+      ]
+    }
+  ]
+}

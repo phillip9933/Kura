@@ -127,3 +127,23 @@ Evidence covers declarations, scoped offline resolution/advisory lookup,
 retained public artifacts and existing CI references. It does not establish
 platform security-service scan status or signing recovery. Sensitive findings and credential-location inventories belong
 in the maintainer's private records, outside this repository.
+
+
+## Stable SDK pin follow-up — 7 November 2026
+
+The source now selects scanner 0.8.0 and updater 0.2.2. The dated inventory and
+advisory lookup above retain their original candidate-version scope; they are
+not relabelled as a new scan. [Pin review and binary comparison](evidence/stable-sdk-pins-20261107.json)
+verifies both published outer archives, exact tag/source revisions, all 185
+scanner host pins and seven supplied updater pins, and exact Maven coverage.
+The scanner archive has no inner manifest: Kura generates its own after checking
+the outer digest and all 23 supplied SHA-256 sidecars, retaining provenance.
+
+All five scanner AARs and the updater AAR match the previous pins byte-for-byte.
+The scanner core JAR has identical entry payloads despite a changed ZIP hash;
+Maven source JARs are identical. POMs change release versions only; Gradle module
+metadata also updates the core-JAR archive hashes. Licenses, models and native
+notices are retained; native/transitive versions are unchanged. This is bounded
+artifact correspondence, not a new native rebuild, security audit or Kura
+physical acceptance. Host build/runtime qualification is recorded separately
+before merging; the original build-scoped debt and scan gaps remain visible.

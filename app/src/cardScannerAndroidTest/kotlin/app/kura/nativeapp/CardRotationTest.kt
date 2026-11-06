@@ -7,7 +7,8 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.os.Build
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.offlinescan.core.Quad
+import app.kura.nativecore.CardCrop
+import androidx.compose.ui.geometry.Rect
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
@@ -48,8 +49,8 @@ class CardRotationTest {
                 180f to listOf(Color.YELLOW, Color.BLUE, Color.GREEN, Color.RED),
                 -90f to listOf(Color.GREEN, Color.YELLOW, Color.RED, Color.BLUE))
             for ((angle, colors) in expected) {
-                val rotated = rotateCardImage(original, angle)
-                val cropped = CardScanEngine(context).crop(rotated, Quad.FULL, 0)
+                val framing = CardCrop(80, 40, if (angle == 90f || angle == -90f) .5 else 2.0, degrees = angle.toDouble())
+                val cropped = CardScanEngine(context).crop(original, framing.quad(), 0)
                 try {
                     val bitmap = decode(cropped)
                     try {
@@ -58,28 +59,50 @@ class CardRotationTest {
                         colors.forEachIndexed { i, color -> closeColor(color, bitmap.getPixel(bitmap.width * (if (i % 2 == 0) 1 else 3) / 4,
                             bitmap.height * (if (i / 2 == 0) 1 else 3) / 4)) }
                     } finally { bitmap.eraseColor(0); bitmap.recycle() }
-                } finally { rotated.fill(0); cropped.fill(0) }
+                } finally { cropped.fill(0) }
             }
             assertArrayEquals("Original photo is never resampled in place", copy, original)
         } finally { original.fill(0); copy.fill(0) }
     }
     @Test fun customAngleMatchesPreviewBoundsAndRepeatedEditsUseOriginal() = runBlocking {
-        guard(); val original = source()
-        val first = rotateCardImage(original, 30f); val second = rotateCardImage(original, 30f)
+        guard()
+        val bitmap = Bitmap.createBitmap(400, 240, Bitmap.Config.ARGB_8888)
+        val pixels = IntArray(400 * 240) { i -> Color.rgb((i % 400) * 255 / 399, (i / 400) * 255 / 239, 64) }
+        val original = try {
+            bitmap.setPixels(pixels, 0, 400, 0, 0, 400, 240)
+            ByteArrayOutputStream().use { stream -> bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream); stream.toByteArray() }
+        } finally { pixels.fill(0); bitmap.eraseColor(0); bitmap.recycle() }
+        val copy = original.copyOf()
         try {
-            assertArrayEquals(first, second)
-            val bitmap = decode(first)
-            try {
-                assertEquals(90, bitmap.width); assertEquals(75, bitmap.height)
-                closeColor(Color.WHITE, bitmap.getPixel(1, 1))
-                val previewBounds = cardRotationMatrix(80, 40, 30f).second
-                assertTrue(abs(bitmap.width - previewBounds.width()) <= 1)
-                assertTrue(abs(bitmap.height - previewBounds.height()) <= 1)
-            } finally { bitmap.eraseColor(0); bitmap.recycle() }
-        } finally { original.fill(0); first.fill(0); second.fill(0) }
+            val engine = CardScanEngine(context)
+            for (angle in listOf(-30.0, 0.0, 33.0, 90.0, 180.0, 270.0)) for (zoom in listOf(1.0, 2.5)) {
+                val framing = CardCrop(400, 240, 1.586, zoom, angle, .7, -.5)
+                val first = engine.crop(original, framing.quad(), 0)
+                val second = engine.crop(original, framing.quad(), 0)
+                try {
+                    assertArrayEquals("Repeated edits sample the same source", first, second)
+                    val output = decode(first)
+                    try {
+                        assertEquals(1.586, output.width.toDouble() / output.height, .05)
+                        for (x in listOf(.2, .5, .8)) for (y in listOf(.2, .5, .8)) {
+                            val point = framing.frameToImage(x, y)
+                            val color = output.getPixel(((output.width - 1) * x).toInt(), ((output.height - 1) * y).toInt())
+                            assertTrue("Output red matches visible source at $angle/$zoom", abs(Color.red(color) - point.x * 255) < 7)
+                            assertTrue("Output green matches visible source at $angle/$zoom", abs(Color.green(color) - point.y * 255) < 7)
+                            val preview = floatArrayOf((point.x * 400).toFloat(), (point.y * 240).toFloat())
+                            cardCropMatrix(framing, 400, 240, Rect(20f, 30f, 320f, 230f)).mapPoints(preview)
+                            assertEquals((20 + 300 * x).toFloat(), preview[0], .01f)
+                            assertEquals((30 + 200 * y).toFloat(), preview[1], .01f)
+                        }
+                    } finally { output.eraseColor(0); output.recycle() }
+                } finally { first.fill(0); second.fill(0) }
+            }
+            assertArrayEquals("Original photo is not resampled in place", copy, original)
+        } finally { original.fill(0); copy.fill(0) }
     }
     @Test fun rotatedWorkingRasterStaysWithinScannerBudget() = runBlocking {
-        guard(); val original = source(3000, 1500); val rotated = rotateCardImage(original, 45f)
+        guard(); val original = source(3000, 1500)
+        val rotated = CardScanEngine(context).crop(original, CardCrop(3000, 1500, 2.0, degrees = 45.0).quad(), 0)
         try {
             val bitmap = decode(rotated)
             try {
@@ -91,10 +114,11 @@ class CardRotationTest {
     @Test fun invalidAnglesAndImagesAreRefused() = runBlocking {
         guard(); val original = source()
         try {
-            for (angle in listOf(Float.NaN, Float.POSITIVE_INFINITY, 181f)) {
-                try { rotateCardImage(original, angle); fail("Invalid angle accepted") } catch (_: IllegalArgumentException) { }
+            for (angle in listOf(Double.NaN, Double.POSITIVE_INFINITY, 361.0)) {
+                try { CardCrop(80, 40, 2.0, degrees = angle); fail("Invalid angle accepted") } catch (_: IllegalArgumentException) { }
             }
-            try { rotateCardImage(byteArrayOf(1, 2, 3), 90f); fail("Invalid photo accepted") } catch (_: IllegalArgumentException) { }
+            try { CardScanEngine(context).crop(byteArrayOf(1, 2, 3), CardCrop(80, 40, 2.0).quad(), 0); fail("Invalid photo accepted") }
+            catch (failure: dev.offlinescan.core.ScanException) { assertEquals(dev.offlinescan.core.ErrorCode.INVALID_IMAGE, failure.error.code) }
         } finally { original.fill(0) }
     }
 }

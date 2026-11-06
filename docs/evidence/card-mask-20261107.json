@@ -1,0 +1,268 @@
+{
+  "date": "2026-11-07",
+  "status": "Crop implementation qualified in focused/matrix/CI scopes; V8 full regression failed one legacy click fixture; V9 full rerun in progress",
+  "source_files": [
+    {
+      "path": "app/build.gradle.kts",
+      "sha256": "f0a3d704106fbd314e5f05295cefaf13327d7f872b4346b0a96d3644e40feb1d"
+    },
+    {
+      "path": "app/src/androidTest/kotlin/app/kura/nativeapp/JourneyUi.kt",
+      "sha256": "9da0b4263b438cb295e2cb48c4a8ed2ccf84873cc618b09f028092869cbc17e5"
+    },
+    {
+      "path": "app/src/cardScanner/kotlin/app/kura/nativeapp/CardCropEditor.kt",
+      "sha256": "336bda3001aabc776e214ad585c67644e421bfc8d13e1686300aa7aace330f48"
+    },
+    {
+      "path": "app/src/cardScanner/kotlin/app/kura/nativeapp/CardImageRotation.kt",
+      "sha256": null
+    },
+    {
+      "path": "app/src/cardScanner/kotlin/app/kura/nativeapp/EnhancedCardDialog.kt",
+      "sha256": "4e99ecaee266dc12da34ef0ffba944a459c28ae56ea43e2d6f2cbffd6e9ebacb"
+    },
+    {
+      "path": "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardCropLayoutTest.kt",
+      "sha256": "d3570c9ceafcc2e53b25bdd48accbfc4841160ebdbf554dcf6d12cc9aae8398c"
+    },
+    {
+      "path": "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardRotationTest.kt",
+      "sha256": "d7c4e8d09f47dfb1c119b4cc90e75ffca6ca7d9d4cb300298a36f96c078c9f9a"
+    },
+    {
+      "path": "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardScanSafetyTest.kt",
+      "sha256": "1a9f2da59a6d534262862f524ff72715526de2a6d3b3c883a523cf80e6f1e2d9"
+    },
+    {
+      "path": "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardScannerIntegrationTest.kt",
+      "sha256": "6479619bf4bd36634b1d8ebc0b3c3764a85a1e3fd636fd5176f34f4e470e1488"
+    },
+    {
+      "path": "core/model/src/main/kotlin/app/kura/nativecore/CardCrop.kt",
+      "sha256": "61f3e01c49f30577bb01f976cfb7e98a045b4ffadefe48740dd723bc068fb965"
+    },
+    {
+      "path": "core/model/src/test/kotlin/app/kura/nativecore/CardCropTest.kt",
+      "sha256": "30f568e3cbe05e8b18fe7cecc07a609bd72dde127713512087addb98281f6869"
+    }
+  ],
+  "verified_scopes": [
+    {
+      "scope": "Prior editor, corrected small-portrait visibility regression",
+      "result": "expected failure, 1/1",
+      "seconds": 16.912,
+      "artifact": "0015-before-layout.json"
+    },
+    {
+      "scope": "V3 crop geometry/native output/layout before large-text controls revision",
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 48.905,
+      "artifact": "0035-fixed-v3-layout-output.json"
+    },
+    {
+      "scope": "V4 crop controls, small portrait, dark, 200% text",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 68.441,
+      "artifact": "0066-v4-large-text-actual.json"
+    },
+    {
+      "scope": "V4 crop controls, small landscape, dark, 200% text; before wider review dialog",
+      "passed": 1,
+      "failed": 2,
+      "seconds": 92.664,
+      "artifact": "0070-v4-landscape-200.json",
+      "finding": "OCR offer scrolling region collapses to 9 dp; Adjust crop unreachable. Fix awaiting final-source rerun."
+    },
+    {
+      "scope": "V5 build before final review-dialog and test-source changes",
+      "jvm": {
+        "passed": 63,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "lint": {
+        "errors": 0,
+        "fatal": 0,
+        "app_warnings": 28
+      },
+      "debug_and_test_assembly": "pass",
+      "unsigned_release_assembly": "pass",
+      "seconds": 202.398
+    },
+    {
+      "scope": "Final application implementation / V6 harness, landscape dark 200%",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 86.321,
+      "artifact": "0079-v6-landscape-200.json"
+    },
+    {
+      "scope": "Final implementation / V6 harness, portrait dark 200%",
+      "passed": 3,
+      "failed": 1,
+      "seconds": 73.974,
+      "artifact": "0084-v6-portrait-200.json",
+      "finding": "No-edge status was offscreen beyond the bounded eight-step fixture search; read-only discovery extended, assertion retained."
+    },
+    {
+      "scope": "Final implementation / V6 harness, small portrait light scanner selection",
+      "passed": 17,
+      "failed": 1,
+      "seconds": 131.509,
+      "artifact": "0089-v6-focused-18.json",
+      "finding": "OCR Member number field lookup failed; scroll-aware fixture and before-scroll diagnostics under rerun."
+    },
+    {
+      "scope": "Final implementation / V8 harness, portrait dark 200%",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 72.317,
+      "artifact": "0111-v8-portrait-200.json"
+    },
+    {
+      "scope": "Final implementation / V8 harness, landscape dark 200%",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 84.242,
+      "artifact": "0114-v8-landscape-200.json"
+    },
+    {
+      "scope": "Final implementation / V6 harness, larger portrait dark",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 49.164,
+      "artifact": "0097-v6-large-dark.json"
+    },
+    {
+      "scope": "Final implementation / V6 harness, small landscape light",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 10.528,
+      "artifact": "0102-final-landscape-light.json"
+    },
+    {
+      "scope": "Final implementation / V8 harness, small portrait light scanner selection",
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 137.939,
+      "artifact": "0119-v8-focused-18.json",
+      "coverage": [
+        "crop and keyboard",
+        "actual native preview/output mapping",
+        "English/Japanese OCR",
+        "front/back encrypted images",
+        "existing-field conflict preservation",
+        "explicit Save",
+        "encrypted backup/staging",
+        "retake/cancel",
+        "lock during recognition and stale generation refusal"
+      ]
+    },
+    {
+      "scope": "Complete enhanced application selection / V8 harness",
+      "total": 96,
+      "passed": 91,
+      "failed": 1,
+      "skipped": 4,
+      "seconds": 947.006,
+      "artifact": "0123-v8-full-enhanced.json",
+      "failure": "ParityJourneyTest.mixedSectionRenameOrderDraftImagesAndSecureSharing: More pass actions not found; saved hierarchy still shows search result before detail navigation.",
+      "app_sha256": "bc7feb7c103dbbe46976ffc41dfff3bade71e3ac72b383d571547ccceb191d5c",
+      "test_sha256": "788ad9a9bfae32868ccc7e4fa567065d1854ca7c813471df688e497c05b6dab0",
+      "skip_scope": [
+        "phone-only cold-process opt-in",
+        "prototype retained-upgrade opt-in",
+        "store screenshot opt-in",
+        "empty-vault timing opt-in"
+      ]
+    },
+    {
+      "scope": "V9 Parity fixture after adopting shared frame-synchronized clicks; original image semantic actions retained",
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 62.526,
+      "artifact": "0126-v9-parity-all.json"
+    }
+  ],
+  "preserved_failures": [
+    "V2: one real quarter-turn boundary-pixel defect and two fixture queries; corrected without removing assertions.",
+    "V3: small portrait 200% re-entry lookup failed for an offscreen value; corrected with read-only scrolling.",
+    "V4: lint rejected an unused BoxWithConstraints scope; replaced with Box, no suppression.",
+    "Fresh disposable debug keys caused incompatible prototype updates; clean synthetic installs used. Job 0058 ran the old V3 pair and is not V4 evidence.",
+    "Initial V4 Bubblewrap launch denied before repository execution; the established isolated execution path was then used.",
+    "Complete V8 suite: 91 pass / 1 Parity click failure / 4 intentional skips. The whole run is not a pass. Saved hierarchy remains on results after the old click helper; V9 uses the existing frame/cache synchronization without changing application code or assertions."
+  ],
+  "pending": [
+    "Complete enhanced app regression (running)",
+    "Final harness four-way CI",
+    "Owner crop layout review",
+    "Screen-reader acceptance",
+    "Physical photographed-card/arm64/hardware-key and production-package acceptance"
+  ],
+  "privacy": "Synthetic fixtures only on a disposable prototype emulator. Production package, signing credentials and personal data were not used.",
+  "visual_evidence": [
+    {
+      "path": "docs/images/card-crop/before.png",
+      "sha256": "67faccfb96b7733026e3f1ba220c8c13516c4b5bc1291c1f3e9c999a5b116431",
+      "source_scope": "960f65f prior editor; visibility regression expected failure"
+    },
+    {
+      "path": "docs/images/card-crop/after.png",
+      "sha256": "8a423b6af25dcbf71fa420a77e71c98c5e22ecf116212c4a93974c80b122fe50",
+      "source_scope": "8d97adc implementation; V6 normal portrait fixture"
+    },
+    {
+      "path": "docs/images/card-crop/rotation.png",
+      "sha256": "44c3012327798a64ff00ab5382df26709cab1986718f7be9323bb4df588976bf",
+      "source_scope": "8d97adc implementation; V6 saved framing after OCR re-entry"
+    },
+    {
+      "path": "docs/images/card-crop/large-text-landscape.png",
+      "sha256": "8355f39ba6dc4068ec83a9bfdccdd29cfab19849ee76d323f1456405d0dc6324",
+      "source_scope": "8d97adc implementation; V8 200% landscape fixture"
+    }
+  ],
+  "implementation_commit": "8d97adc85fe78e7ee2cbfc3798b9a149b0b72066",
+  "ocr_fixture_diagnosis": "The pre-scroll hierarchy contains the review title, scroll pane, preview/instructions and only the first expiry field at the bottom. Member number is offscreen. Read-only scrolling finds it; the exact conflict/value/image/backup assertions then pass.",
+  "current_test_source": [
+    {
+      "path": "app/src/androidTest/kotlin/app/kura/nativeapp/JourneyUi.kt",
+      "sha256": "a84feb8857c029136966cdfd7c6228c6295f9139e6f8281a54f11d5bd90355f4"
+    },
+    {
+      "path": "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardCropLayoutTest.kt",
+      "sha256": "6abe237bf54b1ad15dc8874315fcf3d9d1783284a21f2a2180081845d524f375"
+    },
+    {
+      "path": "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardScanSafetyTest.kt",
+      "sha256": "16704dc45b6e2c8ed70930e9acb586f3b774a0c447b291ffc19f80d8be8e83b4"
+    },
+    {
+      "path": "app/src/androidTest/kotlin/app/kura/nativeapp/ParityJourneyTest.kt",
+      "sha256": "94e180a01e952069cf9010b92c4bdd7eedb9920e8b2cbbe4f51db826434d0b29"
+    }
+  ],
+  "apks": [
+    {
+      "kind": "app",
+      "sha256": "bc7feb7c103dbbe46976ffc41dfff3bade71e3ac72b383d571547ccceb191d5c"
+    },
+    {
+      "kind": "test",
+      "sha256": "4c3cde3a922815421576797e859b48ee2c7957c62f6fa6683466dc2b6b455ab3"
+    }
+  ]
+}

@@ -56,4 +56,4 @@ Licensed under [AGPL-3.0](LICENSE).
 
 ## Optional card scanning
 
-The enhanced-scanning development build (`-PcardScanner=true`) adds automatic card-edge cropping and optional offline English/Japanese OCR into existing empty form fields, with editable review before saving. It uses scanner 0.8.0-beta.1 and requires Android API 26+ on 64-bit devices. The base build retains API 24 support. See [card scanning](docs/CARD-RECOGNITION.md) for controls, privacy, build flags and known limitations.
+The enhanced-scanning development build (`-PcardScanner=true`) adds automatic card-edge cropping and optional offline English/Japanese OCR into existing empty form fields, with editable review before saving. It uses scanner 0.8.0 and requires Android API 26+ on 64-bit devices. The base build retains API 24 support. See [card scanning](docs/CARD-RECOGNITION.md) for controls, privacy, build flags and known limitations.
