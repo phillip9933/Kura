@@ -71,12 +71,12 @@ kotlin { jvmToolchain(21); compilerOptions { jvmTarget.set(org.jetbrains.kotlin.
 dependencies {
  if (cardScanner) {
     implementation("androidx.compose.material:material-icons-core:1.7.8")
-    implementation("dev.offlinescan:scanner-core:0.8.0-beta.1")
-    implementation("dev.offlinescan:scanner-processing-opencv:0.8.0-beta.1")
-    implementation("dev.offlinescan:scanner-ocr-tesseract:0.8.0-beta.1")
+    implementation("dev.offlinescan:scanner-core:0.8.0")
+    implementation("dev.offlinescan:scanner-processing-opencv:0.8.0")
+    implementation("dev.offlinescan:scanner-ocr-tesseract:0.8.0")
  }
  if (directUpdates) {
-    implementation("io.github.phillip9933:android-updater:0.2.2-beta.1")
+    implementation("io.github.phillip9933:android-updater:0.2.2")
     implementation("androidx.work:work-runtime:2.11.2")
  }
  coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")

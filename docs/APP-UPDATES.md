@@ -19,7 +19,7 @@ Update metadata and APK cache are separate from vault files. The library's nonex
 
 ## Dependency and licensing
 
-The independent AGPL-3.0 updater is vendored as an immutable Maven/source/license bundle under `third_party/android-updater`. Gradle verifies its SHA256SUMS and rejects unlisted Maven files; builds never follow a sibling checkout. The current source pin is the explicit candidate `io.github.phillip9933:android-updater:0.2.2-beta.1`, from [the standalone prerelease](https://github.com/phillip9933/android-app-updater/releases/tag/v0.2.2-beta.1). See the bundle README for source revision and archive checksum. Kura's existing LICENSE is AGPL-3.0; earlier README/contribution GPL labels were corrected. Do not replace already distributed artifacts under an existing version.
+The independent AGPL-3.0 updater is vendored as an immutable Maven/source/license bundle under `third_party/android-updater`. Gradle verifies its SHA256SUMS and rejects unlisted Maven files; builds never follow a sibling checkout. The current source pin is `io.github.phillip9933:android-updater:0.2.2`, from [the stable release](https://github.com/phillip9933/android-app-updater/releases/tag/v0.2.2). The AAR and Maven source JAR are byte-identical to the previously pinned candidate; the corrupt-cache recovery fix is retained. See the [host pin review](evidence/stable-sdk-pins-20261107.json). See the bundle README for source revision and archive checksum. Kura's existing LICENSE is AGPL-3.0; earlier README/contribution GPL labels were corrected. Do not replace already distributed artifacts under an existing version.
 
 ## Acceptance limits
 
@@ -62,3 +62,14 @@ The owner manually confirmed that Settings → App updates → Check for updates
 The owner then reported that the loading background also showed the update entry and allowed a quick tap to open its dialog. The shared non-unlocked layout rendered the entry during authentication/opening, and the root hosted dialogs without a vault-transition gate. The follow-up suppresses both the entry and dialogs until the vault is open or the locked screen is idle with no automatic unlock pending. The automatic-unlock flag is observable so the first startup frame and lifecycle changes follow the same rule. A requested panel or available offer can appear once the transition settles; update access still requires no vault access. Networking and installation remain opt-in and user-confirmed.
 
 This fix is published in [2.2.0-beta.3 (122)](https://github.com/phillip9933/Kura/releases/tag/v2.2.0-beta.3). The beta.2 APK and validation report remain unchanged. Exact focused verification, release-source CI and the preserved failing pre-fix regression are recorded in [Testing](TESTING.md).
+
+
+## Stable dependency pin — 7 November 2026
+
+Kura source now selects the immutable 0.2.2 stable Maven/source/license bundle.
+Its published outer digest, seven original inner pins, source ZIP and annotated
+tag target match. The runtime AAR is unchanged from 0.2.2-beta.1; Maven metadata
+updates the version only. This dependency promotion changes no updater policy,
+network consent, installer checks, vault data flow or published Kura beta bytes.
+Kura host build/runtime and production-package acceptance remain separate.
+Earlier dated candidate/installer results retain their original source scopes.
