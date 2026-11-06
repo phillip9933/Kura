@@ -255,15 +255,23 @@ class OrganizationJourneyTest {
   val transparentBytes=java.io.ByteArrayOutputStream().also {transparent.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)}.toByteArray();transparent.recycle()
   val normalized=CapturedImageScanner.crop(transparentBytes,1f,.5f,.5f)
   try {val decoded=android.graphics.BitmapFactory.decodeByteArray(normalized,0,normalized.size);assertEquals(0,android.graphics.Color.alpha(decoded.getPixel(0,0)));decoded.recycle()} finally {normalized.fill(0);transparentBytes.fill(0)}
+  // Exercise the real foreground vault lifetime. A headless publish can be
+  // revoked correctly by the preceding Activity's delayed pending cleanup.
+  val vm = start()
   val bytes="Private attachment".toByteArray()
-  val uri=AttachmentContent.publish(context,"Notes.txt","text/plain",bytes)
-  assertEquals("text/plain",context.contentResolver.getType(uri))
-  context.contentResolver.openInputStream(uri)!!.use {assertEquals("Private attachment",it.readBytes().toString(Charsets.UTF_8))}
-  if(android.os.Build.VERSION.SDK_INT>=26) context.contentResolver.openFileDescriptor(uri,"r")!!.use {fd->
-   android.system.Os.lseek(fd.fileDescriptor,3,android.system.OsConstants.SEEK_SET)
-   val part=ByteArray(4);assertEquals(4,android.system.Os.read(fd.fileDescriptor,part,0,4));assertEquals("vate",part.toString(Charsets.UTF_8));part.fill(0)
+  try {
+   val uri=AttachmentContent.publish(context,"Notes.txt","text/plain",bytes)
+   assertEquals("text/plain",context.contentResolver.getType(uri))
+   context.contentResolver.openInputStream(uri)!!.use {assertEquals("Private attachment",it.readBytes().toString(Charsets.UTF_8))}
+   if(android.os.Build.VERSION.SDK_INT>=26) context.contentResolver.openFileDescriptor(uri,"r")!!.use {fd->
+    android.system.Os.lseek(fd.fileDescriptor,3,android.system.OsConstants.SEEK_SET)
+    val part=ByteArray(4);assertEquals(4,android.system.Os.read(fd.fileDescriptor,part,0,4));assertEquals("vate",part.toString(Charsets.UTF_8));part.fill(0)
+   }
+   AttachmentContent.clear();assertTrue(bytes.all {it==0.toByte()});assertTrue(runCatching {context.contentResolver.openInputStream(uri)}.isFailure)
+  } finally {
+   AttachmentContent.clear();bytes.fill(0)
+   runBlocking { vm.lock() };device.pressHome()
   }
-  AttachmentContent.clear();assertTrue(bytes.all {it==0.toByte()});assertTrue(runCatching {context.contentResolver.openInputStream(uri)}.isFailure)
  }
  @Test fun logoEditorAttachmentsAndHiddenSearchStyle() {
   val vm=start();val saved=runBlocking {vm.work {vm.store.settings(it).toString()}}

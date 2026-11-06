@@ -23,13 +23,14 @@ internal fun settleJourneyUi(device: UiDevice) {
     if (Build.VERSION.SDK_INT >= 34) instrumentation.uiAutomation.clearCache()
 }
 
-internal fun clickJourneyControl(device: UiDevice, label: String) {
+internal fun clickJourneyControl(device: UiDevice, label: String, beforeClick: ((UiObject2) -> Unit)? = null) {
     val overflowActions = setOf("Edit", "Delete", "Archive", "Unarchive", "Share securely", "Export encrypted pass", "Export as .pkpass")
     repeat(16) { attempt ->
         settleJourneyUi(device)
         try {
             val node = device.findObject(By.desc(label)) ?: device.findObject(By.text(label))
             if (node != null && node.isEnabled && !node.visibleBounds.isEmpty) {
+                beforeClick?.invoke(node)
                 node.click()
                 settleJourneyUi(device)
                 return

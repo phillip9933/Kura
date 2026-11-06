@@ -103,12 +103,24 @@ class RefinementJourneyTest {
    runBlocking {vm.preference("isPassSearchEnabled",true);vm.preference("searchBarPosition","bottom");vm.preference("passSearchStyle","alwaysOn")}
    device.waitForIdle()
    assertFalse(android.graphics.Rect.intersects(device.findObject(By.desc("Settings")).visibleBounds,device.findObject(By.desc("Add")).visibleBounds))
-   click("Settings");click("General Display");click("App Theme")
+   click("Settings")
+   var parentRow: android.graphics.Rect? = null
+   clickJourneyControl(device, "General Display") { parentRow = android.graphics.Rect(it.visibleBounds) }
+   click("App Theme")
    device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null),"refinement-theme.xml"))
    until {runCatching {device.findObject(By.text("Dark"))?.let {it.isSelected || it.isChecked || it.parent?.isSelected==true || it.parent?.isChecked==true}==true}.getOrDefault(false)}
    snapshot("refinement-selected-theme")
    click("Cancel");click("Back")
-   assertNotNull("Parent scroll position is retained",device.wait(Until.findObject(By.text("General Display")),5000))
+   settleJourneyUi(device)
+   // The clicked row can be partly visible while its child title is offscreen.
+   // Check the same semantic row and its exact bounds without scrolling again.
+   val restoredParent = device.wait(Until.findObject(By.desc("General Display")),5000)
+   if (restoredParent == null || restoredParent.visibleBounds != parentRow) {
+    device.dumpWindowHierarchy(java.io.File(context.getExternalFilesDir(null), "refinement-parent-scroll.xml"))
+   }
+   println("SETTINGS_PARENT before=$parentRow after=${restoredParent?.visibleBounds}")
+   assertNotNull("Parent scroll position is retained", restoredParent)
+   assertEquals("Parent row must return at the same scroll position", parentRow, restoredParent!!.visibleBounds)
    click("Expiry Alerts");assertNotNull(device.wait(Until.findObject(By.text("Show Expiry Indicators")),5000))
    assertTrue(vm.presentation.value.preferences.bool("showExpiryIndicators",false));assertFalse(vm.presentation.value.preferences.bool("isExpiryNotificationEnabled"))
    click("Back");click("Navigation & Layout")

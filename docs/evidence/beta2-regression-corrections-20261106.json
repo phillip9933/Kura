@@ -1,0 +1,78 @@
+{
+  "date": "2026-11-06",
+  "application_source": "b07ef53707748a2bfe5db94eaaae8490e2642564",
+  "application_changed": false,
+  "security_assertions_removed": false,
+  "failed_complete_runs": {
+    "enhanced": {
+      "passed": 86,
+      "failed": 1,
+      "assumption_skips": 4,
+      "total": 91,
+      "failed_cases": [
+        "app.kura.nativeapp.OrganizationJourneyTest#frontImageRulesCropMasksAndEphemeralAttachmentRead"
+      ],
+      "seconds": 1080.692
+    },
+    "offline": {
+      "passed": 66,
+      "failed": 1,
+      "assumption_skips": 4,
+      "total": 71,
+      "failed_cases": [
+        "app.kura.nativeapp.RefinementJourneyTest#selectedSettingsScrollAndBottomControlsStayReachable"
+      ],
+      "seconds": 951.8
+    }
+  },
+  "settings_observation": {
+    "clicked": "General Display semantic parent row",
+    "bounds_before": [
+      36,
+      1841,
+      1044,
+      1866
+    ],
+    "restored_parent_bounds_from_failure_hierarchy": [
+      36,
+      1841,
+      1044,
+      1866
+    ],
+    "old_assertion": "Searched for child title, which was offscreen even before navigation",
+    "correction": "Check same parent row and assert exact unchanged bounds without scrolling again"
+  },
+  "attachment_observation": {
+    "native_callback": "Attachment closed ENOENT; token was revoked before descriptor open",
+    "context": "Old headless fixture had no real foreground vault lifetime; earlier Activity/pending cleanup can revoke global leases",
+    "correction": "Authenticate real foreground vault for memory descriptor checks and clear/lock in finally; preserve seek, byte-wipe and expired-token refusal assertions",
+    "provider_changed": false
+  },
+  "focused_diagnostic": {
+    "passed": 1,
+    "failed": 1,
+    "seconds": 22.882
+  },
+  "focused_corrected": {
+    "success": true,
+    "summary": [
+      "Time: 33.033",
+      "OK (2 tests)"
+    ]
+  },
+  "installer": {
+    "old_version": 121,
+    "new_version": 122,
+    "uid": 10230,
+    "uid_retained_assertion_passed_before_installed_phase": true,
+    "explicit_android_update_confirmation": true,
+    "android_app_updated_completion_observed": true,
+    "original_wallet_retained_after_real_authentication": true,
+    "production_package_never_installed": true,
+    "successful_phase_executions": 18,
+    "installed_apk_sha256": "3b4f84436e79269015aa113da6c212c2ba929720dd0f824ce099260734a19e50",
+    "installed_apk_matches_generated_candidate": true,
+    "installer_permission_after_tests": "REQUEST_INSTALL_PACKAGES: deny; time=+8m58s581ms ago"
+  },
+  "source_docs": "https://developer.android.com/training/data-storage/app-specific"
+}
