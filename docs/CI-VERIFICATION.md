@@ -3,8 +3,9 @@
 Both checked-in workflows declare `permissions: contents: read`; unspecified
 token permissions are not requested. Checkout disables credential persistence.
 Validation uses GitHub-hosted runners, not a signing runner. Neither workflow
-uses `pull_request_target`, requests OIDC/write permissions, signs an artifact,
-or publishes a release. The manual candidate workflow uploads only an unsigned
+uses `pull_request_target`, requests OIDC/write permissions, uses production
+signing credentials, or publishes a release. Prototype debug/test APKs use the
+runner's disposable debug signing identity. The manual candidate workflow uploads only an unsigned
 APK. Artifact upload uses the Actions artifact service, not release credentials.
 
 ## Reviewed action references
@@ -42,12 +43,38 @@ with floating tags. No update bot or account integration is enabled here.
 The four existing matrix combinations, job names, triggers, Gradle tasks and
 report uploads are retained. The eight packaging verifier regressions run only
 in the default combination, immediately after SDK setup and before the Gradle
-build. They add Python checks without changing the existing 59 JVM executions
-per combination. Android instrumentation is compiled, not run, in these jobs.
+build. They add Python packaging checks without replacing the Gradle JVM suites.
+Current test counts come from the XML evidence in [Testing](TESTING.md).
+Android instrumentation is compiled, not run, in these jobs.
 
-The hardening diff has not run on GitHub. Existing successful runs predate it;
-local fixture results are recorded in [Testing](TESTING.md). Publishing workflow
-changes and checking actual runner/token behavior remain separate verification.
-No new measured runtime budget or required check is introduced. Account/branch
+The hardening changes merged in [PR #27](https://github.com/phillip9933/Kura/pull/27)
+after [four successful configurations](https://github.com/phillip9933/Kura/actions/runs/42228987241)
+at `960f65f`. The later [crop implementation run](https://github.com/phillip9933/Kura/actions/runs/42245999018)
+at `8d97adc` also passes all four; downloaded XML records 63 fresh JVM tests per
+configuration, 252 total, with zero failures/errors/skips. Those runs compile
+instrumentation rather than execute it. Runtime results retain separate source
+and artifact scopes in Testing.
+
+No measured runtime budget or required check is introduced here. Account/branch
 rules and security-service grants are outside these workflow files; no setting
 change or effective merge-gate enforcement is claimed.
+
+## Manual prototype runtime export
+
+The verification workflow accepts `export-prototype-apks`, default false. Only
+a manual dispatch selecting it and the combined scanner/updater configuration
+compiles the three core instrumentation APKs and uploads the prototype app/test
+pair plus core tests. That job's ordinary validation and packaging checks
+must succeed first; the complete four-way matrix remains part of qualification. Export runs before opt-in installer-harness compilation so
+the saved app test APK is the default suite. No production signing key, release
+APK or signing material enters this artifact; retention is seven days.
+
+This supports exact-head runtime qualification, including the Kotlin update, on
+a credential-free disposable emulator without installing a new global compiler.
+Record the dispatch head, downloaded artifact hashes and actual device results.
+APK export/compilation is not a runtime pass. Keep the prototype-package and
+emulator guards; never install this pair over a personal or production wallet.
+These validation artifacts are not inputs to privileged release signing or
+publishing. Production builds must follow the separate tagged-source release
+workflow. No branch/account settings, token grants or signing configuration
+change is included.
