@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Rotate the photo before cropping, with live preset/custom-angle previews and edge detection on the oriented image.
+
 - Combine automatic edge detection and manual corner editing in one crop dialog, with a shaded mask, expandable fine-tuning and consistent primary/secondary actions.
 
 ## 2.2.0-beta.1 — November 5, 2026

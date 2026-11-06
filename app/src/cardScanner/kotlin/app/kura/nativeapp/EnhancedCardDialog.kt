@@ -20,6 +20,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import java.util.Locale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
@@ -55,7 +58,13 @@ private enum class CardStep { CROP, OFFER, REVIEW }
     var selectedCorner by remember { mutableIntStateOf(0) }
     var fineTune by remember { mutableStateOf(false) }
     var detectedCorners by remember(bytes) { mutableStateOf(Quad.FULL) }
-    var rotation by remember { mutableIntStateOf(0) }
+    var rotation by remember(bytes) { mutableFloatStateOf(0f) }
+    var rotationPicker by remember { mutableStateOf(false) }
+    var draftRotation by remember { mutableFloatStateOf(0f) }
+    var oriented by remember(bytes) { mutableStateOf<ByteArray?>(null) }
+    val workingBytes = oriented ?: bytes
+    val rotationOwner = remember(bytes) { arrayOfNulls<ByteArray>(1) }
+    DisposableEffect(rotationOwner) { onDispose { rotationOwner[0]?.fill(0); rotationOwner[0] = null } }
     var busy by remember { mutableStateOf(true) }
     var status by remember { mutableStateOf("Detecting card edges…") }
     var error by remember { mutableStateOf<String?>(null) }
@@ -113,14 +122,14 @@ private enum class CardStep { CROP, OFFER, REVIEW }
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (step == CardStep.CROP) {
                     Text("Drag the corners to adjust the detected card edges.")
-                    CardCorners(bytes, corners, !busy) { corners = it; status = "Crop adjusted. Check all four corners." }
+                    CardCorners(workingBytes, corners, !busy) { corners = it; status = "Crop adjusted. Check all four corners." }
                     Text(status, style = MaterialTheme.typography.bodySmall)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(enabled = !busy, onClick = { corners = detectedCorners }, modifier = Modifier.weight(1f)) { Text("Reset edges") }
                         OutlinedButton(enabled = !busy, onClick = { corners = Quad.FULL }, modifier = Modifier.weight(1f)) { Text("Use full image") }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(enabled = !busy, onClick = { rotation = (rotation + 1) % 4 }, modifier = Modifier.weight(1f)) { Text("Rotate result: ${rotation * 90}°") }
+                        OutlinedButton(enabled = !busy, onClick = { draftRotation = rotation; rotationPicker = true }, modifier = Modifier.weight(1f)) { Text("Rotate: ${angleLabel(rotation)}") }
                         OutlinedButton(enabled = !busy, onClick = { fineTune = !fineTune }, modifier = Modifier.weight(1f)) { Text(if (fineTune) "Hide fine-tune" else "Fine-tune") }
                     }
                     if (fineTune) {
@@ -185,7 +194,7 @@ private enum class CardStep { CROP, OFFER, REVIEW }
                         try {
                             var owned: ByteArray? = null
                             try {
-                                vm.work { owned = engine.crop(bytes, corners, rotation) }
+                                vm.work { owned = engine.crop(workingBytes, corners, 0) }
                                 cropped = owned; owned = null
                                 step = CardStep.OFFER
                             } finally { owned?.fill(0) }
@@ -201,6 +210,51 @@ private enum class CardStep { CROP, OFFER, REVIEW }
         },
         dismissButton = { TextButton(onClick = dismiss) { Text("Cancel import") } },
     )
+    if (rotationPicker) {
+        AlertDialog(
+            onDismissRequest = { rotationPicker = false },
+            title = { Text("Rotate photo") },
+            text = {
+                Column(Modifier.heightIn(max = (LocalConfiguration.current.screenHeightDp * .58f).dp).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    RotationPreview(bytes, draftRotation)
+                    listOf(listOf(0f, 90f), listOf(180f, -90f)).forEach { angles ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            angles.forEach { angle ->
+                                FilterChip(selected = draftRotation == angle, onClick = { draftRotation = angle },
+                                    modifier = Modifier.weight(1f),
+                                    label = { Text(if (angle == -90f) "270°" else "${angle.toInt()}°") })
+                            }
+                        }
+                    }
+                    Text("Custom angle: ${String.format(Locale.ROOT, "%.1f°", draftRotation)}")
+                    Slider(value = draftRotation, onValueChange = { draftRotation = it }, valueRange = -180f..180f,
+                        steps = 3599, modifier = Modifier.semantics { contentDescription = "Photo rotation angle" })
+                    Text("Rotation updates the photo before cropping and resets the detected edges. You can adjust the mask afterward.",
+                        style = MaterialTheme.typography.bodySmall)
+                }
+            },
+            confirmButton = { Button(onClick = {
+                val angle = draftRotation
+                rotationPicker = false; busy = true; error = null
+                scope.launch {
+                    var owned: ByteArray? = null
+                    try {
+                        val detected = vm.work {
+                            owned = rotateCardImage(bytes, angle)
+                            engine.detect(owned!!)
+                        }
+                        rotationOwner[0]?.fill(0); rotationOwner[0] = owned; oriented = owned; owned = null
+                        rotation = angle; corners = detected; detectedCorners = detected
+                        status = "Photo rotated. Check the card edges before cropping."
+                    } catch (cancelled: CancellationException) { throw cancelled }
+                    catch (_: Exception) { error = "Could not rotate this photo. Your previous crop is unchanged." }
+                    finally { owned?.fill(0); busy = false }
+                }
+            }) { Text("Apply rotation") } },
+            dismissButton = { TextButton(onClick = { rotationPicker = false }) { Text("Cancel") } },
+        )
+    }
 }
 
 internal fun recognitionFields(table: String, form: FormMemory, preferences: VaultPreferences): List<CardField> {
@@ -283,6 +337,25 @@ private fun Quad.replace(index: Int, point: Point): Quad {
         points.forEach {
             drawCircle(Color.White, 10.dp.toPx(), it)
             drawCircle(accent, 7.dp.toPx(), it)
+        }
+    }
+}
+
+private fun angleLabel(angle: Float): String {
+    val positive = (angle + 360f) % 360f
+    return if (positive % 1f == 0f) "${positive.toInt()}°" else String.format(Locale.ROOT, "%.1f°", positive)
+}
+
+@Composable private fun RotationPreview(bytes: ByteArray, degrees: Float) {
+    val bitmap = imagePreview(bytes) ?: return
+    Canvas(Modifier.fillMaxWidth().height(180.dp).clip(RoundedCornerShape(16.dp)).background(Color.White)
+        .semantics { contentDescription = "Rotated photo preview: ${angleLabel(degrees)}" }) {
+        val (matrix, bounds) = cardRotationMatrix(bitmap.width, bitmap.height, degrees)
+        val scale = minOf(size.width / bounds.width(), size.height / bounds.height())
+        matrix.postScale(scale, scale)
+        matrix.postTranslate((size.width - bounds.width() * scale) / 2, (size.height - bounds.height() * scale) / 2)
+        drawIntoCanvas { canvas ->
+            canvas.nativeCanvas.drawBitmap(bitmap, matrix, android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG))
         }
     }
 }

@@ -1,0 +1,37 @@
+{
+  "success": true,
+  "cases": 8,
+  "duration_seconds": 39.986,
+  "scope": "Owned API37/16KiB emulator, generated fixtures only",
+  "build_lint": "passed,54s,278 tasks:14 executed/264 up-to-date",
+  "pixel_checks": [
+    "Quarter-turn pixels and crop dimensions match preview orientation",
+    "Custom-angle bounds and white expanded canvas",
+    "Repeated edits derive from original input",
+    "Working raster <=2048 per dimension and <=4M pixels",
+    "Invalid images and nonfinite/out-of-range angles rejected"
+  ],
+  "ui_checks": [
+    "Preset preview and cancel preservation",
+    "270-degree application updates crop view",
+    "Custom slider changes preview",
+    "Crop/OCR/review/image-only/cancel/encrypted explicit save"
+  ],
+  "preserved_history": "Initial8/8 in42.911s. Cleanup refinement syntax-only build failure occurred before instrumentation; corrected final source8/8 in39.986s.",
+  "source_sha256": {
+    "app/src/cardScanner/kotlin/app/kura/nativeapp/CardImageRotation.kt": "3ddfbb22f1e9984d70581f288ae3bc271a7bcd0980a5bdd3a92b4bd8f50cab26",
+    "app/src/cardScanner/kotlin/app/kura/nativeapp/EnhancedCardDialog.kt": "8030e3ad32b9d4ff6cceb01e8f6ede49abe32838c8be051fd7d8615b4ac1c43a",
+    "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardRotationTest.kt": "6df933ead12d927040be7fb3c472cb1134cc5ee3fa773b4f95d9dc995bb32f45",
+    "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardScannerIntegrationTest.kt": "ebc26bb126e4bacb222ffec97e9a32ea389e5a7901eb3e679db86b981463b845"
+  },
+  "remaining": [
+    "Required independent review and CI",
+    "Full regression on final release source",
+    "Physical/platform camera qualification"
+  ],
+  "ai_assisted": true,
+  "installed_apk_sha256": {
+    "app.kura.wallet.prototype": "f2f9280a5e786de389c4f0540e395f04084140559e54e07d4c58e72b7355d7c1",
+    "app.kura.wallet.prototype.test": "73257ccd18d4bdc30468dfa7988d53062e148ad93b11b49e5d4048b2a21edc47"
+  }
+}

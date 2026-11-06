@@ -99,7 +99,7 @@ class CardScannerIntegrationTest {
         }
         return vm
     }
-    private fun captureCropPreview() {
+    private fun captureCropPreview(name: String = "crop-dialog") {
         if (InstrumentationRegistry.getArguments().getString("captureCropPreview") != "true") return
         disposable()
         val windows = mutableListOf<Pair<android.view.View, Int>>()
@@ -114,7 +114,7 @@ class CardScannerIntegrationTest {
         try {
             settleJourneyUi(device)
             val bitmap = requireNotNull(instrumentation.uiAutomation.takeScreenshot())
-            try { File(context.getExternalFilesDir(null), "crop-dialog.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) } }
+            try { File(context.getExternalFilesDir(null), "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) } }
             finally { bitmap.recycle() }
         } finally {
             instrumentation.runOnMainSync {
@@ -164,6 +164,28 @@ class CardScannerIntegrationTest {
             assertTrue(device.wait(Until.hasObject(By.text("Card edges detected. Check all four corners before continuing.")), 20_000))
         }
         start()
+        clickJourneyControl(device, "Rotate: 0°")
+        clickJourneyControl(device, "90°")
+        assertNotNull(device.wait(Until.findObject(By.desc("Rotated photo preview: 90°")), 5000))
+        clickJourneyControl(device, "Cancel")
+        assertTrue(device.hasObject(By.text("Rotate: 0°")))
+        clickJourneyControl(device, "Rotate: 0°")
+        clickJourneyControl(device, "270°")
+        assertNotNull(device.wait(Until.findObject(By.desc("Rotated photo preview: 270°")), 5000))
+        clickJourneyControl(device, "Apply rotation")
+        assertNotNull(device.wait(Until.findObject(By.text("Rotate: 270°")), 20000))
+        captureCropPreview("rotated-crop")
+        clickJourneyControl(device, "Rotate: 270°")
+        clickJourneyControl(device, "0°")
+        val angleSlider = device.findObject(By.desc("Photo rotation angle"))
+        assertNotNull(angleSlider)
+        val sliderBounds = angleSlider.visibleBounds
+        device.swipe(sliderBounds.centerX(), sliderBounds.centerY(), sliderBounds.left + sliderBounds.width() * 2 / 3, sliderBounds.centerY(), 20)
+        assertTrue("Custom slider changes live preview", device.wait(Until.gone(By.desc("Rotated photo preview: 0°")), 5000))
+        captureCropPreview("rotation-picker")
+        clickJourneyControl(device, "0°")
+        clickJourneyControl(device, "Apply rotation")
+        assertNotNull(device.wait(Until.findObject(By.text("Rotate: 0°")), 20000))
         assertFalse("Fine-tuning starts collapsed", device.hasObject(By.desc("Corner horizontal position")))
         assertFalse("There is no separate crop screen", device.hasObject(By.text("Use manual crop instead")))
         clickJourneyControl(device, "Fine-tune")

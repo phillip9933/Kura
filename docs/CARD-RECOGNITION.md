@@ -63,6 +63,12 @@ Acceptance must cover synthetic English/Japanese cards; incorrect/ambiguous/lead
 
 ## Unified crop editor — 6 November 2026
 
-In the enhanced build, front/back card photos use one Material dialog after camera capture or image selection. Edge detection initializes the editable four-corner mask; dragging or fine-tuning edits that same mask. Reset edges restores the detected result, Use full image expands the mask, and rotation applies to the cropped result. Fine-tune exposes labelled corner selectors and horizontal/vertical adjustments without leaving the editor. There is no separate manual-crop screen in this path.
+In the enhanced build, front/back card photos use one Material dialog after camera capture or image selection. Edge detection initializes the editable four-corner mask; dragging or fine-tuning edits that same mask. Reset edges restores the detected result, Use full image expands the mask, and rotation updates the source photo before detection and cropping. Fine-tune exposes labelled corner selectors and horizontal/vertical adjustments without leaving the editor. There is no separate manual-crop screen in this path.
 
 The photo has a shaded outside region and visible corner handles. Use crop is the filled primary action, Cancel import stays available, and adjustment actions use outlined buttons. Dialog content scrolls while confirmation stays outside the scroll area. Optional on-device OCR review follows confirmation; image-only import, explicit form Save and existing-field/empty-value checks remain unchanged. Capture still uses the system camera; no live edge overlay or silent image save is introduced. The base offline scanner retains its existing manual crop UI.
+
+## Preview-first rotation
+
+Rotate opens a picker with 0°,90°,180°,270° presets and a custom -180° to180° slider (0.1° steps). The picker previews the selected angle live; Cancel preserves the current photo and mask. Apply rotation creates a bounded oriented raster from the original input, updates the main photo preview and detects edges again. The picker explains that applying rotation resets the mask. Users can then edit the detected mask normally. Cropping and OCR consume that same oriented raster; there is no additional post-crop rotation.
+
+Each change starts from the original photo to avoid cumulative resampling. Nonzero working rotations are bounded to2048 pixels per dimension and4 million pixels, use a white expanded canvas, and release owned bitmap/encoded buffers on cancellation or disposal. Zero degrees preserves the original encoded photo. Preset orientation and custom bounds have pixel-level synthetic acceptance coverage; physical-card and broader platform qualification remain separate.
