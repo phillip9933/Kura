@@ -909,3 +909,69 @@ The V9 test APK hash/source are in the evidence. The full selection is rerunning
 on that harness; the earlier failure remains recorded. The four default skips
 are cold-process, prototype retained-upgrade, store screenshot and empty-vault
 timing opt-ins, not new exclusions.
+
+### Completed crop regression
+
+The V9 complete enhanced selection passes **92 active tests / 0 failures /
+4 existing opt-in skips, 96 total**, in 948.022s, on the isolated API37.2
+x86_64/16 KiB emulator. Application implementation is `8d97adc`, synchronized
+harness head `4489672`. The complete transcript and all 96 terminal statuses
+were parsed; skipped cases are the four named opt-ins above. The previous V8
+91/1/4 run remains a failed run.
+
+[Harness CI at 4489672](https://github.com/phillip9933/Kura/actions/runs/42252127473)
+passes all four configurations. Downloaded XML records **63 fresh JVM tests
+each / 252 total**, zero failures/errors/skips. Debug/unsigned release, lint,
+instrumentation/installer-harness compilation and permissions/16 KiB packaging
+checks pass. Lint warnings are 58 offline, 62 updater, 64 scanner and 67 combined;
+zero errors/fatals. Configuration-size recommendations remain warnings.
+
+This closes the software regression for the crop change. Maintainer layout
+review remains pending before publication. Screen-reader, physical-card/arm64,
+production-identity upgrade and final signed-artifact acceptance are separate
+and unverified here. No app version, production signing, release or beta asset
+change occurred.
+
+### Stable SDK artifact correspondence
+
+Stable scanner 0.8.0/updater 0.2.2 source `d5e524b` passes isolated debug/test,
+unsigned release and lint checks in 70.034s (22 tasks executed / 482 up-to-date).
+The JVM task outputs are reused, not fresh local executions. App lint has
+0 errors/fatals and 30 warnings. [Separate four-way CI](https://github.com/phillip9933/Kura/actions/runs/42252631278)
+passes; downloaded XML confirms 63 fresh JVM tests each / 252 total, zero
+failures/errors/skips. Lint totals 58/62/64/67 across offline/updater/scanner/both,
+zero errors/fatals; compilation and permissions/16 KiB packaging pass.
+
+Both stable-SDK debug app/test APKs are byte-identical to the executed V9 pair,
+including signatures, resources, native payloads and DEX. The unsigned release
+APK is also byte-identical to its prior qualified build. Therefore the
+92/0/4 full-app result covers the exact stable-SDK app/test bytes as **reused
+evidence**, not a second fresh execution. [Pin/build/hash evidence](evidence/stable-sdk-pins-20261107.json).
+Kotlin remains 2.2.20 in this scope; the combined 2.4.21 candidate is separately
+qualified. No production signing, release or physical acceptance is inferred.
+
+
+### Atomic publication recovery — 7 November 2026
+
+A real API26 run exposed a false-success file publication: the base bytes matched
+the replacement while the legacy backup remained authoritative. A pre-Kotlin
+2.2.20 baseline with the unchanged helper reproduces all three selected cases
+(**0 pass / 3 fail**,1.985s). Modern Android reproduces the equal-byte replacement
+case (**2 pass / 1 fail**,2.132s), where an uncommitted new file remains.
+Both baselines and the original `failedRenameIsReportedInsteadOfSilentlyClaimingRestoreSuccess`
+assertion are preserved; this is not attributed to the Kotlin upgrade.
+
+The fix refuses success while a platform backup/new transaction entry remains,
+then retains checked fsync and bounded byte/length verification. Real-directory
+permission failures exercise the OS, followed by authoritative reopen and retry;
+no AtomicFile behavior is mocked. The complete import/publication suite passes
+**31/31 on API26**,69.240s, and **31/31 on API37**,80.102s, on disposable
+x86_64 emulators (4 KiB and16 KiB respectively). Two new cases cover different
+and identical replacement bytes. The fixed test APK was built with Kotlin2.2.20;
+these results do not qualify a subsequent2.4.21 build.
+
+Isolated baseline build29.727s; fixed build/storage lint16.750s. No new lint
+suppression, schema, backup format, key alias, production package or signing
+change. [Source/artifact evidence](evidence/atomic-publication-20261107.json).
+Full application and other library results retain their earlier source scope;
+final combined qualification is separate. AI assisted diagnosis, patch and tests.

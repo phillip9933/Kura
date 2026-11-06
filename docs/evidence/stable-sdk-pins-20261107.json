@@ -1,6 +1,6 @@
 {
   "date": "2026-11-07",
-  "status": "Static pin review; host build/runtime qualification pending",
+  "status": "Stable SDK source/build integrity and software qualification pass; physical/production acceptance separate",
   "scanner": {
     "version": "0.8.0",
     "source": "e74d8cd8efd838f38820ee8ca48bc7ea765b2a8c",
@@ -147,9 +147,115 @@
     ]
   },
   "remaining": [
-    "Kura debug/unsigned release/lint and four-configuration CI",
-    "Kura relevant runtime regression; static byte identity is not execution",
-    "Broader security/dependency scan coverage stays limited by the dated baseline",
-    "Physical/production acceptance deferred"
-  ]
+    "Separate Kotlin2.4 combined-source qualification",
+    "Physical/production acceptance deferred",
+    "Broader native/embedded-tool security coverage stays limited by the dated baseline"
+  ],
+  "host_build": {
+    "source_head": "d5e524b7bf93f8786427f61f821f8866d0ded685",
+    "kotlin": "2.2.20",
+    "seconds": 70.034,
+    "tasks": {
+      "executed": 22,
+      "up_to_date": 482
+    },
+    "results": [
+      "debug app/test APK assembly",
+      "unsigned release assembly",
+      "JVM tasks (reused results, not fresh)",
+      "lint: no errors/fatals; app30 warnings"
+    ]
+  },
+  "ci": {
+    "run_id": 42252631278,
+    "head": "d5e524b7bf93f8786427f61f821f8866d0ded685",
+    "results": [
+      {
+        "configuration": "android-verification-reports-updates-false-scanner-false",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Fatal": 0,
+          "Error": 0,
+          "Warning": 58
+        }
+      },
+      {
+        "configuration": "android-verification-reports-updates-false-scanner-true",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Fatal": 0,
+          "Error": 0,
+          "Warning": 64
+        }
+      },
+      {
+        "configuration": "android-verification-reports-updates-true-scanner-false",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Fatal": 0,
+          "Error": 0,
+          "Warning": 62
+        }
+      },
+      {
+        "configuration": "android-verification-reports-updates-true-scanner-true",
+        "jvm": {
+          "tests": 63,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "lint": {
+          "Fatal": 0,
+          "Error": 0,
+          "Warning": 67
+        }
+      }
+    ]
+  },
+  "runtime_correspondence": [
+    {
+      "kind": "app",
+      "prior_sha256": "bc7feb7c103dbbe46976ffc41dfff3bade71e3ac72b383d571547ccceb191d5c",
+      "stable_sha256": "bc7feb7c103dbbe46976ffc41dfff3bade71e3ac72b383d571547ccceb191d5c",
+      "byte_identical": true,
+      "changed_entries": []
+    },
+    {
+      "kind": "test",
+      "prior_sha256": "4c3cde3a922815421576797e859b48ee2c7957c62f6fa6683466dc2b6b455ab3",
+      "stable_sha256": "4c3cde3a922815421576797e859b48ee2c7957c62f6fa6683466dc2b6b455ab3",
+      "byte_identical": true,
+      "changed_entries": []
+    },
+    {
+      "kind": "unsigned-release",
+      "byte_identical": true,
+      "sha256": "e89b91a0851f1a2092a2789067779d2f572662f7909e5cbba5374056228faac3"
+    }
+  ],
+  "reused_runtime": {
+    "selection": "Complete enhanced / V9",
+    "total": 96,
+    "passed": 92,
+    "failed": 0,
+    "skipped": 4,
+    "seconds": 948.022,
+    "reason": "Stable SDK source produces byte-identical app and test APKs; these exact bytes executed in the V9 run. This is not a second fresh run."
+  }
 }

@@ -1,0 +1,95 @@
+{
+  "date": "2026-11-07",
+  "pre_kotlin_base": "98544100bae58cd8903032814081828c23bf2fa3",
+  "platform_sources": [
+    "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-8.0.0_r36/core/java/android/util/AtomicFile.java",
+    "https://raw.githubusercontent.com/aosp-mirror/platform_frameworks_base/android-11.0.0_r1/core/java/android/util/AtomicFile.java"
+  ],
+  "baseline": [
+    {
+      "raw": "emulator-kotlin-api26-ready/results/0013-atomic-baseline.json",
+      "terminal_cases": 3,
+      "terminal_counts": {
+        "-2": 3
+      },
+      "seconds": [
+        "1.985"
+      ],
+      "failures": [
+        "app.kura.nativecore.AtomicCommitSafetyTest.deniedCommitIsReportedEvenWhenReplacementBytesAreUnchanged",
+        "app.kura.nativecore.AtomicCommitSafetyTest.deniedCommitCannotReportSuccessBeforeRollingBackOnRead",
+        "app.kura.nativecore.PublicationFaultTest.failedRenameIsReportedInsteadOfSilentlyClaimingRestoreSuccess"
+      ],
+      "driver_exit": 0
+    },
+    {
+      "raw": "emulator-home-fixed/results/0142-atomic-baseline.json",
+      "terminal_cases": 3,
+      "terminal_counts": {
+        "-2": 1,
+        "0": 2
+      },
+      "seconds": [
+        "2.132"
+      ],
+      "failures": [
+        "app.kura.nativecore.AtomicCommitSafetyTest.deniedCommitIsReportedEvenWhenReplacementBytesAreUnchanged"
+      ],
+      "driver_exit": 0
+    }
+  ],
+  "fixed": [
+    {
+      "raw": "emulator-kotlin-api26-ready/results/0015-atomic-fixed-full-import.json",
+      "api": 26,
+      "terminal_cases": 31,
+      "terminal_counts": {
+        "0": 31
+      },
+      "time": [
+        "69.24"
+      ],
+      "observations": [
+        "ATOMIC_COMMIT_OBSERVATION success=false backup=true new=false baseMatches=true recoveredOriginal=true",
+        "ATOMIC_COMMIT_OBSERVATION success=false backup=true new=false baseMatches=true recoveredOriginal=true"
+      ],
+      "failure_excerpt": null
+    },
+    {
+      "raw": "emulator-home-fixed/results/0144-atomic-fixed-full-import.json",
+      "api": 37,
+      "terminal_cases": 31,
+      "terminal_counts": {
+        "0": 31
+      },
+      "time": [
+        "80.102"
+      ],
+      "observations": [
+        "ATOMIC_COMMIT_OBSERVATION success=false backup=false new=true baseMatches=true recoveredOriginal=true",
+        "ATOMIC_COMMIT_OBSERVATION success=false backup=false new=true baseMatches=false recoveredOriginal=true"
+      ],
+      "failure_excerpt": null
+    }
+  ],
+  "artifacts": {
+    "baseline": {
+      "compiler": "2.2.20",
+      "helper": "unchanged",
+      "apk_sha256": "927f4f6118d57da53d81ec0293a2de78912bc72c5d41b76459abb75f313cc307",
+      "size": 14961790
+    },
+    "fixed": {
+      "compiler": "2.2.20",
+      "source_manifest": "atomic-fixed-source-v1.json",
+      "apk_sha256": "b9a8146561f71da7ba378e2a027dc94c7fcfe2a4dc07de98ec7ca2094e0d2f86",
+      "size": 15135321
+    }
+  },
+  "source_files": {
+    "core/storage/src/main/kotlin/app/kura/nativecore/VerifiedAtomicWrite.kt": "3167f93286120dbdb5d1503b8ef164ce6e5f60369e81b13afa6b871121581bc3",
+    "core/import/src/androidTest/kotlin/app/kura/nativecore/AtomicCommitSafetyTest.kt": "e08c3504fdf9dbdd47c4e92795b312127ce9558b293b02a8e17315c2d96c6b10",
+    "core/import/src/androidTest/kotlin/app/kura/nativecore/PublicationFaultTest.kt": "d5d2d50fda63032cb32fdabc923c1615405e32a83ef4b002f50d44669dd986e3"
+  },
+  "scope": "Synthetic self-targeted import instrumentation; no production package, personal data or signing material. Existing callers retain mutual exclusion. Publication failure is not physical-device acceptance."
+}
