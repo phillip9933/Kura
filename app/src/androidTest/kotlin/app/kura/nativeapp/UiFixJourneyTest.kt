@@ -65,8 +65,12 @@ class UiFixJourneyTest {
     val bitmap=android.graphics.Bitmap.createBitmap(8,5,android.graphics.Bitmap.Config.ARGB_8888)
     val output=java.io.ByteArrayOutputStream();bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,output);bitmap.recycle()
     val bytes=output.toByteArray()
+    instrumentation.runOnMainSync {
+     vm.pending.uiMemory.form.initialize("identities", null, "identities", vm.presentation.value.preferences)
+    }
     try {vm.imageChange(ImageTarget("identities",-1,"frontImagePath"),bytes)} finally {bytes.fill(0)}
     vm.saveRecord("identities",JSONObject().put("name","UX identity").put("value","ID-123").put("cardType","Passport").toString(),vm.pending.takeDraft())
+    instrumentation.runOnMainSync { vm.pending.uiMemory.form.clear() }
     vm.items.value.filter {it.title.startsWith("UX ")}.forEach {ids+=it.table to it.id}
    }
    for((table,label,title) in listOf(Triple("wallets","Cards","UX payment"),Triple("passes","Passes","UX pass"),Triple("identities","Identity","UX identity"))) {

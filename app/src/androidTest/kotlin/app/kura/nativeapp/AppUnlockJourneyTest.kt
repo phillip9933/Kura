@@ -136,7 +136,19 @@ class AppUnlockJourneyTest {
             fail("A locked phone must not release the vault key")
         } catch (_: IllegalStateException) { }
         device.wakeUp()
-        device.swipe(device.displayWidth / 2, device.displayHeight * 3 / 4, device.displayWidth / 2, device.displayHeight / 4, 20)
+        // A newly booted emulator may accept wake before keyguard's first frame.
+        // Retry only the real keyguard gesture until the system PIN UI is visible;
+        // authorize() still enters the credential and checks automatic vault reopen.
+        val phonePin = By.res(java.util.regex.Pattern.compile(
+            "com\\.android\\.(systemui|settings):id/(pinEntry|lockPassword|password_entry)"))
+        repeat(3) {
+            if (!device.hasObject(phonePin)) {
+                device.waitForIdle()
+                device.swipe(device.displayWidth / 2, device.displayHeight * 3 / 4,
+                    device.displayWidth / 2, device.displayHeight / 4, 20)
+                device.wait(Until.hasObject(phonePin), 2000)
+            }
+        }
         authorize()
         clickSettings()
         device.findObject(By.desc("Require app unlock")).click()

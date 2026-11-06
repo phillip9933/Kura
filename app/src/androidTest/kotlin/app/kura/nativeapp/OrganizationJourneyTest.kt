@@ -270,13 +270,13 @@ class OrganizationJourneyTest {
   try {
    configure(vm)
    val front=photo(vm,android.graphics.Color.CYAN)
-   var member=fixture(vm,"Organize Member editor",JSONObject().put("type","storeCard").put("frontImagePath",front).put("barcodeValue","ABC123").put("barcodeFormat","CODE_128"))
-   runBlocking {
-    val bytes=vm.image(front)
-    try {vm.imageChange(ImageTarget("passes",-1,"kuraLogo"),bytes)} finally {bytes.fill(0)}
-    vm.edit(member,member.json,vm.pending.takeDraft())
-    vm.attach(member,"Notes.txt","text/plain","Test note".toByteArray())
-   }
+   // Seed an already saved logo from the encrypted fixture image. No editor
+   // exists yet, so this setup must not manufacture an ownerless photo draft.
+   val memberRow = JSONObject().put("type", "storeCard").put("frontImagePath", front)
+    .put("barcodeValue", "ABC123").put("barcodeFormat", "CODE_128")
+   app.kura.nativecore.ItemMedia.put("passes", memberRow, JSONObject().put("logo", front))
+   var member = fixture(vm, "Organize Member editor", memberRow)
+   runBlocking { vm.attach(member, "Notes.txt", "text/plain", "Test note".toByteArray()) }
    member=vm.items.value.single {it.id==member.id && it.table=="passes"}
    assertTrue(app.kura.nativecore.ItemMedia.logo(member.table,JSONObject(member.json)).isNotBlank())
    click("Cards");device.wait(Until.findObject(By.clazz("android.widget.EditText")),5000)!!.text="Organize Member editor"
