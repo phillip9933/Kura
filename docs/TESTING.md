@@ -1,6 +1,16 @@
 # Testing
 
-## Unreleased updater loading-screen follow-up — 6 November 2026
+## Published beta 3 qualification — 6 November 2026
+
+[Kura 2.2.0-beta.3 / 122](https://github.com/phillip9933/Kura/releases/tag/v2.2.0-beta.3) is published from 6fe858f, including the loading-screen fix from 7f1b257. Compared with a511398, only version metadata and release documentation changed. The signed release, debug/test APKs and lint passed in 1m 30s: **498 tasks, 84 executed / 414 up-to-date**, 0 lint errors / 65 warnings. Signature continuity against checksum-matched public beta.2 and production identity/model/permission/provider/baseline-profile/ELF+ZIP 16 KiB verification pass.
+
+Fresh version 122 instrumentation on the owned disposable API 37.2 / 16 KiB prototype emulator: startup regression **1/1**, 18.685s; updater integration/popup/Settings plus the ordinary phone-only encrypted-wallet/backup/re-enable journey **7/7**, 90.343s; external nondebuggable R8 updater discovery **1/1**, 23.172s. **9 active passed, 0 failures, 0 skips**. The cold-process opt-in method was not selected. Optimized benchmark/test build passed in 1m: 279 tasks, 18 executed / 261 up-to-date.
+
+All four [exact-release-source CI jobs](https://github.com/phillip9933/Kura/actions/runs/42189858072) pass. Downloaded XML and task logs show **59 fresh JVM checks each / 236 total**, 0 failures/errors/skips; lint has 0 errors with 58/62/62/65 warnings. Build, unsigned release, instrumentation compilation, packaging and opt-in installer-harness compilation pass. These CI jobs do not execute Android instrumentation. Full app suites, core device suites, installer/upgrade matrix, API 26 and physical-device checks were not rerun for beta.3; prior results below remain historical with their actual source scopes.
+
+The APK, checksums and [public validation report](https://github.com/phillip9933/Kura/releases/download/v2.2.0-beta.3/release-validation.json) were independently downloaded and matched byte-for-byte; the public APK passes signature and packaging verification. Evidence/APKs/transcripts and the report-observer correction remain in `../outputs/release-2.2.0-beta.3-20261106/`. The generator initially expected an older aapt field name; the observed `minSdkVersion:26`/target 36 checks were retained. No product test failed in this release pass. Prior baseline/observer failures below remain preserved. Latest stable stays 2.1.0; independent review and physical/production acceptance remain open. AI assisted implementation, verification, documentation and publication.
+
+## Updater loading-screen follow-up — 6 November 2026
 
 The owner confirmed that published beta.2's Settings → App updates → Check for updates is visible and opens on the affected phone. This is a manual owner report, not a download/install check or a reproduction of the earlier beta1 disappearance. The subsequent loading-screen report was reproduced: the shared non-unlocked layout exposed the update entry while the vault was opening. The initial regression failed **1/1**,14.448s, before the fix.
 
@@ -10,7 +20,7 @@ Enhanced/direct debug/test/unsigned-release build and lint pass: **497 tasks,34 
 
 [Application-source CI](https://github.com/phillip9933/Kura/actions/runs/42181216040) at7f1b257 passes all four distribution combinations. Downloaded XML and task logs verify **59 fresh JVM checks per configuration /236 total**,0 failures/errors/skips; lint has0 errors and58/62/62/65 warnings. Build, unsigned release, instrumentation compilation, native/model/permission/16KiB checks and opt-in installer-harness compilation pass. This CI does not run device instrumentation or replace the remaining physical/production-package acceptance.
 
-[Structured evidence](evidence/updater-loading-20261106.json) includes hashes, exact scopes and the preserved failing baseline. Raw transcripts/APKs remain in `../outputs/updater-loading-20261106/`. This is an unreleased change after097582a, separate from the immutable beta.2 APK/tag/report. No signing, merge or new release occurred. Required independent review and remaining physical/data-safety gates remain. AI assisted diagnosis, implementation, tests and documentation.
+[Structured evidence](evidence/updater-loading-20261106.json) includes hashes, exact scopes and the preserved failing baseline. Raw transcripts/APKs remain in `../outputs/updater-loading-20261106/`. These results are from the follow-up after 097582a and precede beta.3 publication, remaining separate from the immutable beta.2 APK/tag/report. No signing, merge or new release occurred in that earlier verification pass. Required independent review and remaining physical/data-safety gates remain. AI assisted diagnosis, implementation, tests and documentation.
 
 ## Published beta 2 qualification — 6 November 2026
 

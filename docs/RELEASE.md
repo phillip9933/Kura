@@ -1,5 +1,13 @@
 # Release tooling
 
+## Kura 2.2 beta.3 — published 6 November 2026
+
+The owner-authorized [2.2.0-beta.3 / 122](https://github.com/phillip9933/Kura/releases/tag/v2.2.0-beta.3) is published from tag/source 6fe858f on the PR branch. It includes the loading-screen updater fix from 7f1b257: update controls/dialogs wait for an open vault or an idle locked screen with no automatic unlock pending. Scanner 0.8.0-beta.1 and updater 0.2.2-beta.1 remain pinned. Enable **Include beta releases** in App updates, then **Check for updates**, to receive this testing build.
+
+Nine focused Android checks pass on version 122, including startup suppression, updater routes/popups, encrypted phone-only access and external optimized/R8 discovery. All four [release-source CI configurations](https://github.com/phillip9933/Kura/actions/runs/42189858072) pass with 236 fresh JVM checks and 0 failures/errors/skips; lint has 0 errors. [Exact validation](https://github.com/phillip9933/Kura/releases/download/v2.2.0-beta.3/release-validation.json) separates these results from historical beta.2 full-suite/installer/API26 evidence. All three public assets were downloaded and matched byte-for-byte; the public APK signature, models/permissions/providers and native/ZIP 16 KiB packaging pass. The certificate matches checksum-verified public beta.2. APK SHA-256: `827b8dcd70a9fd41c3e146692eed9edbe218159603fc888c4a96dbcdfd6cb910`.
+
+Distribution remains APK-only/API 26+ with arm64-v8a/x86_64. Stable latest remains 2.1.0; prior releases/assets are unchanged. Independent approving review/merge and physical-camera/arm64/hardware-key/production-package data-safety acceptance still gate closeout/stable. The owner confirmed beta.2 Settings update access; beta.3 phone testing is not yet recorded. Existing signing inputs were consumed only for this explicitly authorized beta; no secrets were displayed/committed or globally configured. No production-package or personal-phone test suite ran.
+
 ## Kura 2.2 beta.2 — published 6 November 2026
 
 The owner-authorized [2.2.0-beta.2 / 121](https://github.com/phillip9933/Kura/releases/tag/v2.2.0-beta.2) is published from validated source tag bcb9f9a on the PR branch. It combines `-PcardScanner=true -PdirectUpdates=true`, scanner 0.8.0-beta.1 and updater 0.2.2-beta.1. Distribution is APK-only: signed APK, SHA256SUMS.txt and [exact validation report](https://github.com/phillip9933/Kura/releases/download/v2.2.0-beta.2/release-validation.json). All public assets were downloaded and matched byte-for-byte; signature, models/permissions and native/ZIP 16 KiB packaging passed. The certificate matches checksum-verified public 2.1 and beta1 APKs. No AAB or store submission occurred.
