@@ -836,7 +836,7 @@ landscape review dialog and an explicit minimum-review-space regression are now
 under qualification. The failure remains evidence, not a pass.
 
 V5 builds debug/test and unsigned release and runs **63 JVM tests, zero failures,
-errors or skips**; app lint has **0 errors/fatals and 28 warnings**, in202.398s.
+errors or skips**; app lint has **0 errors/fatals and 28 warnings**, in 202.398s.
 These checks precede the final review-dialog/test changes and are not presented
 as final-head qualification. V4's unused-layout lint error was fixed without a
 suppression. Earlier V2/V3 failures and incompatible disposable-debug-key install
@@ -854,3 +854,38 @@ pixel/screenshot assertion; older-API control/native-output checks still run.
 Physical/production acceptance and screen-reader coverage are not inferred from
 these emulator checks. No stable publication or beta removal occurred. AI
 assisted implementation, tests, design notes and verification.
+
+### Final crop implementation and small-screen harness
+
+Application implementation is `8d97adc`; the V8 harness changes only read-only
+UI discovery/diagnostics. Its application APK is byte-identical to V6
+(`bc7feb7c103dbbe46976ffc41dfff3bade71e3ac72b383d571547ccceb191d5c`).
+The V8 test APK hash is recorded in the structured evidence. No application
+assertion, field/value expectation, failure boundary or test case was removed.
+
+V8 small portrait and landscape at 200% text/dark pass **4/4 each** in 72.317s
+and 84.242s. Keyboard Tab/Enter activates Zoom with the preview retained. The
+normal-font/light small-phone crop/OCR/media/lifecycle selection passes
+**18/18**, zero failures/skips, in 137.939s. This includes real native crop
+landmarks/rotation, English/Japanese recognition, existing-field conflicts,
+front/back encrypted images, separate Save, encrypted backup/staging, retake,
+cancellation and lock/stale-generation refusal.
+
+The previous V6 small-portrait full-photo case missed an offscreen no-edge
+message with its shorter eight-step search. The V6 scanner selection passed
+17/18 but missed the OCR Member number label below the preview/first field.
+The saved pre-scroll hierarchy confirms the review pane shows only the first
+expiry field at its bottom. A shared bounded read-only scroller reaches the
+unchanged expected labels/values. Both failures remain preserved; the V8
+selection now passes them. The final-implementation V6 larger portrait/dark
+layout selection passed 4/4 in 49.164s and small landscape/light visibility passed
+1/1 in 10.528s, before this test-only correction.
+
+Unedited [before/after, rotation and 200% landscape captures](design.md#visual-review-gallery)
+were inspected. The original 9 dp OCR-offer viewport defect is fixed by widening
+the landscape Material dialog; both actual return journeys and an 80 dp minimum
+review-space assertion pass. Screen-reader acceptance remains unrun; keyboard
+coverage and semantic queries are not a claim of full accessibility conformance.
+Complete enhanced regression and the final harness CI are in progress. Physical
+and production-package acceptance remain deferred. No version/signing/release
+change or beta removal is included.

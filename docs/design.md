@@ -67,3 +67,18 @@ optional OCR/save journeys. Record actual screenshots/results and failures in
 Testing; compile success is not visual validation or owner sign-off. The owner
 must review this crop revision before publication. Physical-device and stable
 release acceptance remain separate.
+
+## Visual review gallery
+
+These are unedited captures of synthetic cards from a disposable emulator.
+The older editor loses the photo when its corner controls are reached. The
+replacement keeps the preview and actions fixed; rotation edits that same
+preview. The 200% landscape capture checks readable pinned modes.
+
+| Prior editor | Stationary mask |
+| --- | --- |
+| ![Photo hidden above corner controls](images/card-crop/before.png) | ![Photo and move controls remain together](images/card-crop/after.png) |
+
+[Rotation and retained framing](images/card-crop/rotation.png) ·
+[Landscape at 200% text, dark theme](images/card-crop/large-text-landscape.png).
+Exact source scopes and image hashes are in the [test evidence](evidence/card-mask-20261107.json).

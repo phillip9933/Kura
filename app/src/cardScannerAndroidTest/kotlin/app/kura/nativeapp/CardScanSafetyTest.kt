@@ -226,7 +226,10 @@ class CardScanSafetyTest {
         try {
             scan(vm, "frontImagePath", image(Color.RED)); crop(); click("Review autofill")
             assertNotNull(device.wait(Until.findObject(By.text("Review recognized details")), 45000))
-            assertNotNull(device.wait(Until.findObject(By.text("Member number")), 5000))
+            if (InstrumentationRegistry.getArguments().getString("captureCropPreview") == "true") {
+                device.dumpWindowHierarchy(File(context.getExternalFilesDir(null), "scanner-review-before-scroll.xml"))
+            }
+            assertNotNull(findJourneyNode(device, By.text("Member number")))
             assertTrue(form.customValues["Member number"].orEmpty().isBlank())
             // Simulate an intervening correction/source result after suggestions were
             // produced. Applying OCR must recheck current values rather than overwrite it.

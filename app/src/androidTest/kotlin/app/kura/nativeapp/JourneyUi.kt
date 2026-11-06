@@ -23,6 +23,20 @@ internal fun settleJourneyUi(device: UiDevice) {
     if (Build.VERSION.SDK_INT >= 34) instrumentation.uiAutomation.clearCache()
 }
 
+/** Find an existing value by scrolling its pane, without clicking or editing it. */
+internal fun findJourneyNode(device: UiDevice, selector: BySelector): UiObject2? {
+    repeat(20) { attempt ->
+        settleJourneyUi(device)
+        device.findObject(selector)?.let { if (!it.visibleBounds.isEmpty) return it }
+        val pane = device.findObject(By.desc("Crop adjustments").scrollable(true))
+            ?: device.findObject(By.desc("Card review").scrollable(true))
+            ?: device.findObject(By.scrollable(true))
+        pane?.scroll(if (attempt < 10) Direction.DOWN else Direction.UP, .5f)
+    }
+    device.dumpWindowHierarchy(File(InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null), "journey-missing-value.xml"))
+    return null
+}
+
 internal fun clickJourneyControl(device: UiDevice, label: String, beforeClick: ((UiObject2) -> Unit)? = null) {
     val overflowActions = setOf("Edit", "Delete", "Archive", "Unarchive", "Share securely", "Export encrypted pass", "Export as .pkpass")
     repeat(16) { attempt ->

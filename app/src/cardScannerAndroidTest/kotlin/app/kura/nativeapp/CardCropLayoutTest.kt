@@ -135,12 +135,9 @@ class CardCropLayoutTest {
 
     /** Scrolling to read a value must not change it, unlike clicking a preset. */
     private fun findAdjustment(selector: BySelector): UiObject2? {
-        repeat(20) { attempt ->
-            settleJourneyUi(device)
-            device.findObject(selector)?.let { if (!it.visibleBounds.isEmpty) return it }
-            device.findObject(By.desc("Crop adjustments"))?.scroll(
-                if (attempt < 10) Direction.DOWN else Direction.UP, .35f)
-        }
+        findJourneyNode(device, selector)?.let { return it }
+        capture("crop-missing-adjustment")
+        device.dumpWindowHierarchy(File(context.getExternalFilesDir(null), "crop-missing-adjustment.xml"))
         return null
     }
 
@@ -176,13 +173,7 @@ class CardCropLayoutTest {
         val vm = open()
         begin(vm, photo(plain = true))
         try {
-            repeat(8) {
-                if (!device.hasObject(By.textStartsWith("No reliable edges found"))) {
-                    device.findObject(By.desc("Crop adjustments"))?.scroll(Direction.DOWN, .35f)
-                    settleJourneyUi(device)
-                }
-            }
-            assertNotNull(device.wait(Until.findObject(By.textStartsWith("No reliable edges found")), 5000))
+            assertNotNull(findAdjustment(By.textStartsWith("No reliable edges found")))
             repeat(2) {
                 clickJourneyControl(device, "Full photo")
                 assertNotNull("Resetting an unchanged source must not disable cropping", device.wait(Until.findObject(By.text("Use crop").enabled(true)), 3000))
