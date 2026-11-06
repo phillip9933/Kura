@@ -45,17 +45,19 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 private enum class CropControl { Zoom, Move, Rotate }
+// ISO/IEC 7810 ID-1 dimensions, width / height in millimetres.
+private const val CreditCardAspectRatio = 85.60 / 53.98
 internal enum class CardShape(val label: String, val ratio: Double?) {
-    PHOTO("Photo proportions", null), CARD("Landscape card", 1.586),
-    PORTRAIT("Portrait card", 1 / 1.586), SQUARE("Square", 1.0),
+    PHOTO("Photo proportions", null), CARD("Landscape card", CreditCardAspectRatio),
+    PORTRAIT("Portrait card", 1 / CreditCardAspectRatio), SQUARE("Square", 1.0),
 }
 
 /** Owned by the import, so OCR review/re-entry cannot reset the displayed edits. */
 @Stable internal class CardCropControls {
-    var shape by mutableStateOf(CardShape.PHOTO)
+    var shape by mutableStateOf(CardShape.CARD)
     var quarter by mutableIntStateOf(0)
     var fineAngle by mutableFloatStateOf(0f)
-    fun reset() { shape = CardShape.PHOTO; quarter = 0; fineAngle = 0f }
+    fun reset(shape: CardShape = CardShape.CARD) { this.shape = shape; quarter = 0; fineAngle = 0f }
 }
 
 @Composable internal fun CardCropEditor(

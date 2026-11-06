@@ -96,8 +96,11 @@ rotation presets use two columns. See the scoped [design](design.md).
 
 There are no editable document corners or separate rotation dialog. Automatic
 perspective alignment remains a starting proposal, not a confidence guarantee.
-The shape can follow photo proportions or use landscape-card, portrait-card or
-square proportions. Full photo also works when detection finds no edges.
+New imports and Auto fit use a horizontal standard credit-card mask
+(85.60/53.98 width/height), independent of capture/detection orientation. Rotation
+turns the photo under that mask. Photo proportions, portrait-card and square are
+explicit alternatives. Full photo restores the original capture and its
+proportions, and also works when detection finds no edges.
 Returning from the OCR offer preserves shape, quarter/fine angle, zoom and image
 position. Neither option creates fields or saves the card automatically.
 
@@ -106,8 +109,10 @@ native perspective renderer. It inscribes the frame in the selected source,
 clamps movement/zoom, and uses exact quarter-turn transforms to preserve boundary
 pixels. Arbitrary rotations crop inside the source instead of adding an expanded
 white canvas. Each change samples the original or automatic proposal, avoiding
-cumulative resampling. An untouched automatic JPEG is copied without another
-lossy encode. Preview decode stays bounded to 1536 pixels; working/output budgets
+cumulative resampling. Photo proportions with no other edits can retain the
+complete automatic JPEG without another lossy encode. Standard card framing
+crops to the same ratio shown in the preview. Preview decode stays bounded to
+1536 pixels; working/output budgets
 and session-owned encrypted persistence remain unchanged. The rounded mask is
 visual: saved JPEGs retain their rectangular bounds.
 

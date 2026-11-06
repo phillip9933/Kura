@@ -1,0 +1,154 @@
+{
+  "date": "2026-11-07",
+  "central_guidance_revision": "2026-11-06-draft.3",
+  "base_revision": "d5777c8942e699f390eda27fc163f0b0a2eb2df1",
+  "application_and_tests_patch_sha256": "3a5ee8c24b8e3170f1c7ada2950a2771da7bcedb6ecb28853c53d846818c165d",
+  "source_state": "Uncommitted local fix; all Kotlin source/test bytes match the executed snapshot",
+  "scope": "New imports and Auto fit default to horizontal ID-1 card proportions. Full photo explicitly restores original proportions. Rotation preserves the selected mask ratio.",
+  "regression_before_fix": {
+    "passed": 0,
+    "failed": 1,
+    "expected_failure": true,
+    "host_seconds": 9.564,
+    "expected_mask_ratio": 1.585772508336421,
+    "measured_mask_ratio": 0.6291240045506257
+  },
+  "build_and_unit_checks": {
+    "core_model_junit": {
+      "tests": 28,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "app_debug_lint": {
+      "Warning": 30
+    },
+    "build": {
+      "exit_code": 0,
+      "seconds": 78.243,
+      "tasks": [
+        ":core:model:test",
+        ":app:assembleDebug",
+        ":app:assembleDebugAndroidTest",
+        ":app:lintDebug",
+        ":app:assembleRelease"
+      ]
+    }
+  },
+  "runtime": [
+    {
+      "configuration": "API 37 / 16 KiB, small portrait, light, 100% text; crop/rotation/scanner/safety",
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0,
+      "host_seconds": 154.641,
+      "transcript_sha256": "9a4914a9fe04d441a8553e141a9eff2b2399a47a3a9613863fa4b718ed029d69"
+    },
+    {
+      "configuration": "API 37 / 16 KiB, small landscape, dark, 200% text; crop layout",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "host_seconds": 103.918,
+      "transcript_sha256": "85db901052a1a18bc5efefec0c65145c17743eafcb3d6f1c7f317474418f05c4"
+    },
+    {
+      "configuration": "API 37 / 16 KiB, small portrait, dark, 200% text; crop layout",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "host_seconds": 93.38,
+      "transcript_sha256": "fb11b3964de86f8e8de15839fd6a0ebab53574e9e5eff1d3473586c38b32aeee"
+    },
+    {
+      "configuration": "API 26 / 4 KiB; crop layout and saved image",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "host_seconds": 53.841,
+      "transcript_sha256": "162ad88a558093e2c84d8aa861f609d6a955f2d736ea7de0adaa0db004b27081"
+    }
+  ],
+  "apk": {
+    "base_source_revision": "d5777c8942e699f390eda27fc163f0b0a2eb2df1",
+    "package": "app.kura.wallet",
+    "version_name": "2.2.0-beta.3",
+    "version_code": 122,
+    "variant": "release",
+    "debuggable": false,
+    "test_only": false,
+    "min_sdk": 26,
+    "target_sdk": 36,
+    "card_scanner": true,
+    "direct_updates": true,
+    "native_alignment_16k": true,
+    "signed": true,
+    "signer_sha256": "1e19598265c5c5920639da46261944463f8ec65793fe0dbd362a558599c6dfd1",
+    "apk_bytes": 116861362,
+    "apk_sha256": "255b29f22bc5d71cbf3c03397a7ea05ee6d8d1fc3952657c6a9a0b1380888dcf"
+  },
+  "release_state": "Local production testing artifact only; version metadata remains beta.3/122; no commit, push, merge, tag or release",
+  "visual_review": [
+    {
+      "name": "baseline-mask.png",
+      "sha256": "8ef7781bc9b8347e101dafb020ee3991d04778ca77ba30b490679a5961eb961c",
+      "reviewed": "mask framing and available photo/actions; synthetic inputs only"
+    },
+    {
+      "name": "fixed-mask.png",
+      "sha256": "64e73869356901b6155d8ad06579e4f7046496aadcc84e611b58493b253b7dd2",
+      "reviewed": "mask framing and available photo/actions; synthetic inputs only"
+    },
+    {
+      "name": "fixed-rotation.png",
+      "sha256": "110980facaa9d7df448bccab409a725df8c25ee50cf4411d1c43edb6b041f19e",
+      "reviewed": "mask framing and available photo/actions; synthetic inputs only"
+    },
+    {
+      "name": "landscape200-mask.png",
+      "sha256": "9e14f9b1e04783f30f95304ec3d80dee1da8912ed91dc85e72540a57d6be0566",
+      "reviewed": "mask framing and available photo/actions; synthetic inputs only"
+    },
+    {
+      "name": "landscape200-card.png",
+      "sha256": "53e7315526b036f36d681a02821bbb14675e017312e0685487dec8e153b64797",
+      "reviewed": "mask framing and available photo/actions; synthetic inputs only"
+    },
+    {
+      "name": "portrait200-mask.png",
+      "sha256": "a3c3338b0a8ac9c38ced4596661ae1cd2697848790621c147195360819cbe2eb",
+      "reviewed": "mask framing and available photo/actions; synthetic inputs only"
+    },
+    {
+      "name": "portrait200-card.png",
+      "sha256": "f3182c90ac8ddbcc05331239a29d912ee3b9c776b6268e74aeaf219264f500e6",
+      "reviewed": "mask framing and available photo/actions; synthetic inputs only"
+    }
+  ],
+  "execution_safety": "Disposable synthetic prototype-package emulators; build/app/verifier execution isolated without credentials or external networking. Signing used a separate trusted SDK-only offline sandbox.",
+  "retained_setup_failure": "Initial API 26 launcher stopped before installing the app because getconf PAGE_SIZE is unavailable. Replaced only that harness probe with the already documented /proc/self/smaps exact-4-KiB guard.",
+  "not_run": [
+    "Full application/core-import/database/security suites for this patch",
+    "Physical card/camera/arm64 or production-package runtime acceptance",
+    "A fresh screen-reader audit",
+    "An actual version-code upgrade test or stable promotion"
+  ],
+  "changed_kotlin_sources": [
+    {
+      "path": "app/src/cardScanner/kotlin/app/kura/nativeapp/CardCropEditor.kt",
+      "sha256": "c3bf4076f239c3a75825c5cb18f93620bbc402e2908901e5dc6cfb2668e1cdef"
+    },
+    {
+      "path": "app/src/cardScanner/kotlin/app/kura/nativeapp/EnhancedCardDialog.kt",
+      "sha256": "abbc175f09c66edf33cd4bf5aa1b4275a838664853f668bb4735ae5e2f97b597"
+    },
+    {
+      "path": "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardCropLayoutTest.kt",
+      "sha256": "85947d082c87cca4a8fbb603d48e5ef6351f9d19e2d0568c1bc60ca4e9cc4f62"
+    },
+    {
+      "path": "app/src/cardScannerAndroidTest/kotlin/app/kura/nativeapp/CardScannerIntegrationTest.kt",
+      "sha256": "5a2a5576e0b2b878afc523c9941fe5d53529b90ecb592a6047d17fac02069f5d"
+    }
+  ]
+}

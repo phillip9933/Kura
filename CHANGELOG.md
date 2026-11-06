@@ -8,6 +8,7 @@
 
 ### Fixed
 - Report incomplete atomic file commits instead of claiming success before a later read rolls them back.
+- Default card cropping to horizontal credit-card proportions while rotating the photo inside the selected frame.
 
 ### Build information
 - Use Kotlin JVM/Compose 2.4.21 with the existing AGP, Gradle and KSP toolchain.

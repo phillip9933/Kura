@@ -79,13 +79,15 @@ private enum class CardStep { CROP, OFFER, REVIEW }
     }
     LaunchedEffect(workingBytes) {
         crop = null
-        cropControls.reset()
+        val shape = if (originalPhoto) CardShape.PHOTO else CardShape.CARD
+        cropControls.reset(shape)
         try {
             crop = withContext(Dispatchers.Default) {
                 val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                 BitmapFactory.decodeByteArray(workingBytes, 0, workingBytes.size, bounds)
                 require(bounds.outWidth > 0 && bounds.outHeight > 0 && bounds.outWidth.toLong() * bounds.outHeight <= 16_000_000)
-                CardCrop(bounds.outWidth, bounds.outHeight, bounds.outWidth.toDouble() / bounds.outHeight)
+                CardCrop(bounds.outWidth, bounds.outHeight,
+                    shape.ratio ?: (bounds.outWidth.toDouble() / bounds.outHeight))
             }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { error = "Could not read this photo. Retake it or cancel the import." }
@@ -127,9 +129,10 @@ private enum class CardStep { CROP, OFFER, REVIEW }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { /* Advisory only; cropping does not depend on a quality score. */ }
     }
-    fun resetFraming() {
-        cropControls.reset()
-        crop = crop?.let { CardCrop(it.imageWidth, it.imageHeight, it.imageWidth.toDouble() / it.imageHeight) }
+    fun resetFraming(shape: CardShape = CardShape.CARD) {
+        cropControls.reset(shape)
+        crop = crop?.let { CardCrop(it.imageWidth, it.imageHeight,
+            shape.ratio ?: (it.imageWidth.toDouble() / it.imageHeight)) }
     }
     if (step == CardStep.CROP) {
         CardCropEditor(workingBytes, crop, cropControls, busy, status, photoWarnings, error, aligned != null,
@@ -140,7 +143,7 @@ private enum class CardStep { CROP, OFFER, REVIEW }
                 status = "Card aligned automatically. Check that every detail fits."
             },
             onFullPhoto = {
-                if (workingBytes !== bytes) crop = null else resetFraming()
+                if (workingBytes !== bytes) crop = null else resetFraming(CardShape.PHOTO)
                 originalPhoto = true
                 status = "Original photo. Move, zoom or rotate it inside the mask."
             },

@@ -1048,3 +1048,40 @@ and empty-vault timing opt-ins. No physical/arm64, production-identity or
 signed-artifact claim is made. Raw transcripts and verified APK hashes remain
 in task outputs; failed API 26 evidence is retained. Independent AI patch review
 of the atomic fix found no blocking issue, not human maintainer sign-off.
+
+### Horizontal credit-card mask — 7 November 2026
+
+The local production testing build exposed a portrait default: framing followed
+the captured/detected photo rather than a card. A new pixel-based regression
+reproduces the defect before the fix (**0 passed / 1 expected failure**): the
+visible mask ratio is 0.629 instead of 85.60/53.98. New imports and Auto fit now
+select the horizontal ID-1 card shape. Full photo explicitly restores original
+proportions; rotation keeps the selected mask ratio. The regression checks the
+actual visible border, full-photo recovery, quarter-turn framing and the image
+read back from encrypted draft storage. Existing review/preservation and
+Auto-fit tests cover the changed default without weakening their assertions.
+
+Fresh checks on the uncommitted patch over `d5777c8`:
+
+- Model JVM tests: **28/28**, no failures/skips; debug build/test APK, debug lint
+  and unsigned release build pass in 78.243s. Lint reports 0 errors / 30 warnings.
+- API 37 / 16 KiB small portrait, light, 100% text: crop/rotation/scanner/safety
+  selection **19/19**, 154.641s, no failures/skips. This includes optional OCR,
+  front/back association, encrypted save/backup and cancellation boundaries.
+- API 37 / 16 KiB dark, 200% text: layout **5/5 landscape**, 103.918s, and
+  **5/5 portrait**, 93.380s, no failures/skips. Synthetic mask/rotation/card
+  screenshots were visually inspected; keyboard mode selection remains covered.
+- API 26 / 4 KiB layout and saved-image checks: **5/5**, 53.841s, no
+  failures/skips. Its first launcher stopped before app installation because
+  this image lacks `getconf`; the documented kernel `smaps` page-size guard
+  preserves the exact 4 KiB assertion. Failed setup evidence is retained.
+
+The local signed APK retains `app.kura.wallet`, 2.2.0-beta.3 / 122, scanner and
+direct updates. Production certificate matching, release manifest restrictions,
+OCR model hashes, baseline profiles and ZIP/native 16 KiB checks pass. Signing
+was separate from credential-free build/test/verifier execution. Both owned
+emulators were stopped. No source was committed/pushed and no release published.
+[Source, artifact and verification evidence](evidence/horizontal-card-mask-20261107.json).
+Broader full-suite results remain historical; physical/arm64, production-package
+runtime, new screen-reader and actual version-code upgrade acceptance were not
+run for this patch. AI assisted the fix, regression and verification.

@@ -1,4 +1,4 @@
-# Design: card-image cropping
+# Design: card images
 
 This scoped design covers the owner-requested card-crop revision. It is a draft
 for owner review, not a complete design specification for the wallet. Other
@@ -16,9 +16,12 @@ fields. The form's explicit Save owns persistence. Cancel/retake preserve the
 existing form and front/back destination.
 
 Automatic perspective correction remains a starting proposal. **Full photo**
-restores the original capture when detection chose the wrong region. The frame
-can follow the detected/photo proportions or use landscape card, portrait card
-or square proportions. Differing documents are supported; a standard card ratio
+restores the original capture and its proportions when detection chose the wrong
+region. New imports and **Auto fit** start with a horizontal credit-card frame,
+using the [ID-1 dimensions of 85.60 × 53.98 mm](https://www.epo.org/boards-of-appeal/decisions/pdf/t140876eu1.pdf)
+(width/height ≈ 1.586). The mask stays horizontal while the photo rotates beneath
+it. Photo proportions, portrait card and square remain explicit alternatives.
+Differing documents are supported; a standard card ratio
 is a convenience, not a validity rule. Users inspect the visible frame before
 cropping. No OCR confidence or detected edge is treated as verified content.
 
@@ -66,7 +69,9 @@ alternate proportions, full-photo/reset, cancel/retake/re-entry, front/back and
 optional OCR/save journeys. Record actual screenshots/results and failures in
 Testing; compile success is not visual validation or owner sign-off. The owner
 must review this crop revision before publication. Physical-device and stable
-release acceptance remain separate.
+release acceptance remain separate. The owner accepted the horizontal crop's
+appearance in the local card-mask-fix testing build on 7 November 2026; that
+feedback does not constitute physical/data-safety or stable-release acceptance.
 
 ## Visual review gallery
 

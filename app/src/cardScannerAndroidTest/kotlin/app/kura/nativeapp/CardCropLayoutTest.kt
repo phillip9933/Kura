@@ -2,6 +2,7 @@ package app.kura.nativeapp
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -20,6 +21,7 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import app.kura.feature.FormMemory
+import kotlinx.coroutines.runBlocking
 import java.io.ByteArrayOutputStream
 import java.io.File
 import org.junit.Assert.*
@@ -57,8 +59,9 @@ class CardCropLayoutTest {
         return controller
     }
 
-    private fun photo(plain: Boolean = false): ByteArray {
-        val bitmap = Bitmap.createBitmap(1600, 1000, Bitmap.Config.ARGB_8888)
+    private fun photo(plain: Boolean = false, portrait: Boolean = false): ByteArray {
+        val bitmap = Bitmap.createBitmap(if (portrait) 1000 else 1600,
+            if (portrait) 1600 else 1000, Bitmap.Config.ARGB_8888)
         return try {
             val canvas = Canvas(bitmap)
             canvas.drawColor(Color.rgb(40, 50, 60))
@@ -131,6 +134,60 @@ class CardCropLayoutTest {
             vm.pending.cropBytes = bytes
         }
         assertNotNull(device.wait(Until.findObject(By.text("Use crop").enabled(true)), 20_000))
+    }
+
+    private fun assertVisibleMaskRatio(expected: Double) {
+        if (Build.VERSION.SDK_INT < 29) return // No public window inspection on API 26.
+        screenshot { bitmap ->
+            val bounds = requireNotNull(device.findObject(By.desc("Card crop preview"))).visibleBounds
+            fun white(x: Int, y: Int): Boolean {
+                val color = bitmap.getPixel(x, y)
+                return Color.red(color) > 235 && Color.green(color) > 235 && Color.blue(color) > 235
+            }
+            // Plain synthetic input has no white pixels: these are the actual mask borders.
+            val horizontal = (bounds.left until bounds.right).filter { white(it, bounds.centerY()) }
+            val vertical = (bounds.top until bounds.bottom).filter { white(bounds.centerX(), it) }
+            assertTrue("The horizontal mask border is visible", horizontal.size >= 2)
+            assertTrue("The vertical mask border is visible", vertical.size >= 2)
+            assertEquals("The visible mask has the selected proportions", expected,
+                (horizontal.last() - horizontal.first()).toDouble() / (vertical.last() - vertical.first()), .03)
+        }
+    }
+
+    @Test fun portraitCaptureDefaultsToHorizontalCreditCardMaskAndSavedImage() {
+        val vm = open()
+        begin(vm, photo(plain = true, portrait = true))
+        try {
+            capture("credit-card-default")
+            val creditCardRatio = 85.60 / 53.98
+            assertVisibleMaskRatio(creditCardRatio)
+            assertNotNull(findAdjustment(By.text("Shape: Landscape card")))
+            clickJourneyControl(device, "Full photo")
+            assertNotNull(findAdjustment(By.text("Shape: Photo proportions")))
+            assertVisibleMaskRatio(1000.0 / 1600)
+            clickJourneyControl(device, "Shape: Photo proportions")
+            clickJourneyControl(device, "Landscape card")
+            clickJourneyControl(device, "Rotate")
+            clickJourneyControl(device, "90°")
+            assertVisibleMaskRatio(creditCardRatio)
+            capture("credit-card-rotated")
+            clickJourneyControl(device, "Use crop")
+            assertNotNull(device.wait(Until.findObject(By.text("Autofill card details?")), 20_000))
+            clickJourneyControl(device, "Use image only")
+            assertTrue(device.wait(Until.gone(By.text("Autofill card details?")), 20_000))
+            val encrypted = requireNotNull(vm.pending.draftImages["frontImagePath"])
+            val bytes = runBlocking { vm.image(encrypted.name) }
+            try {
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+                assertTrue("The saved card is horizontal", bounds.outWidth > bounds.outHeight)
+                assertEquals("Saved framing matches the credit-card mask", creditCardRatio,
+                    bounds.outWidth.toDouble() / bounds.outHeight, .005)
+            } finally { bytes.fill(0) }
+        } finally {
+            if (device.hasObject(By.text("Cancel import")) || device.hasObject(By.desc("Cancel import"))) clickJourneyControl(device, "Cancel import")
+            instrumentation.runOnMainSync { vm.pending.discardDraft() }
+        }
     }
 
     /** Scrolling to read a value must not change it, unlike clicking a preset. */
@@ -229,7 +286,7 @@ class CardCropLayoutTest {
         var before: IntArray? = null
         var after: IntArray? = null
         try {
-            clickJourneyControl(device, "Shape: Photo proportions")
+            clickJourneyControl(device, "Shape: Landscape card")
             clickJourneyControl(device, "Portrait card")
             clickJourneyControl(device, "Rotate")
             clickJourneyControl(device, "270°")
