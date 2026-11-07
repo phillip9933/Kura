@@ -189,3 +189,44 @@ The fixed candidate's CI at `3c50ed1` and the final external-driver build at
 7 November result therefore remains applicable within that exact scope as
 **reused evidence**. It is not a second scan or a claim that every older scope
 was recollected. [Final CI and runtime correspondence](evidence/kotlin-runtime-20261107.json).
+
+
+## Strict lock-state follow-up — 7 November 2026
+
+The root build-plugin classpath and the eight named project configurations in
+`tools/export-dependency-resolution.gradle` now use committed strict version
+locks. The app keeps separate states for all four scanner/updater combinations,
+plus the combined-feature `installerAcceptance=true` harness. Model/import test
+states and the root buildscript state are shared where their graphs agree.
+Normal builds consume lock states; they never pass `--write-locks` in CI.
+
+The initial locked exports match the reviewed CI components and external
+artifact hashes exactly in every one of the nine normal scopes/four variants.
+The existing installer harness changes only the Android-test runtime scope;
+its component tuples are already present in the collected union, so the same
+318-tuple advisory lookup applies within that union. It is not a new scan or
+comprehensive installer-path assessment. No additional unique tuple was added
+to the previously queried union; no new advisory lookup is claimed.
+
+In a disposable source copy, removing the app's valid lock state correctly
+fails resolution. Restoring that retained file then passes the combined
+JVM/lint/debug/release/test/optimized/benchmark build: **63 JVM tests**, no
+failures/errors/skips; lint **0 errors / 30 warnings** locally. Debug, test,
+unsigned-release, optimized and external-driver APK bytes match the previously
+qualified build-123 inputs exactly. Existing runtime results therefore apply to
+those exact bytes; they are not repeated executions under a new source label.
+
+This is **version locking**, not artifact authentication or a complete Gradle
+lock/verification system. The selected map does not automatically lock
+optimized/profile/benchmark, hidden compiler/processor/lint or every opt-in
+configuration. Full Gradle artifact-verification metadata remains absent;
+existing vendor/model/distribution hash checks cover narrower boundaries.
+Reviewed CI/hash correspondence is baseline consistency evidence, not an
+independent publisher signature or reproducible native build. Unresolved
+build-tool advisories and native/toolchain coverage gaps remain open.
+
+To deliberately update these states, review dependency changes and provenance,
+then run the named export with `--write-locks` under each supported flag set,
+including the combined installer harness. Compare the generated graphs before
+committing the explicit lockfiles. Do not regenerate them simply to silence a
+failed check or use a single variant's state for another optional build.
