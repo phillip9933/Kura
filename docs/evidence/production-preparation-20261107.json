@@ -312,10 +312,23 @@
         "skipped_rules": 0,
         "gate": "failed as required"
       },
-      "hosted_corrected_binding": "pending"
+      "hosted_corrected_binding": {
+        "source": "2619bf77ac376a4f96f4ea5671b5a27649da3f84",
+        "run_id": 42326237144,
+        "all_six_jobs": "success",
+        "kotlin_binding_regressions_passed": 2,
+        "rules": 13,
+        "shipping_files": 69,
+        "controls": 3,
+        "retained_INFO": 7,
+        "unreviewed": 0,
+        "errors": 0,
+        "skipped_rules": 0,
+        "audit_set_changed": false
+      }
     }
   },
-  "review_only_limits": "No main merge, signing, release, latest promotion, beta/tag deletion, personal-device destructive suite or account/security-setting changes. Source preparation and scoped CI/doc changes only.",
+  "review_only_limits": "No main merge, signing, release/latest promotion, beta/tag deletion, device wipe or unrelated account/security change. Source/CI preparation and explicitly approved synthetic test-phone actions only.",
   "ci_followups": [
     {
       "source": "16923a17ab25c163759c6aede8be624186ecf00b",
@@ -323,6 +336,13 @@
       "jobs": 5,
       "conclusion": "success",
       "scope": "Four Android configurations plus secret scan; not a native screen-reader or physical acceptance run."
+    },
+    {
+      "source": "2619bf77ac376a4f96f4ea5671b5a27649da3f84",
+      "run_id": 42326237144,
+      "jobs": 6,
+      "conclusion": "success",
+      "scope": "Four Android build/test/lint/package configurations plus native Kotlin source check and tracked-tree secret scan; no device instrumentation executed in these jobs."
     }
   ],
   "source_build_correspondence": {
@@ -347,14 +367,79 @@
   },
   "signing_recovery": {
     "metadata_inventory": "Approved and completed privately; no credential contents accessed.",
-    "recovery_canary": "Approved, not executed; genuine protected backup provenance and secure factor mechanism not established by metadata.",
+    "recovery_canary": "Approved actual recovery remains unexecuted: protected-backup provenance not established. Procedure compiles and passes synthetic wrong-identity, wrong-factor and successful-signature cases; synthetic key remains unchanged, real key never mounted or used.",
     "production_signing": "Separate authorization required; not executed.",
     "no_secret_or_private_location_disclosure": true
   },
   "physical_target": {
-    "status": "Approved arm64 test target identified; separate prototype123 installed without replacing the existing production package. No camera/hardware acceptance result inferred. Software-key test fallback is false on the actual non-emulator hardware.",
-    "upgrade_prerequisite": "Existing production identity differs from GitHub channel; independent production baseline requires specifically confirmed irreversible Kura reset. No production reset, downgrade, upgrade, wallet-data read or permission auto-grant performed.",
-    "no_personal_wallet_suite": true
+    "hardware": "Pixel6Pro raven, GrapheneOS Android17/API37, arm64",
+    "package": "app.kura.wallet.prototype",
+    "version": "2.2.0-dev/123",
+    "apk_sha256": "10c6fa4132332b2c68fb3d142d86bd4f7d6495786773caa11e34165015b9c77e",
+    "software_key_fallback": false,
+    "synthetic_file_image_import": {
+      "front_crop": true,
+      "explicit_OCR_opt_in": true,
+      "leading_zero_number_preserved": true,
+      "existing_nonempty_name_preserved": true,
+      "prefilled_issuer_preservation": "not tested due soft-keyboard setup error, retained privately",
+      "front_only_detail_missing_back_action": true,
+      "back_import_from_details": true,
+      "camera_capture": false,
+      "latency_memory_acceptance": false
+    },
+    "cold_relaunch": {
+      "one_synthetic_record_retained": true,
+      "both_images_decoded": true,
+      "require_app_unlock_retained_off": true,
+      "new_app_authentication_prompt": false,
+      "no_clear_uninstall_upgrade_within_case": true,
+      "encrypted_media_hash_comparison": "unverified; empty query stopped",
+      "assertion_correction": "Compose bitmap semantics use android.view.View rather than android.widget.ImageView; captured hierarchy already verifies decoded images. Failed assertion retained; cold relaunch not repeated."
+    },
+    "production_reset": "Specifically confirmed old incompatible production installation removed; no wallet backup or retained-upgrade proof inferred.",
+    "production_upgrade": "not executed",
+    "public_upgrade_baselines": {
+      "2.1.0_code119": "APK hash/signature/GitHub certificate verified offline",
+      "2.2.0-beta.3_code122": "APK hash/signature/GitHub certificate verified offline"
+    },
+    "reader_helper": {
+      "disposable_native_control": "natural A/B/C focus and C activation pass; automatic120s idle disable pass",
+      "phone_attempts": 2,
+      "phone_helper_bound": false,
+      "phone_reader_gestures_executed": false,
+      "cleanup_after_each_attempt": "prior accessibility values restored; helper uninstalled and absent/unbound",
+      "precise_nonbinding_cause": "not established; captured alignment diagnostic, offline zipalign passes and no native libraries",
+      "spoken_feedback": "unverified"
+    },
+    "no_personal_wallet_suite": true,
+    "actual_wrapping_key_metadata": {
+      "passed": 1,
+      "failed": 0,
+      "seconds": 3.012,
+      "target_apk_sha256": "10c6fa4132332b2c68fb3d142d86bd4f7d6495786773caa11e34165015b9c77e",
+      "test_apk_sha256": "edc7a0cc7128ea93774c2c3569f31db9d31c297aacabde402f50c64fb2cf7974",
+      "keys": [
+        {
+          "category": "app-authenticated wrapper",
+          "security_level": "StrongBox",
+          "key_bits": 256,
+          "user_authentication_required": true,
+          "auth_requirement_hardware_enforced": true
+        },
+        {
+          "category": "phone-only wrapper",
+          "security_level": "StrongBox",
+          "key_bits": 256,
+          "user_authentication_required": false,
+          "auth_requirement_hardware_enforced": false
+        }
+      ],
+      "scope": "Read-only KeyInfo; no key bytes exported, generation/deletion, authentication or cipher operation. No requested permissions/UI activities in temporary test package.",
+      "temporary_test_package_removed": true,
+      "accessibility_still_original_off": true,
+      "authenticated_operation_tested": false
+    }
   },
   "canonical_lf_build": {
     "seconds": 179.568,

@@ -15,6 +15,7 @@ and scanner-tooling changes do not become fresh runtime executions.
 | Complete enhanced app, API 37 / 16 KiB | **94 passed / 0 failed / 4 existing opt-in skips**, 98 cases, 994.168 s; exact canonical debug/test pair |
 | External nondebuggable/R8 selection | **4/4 passed**, 97.390 s, both documented `unlockTiming` and `permissionAcceptance` opt-ins supplied |
 | Parsed four-way CI at `c72e5c7` | [252 fresh JVM passes](https://github.com/phillip9933/Kura/actions/runs/42312339233), no failures/errors/skips; no lint errors; warnings 58 offline, 62 updater, 64 scanner, 67 both |
+| Canonical-byte security CI at `2619bf7` | [All six jobs pass](https://github.com/phillip9933/Kura/actions/runs/42326237144): four Android configurations, native Kotlin security and secret scan. Kotlin binding regressions 2/2; 69 shipping files/13 rules/3 controls/7 retained INFO, no unreviewed findings/errors/skips. |
 | Later tooling CI at `16923a1` | [All five jobs pass](https://github.com/phillip9933/Kura/actions/runs/42317427829): four Android configurations plus the new pinned secret check; no new runtime count inferred |
 | Strict-lock control and build | Missing app lock state correctly fails; restored state passes **63 JVM tests**, no failures/errors/skips, lint **0 errors / 30 warnings** locally; debug/test/release/optimized/driver APK hashes equal the runtime-qualified inputs |
 | Dependency correspondence | Four normal flag sets match all nine reviewed component/artifact graphs; separate combined installer-harness lock state recorded. Version locking does not authenticate artifacts or cover all hidden configurations. |
@@ -66,6 +67,60 @@ SDK audio capture is denied `UNAUTHENTICATED`; no credentials, auth bypass or
 alternate audio endpoint is tried. Spoken feedback remains unverified. Native
 input help was inspected without a further input-injection workaround.
 
+### Approved physical prototype checks
+
+A Pixel 6 Pro running GrapheneOS / Android 17 (API 37, arm64) exercises the exact local
+prototype 123 debug APK recorded above. Through normal UI, a synthetic file
+image is cropped, OCR is explicitly opted into, the leading-zero number is
+applied to an existing blank field, and an existing nonempty name is retained.
+The intended issuer prefill hit the soft keyboard and altered the synthetic name;
+that setup mistake is retained, and prefilled-issuer preservation is not claimed.
+No recognized fields are added outside the existing form. A saved front-only
+card exposes its missing-back action directly in details; adding the synthetic
+back there succeeds. This is file import, not real camera capture or a measured
+camera latency/memory result.
+
+After a real prototype force-stop/relaunch, the one synthetic card and both
+decoded images remain available, and Require app unlock remains off without a
+new app authentication prompt. The initial image assertion wrongly expected an
+Android ImageView; Compose exposes bitmap semantics as android.view.View. The
+captured hierarchy already contains both decoded images with substantial visible
+bounds; that failed assertion is retained and the cold relaunch was not repeated
+to conceal it. An optional encrypted-media hash query returned no usable output
+and was stopped; no byte-retention comparison is claimed. No uninstall, data
+clear or version upgrade occurs inside this cold-relaunch scenario.
+
+A separate test-only gesture helper validates the real TalkBack input route on
+an isolated 16 KiB emulator: natural A→B→C focus events, then double tap outside
+observed controls activates C exactly once. A two-minute idle timeout disables
+it. Initial force-stop setup and native all-caps label failures are retained.
+On the phone, TalkBack binds but the helper does not bind in two bounded setup
+attempts; no phone reader gestures run. Original accessibility values are
+restored, the helper is uninstalled and absence/unbound state is verified after
+each attempt. A targeted package-alignment diagnostic does not establish the
+cause: the helper passes SDK alignment checks and has no native libraries. No
+policy bypass, further speculative reinstall or spoken-feedback pass is claimed.
+
+A separate permission-free, read-only metadata probe passes **1/1**, 3.012 s,
+against the hash-verified prototype. Both existing wrapping keys report
+**StrongBox-backed AES-256**. The app-authenticated wrapper requires
+hardware-enforced user authentication; the phone-only wrapper does not require
+per-app authentication. No key bytes are exported, keys created/deleted,
+authentication performed or cipher operation invoked. The temporary test package
+is removed, and accessibility remains in its original off state. This verifies
+actual key properties rather than only advertised hardware features; it does
+not verify authenticated-operation behavior, screen-off denial or production
+upgrade retention.
+
+The old, incompatible production-channel installation was removed only after
+specific confirmation. Published 2.1.0 / code 119 and beta 3 / code 122 APK hashes, signatures
+and common GitHub certificate are verified offline, but neither is installed as
+an upgrade baseline yet. Actual production upgrade, authenticated-mode hardware
+checks, difficult photographed cards and complete reader/spoken acceptance
+remain outstanding. A recovery-canary procedure passes synthetic wrong-identity,
+wrong-password and successful-signature controls without touching a real key;
+actual protected-backup provenance/recovery and production signing remain separate.
+
 **Stable remains held:** all five open issues must have verified closure
 criteria. #29's owner crop review is supplied; source merge is separate.
 #9/#10/#15 retain physical/hardware, production retained-upgrade and representative
@@ -73,8 +128,8 @@ camera acceptance. #13 needs all prepublication gates, then verified actual
 publication to complete Stable. No waiver or numerical issue cleanup substitutes
 for verification. Final tagged CI bytes, approved recovery verification, separately authorized
 production signing and artifact checks remain pending. An approved physical
-test target has been identified and a separate prototype installed; no hardware/
-camera acceptance, production-wallet reset or upgrade is claimed. [CI/security scope](CI-VERIFICATION.md) and
+test target has completed the narrow prototype checks above; authenticated
+hardware, live-camera and production-upgrade acceptance are not established. [CI/security scope](CI-VERIFICATION.md) and
 [dependency limits](DEPENDENCY-BASELINE.md) remain explicit. AI assisted work and
 review are not independent human approval.
 

@@ -85,7 +85,10 @@ seven retained INFO prompts and zero unreviewed findings/errors/skips.
 Regression checks exercise a real Git archive with `core.autocrlf=true`, a
 one-byte source change, changed rule/path/line/severity, a missing finding and a
 duplicate finding. Only the exact reviewed set passes. Hosted qualification of
-the corrected binding remains pending until its fresh run completes. The same
+the corrected binding passes in [run 42326237144](https://github.com/phillip9933/Kura/actions/runs/42326237144)
+at `2619bf7`: all four Android configurations, Kotlin security and secret scan
+complete successfully. The Kotlin job runs both binding regressions and retains
+the seven exact INFO reviews, with no unreviewed findings/errors/skips. The same
 regressions fail on the previous wrapper. A full native scan of a disposable
 snapshot with one changed nonce byte also fails with four unreviewed findings
 and a changed audit set, while all rules/controls/coverage checks still complete.
