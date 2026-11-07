@@ -1,5 +1,40 @@
 # CI dependencies and permissions
 
+## Tracked-tree secret check
+
+The verification workflow also runs `tools/run-secret-scan.py` on an ephemeral
+hosted runner. It downloads Gitleaks 8.30.1 from the official
+[`gitleaks/gitleaks` release](https://github.com/gitleaks/gitleaks/releases/tag/v8.30.1),
+checking the pinned archive digest, pinned checksum-file digest and matching
+manifest entry before execution. This is build tooling, not an app dependency.
+The scanner first has to reject a fabricated credential-pattern control, then
+scans a fresh Git archive with its default rules. A finding fails the job.
+No baseline, custom allowlist or new suppression is introduced.
+
+Reports use 100% secret redaction and private temporary files outside the source
+tree. Only counts and execution status reach the job log; findings are not
+uploaded as public artifacts. A failing scan needs private maintainer triage,
+normally by reproducing the scan locally with a private report directory.
+Never paste matches or reports into an issue. The child scanner receives a
+minimal environment and no persisted checkout credentials. Downloads send only
+public release requests; source scanning does not require network access.
+The local equivalent uses an approved isolated environment and a separately
+checksum-verified executable with `--scanner` and `--snapshot`.
+
+Scope is the current tracked tree. Git history, ignored/private files, generated
+builds and comprehensive binary/archive internals are excluded. This does not
+verify platform secret scanning or push protection, and it is not source
+security analysis or an assurance of universal secret absence.
+
+On 7 November, the offline Gitleaks 8.30.1 run against archived `acd20de`
+detected its controlled failing example and returned zero current-tree findings.
+Private reports were not uploaded. The initial control used characters outside
+the rule's base32 alphabet and was correctly not detected; it was replaced with
+a fabricated value matching the documented upstream rule, without weakening
+the scanner. The repository wrapper also passes offline against its staged
+tree, with one detected control and zero tracked-tree findings. Syntax and YAML
+checks pass. The hosted job remains pending until its actual run is recorded.
+
 Both checked-in workflows declare `permissions: contents: read`; unspecified
 token permissions are not requested. Checkout disables credential persistence.
 Validation uses GitHub-hosted runners, not a signing runner. Neither workflow

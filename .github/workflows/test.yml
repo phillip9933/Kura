@@ -17,6 +17,15 @@ permissions:
   contents: read
 
 jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Scan tracked tree with redacted private reports
+        run: python3 tools/run-secret-scan.py --report-dir "$RUNNER_TEMP/kura-secret-scan-reports"
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 45
