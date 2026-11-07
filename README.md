@@ -10,7 +10,7 @@ Follow release scope and maturity separately from individual work. Dates are est
 
 Kura (蔵) keeps your cards, passes and identity documents in an encrypted, offline Android wallet. No accounts, advertising or telemetry. The default build has no Internet permission. An optional direct-update build can check GitHub for updates; see [app updates](docs/APP-UPDATES.md).
 
-[Stable download](https://github.com/phillip9933/Kura/releases/latest) · [2.2 beta](https://github.com/phillip9933/Kura/releases/tag/v2.2.0-beta.3) · [Changelog](CHANGELOG.md) · [Privacy](PRIVACY.MD)
+[Stable download](https://github.com/phillip9933/Kura/releases/latest) · [2.2.0 release](https://github.com/phillip9933/Kura/releases/tag/v2.2.0) · [Changelog](CHANGELOG.md) · [Privacy](PRIVACY.MD)
 
 ## About this project
 

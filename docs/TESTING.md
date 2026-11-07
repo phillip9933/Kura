@@ -1,5 +1,56 @@
 # Testing
 
+## Published stable production upgrades — 7 November 2026
+
+Release **2.2.0 / 123**, source `10f17a93c99b67cbe63b17417111b0e8a7ab34f1`,
+is published as latest. The signed APK is the exact tagged-CI artifact, with no
+local rebuild substitution. [Structured release evidence](evidence/production-release-20261107.json)
+records the APK, signer, CI provenance, production acceptance and public download checks.
+
+Two normal foreground Android-installer upgrades on the dedicated Pixel 6 Pro
+GrapheneOS Android 17 / API 37 test phone passed:
+
+| Published baseline | Unlock mode | Verification |
+| --- | --- | --- |
+| 2.1.0 / 119 | App authentication on | Exact synthetic fields and leading-zero number, decoded front/back images, Dark theme, Cards launch preference and UID retained; owner completed real post-upgrade authentication; app unlock stayed on. |
+| 2.2.0-beta.3 / 122 | Phone-only | Same field/media/UID checks, Light theme and Cards launch preference retained; app unlock stayed off; post-upgrade and force-stop reopening required no extra app authentication. |
+
+There was no clear/uninstall between seeding and verification in either case.
+A separately confirmed reset occurred only between completed cases to install the
+older second baseline. Version 2.1 had no phone-only setting; the two supported
+baseline configurations above cover both unlock choices. These are ordinary
+synthetic production-UI checks, not destructive instrumentation on a production
+wallet. Decoded image semantics were verified; encrypted-media file hashes were
+not extracted.
+
+Preserved harness limitations: a partly clipped Compose row's full-parent bounds
+caused an accidental Home tap and an authentication repeat; the helper was corrected
+to visible bounds and the target scrolled into view. A first Beta 3 upgrade snapshot
+was premature during loading; the same process subsequently displayed retained
+data without authentication. Neither is counted as an app failure or another passing
+case. Actual checkable switch ancestors were inspected rather than their unchecked
+non-checkable label children.
+
+The APK signature/identity, scanner/updater permissions/models/profiles and all 24
+native/ZIP 16 KiB checks pass. All three release assets were publicly downloaded
+and matched exact upload bytes and the checksum manifest. Public latest metadata
+returns v2.2.0; the installed current-version app completed an explicit manual
+GitHub check without error/newer offer, leaving automatic checks/downloads and
+beta selection off. This is not a new-version popup test on an already-current app.
+
+Earlier software executions retain their original source/artifact scopes: full
+enhanced app 94 active passes / 0 failed / 4 existing opt-in skips; optimized
+journeys 4/4. All six post-merge CI jobs pass, and the tagged release build passes;
+job status is not relabelled as newly parsed test counts. Historical failed
+attempts, narrower API/backup/installer and prototype results remain below and in
+their linked evidence.
+
+Actual phone StrongBox/authenticated unwrap and screen-off lock acceptance was
+completed earlier and restored off in the prototype. Requested photo/TalkBack
+acceptance and signing-backup possession are owner-reported; independent recovery
+was omitted, not passed. No per-scene latency/peak-memory numbers or exhaustive
+hardware/security certification are inferred. AI assisted implementation and verification.
+
 ## Production preparation and final image fixes — 7 November 2026
 
 Proposed **2.2.0 / 123** is unpublished. Executed app/test/optimized inputs come
