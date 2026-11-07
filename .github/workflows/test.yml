@@ -33,6 +33,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Check canonical archive and audit binding regressions
+        run: python3 -m unittest discover -s tools/tests -p 'test_kotlin_security_scan.py' -v
       - name: Check Kotlin source with private native-scanner reports
         run: python3 tools/run-kotlin-security-scan.py --report-dir "$RUNNER_TEMP/kura-kotlin-security-reports"
   verify:

@@ -65,9 +65,36 @@ must pass. Public failure details contain fixed categories/stage/exit codes,
 never raw stderr or real findings.
 
 Both startup modes, the fabricated control and the corrected full local check
-pass on the local host. Hosted resolution and the precise hosted cause remain
-unverified until the fresh run is recorded. Failed runs are retained; no rule,
-control or finding is waived.
+pass on the local host. On the Ubuntu runner, [run 42324272291](https://github.com/phillip9933/Kura/actions/runs/42324272291)
+now completes all 13 rules, 69 files and three controls, with no scan errors or
+skips. The audit gate correctly rejects all seven retained prompts because the
+initial local export used CRLF bytes while GitHub checked out canonical LF bytes.
+The original native control still fails on that host; corrected-runtime scanning
+succeeds. Failed runs remain recorded; no rule, control or finding is waived.
+
+### Canonical source and review binding
+
+The archive command now explicitly disables `core.autocrlf`. Review hashes bind
+to exact Git blob bytes, without matcher-only normalization. All 69 selected
+files in the corrected local snapshot were checked byte-for-byte against their
+Git blobs. The seven reviewed tuples were independently checked against those
+same bytes; the earlier CRLF hashes are superseded, not treated as a passing CI
+result. The corrected local native run reports 69 files, 13 rules, three controls,
+seven retained INFO prompts and zero unreviewed findings/errors/skips.
+
+Regression checks exercise a real Git archive with `core.autocrlf=true`, a
+one-byte source change, changed rule/path/line/severity, a missing finding and a
+duplicate finding. Only the exact reviewed set passes. Hosted qualification of
+the corrected binding remains pending until its fresh run completes. The same
+regressions fail on the previous wrapper. A full native scan of a disposable
+snapshot with one changed nonce byte also fails with four unreviewed findings
+and a changed audit set, while all rules/controls/coverage checks still complete.
+
+A separate canonical-LF combined build passes 63 JVM cases with no failures,
+errors or skips. All five APKs (debug, test, optimized, benchmark and unsigned
+release) are byte-identical to the previously qualified local inputs. This
+confirms the existing runtime evidence applies to those same bytes; it does
+not turn a local build into the required final tagged CI artifact.
 
 ## Tracked-tree secret check
 

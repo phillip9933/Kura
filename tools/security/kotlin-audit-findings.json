@@ -6,43 +6,44 @@
       "rule": "gcm-detection",
       "file": "core/security/src/main/kotlin/app/kura/nativecore/HardwareVaultKey.kt",
       "line": 83,
-      "source_sha256": "23d403b2579da3a44bc2d535c86c2f0f2f0a1ff0ef0f24d8fe28e718ad4866ed"
+      "source_sha256": "eddb82e032b10fcba24ef01b719c820039c5979129edbbd2ecd75ca8e3e9a718"
     },
     {
       "rule": "gcm-detection",
       "file": "core/security/src/main/kotlin/app/kura/nativecore/HardwareVaultKey.kt",
       "line": 85,
-      "source_sha256": "23d403b2579da3a44bc2d535c86c2f0f2f0a1ff0ef0f24d8fe28e718ad4866ed"
+      "source_sha256": "eddb82e032b10fcba24ef01b719c820039c5979129edbbd2ecd75ca8e3e9a718"
     },
     {
       "rule": "gcm-detection",
       "file": "core/security/src/main/kotlin/app/kura/nativecore/LegacyCrypto.kt",
       "line": 24,
-      "source_sha256": "0075867014b7b160231f817c1263991fb03b4e11743838dacd8fde1aa4254bad"
+      "source_sha256": "109663b6032fed38bfbc35dcdf13e8f66b7128497a27771cb603c6379f8e5be4"
     },
     {
       "rule": "gcm-detection",
       "file": "core/storage/src/main/kotlin/app/kura/nativecore/MediaStorage.kt",
       "line": 19,
-      "source_sha256": "159a8674ea8aaa4e21ddba09198d3905f597abfc529e012ee4cf5b72aa8de4c4"
+      "source_sha256": "ede50fd9aa57f26cfb94b60b00fd86e40e0b2096079a27535f7539bbb25e3abd"
     },
     {
       "rule": "gcm-detection",
       "file": "core/storage/src/main/kotlin/app/kura/nativecore/MediaStorage.kt",
       "line": 20,
-      "source_sha256": "159a8674ea8aaa4e21ddba09198d3905f597abfc529e012ee4cf5b72aa8de4c4"
+      "source_sha256": "ede50fd9aa57f26cfb94b60b00fd86e40e0b2096079a27535f7539bbb25e3abd"
     },
     {
       "rule": "gcm-detection",
       "file": "core/storage/src/main/kotlin/app/kura/nativecore/MediaStorage.kt",
       "line": 30,
-      "source_sha256": "159a8674ea8aaa4e21ddba09198d3905f597abfc529e012ee4cf5b72aa8de4c4"
+      "source_sha256": "ede50fd9aa57f26cfb94b60b00fd86e40e0b2096079a27535f7539bbb25e3abd"
     },
     {
       "rule": "gcm-detection",
       "file": "core/storage/src/main/kotlin/app/kura/nativecore/MediaStorage.kt",
       "line": 31,
-      "source_sha256": "159a8674ea8aaa4e21ddba09198d3905f597abfc529e012ee4cf5b72aa8de4c4"
+      "source_sha256": "ede50fd9aa57f26cfb94b60b00fd86e40e0b2096079a27535f7539bbb25e3abd"
     }
-  ]
+  ],
+  "source_bytes": "Exact canonical Git blob/archive bytes. Do not normalize only the matcher. The earlier local export used core.autocrlf CRLF conversion; those hashes were incorrect for CI."
 }

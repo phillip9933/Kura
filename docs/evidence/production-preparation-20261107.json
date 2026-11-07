@@ -293,7 +293,27 @@
     "first_exploratory_scope": "73 total included same69 shipping files plus4 directAndroidTest files; not73 shipping files.",
     "triage": "Reviewed encryption paths generate fresh nonces or only decrypt stored nonces; not demonstrated nonce reuse or cryptographic certification.",
     "privacy": "No source or findings uploaded; raw reports and diagnostics private; upstream rule text not redistributed.",
-    "limits": "Intrafile patterns; not complete native/binary/tooling/cross-file analysis or platform security-service evidence."
+    "limits": "Intrafile patterns; not complete native/binary/tooling/cross-file analysis or platform security-service evidence.",
+    "canonical_binding": {
+      "shipping_files_equal_git_blobs": 69,
+      "autocrlf_disabled_for_archive": true,
+      "review_hashes": "Exact Git blob bytes; earlier local CRLF export hashes rejected by hosted audit gate and corrected, without normalization of matcher.",
+      "regressions": {
+        "old_wrapper": "2 tests fail",
+        "fixed_wrapper": "2 tests pass",
+        "cases": "real autocrlf archive; one-byte source change; changed rule/path/line/severity; missing/duplicate finding"
+      },
+      "native_changed_source": {
+        "byte_changes": 1,
+        "retained_INFO": 7,
+        "unreviewed": 4,
+        "audit_set_changed": true,
+        "errors": 0,
+        "skipped_rules": 0,
+        "gate": "failed as required"
+      },
+      "hosted_corrected_binding": "pending"
+    }
   },
   "review_only_limits": "No main merge, signing, release, latest promotion, beta/tag deletion, personal-device destructive suite or account/security-setting changes. Source preparation and scoped CI/doc changes only.",
   "ci_followups": [
@@ -335,5 +355,37 @@
     "status": "Approved arm64 test target identified; separate prototype123 installed without replacing the existing production package. No camera/hardware acceptance result inferred. Software-key test fallback is false on the actual non-emulator hardware.",
     "upgrade_prerequisite": "Existing production identity differs from GitHub channel; independent production baseline requires specifically confirmed irreversible Kura reset. No production reset, downgrade, upgrade, wallet-data read or permission auto-grant performed.",
     "no_personal_wallet_suite": true
+  },
+  "canonical_lf_build": {
+    "seconds": 179.568,
+    "jvm": {
+      "passed": 63,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "apks": {
+      "debug": {
+        "sha256": "10c6fa4132332b2c68fb3d142d86bd4f7d6495786773caa11e34165015b9c77e",
+        "matches_previous_executed_apk": true
+      },
+      "test": {
+        "sha256": "6c86d812b4c85b457efc5ff6a46405cded2303cc660f0baf09c068d14402a9e0",
+        "matches_previous_executed_apk": true
+      },
+      "optimized": {
+        "sha256": "0b30a7bce5fc4709d5a811b38a9d2d5e48de5689eb9bf8f7a8431c7db2808d74",
+        "matches_previous_executed_apk": true
+      },
+      "benchmark": {
+        "sha256": "a8e31ef79c7eb3e38c909eace353dd12b91d57b1a8f60bee2cfdb90a9648b4b8",
+        "matches_previous_executed_apk": true
+      },
+      "release": {
+        "sha256": "6344bc082a3f14c0dbab0f1cb2af1e2e8b27fbed4f715006ba530865d7ee3e01",
+        "matches_previous_executed_apk": true
+      }
+    },
+    "scope": "Canonical LF Git blob bytes; APKs exactly match prior local tested inputs, not final tagged CI release bytes."
   }
 }

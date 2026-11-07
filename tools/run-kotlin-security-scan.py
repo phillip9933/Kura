@@ -193,11 +193,12 @@ def prepare_source(repository, snapshot, work):
     else:
         source = work / "source"
         source.mkdir()
-        archive = subprocess.Popen(["git", "archive", "HEAD"], cwd=repository, stdout=subprocess.PIPE)
-        with tarfile.open(fileobj=archive.stdout, mode="r|") as bundle:
-            bundle.extractall(source, filter="data")
-        if archive.wait() != 0:
-            raise RuntimeError("Tracked-tree archive failed")
+        with subprocess.Popen(["git", "-c", "core.autocrlf=false", "archive", "HEAD"],
+                              cwd=repository, stdout=subprocess.PIPE) as archive:
+            with archive.stdout, tarfile.open(fileobj=archive.stdout, mode="r|") as bundle:
+                bundle.extractall(source, filter="data")
+            if archive.wait() != 0:
+                raise RuntimeError("Tracked-tree archive failed")
     files = sorted(path for path in source.rglob("*.kt") if "src" in path.relative_to(source).parts
                    and not path.relative_to(source).parts[0] == "benchmark"
                    and not any(part in {"test", "androidTest"} or part.endswith("AndroidTest")
@@ -248,7 +249,7 @@ def review_audits(matches, source, audits):
         if match["extra"]["severity"] != "INFO" or finding not in expected:
             unexpected += 1
         observed.add(finding)
-    return unexpected, observed != expected
+    return unexpected, observed != expected or len(matches) != len(observed)
 
 
 def main():
