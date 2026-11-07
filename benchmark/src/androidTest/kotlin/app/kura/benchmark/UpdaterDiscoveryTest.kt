@@ -11,7 +11,10 @@ import org.junit.Test
 class UpdaterDiscoveryTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val device = UiDevice.getInstance(instrumentation)
-    private val target = "app.kura.wallet.prototype.benchmark"
+    private val target = (InstrumentationRegistry.getArguments().getString("targetPackage")
+        ?: "app.kura.wallet.prototype.benchmark").also {
+        require(it in setOf("app.kura.wallet.prototype", "app.kura.wallet.prototype.benchmark"))
+    }
     private fun click(label: String) {
         repeat(16) { attempt ->
             device.waitForIdle()

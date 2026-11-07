@@ -4,7 +4,7 @@ plugins { id("com.android.application"); id("org.jetbrains.kotlin.plugin.compose
 val cardScanner = providers.gradleProperty("cardScanner").orNull == "true"
 val directUpdates = providers.gradleProperty("directUpdates").orNull == "true"
 android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) { minorApiLevel = 0 } }
- defaultConfig { applicationId = "app.kura.wallet"; minSdk = if (directUpdates || cardScanner) 26 else 24; targetSdk = 36; versionCode = 122; versionName = "2.2.0-beta.3"
+ defaultConfig { applicationId = "app.kura.wallet"; minSdk = if (directUpdates || cardScanner) 26 else 24; targetSdk = 36; versionCode = 123; versionName = "2.2.0"
 
  if (cardScanner) ndk { abiFilters += setOf("arm64-v8a", "x86_64") }
  testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
@@ -70,12 +70,13 @@ android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) {
 kotlin { jvmToolchain(21); compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 dependencies {
  if (cardScanner) {
-    implementation("dev.offlinescan:scanner-core:0.8.0-beta.1")
-    implementation("dev.offlinescan:scanner-processing-opencv:0.8.0-beta.1")
-    implementation("dev.offlinescan:scanner-ocr-tesseract:0.8.0-beta.1")
+    implementation("androidx.compose.material:material-icons-core:1.7.8")
+    implementation("dev.offlinescan:scanner-core:0.8.0")
+    implementation("dev.offlinescan:scanner-processing-opencv:0.8.0")
+    implementation("dev.offlinescan:scanner-ocr-tesseract:0.8.0")
  }
  if (directUpdates) {
-    implementation("io.github.phillip9933:android-updater:0.2.2-beta.1")
+    implementation("io.github.phillip9933:android-updater:0.2.2")
     implementation("androidx.work:work-runtime:2.11.2")
  }
  coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")

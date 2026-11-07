@@ -1,0 +1,110 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "dev.offlinescan",
+    "module": "scanner-export",
+    "version": "0.8.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "dev.offlinescan",
+          "module": "scanner-core",
+          "version": {
+            "requires": "0.8.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "scanner-export-0.8.0.aar",
+          "url": "scanner-export-0.8.0.aar",
+          "size": 16744,
+          "sha512": "d8d551ab45085342d1849af5e53cc0db2cf54ddf062ba17021cbed4c150b18c92018754a26a3a256b185b0335fe80e110e1478e5c77cb31287a2a94118aaa825",
+          "sha256": "29556167b61b199da66349d4e2a08a22ec209cbf26d8d793b5316208991e5970",
+          "sha1": "c6a27dd05545cc1b25516526bbc3feb8eca29fb8",
+          "md5": "11a9faf7eb515c4a7284ae5b615142be"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "dev.offlinescan",
+          "module": "scanner-core",
+          "version": {
+            "requires": "0.8.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "scanner-export-0.8.0.aar",
+          "url": "scanner-export-0.8.0.aar",
+          "size": 16744,
+          "sha512": "d8d551ab45085342d1849af5e53cc0db2cf54ddf062ba17021cbed4c150b18c92018754a26a3a256b185b0335fe80e110e1478e5c77cb31287a2a94118aaa825",
+          "sha256": "29556167b61b199da66349d4e2a08a22ec209cbf26d8d793b5316208991e5970",
+          "sha1": "c6a27dd05545cc1b25516526bbc3feb8eca29fb8",
+          "md5": "11a9faf7eb515c4a7284ae5b615142be"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "scanner-export-0.8.0-sources.jar",
+          "url": "scanner-export-0.8.0-sources.jar",
+          "size": 4287,
+          "sha512": "91a74ae8c7d89b2ef0a2f0c46b99d877c58ecaa47f2a07ba94e6917b31f2b5eabfc1fbd5891c9392d86b7c2133c7b6730aac41cb81d86862eb77beee5e154615",
+          "sha256": "c95bd09c51b8f17ddb717332ccbb474c43b178881fa5b393691f05970e963915",
+          "sha1": "589f091810bb52adac9ef0af8a68804976550561",
+          "md5": "b6719f040656f21c9958bb28936e4f2a"
+        }
+      ]
+    }
+  ]
+}

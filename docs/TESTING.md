@@ -1,5 +1,194 @@
 # Testing
 
+## Production preparation and final image fixes — 7 November 2026
+
+Proposed **2.2.0 / 123** is unpublished. Executed app/test/optimized inputs come
+from `c72e5c7`, including the horizontal ID-1 default and independent missing-side
+photo actions. Later strict-lock qualification produces **identical complete
+APK bytes**, including the app test and external driver. Current application,
+vendor and build inputs correspond to that qualified snapshot; documentation
+and scanner-tooling changes do not become fresh runtime executions.
+[Exact sources, hashes, failures and limits](evidence/production-preparation-20261107.json).
+
+| Verification | Result and scope |
+| --- | --- |
+| Complete enhanced app, API 37 / 16 KiB | **94 passed / 0 failed / 4 existing opt-in skips**, 98 cases, 994.168 s; exact canonical debug/test pair |
+| External nondebuggable/R8 selection | **4/4 passed**, 97.390 s, both documented `unlockTiming` and `permissionAcceptance` opt-ins supplied |
+| Parsed four-way CI at `c72e5c7` | [252 fresh JVM passes](https://github.com/phillip9933/Kura/actions/runs/42312339233), no failures/errors/skips; no lint errors; warnings 58 offline, 62 updater, 64 scanner, 67 both |
+| Canonical-byte security CI at `2619bf7` | [All six jobs pass](https://github.com/phillip9933/Kura/actions/runs/42326237144): four Android configurations, native Kotlin security and secret scan. Kotlin binding regressions 2/2; 69 shipping files/13 rules/3 controls/7 retained INFO, no unreviewed findings/errors/skips. |
+| Later tooling CI at `16923a1` | [All five jobs pass](https://github.com/phillip9933/Kura/actions/runs/42317427829): four Android configurations plus the new pinned secret check; no new runtime count inferred |
+| Strict-lock control and build | Missing app lock state correctly fails; restored state passes **63 JVM tests**, no failures/errors/skips, lint **0 errors / 30 warnings** locally; debug/test/release/optimized/driver APK hashes equal the runtime-qualified inputs |
+| Dependency correspondence | Four normal flag sets match all nine reviewed component/artifact graphs; separate combined installer-harness lock state recorded. Version locking does not authenticate artifacts or cover all hidden configurations. |
+| Secret check | Gitleaks 8.30.1 detects the fabricated control and returns zero findings in the current tracked-tree scope; private 100% redacted reports, no history/binary-internal claim |
+| Kotlin source-security wrapper | 69 shipping files / 13 pinned rules; three controlled detections; seven retained informational audit prompts, no unreviewed finding/error/skipped rule. Stale audit hash is rejected; restored metadata passes. Earlier 73-file exploratory scope included four additional tests. |
+| Unsigned local release inspection | Production package, version 123, nondebuggable/non-test flags, scanner/updater models, providers/permissions, profiles, 64-bit ABIs and 16 KiB packaging pass. Local unsigned bytes are not the final tagged-CI release artifact. |
+
+The four full-app skips remain the existing cold-process, retained-upgrade,
+store-capture and empty-vault-timing opt-ins. Core/API 26, older prototype
+installer/version-change and cold-process evidence below is explicitly reused
+at its recorded source/artifact scope. The new UI fixes have their focused
+regressions below; earlier full-suite counts do not silently become current.
+
+The optimized transition is **same version 2.2.0-dev / 123**, package
+`app.kura.wallet.prototype`, debug to nondebuggable optimized via ADB without
+clear/uninstall. Pulled installed APKs match both inputs. This is not a
+production-package upgrade, Android-installer confirmation or independent
+all-record retention proof. The controlled fixture loader alters synthetic data.
+
+Preserved failed attempts:
+- Complete app attempt 1: **49 passed / 45 failed / 4 skips**, 835.509 s. The guest
+  was at Android's locked-phone screen; waking did not authenticate it. After
+  real synthetic phone unlock, the unchanged first failed journey passes 1/1,
+  then the unchanged complete pair passes 94/0/4. Do not report 45 established
+  product regressions or discard this failed execution.
+- Optimized attempt 1: **2 passed / 1 failed / 1 skip**, 75.007 s. The command
+  omitted `permissionAcceptance`, skipping its stopped-app cleanup; the next
+  repeated-authentication test expected a prompt while the app remained open.
+  Both documented opt-ins and the explicit stopped-app precondition yield the
+  complete 4/4 result. No test assertion was removed or weakened.
+
+The owner physically tested the newer crop and independent missing-side actions
+in local Beta 3 / 122, APK SHA-256
+`325e948720d0d74285c488f4814b70096d456990e71650394cfd17eae8aaf153`.
+Its source/build/vendor inputs match before the intentional version change.
+This is UI feedback, not a hardware-key, production-upgrade, difficult-card
+accuracy/arm64-performance or complete accessibility acceptance result.
+
+Real TalkBack binds and touch exploration enables; preview/Zoom direct focus
+and preview state are observed. Two injected crop swipes fail to advance focus.
+Review found forced text-leaf focus and injection assumptions unproven. A native
+Settings control changes ordinary app navigation, not established reader-next
+behavior; its in-process cleanup aborts JUnit completion. A separate initial
+probe paired with R8 crashes because the debug test references removed Kotlin
+runtime classes. Exact debug bytes are restored for that investigation after the
+independent optimized qualification. These are harness/setup findings, not an
+established Kura navigation bug, and none counts as a reader journey pass.
+SDK audio capture is denied `UNAUTHENTICATED`; no credentials, auth bypass or
+alternate audio endpoint is tried. Spoken feedback remains unverified. Native
+input help was inspected without a further input-injection workaround.
+
+### Approved physical prototype checks
+
+A Pixel 6 Pro running GrapheneOS / Android 17 (API 37, arm64) exercises the exact local
+prototype 123 debug APK recorded above. Through normal UI, a synthetic file
+image is cropped, OCR is explicitly opted into, the leading-zero number is
+applied to an existing blank field, and an existing nonempty name is retained.
+The intended issuer prefill hit the soft keyboard and altered the synthetic name;
+that setup mistake is retained, and prefilled-issuer preservation is not claimed.
+No recognized fields are added outside the existing form. A saved front-only
+card exposes its missing-back action directly in details; adding the synthetic
+back there succeeds. This is file import, not real camera capture or a measured
+camera latency/memory result.
+
+After a real prototype force-stop/relaunch, the one synthetic card and both
+decoded images remain available, and Require app unlock remains off without a
+new app authentication prompt. The initial image assertion wrongly expected an
+Android ImageView; Compose exposes bitmap semantics as android.view.View. The
+captured hierarchy already contains both decoded images with substantial visible
+bounds; that failed assertion is retained and the cold relaunch was not repeated
+to conceal it. An optional encrypted-media hash query returned no usable output
+and was stopped; no byte-retention comparison is claimed. No uninstall, data
+clear or version upgrade occurs inside this cold-relaunch scenario.
+
+A separate test-only gesture helper validates the real TalkBack input route on
+an isolated 16 KiB emulator: natural A→B→C focus events, then double tap outside
+observed controls activates C exactly once. A two-minute idle timeout disables
+it. Initial force-stop setup and native all-caps label failures are retained.
+On the phone, TalkBack binds but the helper does not bind in two bounded setup
+attempts; no phone reader gestures run. Original accessibility values are
+restored, the helper is uninstalled and absence/unbound state is verified after
+each attempt. A targeted package-alignment diagnostic does not establish the
+cause: the helper passes SDK alignment checks and has no native libraries. No
+policy bypass, further speculative reinstall or spoken-feedback pass is claimed.
+
+A separate permission-free, read-only metadata probe passes **1/1**, 3.012 s,
+against the hash-verified prototype. Both existing wrapping keys report
+**StrongBox-backed AES-256**. The app-authenticated wrapper requires
+hardware-enforced user authentication; the phone-only wrapper does not require
+per-app authentication. No key bytes are exported, keys created/deleted,
+authentication performed or cipher operation invoked. The temporary test package
+is removed, and accessibility remains in its original off state. This verifies
+actual key properties rather than only advertised hardware features; it does
+not verify authenticated-operation behavior, screen-off denial or production
+upgrade retention.
+
+The old, incompatible production-channel installation was removed only after
+specific confirmation. Published 2.1.0 / code 119 and beta 3 / code 122 APK hashes, signatures
+and common GitHub certificate are verified offline, but neither is installed as
+an upgrade baseline yet. Actual production upgrade, authenticated-mode hardware
+checks, difficult photographed cards and complete reader/spoken acceptance
+remain outstanding. A recovery-canary procedure passes synthetic wrong-identity,
+wrong-password and successful-signature controls without touching a real key;
+actual protected-backup provenance/recovery and production signing remain separate.
+
+**Stable remains held:** all five open issues must have verified closure
+criteria. #29's owner crop review is supplied; source merge is separate.
+#9/#10/#15 retain physical/hardware, production retained-upgrade and representative
+camera acceptance. #13 needs all prepublication gates, then verified actual
+publication to complete Stable. No waiver or numerical issue cleanup substitutes
+for verification. Final tagged CI bytes, approved recovery verification, separately authorized
+production signing and artifact checks remain pending. An approved physical
+test target has completed the narrow prototype checks above; authenticated
+hardware, live-camera and production-upgrade acceptance are not established. [CI/security scope](CI-VERIFICATION.md) and
+[dependency limits](DEPENDENCY-BASELINE.md) remain explicit. AI assisted work and
+review are not independent human approval.
+
+## Combined candidate qualification — 7 November 2026
+
+The atomic-publication fix, fixed-mask crop editor, stable scanner 0.8.0/updater
+0.2.2 and Kotlin JVM/Compose 2.4.21 are qualified on review branches. Runtime
+application source is `3c50ed1`; final build/external driver source is `1f544dd`.
+[Source, APK hashes, counts and limitations](evidence/kotlin-runtime-20261107.json)
+record the exact correspondence. Application code/resources/native payloads are
+identical between those builds; disposable debug signatures differ, and the
+optimized APK's source-revision metadata changes. Full signed-APK byte identity
+is not claimed.
+
+| Fresh verification | Result |
+| --- | --- |
+| [Final four-way CI](https://github.com/phillip9933/Kura/actions/runs/42268577334) at `1f544dd` | 63 JVM tests per configuration; **252 passed**, no failures/errors/skips. Lint warnings: 58 offline, 62 updater, 64 scanner, 67 both; no errors/fatals. Build, unsigned release, manifest/16 KiB packaging and installer-harness compilation pass. |
+| Complete enhanced app selection, API 37 / 16 KiB | **92 passed, 0 failed, 4 existing opt-in skips / 96 cases**, 945.314 s |
+| Modern core security / database / import-publication | **7/7, 12/12, 31/31** passed; no skips |
+| API 26 / 4 KiB core | **49 passed, 0 failed, 1 existing API-specific skip** across 50 cases; import-publication passes 31/31 |
+| API 26 scanner / crop / OCR | **18/18** passed, 102.358 s |
+| Small portrait / landscape at 200% text | **4/4 each**, 72.837 s / 83.268 s; screenshots inspected and keyboard controls exercised |
+| Real OCR process interruption | Six workspace files and a synthetic capture confirmed before force-stop; prepare deliberately interrupted, **not a passed test**. Reopen cleanup/no-draft-publication verification passes **1/1**, 5.065 s. |
+| Phone-only encrypted-wallet prerequisite and cold reopening | API 26: ordinary journey **1/1**, cold prepare/verify **2/2 phase executions**. API 37: prerequisite **1/1**, cold phases **2/2**. Real force-stops; no clear/uninstall between those phases. |
+| External nondebuggable/R8 journeys | **4/4** passed, 97.877 s: authenticated fixtures/lock/reopen, denied camera/cancelled picker, repeated real unlocks, and manual update discovery |
+| Separate pre-Kotlin storage PR | [Exact-head manual CI](https://github.com/phillip9933/Kura/actions/runs/42265709472) at `80a2ea7`: four builds, **252 JVM passes**, no failures/errors/skips; local Kotlin 2.2.20 import suites **31/31 on each API** remain a separate scope. |
+
+The four full-app skips are cold-process, retained-upgrade, store capture and
+empty-vault timing opt-ins. Relevant cold phases run separately above; fresh
+store capture, empty-vault tracing and version-upgrade acceptance are not claimed.
+The failing pre-upgrade baselines and unchanged denied-publication assertion
+remain in [atomic-publication evidence](evidence/atomic-publication-20261107.json).
+The earlier Kotlin candidate's API 26 failure retains its separate scope below.
+Independent AI patch review found no blocking issue; it is not human sign-off.
+
+The optimized test transition is **same-version debug to optimized**, using
+`app.kura.wallet.prototype`, version **2.2.0-beta.3-dev (122)** before and after,
+source `3c50ed1`, the same verified disposable CI signer and UID 10249. Actual
+installed base-APK hashes match the inspected CI inputs. The operation is
+`adb install -r -t`, not the Android update-confirmation UI. The R8 fixture
+loader changes synthetic records; this transition is not independent evidence
+of all pre-existing-record retention, beta-to-stable upgrade, production identity
+or installer acceptance. Earlier genuine version-change/installer phases retain
+their own source/date below. Production signing material was not accessed.
+
+The final CI dependency graph matches the scanned graph in all nine scopes and
+four configurations, including external artifact hashes. The **318-query OSV
+result is reused**, not rerun: ten records across six build-only package
+versions; no returned match in collected app compile/runtime/test scopes.
+[Coverage and unresolved debt](DEPENDENCY-BASELINE.md) remain explicit.
+
+**Still unverified:** owner crop review, screen-reader spoken feedback,
+photographed-card/arm64 and hardware/production-package acceptance. Physical
+tests are deferred, not passed or waived. Stable metadata, tagged release CI,
+production signing and published-artifact verification remain separate. No stable
+release, main merge or beta deletion occurred. Both owned emulators were stopped
+after verification; original local changes and recovery history remain intact.
+AI assisted implementation, independent patch review, tests and documentation.
+
 ## APK verifier regression — 6 November 2026
 
 The local maintenance diff based on `08d3f9e` reads manifest security policy from
@@ -813,3 +1002,254 @@ The isolated installer selection now passes **18 phase executions**: stable119�
 At74480f9, the complete enhanced selection passes **87 active / 0 failed / 4 opt-in skips / 91 total**,1055.771s, with exact installed app/test hashes and a complete transcript. The default offline selection completes with **66 passed / 1 failed / 4 skips / 71 total**,928.976s: encrypted-pass export could not find its action. The saved hierarchy is still the filtered grid, proving its preceding direct raw tap had not opened the detail. That tap now uses the established frame-settled helper and asserts the pass-detail menu exists before export. All backup/password/SAF/restore/data assertions remain. The first cold-process verify also observed default UI memory before Compose initialization, while loaded presentation already correctly requested Cards; the ordinary regression already waited for initialization, but the cold branch did not. It now waits only for first initialization, never for a matching selected value, and retains both immediate presentation-order and exact first-selected-tab assertions.
 
 Corrected offline export passes1/1 in58.124s; cold prepare/force-stop/verify passes2/2 in7.668s/6.903s. Both enhanced/offline pair builds pass (50s/46s respectively). These changes affect two test methods only; application/debug/optimized bytes remain unchanged. Retain the complete enhanced74480f9 pass, repeat its affected backup journey and all cold phases on the final harness, and rerun the complete offline selection. Do not relabel the earlier failed offline run as a pass or claim the enhanced full selection executed at the subsequent test-only commit. [Scoped evidence](evidence/beta2-export-cold-observers-20261106.json). The final real OCR interruption cleanup also passes1/1 in6.948s with four orphaned workspace files plus an abandoned synthetic capture before relaunch; file count varies with interruption timing, and all owned temporary data is removed without publishing a draft. Earlier five-file observations remain historical. AI assisted observation and test synchronization; no application/security change or assertion removal.
+
+
+## Stationary card-mask qualification — 7 November 2026
+
+The crop revision replaces document corners/rotation popup with a fixed mask,
+pan/pinch and labelled zoom/movement/angle controls. Preview and confirmation
+stay outside the controls scroller. Geometry is shared with the actual native
+renderer; quarter turns use exact transforms to preserve boundary pixels. See
+[design](design.md), [integration](CARD-RECOGNITION.md#stationary-card-mask--7-november-2026)
+and [source-scoped evidence](evidence/card-mask-20261107.json). This is draft
+qualification, not a new published APK or owner approval.
+
+The old editor fails the real small-portrait photo/control visibility regression
+**1/1 as expected** (16.912s). V3 passes **7/7** focused layout/native crop cases
+(48.905s), including gradient landmarks, repeated-source rendering, resource
+bounds, exact quarter turns and crop/OCR re-entry. V4's revised pinned mode
+controls pass **3/3** small-portrait dark/200% cases (68.441s). Screenshots were
+visually inspected. V4 landscape/200% passes visibility but fails both OCR
+return journeys: the narrow offer dialog leaves a 9 dp scroll region. A wider
+landscape review dialog and an explicit minimum-review-space regression are now
+under qualification. The failure remains evidence, not a pass.
+
+V5 builds debug/test and unsigned release and runs **63 JVM tests, zero failures,
+errors or skips**; app lint has **0 errors/fatals and 28 warnings**, in 202.398s.
+These checks precede the final review-dialog/test changes and are not presented
+as final-head qualification. V4's unused-layout lint error was fixed without a
+suppression. Earlier V2/V3 failures and incompatible disposable-debug-key install
+attempts remain recorded. A queued run after failed installation used the old
+V3 pair and is explicitly excluded from V4 results.
+
+Use a fresh, credential-free isolated build and disposable emulator; the
+prototype package guards remain required. Relevant selection:
+`CardCropLayoutTest,CardRotationTest,CardScannerIntegrationTest,CardScanSafetyTest`.
+Run both complete app selections and required build/packaging checks on final
+source. Screenshots may be captured only with `captureCropPreview=true` on the
+guarded synthetic prototype emulator; the fixture temporarily clears/restores
+secure-window flags. API29+ public window inspection is required for that extra
+pixel/screenshot assertion; older-API control/native-output checks still run.
+Physical/production acceptance and screen-reader coverage are not inferred from
+these emulator checks. No stable publication or beta removal occurred. AI
+assisted implementation, tests, design notes and verification.
+
+### Final crop implementation and small-screen harness
+
+Application implementation is `8d97adc`; the V8 harness changes only read-only
+UI discovery/diagnostics. Its application APK is byte-identical to V6
+(`bc7feb7c103dbbe46976ffc41dfff3bade71e3ac72b383d571547ccceb191d5c`).
+The V8 test APK hash is recorded in the structured evidence. No application
+assertion, field/value expectation, failure boundary or test case was removed.
+
+V8 small portrait and landscape at 200% text/dark pass **4/4 each** in 72.317s
+and 84.242s. Keyboard Tab/Enter activates Zoom with the preview retained. The
+normal-font/light small-phone crop/OCR/media/lifecycle selection passes
+**18/18**, zero failures/skips, in 137.939s. This includes real native crop
+landmarks/rotation, English/Japanese recognition, existing-field conflicts,
+front/back encrypted images, separate Save, encrypted backup/staging, retake,
+cancellation and lock/stale-generation refusal.
+
+The previous V6 small-portrait full-photo case missed an offscreen no-edge
+message with its shorter eight-step search. The V6 scanner selection passed
+17/18 but missed the OCR Member number label below the preview/first field.
+The saved pre-scroll hierarchy confirms the review pane shows only the first
+expiry field at its bottom. A shared bounded read-only scroller reaches the
+unchanged expected labels/values. Both failures remain preserved; the V8
+selection now passes them. The final-implementation V6 larger portrait/dark
+layout selection passed 4/4 in 49.164s and small landscape/light visibility passed
+1/1 in 10.528s, before this test-only correction.
+
+Unedited [before/after, rotation and 200% landscape captures](design.md#visual-review-gallery)
+were inspected. The original 9 dp OCR-offer viewport defect is fixed by widening
+the landscape Material dialog; both actual return journeys and an 80 dp minimum
+review-space assertion pass. Screen-reader acceptance remains unrun; keyboard
+coverage and semantic queries are not a claim of full accessibility conformance.
+Complete enhanced regression and the final harness CI are in progress. Physical
+and production-package acceptance remain deferred. No version/signing/release
+change or beta removal is included.
+
+### Complete run and Parity click synchronization
+
+The V8 complete enhanced selection finishes **91 passed / 1 failed / 4 intentional
+opt-in skips, 96 total**, in 947.006s. Every crop/scanner case passes. The failure
+is ParityJourneyTest's secure-sharing journey: after setting the result search
+and clicking Open, its old helper cannot find More pass actions. The preserved
+hierarchy still shows the search-results list with Open Parity loyalty; the
+detail screen was never reached. The complete run is not a pass.
+
+Parity's normal controls now use the existing shared click helper, which waits
+for Compose frames and refreshes accessibility nodes before coordinate input.
+Its image-pencil semantic action/scroll handling and all assertions remain.
+The application APK is unchanged. All three Parity journeys pass **3/3** in
+62.526s: secure sharing/import cancellation and record counts, large-font draft
+recreation/image-picker cancellation, and real SAF automatic backup/retention.
+The V9 test APK hash/source are in the evidence. The full selection is rerunning
+on that harness; the earlier failure remains recorded. The four default skips
+are cold-process, prototype retained-upgrade, store screenshot and empty-vault
+timing opt-ins, not new exclusions.
+
+### Completed crop regression
+
+The V9 complete enhanced selection passes **92 active tests / 0 failures /
+4 existing opt-in skips, 96 total**, in 948.022s, on the isolated API37.2
+x86_64/16 KiB emulator. Application implementation is `8d97adc`, synchronized
+harness head `4489672`. The complete transcript and all 96 terminal statuses
+were parsed; skipped cases are the four named opt-ins above. The previous V8
+91/1/4 run remains a failed run.
+
+[Harness CI at 4489672](https://github.com/phillip9933/Kura/actions/runs/42252127473)
+passes all four configurations. Downloaded XML records **63 fresh JVM tests
+each / 252 total**, zero failures/errors/skips. Debug/unsigned release, lint,
+instrumentation/installer-harness compilation and permissions/16 KiB packaging
+checks pass. Lint warnings are 58 offline, 62 updater, 64 scanner and 67 combined;
+zero errors/fatals. Configuration-size recommendations remain warnings.
+
+This closes the software regression for the crop change. Maintainer layout
+review remains pending before publication. Screen-reader, physical-card/arm64,
+production-identity upgrade and final signed-artifact acceptance are separate
+and unverified here. No app version, production signing, release or beta asset
+change occurred.
+
+### Stable SDK artifact correspondence
+
+Stable scanner 0.8.0/updater 0.2.2 source `d5e524b` passes isolated debug/test,
+unsigned release and lint checks in 70.034s (22 tasks executed / 482 up-to-date).
+The JVM task outputs are reused, not fresh local executions. App lint has
+0 errors/fatals and 30 warnings. [Separate four-way CI](https://github.com/phillip9933/Kura/actions/runs/42252631278)
+passes; downloaded XML confirms 63 fresh JVM tests each / 252 total, zero
+failures/errors/skips. Lint totals 58/62/64/67 across offline/updater/scanner/both,
+zero errors/fatals; compilation and permissions/16 KiB packaging pass.
+
+Both stable-SDK debug app/test APKs are byte-identical to the executed V9 pair,
+including signatures, resources, native payloads and DEX. The unsigned release
+APK is also byte-identical to its prior qualified build. Therefore the
+92/0/4 full-app result covers the exact stable-SDK app/test bytes as **reused
+evidence**, not a second fresh execution. [Pin/build/hash evidence](evidence/stable-sdk-pins-20261107.json).
+Kotlin remains 2.2.20 in this scope; the combined 2.4.21 candidate is separately
+qualified. No production signing, release or physical acceptance is inferred.
+
+
+### Atomic publication recovery — 7 November 2026
+
+A real API 26 run exposed a false-success file publication: the base bytes matched
+the replacement while the legacy backup remained authoritative. A pre-Kotlin
+2.2.20 baseline with the unchanged helper reproduces all three selected cases
+(**0 pass / 3 fail**, 1.985s). Modern Android reproduces the equal-byte replacement
+case (**2 pass / 1 fail**, 2.132s), where an uncommitted new file remains.
+Both baselines and the original `failedRenameIsReportedInsteadOfSilentlyClaimingRestoreSuccess`
+assertion are preserved; this is not attributed to the Kotlin upgrade.
+
+The fix refuses success while a platform backup/new transaction entry remains,
+then retains checked fsync and bounded byte/length verification. Real-directory
+permission failures exercise the OS, followed by authoritative reopen and retry;
+no AtomicFile behavior is mocked. The complete import/publication suite passes
+**31/31 on API 26**, 69.240s, and **31/31 on API 37**, 80.102s, on disposable
+x86_64 emulators (4 KiB and 16 KiB respectively). Two new cases cover different
+and identical replacement bytes. The fixed test APK was built with Kotlin 2.2.20;
+these results do not qualify a subsequent 2.4.21 build.
+
+Isolated baseline build 29.727s; fixed build/storage lint 16.750s. No new lint
+suppression, schema, backup format, key alias, production package or signing
+change. [Source/artifact evidence](evidence/atomic-publication-20261107.json).
+Full application and other library results retain their earlier source scope;
+final combined qualification is separate. AI assisted diagnosis, patch and tests.
+
+
+### Kotlin 2.4.21 candidate before atomic-publication fix
+
+The CI-built APKs from `c54787d` (manual run 42254897153) pass the modern
+API 37/16 KiB complete app selection: **92 passed / 0 failed / 4 existing opt-in skips**,
+96 terminal cases, 941.553s. Core security 7/7, database 12/12 and import 29/29
+pass. On API 26/4 KiB, scanner 18/18, phone-unlock/data 1/1 and database 12/12
+pass; security has 6 passed / 1 API-specific skip. Import has 28 passed / 1 real failure,
+which prompted the separately recorded atomic-publication fix above.
+
+These APKs predate that fix; they are not final combined-candidate acceptance.
+Four existing full-app skips are cold-process, retained-upgrade, store capture
+and empty-vault timing opt-ins. No physical/arm64, production-identity or
+signed-artifact claim is made. Raw transcripts and verified APK hashes remain
+in task outputs; failed API 26 evidence is retained. Independent AI patch review
+of the atomic fix found no blocking issue, not human maintainer sign-off.
+
+### Horizontal credit-card mask — 7 November 2026
+
+The local production testing build exposed a portrait default: framing followed
+the captured/detected photo rather than a card. A new pixel-based regression
+reproduces the defect before the fix (**0 passed / 1 expected failure**): the
+visible mask ratio is 0.629 instead of 85.60/53.98. New imports and Auto fit now
+select the horizontal ID-1 card shape. Full photo explicitly restores original
+proportions; rotation keeps the selected mask ratio. The regression checks the
+actual visible border, full-photo recovery, quarter-turn framing and the image
+read back from encrypted draft storage. Existing review/preservation and
+Auto-fit tests cover the changed default without weakening their assertions.
+
+Fresh checks on the uncommitted patch over `d5777c8`:
+
+- Model JVM tests: **28/28**, no failures/skips; debug build/test APK, debug lint
+  and unsigned release build pass in 78.243s. Lint reports 0 errors / 30 warnings.
+- API 37 / 16 KiB small portrait, light, 100% text: crop/rotation/scanner/safety
+  selection **19/19**, 154.641s, no failures/skips. This includes optional OCR,
+  front/back association, encrypted save/backup and cancellation boundaries.
+- API 37 / 16 KiB dark, 200% text: layout **5/5 landscape**, 103.918s, and
+  **5/5 portrait**, 93.380s, no failures/skips. Synthetic mask/rotation/card
+  screenshots were visually inspected; keyboard mode selection remains covered.
+- API 26 / 4 KiB layout and saved-image checks: **5/5**, 53.841s, no
+  failures/skips. Its first launcher stopped before app installation because
+  this image lacks `getconf`; the documented kernel `smaps` page-size guard
+  preserves the exact 4 KiB assertion. Failed setup evidence is retained.
+
+The local signed APK retains `app.kura.wallet`, 2.2.0-beta.3 / 122, scanner and
+direct updates. Production certificate matching, release manifest restrictions,
+OCR model hashes, baseline profiles and ZIP/native 16 KiB checks pass. Signing
+was separate from credential-free build/test/verifier execution. Both owned
+emulators were stopped. No source was committed/pushed and no release published.
+[Source, artifact and verification evidence](evidence/horizontal-card-mask-20261107.json).
+Broader full-suite results remain historical; physical/arm64, production-package
+runtime, new screen-reader and actual version-code upgrade acceptance were not
+run for this patch. AI assisted the fix, regression and verification.
+
+### Missing-side image actions in card details — 7 November 2026
+
+The details view previously hid every empty image slot once any image existed.
+The new real-UI/picker regression fails before the fix (**0 passed / 1 expected
+failure**, 22.971s) on the reported front-present/back-missing case. The view now
+retains both manual-card image slots and decides whether to show the edit menu
+from that individual slot. Existing photos remain viewable; replacement/removal
+continues through the card editor. Imported-pass details retain their read-only
+image presentation.
+
+Fresh API 37 / 16 KiB results on a disposable prototype installation:
+
+- Small portrait/light at 100% text: **5/5**, 93.769s, no failures/skips.
+  Selection: the four-state missing-side regression, existing staged-image
+  edits, imported read-only details and both image-request ownership cases.
+  The new case covers neither/front-only/back-only/both images, correct record
+  and side in the system picker, and unchanged record fields after cancellation.
+- The same four-state regression at 200% text/dark: **1/1 portrait**, 38.942s,
+  and **1/1 landscape**, 58.240s. Image slots and accessible add-photo controls
+  were visually inspected in the normal and large-text captures.
+
+Debug application/test APKs, debug lint and unsigned release build pass in
+75.800s; lint has 0 errors / 30 warnings. The local signed production APK retains
+the accepted horizontal crop changes, scanner and direct updater, with unchanged
+2.2.0-beta.3 / 122 metadata. Release certificate, manifest restrictions, OCR
+models, baseline profiles and 16 KiB packaging checks pass. Signing stayed
+separate from credential-free build/test/verifier execution; the owned emulator
+was stopped. [Source/artifact evidence](evidence/card-detail-image-actions-20261107.json).
+
+Broader suite results remain historical. No fresh API 26, physical/arm64,
+screen-reader, production-package runtime or version-code upgrade qualification
+is claimed. No commit, push or release was performed. AI assisted implementation
+and verification. The owner's preceding crop-appearance acceptance is scoped to
+that local UI review, not stable-release/data-safety acceptance.

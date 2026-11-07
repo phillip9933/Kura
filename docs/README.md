@@ -22,3 +22,5 @@ Start with the root [README](../README.md) to build the app and [Contributing](.
 Keep descriptions near their owner. Link to test results and security findings rather than copying counts or promises into multiple guides. Historical released sources remain in Git; compatibility code is part of the current native application.
 
 - [Card recognition design and synthetic feasibility evidence](CARD-RECOGNITION.md).
+
+- [Wallet design](design.md): screens, journeys, shared states, privacy/accessibility criteria and the detailed card-image interaction; whole-app acceptance gaps remain explicit.

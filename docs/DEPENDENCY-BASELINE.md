@@ -127,3 +127,120 @@ Evidence covers declarations, scoped offline resolution/advisory lookup,
 retained public artifacts and existing CI references. It does not establish
 platform security-service scan status or signing recovery. Sensitive findings and credential-location inventories belong
 in the maintainer's private records, outside this repository.
+
+
+## Stable SDK pin follow-up — 7 November 2026
+
+The source now selects scanner 0.8.0 and updater 0.2.2. The dated inventory and
+advisory lookup above retain their original candidate-version scope; they are
+not relabelled as a new scan. [Pin review and binary comparison](evidence/stable-sdk-pins-20261107.json)
+verifies both published outer archives, exact tag/source revisions, all 185
+scanner host pins and seven supplied updater pins, and exact Maven coverage.
+The scanner archive has no inner manifest: Kura generates its own after checking
+the outer digest and all 23 supplied SHA-256 sidecars, retaining provenance.
+
+All five scanner AARs and the updater AAR match the previous pins byte-for-byte.
+The scanner core JAR has identical entry payloads despite a changed ZIP hash;
+Maven source JARs are identical. POMs change release versions only; Gradle module
+metadata also updates the core-JAR archive hashes. Licenses, models and native
+notices are retained; native/transitive versions are unchanged. This is bounded
+artifact correspondence, not a new native rebuild, security audit or Kura
+physical acceptance. Host build/runtime qualification is recorded separately
+before merging; the original build-scoped debt and scan gaps remain visible.
+
+
+## Combined Kotlin/stable-SDK graph — 7 November 2026
+
+[Exact-head CI 42260877620](https://github.com/phillip9933/Kura/actions/runs/42260877620)
+at `4e0199b` exports actual selections and external Maven artifact SHA-256 values
+for **nine scopes in each of four configurations**. These cover app debug/release
+compile/runtime, default Android-test compile/runtime, model/import JVM-test
+runtime and root build-plugin classpath. This is a new, narrower named scope,
+not a relabelling of the earlier sixteen-configuration export.
+
+Kotlin JVM/Compose and selected standard library are 2.4.21; scanner 0.8.0 and
+updater 0.2.2 are stable pins. Root build tools have 119 components; app release
+runtime remains 139 / 149 / 143 / 153 across offline/updater/scanner/both. The downloaded
+CI reports pass 252 fresh JVM tests, no failures/errors/skips; lint has 0 errors
+and 58 / 62 / 64 / 67 warnings. [Inventory, hashes and scope](evidence/dependency-resolution-20261107.json).
+
+A fresh OSV batch lookup of **318 unique selected Maven tuples** returned
+**10 records across six build-tool package versions**, no truncated queries.
+Every matched tuple occurs only in the collected root build-tool scope; no match
+was returned for the collected app compile/runtime or test scopes. This does
+not prove absence of unknown/unindexed vulnerabilities or safe native binaries.
+Existing build-tool debt remains unresolved and needs scoped maintenance; it
+was neither suppressed nor upgraded by an untested classpath override. Detailed
+triage stays outside Git. The four CI actions retain their separate 6 November
+scan; they were not included in these 318 queries. Only public Maven names and
+versions were sent to OSV from a separate client without source, home or credentials.
+
+This export still excludes comprehensive opt-in installer, processor/lint,
+embedded Gradle/JDK/SDK and native coverage. It is not a shipped/R8 SBOM. The
+subsequent atomic-publication fix changes no dependency declarations, but its
+final CI inventory must be compared before reusing this advisory result.
+
+
+### Final graph correspondence
+
+The fixed candidate's CI at `3c50ed1` and the final external-driver build at
+`1f544dd` export the same selected modules and external artifact hashes as
+`4e0199b` in every one of the nine scopes/four configurations. The 318-query
+7 November result therefore remains applicable within that exact scope as
+**reused evidence**. It is not a second scan or a claim that every older scope
+was recollected. [Final CI and runtime correspondence](evidence/kotlin-runtime-20261107.json).
+
+
+## Strict lock-state follow-up — 7 November 2026
+
+The root build-plugin classpath and the eight named project configurations in
+`tools/export-dependency-resolution.gradle` now use committed strict version
+locks. The app keeps separate states for all four scanner/updater combinations,
+plus the combined-feature `installerAcceptance=true` harness. Model/import test
+states and the root buildscript state are shared where their graphs agree.
+Normal builds consume lock states; they never pass `--write-locks` in CI.
+
+The initial locked exports match the reviewed CI components and external
+artifact hashes exactly in every one of the nine normal scopes/four variants.
+The existing installer harness changes only the Android-test runtime scope;
+its component tuples are already present in the collected union, so the same
+318-tuple advisory lookup applies within that union. It is not a new scan or
+comprehensive installer-path assessment. No additional unique tuple was added
+to the previously queried union; no new advisory lookup is claimed.
+
+In a disposable source copy, removing the app's valid lock state correctly
+fails resolution. Restoring that retained file then passes the combined
+JVM/lint/debug/release/test/optimized/benchmark build: **63 JVM tests**, no
+failures/errors/skips; lint **0 errors / 30 warnings** locally. Debug, test,
+unsigned-release, optimized and external-driver APK bytes match the previously
+qualified build-123 inputs exactly. Existing runtime results therefore apply to
+those exact bytes; they are not repeated executions under a new source label.
+
+This is **version locking**, not artifact authentication or a complete Gradle
+lock/verification system. The selected map does not automatically lock
+optimized/profile/benchmark, hidden compiler/processor/lint or every opt-in
+configuration. Full Gradle artifact-verification metadata remains absent;
+existing vendor/model/distribution hash checks cover narrower boundaries.
+Reviewed CI/hash correspondence is baseline consistency evidence, not an
+independent publisher signature or reproducible native build. Unresolved
+build-tool advisories and native/toolchain coverage gaps remain open.
+
+To deliberately update these states, review dependency changes and provenance,
+then run the named export with `--write-locks` under each supported flag set,
+including the combined installer harness. Compare the generated graphs before
+committing the explicit lockfiles. Do not regenerate them simply to silence a
+failed check or use a single variant's state for another optional build.
+
+
+## Current source/secret check follow-up — 7 November 2026
+
+[CI verification](CI-VERIFICATION.md) records the new pinned, private-report
+checks. Gitleaks 8.30.1 passes its fabricated failing control and current tracked
+tree with zero findings, both locally and in the hosted `secret-scan` job at
+`16923a1`. This is not Git-history or binary-internal coverage. The local Semgrep
+native 1.184.0 wrapper covers 69 shipping Kotlin files with 13 reviewed rules,
+three controlled detections and seven retained/reviewed informational audit
+prompts; no unreviewed matches, errors or skipped rules. Its new hosted check
+remains pending. These source checks do not replace dependency/native scanning,
+publisher authentication or signing-recovery evidence. Earlier no-scan statements
+above retain their dated scope; platform-managed service state is still unverified.

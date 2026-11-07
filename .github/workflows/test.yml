@@ -6,13 +6,40 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      export-prototype-apks:
+        description: Export prototype and core-test APKs for disposable-emulator acceptance
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
 
 jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Scan tracked tree with redacted private reports
+        run: python3 tools/run-secret-scan.py --report-dir "$RUNNER_TEMP/kura-secret-scan-reports"
+  kotlin-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Check canonical archive and audit binding regressions
+        run: python3 -m unittest discover -s tools/tests -p 'test_kotlin_security_scan.py' -v
+      - name: Check Kotlin source with private native-scanner reports
+        run: python3 tools/run-kotlin-security-scan.py --report-dir "$RUNNER_TEMP/kura-kotlin-security-reports"
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -51,6 +78,26 @@ jobs:
           if [ "$DIRECT_UPDATES" = "true" ]; then args+=(--direct-updates); fi
           if [ "$CARD_SCANNER" = "true" ]; then args+=(--card-scanner); fi
           python3 tools/verify-native-packaging.py "${args[@]}"
+      - name: Record resolved runtime and build dependencies
+        run: ./gradlew -I tools/export-dependency-resolution.gradle exportDependencyResolution -PdirectUpdates=$DIRECT_UPDATES -PcardScanner=$CARD_SCANNER -PkuraSourceRevision=${{ github.event.pull_request.head.sha || github.sha }} --max-workers=2 --console=plain
+      - name: Build supplemental runtime acceptance APKs
+        if: github.event_name == 'workflow_dispatch' && inputs.export-prototype-apks && matrix.direct-updates && matrix.card-scanner
+        run: ./gradlew :core:security:assembleDebugAndroidTest :core:database:assembleDebugAndroidTest :core:import:assembleDebugAndroidTest :app:assembleOptimized :benchmark:assembleDebugAndroidTest -PdirectUpdates=$DIRECT_UPDATES -PcardScanner=$CARD_SCANNER --max-workers=2 --console=plain
+      - name: Export prototype and core-test APKs
+        if: github.event_name == 'workflow_dispatch' && inputs.export-prototype-apks && matrix.direct-updates && matrix.card-scanner
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: kura-prototype-runtime-apks
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            app/build/outputs/apk/optimized/app-optimized.apk
+            benchmark/build/outputs/apk/androidTest/debug/*.apk
+            core/security/build/outputs/apk/androidTest/debug/*.apk
+            core/database/build/outputs/apk/androidTest/debug/*.apk
+            core/import/build/outputs/apk/androidTest/debug/*.apk
       - name: Compile opt-in installer acceptance harness
         if: matrix.direct-updates && matrix.card-scanner
         run: ./gradlew -PdirectUpdates=true -PcardScanner=true -PinstallerAcceptance=true :app:assembleDebugAndroidTest --max-workers=2 --console=plain

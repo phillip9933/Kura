@@ -1,0 +1,134 @@
+{
+  "date": "2026-11-07",
+  "central_guidance_revision": "2026-11-06-draft.3",
+  "base_revision": "d5777c8942e699f390eda27fc163f0b0a2eb2df1",
+  "application_and_tests_patch_sha256": "769105a95e49d73e9c769165251dd856b26060f182410bfd3957b6aeb92517bb",
+  "source_state": "Uncommitted local changes include the previously accepted horizontal crop fix",
+  "goal": "Keep each missing front/back photo independently addable from manual-card details",
+  "baseline": {
+    "passed": 0,
+    "failed": 1,
+    "expected_failure": true,
+    "host_seconds": 22.971,
+    "failure": "Missing Back image stays addable from details when Front is populated"
+  },
+  "runtime": [
+    {
+      "configuration": "API 37 / 16 KiB, 360x640 dp portrait, light, 100% text",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "host_seconds": 93.769,
+      "transcript_sha256": "ac655081892593a677d1c91fb6cb192cdb68d86c32609dce820d925c0d245ba5"
+    },
+    {
+      "configuration": "API 37 / 16 KiB, 360x640 dp portrait, dark, 200% text",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "host_seconds": 38.942,
+      "transcript_sha256": "8fe3dccf6cda718efcc7212820750d50f4b7481f4047fdf5eef4c84d98a1e491"
+    },
+    {
+      "configuration": "API 37 / 16 KiB, 640x360 dp landscape, dark, 200% text",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "host_seconds": 58.24,
+      "transcript_sha256": "714ac09b41e914530b47395bd57ce185a8f88e8f641cf29de184cd737dd5b8ca"
+    }
+  ],
+  "verification_scope": [
+    "Neither/front-only/back-only/both image states",
+    "Missing-side picker routes to the correct record and column",
+    "Cancelling the picker preserves record image fields",
+    "Existing-image viewing and staged edit/save/cancel",
+    "Imported-pass read-only details",
+    "Image request lock, replacement-form and expiry boundaries"
+  ],
+  "build_and_lint": {
+    "debug_lint": {
+      "Warning": 30
+    },
+    "build": {
+      "exit_code": 0,
+      "seconds": 75.8,
+      "tasks": [
+        ":app:assembleDebug",
+        ":app:assembleDebugAndroidTest",
+        ":app:lintDebug",
+        ":app:assembleRelease"
+      ]
+    },
+    "unit_tests": "Not rerun: image-slot availability is exercised through real UI/picker regressions"
+  },
+  "apk": {
+    "base_source_revision": "d5777c8942e699f390eda27fc163f0b0a2eb2df1",
+    "package": "app.kura.wallet",
+    "version_name": "2.2.0-beta.3",
+    "version_code": 122,
+    "variant": "release",
+    "debuggable": false,
+    "test_only": false,
+    "min_sdk": 26,
+    "target_sdk": 36,
+    "card_scanner": true,
+    "direct_updates": true,
+    "native_alignment_16k": true,
+    "signed": true,
+    "signer_sha256": "1e19598265c5c5920639da46261944463f8ec65793fe0dbd362a558599c6dfd1",
+    "apk_bytes": 116861362,
+    "apk_sha256": "325e948720d0d74285c488f4814b70096d456990e71650394cfd17eae8aaf153"
+  },
+  "visual_review": [
+    {
+      "name": "normal-Neither.png",
+      "sha256": "b720adaf5fcc29745fee70d1de2162de224dc95451633f01e1f9abb57ef21c8b",
+      "visual_review": "Image slots, labels and missing-side controls inspected; synthetic inputs only"
+    },
+    {
+      "name": "normal-Front.png",
+      "sha256": "1a02a2426b2dad5f0746b88620c636fc36f2311951b50b16bed3f35bbcd1ae29",
+      "visual_review": "Image slots, labels and missing-side controls inspected; synthetic inputs only"
+    },
+    {
+      "name": "normal-Back.png",
+      "sha256": "a48fd8534d25b1bb999b35dec3aa1f5bfeb6f5d258151fbd9710ef6f4be5e757",
+      "visual_review": "Image slots, labels and missing-side controls inspected; synthetic inputs only"
+    },
+    {
+      "name": "normal-Both.png",
+      "sha256": "d702bb3e13d1ebe46fac4e28c24ecb4f12ef779a14f81b8ecf3354018677dd35",
+      "visual_review": "Image slots, labels and missing-side controls inspected; synthetic inputs only"
+    },
+    {
+      "name": "portrait200-Front.png",
+      "sha256": "190b57cca68b11e85088ec881b17e433aee72fa46f7e104daf50d00b73848bb0",
+      "visual_review": "Image slots, labels and missing-side controls inspected; synthetic inputs only"
+    },
+    {
+      "name": "portrait200-Back.png",
+      "sha256": "21d9ae3bbc722eb3fc0f14323829f3d6964c77837374361b586849f4f3bc7d3e",
+      "visual_review": "Image slots, labels and missing-side controls inspected; synthetic inputs only"
+    },
+    {
+      "name": "landscape200-Front.png",
+      "sha256": "5229d7f371eac06608d086de9c4258046ebe495b670374a1e64cca1dd0e87de6",
+      "visual_review": "Image slots, labels and missing-side controls inspected; synthetic inputs only"
+    },
+    {
+      "name": "landscape200-Back.png",
+      "sha256": "d347d8e120046ecc2fdd7a0e6b15cc9fa586a8f27cf500cc6b13f2ed1bad8cb4",
+      "visual_review": "Image slots, labels and missing-side controls inspected; synthetic inputs only"
+    }
+  ],
+  "crop_feedback": "Owner accepted the crop appearance before this fix; no broader physical/data-safety acceptance inferred",
+  "execution": "Credential-free network-isolated build/app/verifier. Disposable prototype package only. Signing used a separate offline trusted-SDK-only helper.",
+  "not_run": [
+    "Full app/core suites for this patch",
+    "Fresh API 26 or physical/arm64 runtime checks",
+    "Screen-reader audit",
+    "Production-package runtime or actual version-code upgrade acceptance"
+  ],
+  "release_state": "Local testing only; beta.3 / 122 unchanged; no commit, push, merge, tag or release"
+}

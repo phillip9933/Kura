@@ -10,7 +10,7 @@ class OptimizedJourneyTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val targetPackage = (InstrumentationRegistry.getArguments().getString("targetPackage")
         ?: "app.kura.wallet.prototype.benchmark").also {
-        require(it in setOf("app.kura.wallet.prototype.benchmark", "app.kura.wallet.prototype.profile"))
+        require(it in setOf("app.kura.wallet.prototype", "app.kura.wallet.prototype.benchmark", "app.kura.wallet.prototype.profile"))
     }
     private val device = UiDevice.getInstance(instrumentation)
     private fun click(text: String) {
@@ -34,6 +34,9 @@ class OptimizedJourneyTest {
         assertTrue(device.wait(Until.hasObject(By.desc("Settings")), 20000))
     }
     @Test fun authenticatedLaunchFixturesLockAndReopen() {
+        check(android.os.Build.HARDWARE in setOf("ranchu", "goldfish"))
+        val info = instrumentation.context.packageManager.getApplicationInfo(targetPackage, 0)
+        assertEquals(0, info.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)
         device.wakeUp()
         val context = instrumentation.context
         context.startActivity(Intent().setClassName(targetPackage,"app.kura.nativeapp.MainActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))

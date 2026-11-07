@@ -1,10 +1,145 @@
 # CI dependencies and permissions
 
+## Kotlin source-security check
+
+`tools/run-kotlin-security-scan.py` uses the pinned Semgrep native 1.184.0
+scanner from its official PyPI wheel, without installing Python packages.
+Wheel/core/rule/license hashes are explicit in `tools/security/kotlin-scan-inputs.json`.
+The helper extracts only the native executable and its same-wheel libraries.
+Rules are downloaded from the pinned upstream commit into temporary storage,
+with their license; no upstream rule text is redistributed in Kura. The
+[Semgrep Rules License](https://semgrep.dev/legal/rules-license/) permits internal
+scanning and restricts redistribution/service use.
+
+The selected 13 Kotlin rules run over **69 current shipping Kotlin files**,
+covering main and both alternatives for the scanner/updater source sets.
+Instrumented/JVM tests, benchmark code, binary/native SDK internals, build/Python
+tooling and cross-file reachability are outside this check. This is bounded
+community pattern analysis, not a complete audit. CodeQL is not substituted with
+a Java-only no-build scan: its [published compiler range](https://codeql.github.com/docs/codeql-overview/supported-languages-and-frameworks/)
+currently ends at Kotlin 2.4.20, while this source uses 2.4.21.
+
+Three fabricated forbidden-algorithm detections must succeed before the scan
+can pass. Parser/rule errors, skipped rules, incomplete selected-file coverage,
+warning/error matches and unreviewed informational matches fail. Seven existing
+GCM informational audit prompts are retained in private results; explicit
+source-hash/location-bound review records are in `tools/security/kotlin-audit-findings.json`.
+Their reviewed paths generate fresh encryption nonces or only decrypt stored
+nonces. They are audit prompts, not demonstrated nonce reuse. Changing the
+source or finding set requires review; no match is silently removed, and no
+cryptographic certification is claimed.
+
+The local offline wrapper passes with 69 files, 13 rules, three control matches,
+seven retained informational prompts, no unreviewed findings, errors or skipped
+rules. An earlier direct-core scan also included four updater test files; it
+covered the same 69 shipping files, not 73 shipping files. Initial runtime-layout
+and library/CA setup stops are retained locally; no source scan pass is inferred
+from them. Only native child processes receive the bundled library path.
+
+CI runs on an ephemeral Linux x86_64 host with a 15-minute runaway limit; that is
+not a performance budget. Reports and diagnostics remain private temporary
+files outside the checkout, with no report upload; only counts reach logs.
+Downloads send public wheel/rule requests, not source. The child receives a
+minimal environment. Local equivalent execution is network-isolated with
+separately pinned inputs; no source or credentials are mounted in the downloader.
+The hosted job is not verified until its actual run succeeds. No account security
+service, alert integration or branch setting is enabled by this workflow.
+
+### Hosted native-runtime failure and compatibility validation
+
+[Run 42321442257](https://github.com/phillip9933/Kura/actions/runs/42321442257)
+at `8b766c6` passes all four Android jobs and the secret check, but the new
+Kotlin job fails on its Ubuntu 26.04 runner before a scan summary. Raw native
+diagnostics remain private; no source vulnerability or passing SAST gate is
+inferred. The local validation host uses glibc 2.44 and is not equivalent.
+
+The wheel includes `libm` and resolver libraries importing glibc-private
+symbols without a matching libc/loader. The execution copy now uses the host's
+`libm`/resolver and the pinned wheel's remaining native libraries; executable,
+wheel and rule pins are unchanged. This addresses a concrete portability risk,
+not a demonstrated application defect. Original-runtime source-free version
+and fabricated-control probes retain return codes/categories for comparison.
+Their timeouts remain diagnostics; the required corrected-runtime startup,
+all controls and the full selected source/rule/error/skip/audit gates still
+must pass. Public failure details contain fixed categories/stage/exit codes,
+never raw stderr or real findings.
+
+Both startup modes, the fabricated control and the corrected full local check
+pass on the local host. On the Ubuntu runner, [run 42324272291](https://github.com/phillip9933/Kura/actions/runs/42324272291)
+now completes all 13 rules, 69 files and three controls, with no scan errors or
+skips. The audit gate correctly rejects all seven retained prompts because the
+initial local export used CRLF bytes while GitHub checked out canonical LF bytes.
+The original native control still fails on that host; corrected-runtime scanning
+succeeds. Failed runs remain recorded; no rule, control or finding is waived.
+
+### Canonical source and review binding
+
+The archive command now explicitly disables `core.autocrlf`. Review hashes bind
+to exact Git blob bytes, without matcher-only normalization. All 69 selected
+files in the corrected local snapshot were checked byte-for-byte against their
+Git blobs. The seven reviewed tuples were independently checked against those
+same bytes; the earlier CRLF hashes are superseded, not treated as a passing CI
+result. The corrected local native run reports 69 files, 13 rules, three controls,
+seven retained INFO prompts and zero unreviewed findings/errors/skips.
+
+Regression checks exercise a real Git archive with `core.autocrlf=true`, a
+one-byte source change, changed rule/path/line/severity, a missing finding and a
+duplicate finding. Only the exact reviewed set passes. Hosted qualification of
+the corrected binding passes in [run 42326237144](https://github.com/phillip9933/Kura/actions/runs/42326237144)
+at `2619bf7`: all four Android configurations, Kotlin security and secret scan
+complete successfully. The Kotlin job runs both binding regressions and retains
+the seven exact INFO reviews, with no unreviewed findings/errors/skips. The same
+regressions fail on the previous wrapper. A full native scan of a disposable
+snapshot with one changed nonce byte also fails with four unreviewed findings
+and a changed audit set, while all rules/controls/coverage checks still complete.
+
+A separate canonical-LF combined build passes 63 JVM cases with no failures,
+errors or skips. All five APKs (debug, test, optimized, benchmark and unsigned
+release) are byte-identical to the previously qualified local inputs. This
+confirms the existing runtime evidence applies to those same bytes; it does
+not turn a local build into the required final tagged CI artifact.
+
+## Tracked-tree secret check
+
+The verification workflow also runs `tools/run-secret-scan.py` on an ephemeral
+hosted runner. It downloads Gitleaks 8.30.1 from the official
+[`gitleaks/gitleaks` release](https://github.com/gitleaks/gitleaks/releases/tag/v8.30.1),
+checking the pinned archive digest, pinned checksum-file digest and matching
+manifest entry before execution. This is build tooling, not an app dependency.
+The scanner first has to reject a fabricated credential-pattern control, then
+scans a fresh Git archive with its default rules. A finding fails the job.
+No baseline, custom allowlist or new suppression is introduced.
+
+Reports use 100% secret redaction and private temporary files outside the source
+tree. Only counts and execution status reach the job log; findings are not
+uploaded as public artifacts. A failing scan needs private maintainer triage,
+normally by reproducing the scan locally with a private report directory.
+Never paste matches or reports into an issue. The child scanner receives a
+minimal environment and no persisted checkout credentials. Downloads send only
+public release requests; source scanning does not require network access.
+The local equivalent uses an approved isolated environment and a separately
+checksum-verified executable with `--scanner` and `--snapshot`.
+
+Scope is the current tracked tree. Git history, ignored/private files, generated
+builds and comprehensive binary/archive internals are excluded. This does not
+verify platform secret scanning or push protection, and it is not source
+security analysis or an assurance of universal secret absence.
+
+On 7 November, the offline Gitleaks 8.30.1 run against archived `acd20de`
+detected its controlled failing example and returned zero current-tree findings.
+Private reports were not uploaded. The initial control used characters outside
+the rule's base32 alphabet and was correctly not detected; it was replaced with
+a fabricated value matching the documented upstream rule, without weakening
+the scanner. The repository wrapper also passes offline against its staged
+tree, with one detected control and zero tracked-tree findings. Syntax and YAML
+checks pass. The hosted job remains pending until its actual run is recorded.
+
 Both checked-in workflows declare `permissions: contents: read`; unspecified
 token permissions are not requested. Checkout disables credential persistence.
 Validation uses GitHub-hosted runners, not a signing runner. Neither workflow
-uses `pull_request_target`, requests OIDC/write permissions, signs an artifact,
-or publishes a release. The manual candidate workflow uploads only an unsigned
+uses `pull_request_target`, requests OIDC/write permissions, uses production
+signing credentials, or publishes a release. Prototype debug/test APKs use the
+runner's disposable debug signing identity. The manual candidate workflow uploads only an unsigned
 APK. Artifact upload uses the Actions artifact service, not release credentials.
 
 ## Reviewed action references
@@ -42,12 +177,104 @@ with floating tags. No update bot or account integration is enabled here.
 The four existing matrix combinations, job names, triggers, Gradle tasks and
 report uploads are retained. The eight packaging verifier regressions run only
 in the default combination, immediately after SDK setup and before the Gradle
-build. They add Python checks without changing the existing 59 JVM executions
-per combination. Android instrumentation is compiled, not run, in these jobs.
+build. They add Python packaging checks without replacing the Gradle JVM suites.
+Current test counts come from the XML evidence in [Testing](TESTING.md).
+Android instrumentation is compiled, not run, in these jobs.
 
-The hardening diff has not run on GitHub. Existing successful runs predate it;
-local fixture results are recorded in [Testing](TESTING.md). Publishing workflow
-changes and checking actual runner/token behavior remain separate verification.
-No new measured runtime budget or required check is introduced. Account/branch
+The hardening changes merged in [PR #27](https://github.com/phillip9933/Kura/pull/27)
+after [four successful configurations](https://github.com/phillip9933/Kura/actions/runs/42228987241)
+at `960f65f`. The later [crop implementation run](https://github.com/phillip9933/Kura/actions/runs/42245999018)
+at `8d97adc` also passes all four; downloaded XML records 63 fresh JVM tests per
+configuration, 252 total, with zero failures/errors/skips. Those runs compile
+instrumentation rather than execute it. Runtime results retain separate source
+and artifact scopes in Testing.
+
+The build jobs have a 45-minute runaway-job timeout. At source `c72e5c7`,
+[run 42312339233](https://github.com/phillip9933/Kura/actions/runs/42312339233)
+measured 541–718 seconds per GitHub-hosted `ubuntu-latest` job, including
+495–678 seconds for the JVM/lint/debug/release/test-APK Gradle step. The timeout
+leaves headroom for cold public dependency downloads and the optional manual
+runtime-APK export; it is not a performance acceptance budget. Record future
+regressions and reassess from representative measurements rather than hiding
+them by extending the timeout. The unsigned-release job uses the same toolchain
+and a smaller build selection; its separate representative timing remains to
+be collected. Existing local build timings use a warm offline mirror and are
+not equivalent to hosted-runner setup/network timings.
+
+No required-check setting is introduced here. Account/branch
 rules and security-service grants are outside these workflow files; no setting
 change or effective merge-gate enforcement is claimed.
+
+## Manual prototype runtime export
+
+The verification workflow accepts `export-prototype-apks`, default false. Only
+a manual dispatch selecting it and the combined scanner/updater configuration
+builds the core instrumentation, R8-optimized prototype and external benchmark
+driver APKs. It uploads these with the prototype debug app/default test pair. That job's ordinary validation and packaging checks
+must succeed first; the complete four-way matrix remains part of qualification. Export runs before opt-in installer-harness compilation so
+the saved app test APK is the default suite. No production signing key, release
+APK or signing material enters this artifact; retention is seven days.
+
+This supports exact-head runtime qualification, including the Kotlin update, on
+a credential-free disposable emulator without installing a new global compiler.
+Record the dispatch head, downloaded artifact hashes and actual device results.
+APK export/compilation is not a runtime pass. Keep the prototype-package and
+emulator guards; never install this pair over a personal or production wallet.
+These validation artifacts are not inputs to privileged release signing or
+publishing. Production builds must follow the separate tagged-source release
+workflow. No branch/account settings, token grants or signing configuration
+change is included.
+
+
+## Resolved dependency evidence
+
+Each flag combination runs `tools/export-dependency-resolution.gradle` after
+normal build/packaging validation. It records app debug/release compile and
+runtime scopes, default Android-test compile/runtime, core model/import JVM
+test runtime, and the root buildscript classpath: nine named scopes per
+configuration. The 6 November export resolved sixteen configurations per
+combination; the new collector explicitly covers the nine scopes listed above.
+Each export retains its own scope definitions and date.
+
+Reports under `build/reports/dependencies/resolution.json` contain exact selected
+Maven coordinates and external artifact hashes, source revision, flags and
+toolchain versions. They are included in the ordinary report artifact. The
+collector does not change resolution attributes; it filters project outputs
+from artifact hashing because Android publishes several secondary variants.
+Project source is covered separately by source/artifact qualification. No
+credentials, repository URLs or absolute file paths are exported.
+
+Resolution is not a shipped/R8 SBOM. Platform/BOM metadata may carry no code;
+compile/test/build-tool matches must remain separate from runtime applicability.
+Opt-in installer-test dependencies, supplemental processor/lint configurations,
+embedded Gradle/JDK/SDK libraries and native components are not exhaustively
+covered. The collector API was exercised against real Gradle configurations in
+a credential-free offline probe; the final Kotlin graph requires its own CI
+report and advisory reconciliation.
+
+
+### External optimized driver target
+
+The exported optimized app uses `app.kura.wallet.prototype`, while the external
+benchmark driver historically defaults to `.prototype.benchmark`. Supply
+`-e targetPackage app.kura.wallet.prototype` when testing the exported optimized
+APK. All four external journeys accept that explicit synthetic identity; the
+production identity remains excluded. The external test APK targets API 37, so its
+manifest explicitly declares visibility for the three allowed prototype targets
+before PackageManager checks. Updater discovery and optimized fixture
+journeys require a nondebuggable app, and the fixture journey explicitly checks
+emulator hardware. This selects an existing release-style prototype build; it
+does not change application code, signing or authentication behavior.
+
+
+### Recorded qualification
+
+[Final manual run 42268577334](https://github.com/phillip9933/Kura/actions/runs/42268577334)
+and [PR run 42268543563](https://github.com/phillip9933/Kura/actions/runs/42268543563)
+at `1f544dd` pass all four configurations. Downloaded manual reports confirm
+252 fresh JVM passes, no failures/errors/skips and no lint errors/fatals.
+The seven exported APKs were inspected for package, signer and instrumentation
+targets; the external driver declares exactly the three prototype query targets.
+Runtime uses the source-correspondent `3c50ed1` app pair and the final `1f544dd`
+self-targeted driver, with signatures recorded separately. Four optimized
+external journeys pass. [Complete scoped evidence](evidence/kotlin-runtime-20261107.json).

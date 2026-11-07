@@ -1,0 +1,86 @@
+import groovy.json.JsonOutput
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import java.security.MessageDigest
+
+// Export selected inputs only: no credentials, repository URLs or absolute paths.
+gradle.projectsEvaluated {
+    rootProject.tasks.register('exportDependencyResolution') {
+        group = 'verification'
+        description = 'Record selected app runtime and root build-tool components.'
+        doLast {
+            def hashes = [:]
+            def coordinate = { id ->
+                id instanceof ModuleComponentIdentifier ?
+                    [group: id.group, name: id.module, version: id.version] : null
+            }
+            def digest = { file ->
+                if (!file.isFile()) return null
+                hashes.computeIfAbsent(file.canonicalPath) {
+                    def sha = MessageDigest.getInstance('SHA-256')
+                    file.withInputStream { input ->
+                        byte[] buffer = new byte[64 * 1024]
+                        int count
+                        while ((count = input.read(buffer)) != -1) sha.update(buffer, 0, count)
+                    }
+                    sha.digest().encodeHex().toString()
+                }
+            }
+            def collect = { owner, name, scope ->
+                def configuration = owner.configurations.findByName(name)
+                if (configuration == null || !configuration.canBeResolved) {
+                    throw new GradleException("Missing resolved scope: ${owner.path}:${name}")
+                }
+                def modules = configuration.incoming.resolutionResult.allComponents
+                    .collect { coordinate(it.id) }.findAll { it != null }
+                    .unique().sort { "${it.group}:${it.name}:${it.version}" }
+                // Project components expose several Android secondary artifacts.
+                // Hash external Maven modules without inventing a consumer variant
+                // or changing the application's resolution attributes.
+                def external = configuration.incoming.artifactView {
+                    componentFilter { it instanceof ModuleComponentIdentifier }
+                }
+                def artifacts = external.artifacts.artifacts.collect { artifact ->
+                    [coordinate: coordinate(artifact.id.componentIdentifier),
+                     file: artifact.file.name, sha256: digest(artifact.file)]
+                }.sort { "${it.coordinate}:${it.file}" }
+                [scope: scope, project: owner.path, configuration: name,
+                 components: modules, artifacts: artifacts]
+            }
+            def scopes = [
+                collect(rootProject.project(':app'), 'debugCompileClasspath', 'app-compile-debug'),
+                collect(rootProject.project(':app'), 'debugRuntimeClasspath', 'app-runtime-debug'),
+                collect(rootProject.project(':app'), 'releaseCompileClasspath', 'app-compile-release'),
+                collect(rootProject.project(':app'), 'releaseRuntimeClasspath', 'app-runtime-release'),
+                collect(rootProject.project(':app'), 'debugAndroidTestCompileClasspath', 'android-test-compile'),
+                collect(rootProject.project(':app'), 'debugAndroidTestRuntimeClasspath', 'android-test-runtime'),
+                collect(rootProject.project(':core:model'), 'testRuntimeClasspath', 'jvm-test-model'),
+                collect(rootProject.project(':core:import'), 'debugUnitTestRuntimeClasspath', 'jvm-test-import'),
+            ]
+            def buildscript = rootProject.buildscript.configurations.getByName('classpath')
+            def tools = buildscript.incoming.resolutionResult.allComponents
+                .collect { coordinate(it.id) }.findAll { it != null }
+                .unique().sort { "${it.group}:${it.name}:${it.version}" }
+            scopes += [scope: 'root-build-tools', project: ':', configuration: 'buildscript.classpath',
+                       components: tools, artifacts: buildscript.incoming.artifacts.artifacts.collect { artifact ->
+                           [coordinate: coordinate(artifact.id.componentIdentifier),
+                            file: artifact.file.name, sha256: digest(artifact.file)]
+                       }.sort { "${it.coordinate}:${it.file}" }]
+            def report = [source_revision: rootProject.findProperty('kuraSourceRevision'),
+                          checkout_revision: System.getenv('GITHUB_SHA'),
+                          gradle: gradle.gradleVersion, java: System.getProperty('java.version'),
+                          flags: [direct_updates: rootProject.findProperty('directUpdates') == 'true',
+                                  card_scanner: rootProject.findProperty('cardScanner') == 'true'],
+                          scopes: scopes,
+                          limits: ['Resolution is not a shipped/R8 artifact SBOM.',
+                                   'Artifact hashes cover external Maven modules, not project outputs.',
+                                   'Platform/BOM components can have no code artifact.',
+                                   'Opt-in installer-test scopes are not included.',
+                                   'Supplemental processor/lint configurations are not comprehensively enumerated.',
+                                   'Embedded Gradle/JDK/SDK libraries and native components need separate coverage.']]
+            def output = rootProject.layout.buildDirectory.file('reports/dependencies/resolution.json').get().asFile
+            output.parentFile.mkdirs()
+            output.setText(JsonOutput.prettyPrint(JsonOutput.toJson(report)) + '\n', 'UTF-8')
+            logger.lifecycle('Exported {} dependency scopes to build/reports/dependencies/resolution.json', scopes.size())
+        }
+    }
+}
