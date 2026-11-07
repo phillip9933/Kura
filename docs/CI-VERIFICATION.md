@@ -55,7 +55,19 @@ configuration, 252 total, with zero failures/errors/skips. Those runs compile
 instrumentation rather than execute it. Runtime results retain separate source
 and artifact scopes in Testing.
 
-No measured runtime budget or required check is introduced here. Account/branch
+The build jobs have a 45-minute runaway-job timeout. At source `c72e5c7`,
+[run 42312339233](https://github.com/phillip9933/Kura/actions/runs/42312339233)
+measured 541–718 seconds per GitHub-hosted `ubuntu-latest` job, including
+495–678 seconds for the JVM/lint/debug/release/test-APK Gradle step. The timeout
+leaves headroom for cold public dependency downloads and the optional manual
+runtime-APK export; it is not a performance acceptance budget. Record future
+regressions and reassess from representative measurements rather than hiding
+them by extending the timeout. The unsigned-release job uses the same toolchain
+and a smaller build selection; its separate representative timing remains to
+be collected. Existing local build timings use a warm offline mirror and are
+not equivalent to hosted-runner setup/network timings.
+
+No required-check setting is introduced here. Account/branch
 rules and security-service grants are outside these workflow files; no setting
 change or effective merge-gate enforcement is claimed.
 
