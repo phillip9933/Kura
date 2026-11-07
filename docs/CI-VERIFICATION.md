@@ -45,6 +45,30 @@ separately pinned inputs; no source or credentials are mounted in the downloader
 The hosted job is not verified until its actual run succeeds. No account security
 service, alert integration or branch setting is enabled by this workflow.
 
+### Hosted native-runtime failure and compatibility validation
+
+[Run 42321442257](https://github.com/phillip9933/Kura/actions/runs/42321442257)
+at `8b766c6` passes all four Android jobs and the secret check, but the new
+Kotlin job fails on its Ubuntu 26.04 runner before a scan summary. Raw native
+diagnostics remain private; no source vulnerability or passing SAST gate is
+inferred. The local validation host uses glibc 2.44 and is not equivalent.
+
+The wheel includes `libm` and resolver libraries importing glibc-private
+symbols without a matching libc/loader. The execution copy now uses the host's
+`libm`/resolver and the pinned wheel's remaining native libraries; executable,
+wheel and rule pins are unchanged. This addresses a concrete portability risk,
+not a demonstrated application defect. Original-runtime source-free version
+and fabricated-control probes retain return codes/categories for comparison.
+Their timeouts remain diagnostics; the required corrected-runtime startup,
+all controls and the full selected source/rule/error/skip/audit gates still
+must pass. Public failure details contain fixed categories/stage/exit codes,
+never raw stderr or real findings.
+
+Both startup modes, the fabricated control and the corrected full local check
+pass on the local host. Hosted resolution and the precise hosted cause remain
+unverified until the fresh run is recorded. Failed runs are retained; no rule,
+control or finding is waived.
+
 ## Tracked-tree secret check
 
 The verification workflow also runs `tools/run-secret-scan.py` on an ephemeral

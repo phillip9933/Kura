@@ -52,10 +52,89 @@ def scanner_result(command, environment, work, reports, name):
     (reports / f"{name}.json").write_bytes(run.stdout)
     (reports / f"{name}.log").write_bytes(run.stderr)
     if run.returncode != 0:
+        print(json.dumps({"native_failure": {"stage": name, "return_code": run.returncode,
+                                             "classification": failure_class(run.stderr)}}))
         raise RuntimeError("Native scanner failed; inspect private diagnostics")
     result = json.loads(run.stdout)
     if result.get("errors") or result.get("skipped_rules"):
         raise RuntimeError("Native scanner errors/skips require private review")
+    return result
+
+
+def failure_class(stderr):
+    # Report fixed diagnostic categories, never raw scanner output or source.
+    text = stderr.decode(errors="replace")
+    for marker, category in [
+        ("GLIBC_PRIVATE", "glibc-private-symbol"),
+        ("error while loading shared libraries", "missing-shared-library"),
+        ("symbol lookup error", "dynamic-symbol-resolution"),
+        ("no trust anchor file found", "missing-system-ca-bundle"),
+        ("Illegal instruction", "unsupported-instruction"),
+    ]:
+        if marker in text:
+            return category
+    return "unclassified-private-diagnostic"
+
+
+def native_environment(binary, work):
+    return {"PATH": "/usr/bin:/bin", "HOME": str(work / "home"), "LANG": "C.UTF-8",
+            "LD_LIBRARY_PATH": str(binary.parent / "libs")}
+
+
+def startup_probe(binary, work, reports, label):
+    try:
+        run = subprocess.run([str(binary), "-version"], env=native_environment(binary, work),
+                             cwd=work, capture_output=True, timeout=30, check=False)
+    except subprocess.TimeoutExpired as failure:
+        (reports / f"{label}-version.txt").write_bytes(failure.stdout or b"")
+        (reports / f"{label}-startup.log").write_bytes(failure.stderr or b"")
+        result = {"stage": label, "return_code": None, "classification": "startup-timeout"}
+        print(json.dumps({"source_free_startup": result}))
+        return result
+    (reports / f"{label}-version.txt").write_bytes(run.stdout)
+    (reports / f"{label}-startup.log").write_bytes(run.stderr)
+    result = {"stage": label, "return_code": run.returncode,
+              "classification": "started" if run.returncode == 0 else failure_class(run.stderr)}
+    print(json.dumps({"source_free_startup": result}))
+    return result
+
+
+def portable_runtime(original, work):
+    # glibc's private ABI belongs to the host libc/loader. Do not transplant
+    # the wheel's older libm/resolver into an unrelated host glibc installation.
+    runtime = work / "host-glibc-runtime"
+    (runtime / "libs").mkdir(parents=True)
+    os.link(original, runtime / "semgrep-core")
+    for library in (original.parent / "libs").iterdir():
+        if library.name not in {"libm.so.6", "libresolv.so.2"}:
+            os.link(library, runtime / "libs" / library.name)
+    return runtime / "semgrep-core"
+
+
+def original_control_probe(binary, rules, target_file, work, reports):
+    if binary is None:
+        return {"stage": "original-runtime-control", "not_run": "startup failed"}
+    command = [str(binary), "-rules", str(rules / "ecb-cipher.yaml"), "-targets", str(target_file),
+               "-json_nodots", "-j", "2", "-timeout", "15", "-max_memory", "1024"]
+    try:
+        run = subprocess.run(command, env=native_environment(binary, work), cwd=work,
+                             capture_output=True, timeout=180, check=False)
+    except subprocess.TimeoutExpired as failure:
+        (reports / "original-runtime-control.json").write_bytes(failure.stdout or b"")
+        (reports / "original-runtime-control.log").write_bytes(failure.stderr or b"")
+        result = {"stage": "original-runtime-control", "return_code": None,
+                  "classification": "control-timeout"}
+        print(json.dumps({"source_free_control": result}))
+        return result
+    (reports / "original-runtime-control.json").write_bytes(run.stdout)
+    (reports / "original-runtime-control.log").write_bytes(run.stderr)
+    # Compatibility discriminator uses only fabricated input; raw output stays private.
+    result = {"stage": "original-runtime-control", "return_code": run.returncode,
+              "classification": "completed" if run.returncode == 0 else failure_class(run.stderr)}
+    if run.returncode == 0:
+        parsed = json.loads(run.stdout)
+        result.update(matches=len(parsed.get("results", [])), errors=len(parsed.get("errors", [])))
+    print(json.dumps({"source_free_control": result}))
     return result
 
 
@@ -126,7 +205,7 @@ def prepare_source(repository, snapshot, work):
     return source, files
 
 
-def scan_sources(binary, rules, inputs, source, files, work, reports):
+def scan_sources(binary, rules, inputs, source, files, work, reports, original):
     control = work / "control"
     control.mkdir()
     fixture = control / "Synthetic.kt"
@@ -136,8 +215,10 @@ def scan_sources(binary, rules, inputs, source, files, work, reports):
                        ' val plain = NullCipher()\n'
                        ' val generator = KeyPairGenerator.getInstance("RSA")\n'
                        ' generator.initialize(1024)\n}\n')
-    environment = {"PATH": "/usr/bin:/bin", "HOME": str(work / "home"), "LANG": "C.UTF-8",
-                   "LD_LIBRARY_PATH": str(binary.parent / "libs")}
+    environment = native_environment(binary, work)
+    control_targets = work / "original-control-targets.json"
+    control_targets.write_text(json.dumps(targets([fixture], control)))
+    original_control = original_control_probe(original, rules, control_targets, work, reports)
     found = {"control": [], "source": []}
     scanned = set()
     for label, paths, root in [("control", [fixture], control), ("source", files, source)]:
@@ -152,7 +233,7 @@ def scan_sources(binary, rules, inputs, source, files, work, reports):
             found[label].extend(result["results"])
             if label == "source":
                 scanned.update(result.get("paths", {}).get("scanned", []))
-    return found, scanned
+    return found, scanned, original_control
 
 
 def review_audits(matches, source, audits):
@@ -171,6 +252,8 @@ def review_audits(matches, source, audits):
 
 
 def main():
+    # Keep this linear orchestration in one temporary lifetime; the helpers own
+    # downloads, extraction, execution and finding review, with cleanup on exit.
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repository", type=Path, default=Path.cwd())
     parser.add_argument("--snapshot", type=Path, help="Tracked-tree snapshot for an isolated local run")
@@ -195,10 +278,18 @@ def main():
             download(inputs["wheel_url"], wheel, inputs["wheel_sha256"], 80_000_000)
         if sha256(wheel) != inputs["wheel_sha256"]:
             raise ValueError("Scanner wheel digest mismatch")
-        binary = prepare_native_tool(work, wheel, inputs)
+        original = prepare_native_tool(work, wheel, inputs)
+        original_probe = startup_probe(original, work, reports, "original-wheel-runtime")
+        binary = portable_runtime(original, work)
+        portable_probe = startup_probe(binary, work, reports, "host-glibc-runtime")
+        if portable_probe["return_code"] != 0:
+            raise RuntimeError("Native scanner startup failed; inspect private diagnostics")
         rules = prepare_rule_inputs(work, inputs, args.rules_dir)
         source, files = prepare_source(repository, args.snapshot, work)
-        found, scanned = scan_sources(binary, rules, inputs, source, files, work, reports)
+        found, scanned, original_control = scan_sources(
+            binary, rules, inputs, source, files, work, reports,
+            original if original_probe["return_code"] == 0 else None,
+        )
         if not {"ecb-cipher", "no-null-cipher", "use-of-weak-rsa-key"}.issubset(
             {match["check_id"] for match in found["control"]}
         ):
@@ -211,6 +302,9 @@ def main():
                    "retained_informational_audits": sum(match["extra"]["severity"] == "INFO" for match in found["source"]),
                    "unreviewed_findings": unexpected,
                    "audit_set_changed": audit_set_changed, "scan_errors": 0, "skipped_rules": 0,
+                   "source_free_startup_probes": [original_probe, portable_probe],
+                   "source_free_original_control": original_control,
+                   "host_libc": platform.libc_ver(),
                    "reports_uploaded": False, "source_uploaded": False}
         (reports / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
         print(json.dumps(summary))
