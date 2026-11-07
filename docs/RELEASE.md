@@ -19,9 +19,22 @@ testing, not complete hardware-key, encrypted-data, production upgrade or
 screen-reader acceptance. Independent AI patch review found no blocking issue;
 it is not independent human approval.
 
-The earlier complete app/CI results predate these two patches. Final candidate
-qualification and the remaining acceptance/publication decisions must be
-recorded separately. Publishable APK bytes must come from CI at the final
+Current executable qualification passes 94 active app tests (four existing
+opt-in skips), four optimized external journeys and 252 parsed four-way CI JVM
+executions. Strict-lock qualification retains byte-identical app/test/release/
+optimized/driver APKs. Pinned private-report source/secret checks, their controls
+and remaining scope are recorded in [Testing](TESTING.md) and
+[structured evidence](evidence/production-preparation-20261107.json).
+
+The owner requires verified completion of every open issue before stable:
+#29 has crop review evidence; #9/#10/#15 retain physical/hardware, production
+retained-upgrade and representative camera acceptance. All prepublication gates
+must pass before authorizing publication; actual verified publication then
+completes #13's Stable gate. No waiver/deferral is substituted for verification.
+Recovery-canary verification is approved but not complete; metadata inventory is
+recorded privately. Production signing remains a separate, unexecuted step.
+
+Publishable APK bytes must come from CI at the final
 authorized tag; the locally built testing APK must not be republished as the
 production release. Retain the APK-only distribution, existing signing identity,
 checksums, verification evidence and opt-in update policy.

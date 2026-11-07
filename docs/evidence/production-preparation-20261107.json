@@ -1,0 +1,339 @@
+{
+  "source_revision": "c72e5c738caa6fadb90861795dcbadb7b5c6e979",
+  "version_name": "2.2.0",
+  "version_code": 123,
+  "state": "unpublished preparation",
+  "ci": {
+    "url": "https://github.com/phillip9933/Kura/actions/runs/42312339233",
+    "configurations": 4,
+    "fresh_jvm_passed": 252,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "lint_errors": 0,
+    "lint_warnings": {
+      "offline": 58,
+      "updater": 62,
+      "scanner": 64,
+      "both": 67
+    },
+    "note": "Fresh parsed252 at executable sourcec72; later16923a1 run42317427829 passes all four Android jobs and new secret check. New final-head checks remain pending."
+  },
+  "local_unsigned_release": {
+    "source_revision": "c72e5c738caa6fadb90861795dcbadb7b5c6e979",
+    "local_changes": "Exact git archive of c72e5c738caa6fadb90861795dcbadb7b5c6e979; canonical-source-manifest.json records tracked inputs. Local unsigned artifact is not final tagged CI release bytes.",
+    "package": "app.kura.wallet",
+    "version_name": "2.2.0",
+    "version_code": 123,
+    "variant": "release",
+    "debuggable": false,
+    "test_only": false,
+    "min_sdk": 26,
+    "target_sdk": 36,
+    "card_scanner": true,
+    "direct_updates": true,
+    "native_alignment_16k": true,
+    "signed": false,
+    "signer_sha256": null,
+    "apk_bytes": 116812771,
+    "apk_sha256": "6344bc082a3f14c0dbab0f1cb2af1e2e8b27fbed4f715006ba530865d7ee3e01"
+  },
+  "runtime_inputs": [
+    {
+      "name": "final-app.apk",
+      "sha256": "10c6fa4132332b2c68fb3d142d86bd4f7d6495786773caa11e34165015b9c77e",
+      "bytes": 140054484,
+      "source": "c72e5c738caa6fadb90861795dcbadb7b5c6e979"
+    },
+    {
+      "name": "final-test.apk",
+      "sha256": "6c86d812b4c85b457efc5ff6a46405cded2303cc660f0baf09c068d14402a9e0",
+      "bytes": 700829,
+      "source": "c72e5c738caa6fadb90861795dcbadb7b5c6e979"
+    }
+  ],
+  "phone_ui": {
+    "apk_sha256": "325e948720d0d74285c488f4814b70096d456990e71650394cfd17eae8aaf153",
+    "version_name": "2.2.0-beta.3",
+    "version_code": 122,
+    "evidence": "Owner-reported physical testing and crop appearance acceptance, limited to horizontal credit-card crop and independent missing-side photo actions.",
+    "correspondence": "391 non-document source/build/vendor inputs match pre-version candidate snapshot; intentional app version metadata change only. Text line-ending normalization between snapshot and canonical Git archive is recorded locally.",
+    "not_claimed": [
+      "complete hardware key acceptance",
+      "production retained-data upgrade",
+      "all scanner accuracy/arm64 performance",
+      "screen-reader acceptance"
+    ]
+  },
+  "screen_reader": {
+    "source_revision": "c72e5c738caa6fadb90861795dcbadb7b5c6e979",
+    "scope": "Task-only nonshipping TalkBack probe; canonical target app unchanged",
+    "target_apk_sha256": "10c6fa4132332b2c68fb3d142d86bd4f7d6495786773caa11e34165015b9c77e",
+    "talkback_bound": true,
+    "touch_exploration": true,
+    "confirmed_accessibility_focus": [
+      "Card crop preview",
+      "Zoom"
+    ],
+    "preview_state": "Zoom 100%, rotation 0.0 degrees",
+    "attempts": [
+      {
+        "result": "failed",
+        "seconds": 18.086,
+        "assertion": "TalkBack right swipe advances from Zoom",
+        "transcript": "emulator-a11y-audio/results/0005-real-talkback-probe.json"
+      },
+      {
+        "result": "failed",
+        "seconds": 18.022,
+        "assertion": "TalkBack right swipe advances from Zoom",
+        "transcript": "emulator-a11y-audio/results/0017-diagnostic-probe.json",
+        "diagnosis": "Focus remains on direct Zoom TextView in active app window; no descendant or alternate-window focus explains the result. Gesture delivery/recognition root cause not established."
+      }
+    ],
+    "disposition": "Stopped after two attempts; no test assertion removed, no source change, no complete screen-reader journey claimed. Rotation and missing-side reader activation stages not reached.",
+    "spoken_feedback": "Not verified: SDK playback capture denied UNAUTHENTICATED; no token/credential read or auth bypass attempted. TTS connection is not audible-speech evidence.",
+    "host_audio_or_microphone_access": false,
+    "guest_service_cleanup": "Both attempts restore prior settings; final independently queried enabled_accessibility_services is null."
+  },
+  "reused_evidence": {
+    "source": "d5777c8942e699f390eda27fc163f0b0a2eb2df1",
+    "url": "https://github.com/phillip9933/Kura/blob/d5777c8942e699f390eda27fc163f0b0a2eb2df1/docs/evidence/kotlin-runtime-20261107.json",
+    "unchanged_scope": "Core, benchmark, tools, workflows and dependency declarations unchanged; two UI corrections and version metadata changed.",
+    "core_modern_passed": 50,
+    "core_api26": {
+      "passed": 49,
+      "skipped": 1
+    },
+    "import_publication_each_api": 31,
+    "api26_scanner_passed": 18,
+    "not_fresh_current_execution": true
+  },
+  "dependency_advisories": {
+    "state": "reused captured-graph lookup",
+    "date": "2026-11-07",
+    "queries": 318,
+    "matched_records": 10,
+    "matched_build_only_versions": 6,
+    "correspondence": "All nine exported scopes in four current CI configurations match selected components and external artifact SHA-256 values.",
+    "gaps": [
+      "unresolved build-tool debt",
+      "native and embedded toolchain coverage",
+      "processor/lint and comprehensive opt-in installer scopes",
+      "not a shipped/R8 SBOM",
+      "no current secret or source-security scan",
+      "no full dependency locking or verification metadata"
+    ]
+  },
+  "dev_limit_review": {
+    "shipping_scope": "app main/basic/enhanced scanner/offline/direct updater, core, UI, build/manifest/assets and selected vendored inputs",
+    "generated_release_PROTOTYPE": false,
+    "software_fallback_guards": "PROTOTYPE plus emulator hardware; release false",
+    "fixture_guards": "UI callback absent when false; fixture operation checks flag",
+    "r8_removed": [
+      "VaultController$fixture$1",
+      "VaultController$fixture$2",
+      "VaultController.fixture(kotlin.coroutines.Continuation)"
+    ],
+    "remaining": "Repeat against actual authorized-tag CI APK; this local unsigned build is not final published bytes."
+  },
+  "open_issues": {
+    "9": "Physical/hardware and production retained-data evidence pending.",
+    "10": "Final shipping certificate and prior-production retained-data upgrade on/off plus hardware evidence pending.",
+    "13": "Beta; RC/stable gates and authorized publication pending.",
+    "15": "Representative difficult photographed-card/arm64 performance and #9/#10 acceptance pending.",
+    "29": "Owner crop review supplied; completed crop work can close after source merge; shipping separate."
+  },
+  "guidance_gaps": [
+    "Whole-app visual, contrast/focus, usability and assistive-technology acceptance remain unverified; design now maps full wallet and scoped evidence.",
+    "Screen-reader navigation/spoken feedback not established by the instrumentation harness.",
+    "Scoped locks do not cover every hidden/optimized/profile/benchmark configuration; full Gradle artifact-verification metadata absent.",
+    "Current dependency advisory scope retains unresolved build-tool debt and native/embedded-toolchain coverage gaps.",
+    "Detailed branch protection, platform security-service effectiveness, complete tag inventory and Project access remain not verified.",
+    "Signing identity recovery and production-package retained-upgrade/physical hardware acceptance remain unverified; credentials not accessed.",
+    "Final authorized-tag CI bytes, authorized signing, signed/checksummed final-artifact checks and actual stable publication remain pending."
+  ],
+  "exceptions": "No waiver or scoped deferral substitutes for verification; owner requires all five issues verifiably complete before stable release. Release tracker remains pending actual publication only after prepublication gates pass.",
+  "publication": "No stable tag, main merge, signing, release/latest promotion or beta/tag deletion; all retained.",
+  "current_full_app": {
+    "result_file": "0020-full-enhanced-app-after-readiness.json",
+    "seconds": 994.168,
+    "terminal_cases": 98,
+    "passed": 94,
+    "failed": 0,
+    "skipped": 4
+  },
+  "earlier_failed_full_app": {
+    "passed": 49,
+    "failed": 45,
+    "skipped": 4,
+    "seconds": 835.509,
+    "precondition": "SystemUI Device locked hierarchy; wake did not authenticate phone keyguard. After real synthetic phone PIN, unchanged first failed journey passed1/1 and complete same-APK rerun94/0/4.",
+    "not_45_established_product_regressions": true
+  },
+  "optimized": {
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 97.39,
+    "input_source": "c72e5c738caa6fadb90861795dcbadb7b5c6e979",
+    "apk_sha256": "0b30a7bce5fc4709d5a811b38a9d2d5e48de5689eb9bf8f7a8431c7db2808d74",
+    "installed_before_debug_sha256": "10c6fa4132332b2c68fb3d142d86bd4f7d6495786773caa11e34165015b9c77e",
+    "installed_after_optimized_sha256": "0b30a7bce5fc4709d5a811b38a9d2d5e48de5689eb9bf8f7a8431c7db2808d74",
+    "package_before_and_after": "app.kura.wallet.prototype",
+    "version_before_and_after": "2.2.0-dev / 123",
+    "operation": "ADB install -r -t, no uninstall/clear, same-version debug\u2192optimized. Not production identity, version upgrade, Android installer or independent all-record retention.",
+    "earlier_attempt": {
+      "passed": 2,
+      "failed": 1,
+      "skipped": 1,
+      "seconds": 75.007,
+      "cause": "permissionAcceptance opt-in omitted; permission case skipped and its expected stopped-app cleanup did not run. Subsequent repeated-auth journey failed from open app. Full documented selection with both opt-ins passes; no assertion changed."
+    }
+  },
+  "secret_scan": {
+    "version": "8.30.1",
+    "source": "acd20ded06360579d6e2adc32418d7533aa9cfcb",
+    "control_detected": 1,
+    "current_tree_findings": 0,
+    "wrapper_staged_tree": "af22606aa6f086f9bdc0c718cd04f00c8eb0e5cb",
+    "wrapper_control_detected": 1,
+    "wrapper_current_tree_findings": 0,
+    "scope": "Fresh current tracked-tree archive, default rules, no suppression baseline; no history or comprehensive binary/archive-internal coverage. Offline, no home/credentials, private redacted report not uploaded.",
+    "limits": "Initial public download failed because Python default CA path was not mounted; retry used mounted standard CA bundle with TLS validation retained. Initial fabricated control had invalid alphabet and was not detected; corrected to upstream documented rule without weakening scanner."
+  },
+  "native_reader_control": {
+    "optimized_pair_attempt": "Debug in-process instrumentation crashed on R8 target: missing kotlin.jvm.internal.Intrinsics; not product failure. Exact original debug bytes restored after optimized qualification.",
+    "debug_attempt": "Observed natural Settings focus Search Settings\u2192Navigate up, injection return true. Hierarchy shows ordinary Apps page navigation, not established TalkBack next-item recognition. Finally self-force-stop aborted instrumentation before JUnit completion. Do not count JSON passed=true as a valid reader pass.",
+    "disposition": "Probe/setup problem; no established app navigation fault. Original failures retained, speech unverified and denied audio route not retried."
+  },
+  "preparation_source": "7130be48c1bd4dc9136c8eb31c5426489ecc616d",
+  "source_reader_notes": "Original direct reader probe is not a valid reader-navigation pass; parent review found forced text-leaf focus and event injection assumptions unsound. Later native control changes ordinary Settings navigation and aborts its runner in cleanup. No established app bug or audible-speech acceptance.",
+  "strict_locks": {
+    "locks": [
+      {
+        "path": "app/gradle/dependency-locks/directUpdates-false-cardScanner-false-installerAcceptance-false.lockfile",
+        "sha256": "a09f748e9e461d81995ddce10a7f07e46c7be1de08d7b000ef5e86dee83bc48d"
+      },
+      {
+        "path": "app/gradle/dependency-locks/directUpdates-false-cardScanner-true-installerAcceptance-false.lockfile",
+        "sha256": "0226c7bccfc33ccc5b84186a07599990fa6f13451d614a17e36e2b7255888e91"
+      },
+      {
+        "path": "app/gradle/dependency-locks/directUpdates-true-cardScanner-false-installerAcceptance-false.lockfile",
+        "sha256": "7ffde2509a31ed2ee9a7ff4526594fdd3fdfa0d57bf08b9101198981809f8e47"
+      },
+      {
+        "path": "app/gradle/dependency-locks/directUpdates-true-cardScanner-true-installerAcceptance-false.lockfile",
+        "sha256": "574b2b96c8d44dfed876449dffd74cedd88a4438a0fe07d48897d5df57416074"
+      },
+      {
+        "path": "app/gradle/dependency-locks/directUpdates-true-cardScanner-true-installerAcceptance-true.lockfile",
+        "sha256": "7847c48544b61059587095bb796f01fbbf11a0a787471e36a17434cec16cef58"
+      },
+      {
+        "path": "buildscript-gradle.lockfile",
+        "sha256": "95a4c7bf4188d81634ce361dcd252198ed7ebe48e192603b6f15538b7de2114b"
+      },
+      {
+        "path": "core/import/gradle.lockfile",
+        "sha256": "285703333fa9184007974327b26e9b99e1a0387ade83b9a243e43118e67ffacb"
+      },
+      {
+        "path": "core/model/gradle.lockfile",
+        "sha256": "d1107d8db9f649d54dd1b6621c39bc1acdaa81fa7d5de314299a2a7c9e27dc09"
+      }
+    ],
+    "junit": {
+      "tests": 63,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "lint": {
+      "Warning": 30
+    },
+    "debug": {
+      "old_sha256": "10c6fa4132332b2c68fb3d142d86bd4f7d6495786773caa11e34165015b9c77e",
+      "new_sha256": "10c6fa4132332b2c68fb3d142d86bd4f7d6495786773caa11e34165015b9c77e",
+      "entry_differences": [],
+      "added": [],
+      "removed": []
+    },
+    "release": {
+      "old_sha256": "6344bc082a3f14c0dbab0f1cb2af1e2e8b27fbed4f715006ba530865d7ee3e01",
+      "new_sha256": "6344bc082a3f14c0dbab0f1cb2af1e2e8b27fbed4f715006ba530865d7ee3e01",
+      "entry_differences": [],
+      "added": [],
+      "removed": []
+    },
+    "optimized": {
+      "old_sha256": "0b30a7bce5fc4709d5a811b38a9d2d5e48de5689eb9bf8f7a8431c7db2808d74",
+      "new_sha256": "0b30a7bce5fc4709d5a811b38a9d2d5e48de5689eb9bf8f7a8431c7db2808d74",
+      "entry_differences": [],
+      "added": [],
+      "removed": []
+    },
+    "scope": "Nine named configurations only; four supported app variants plus combined installer harness; not all compiler/processor/lint/profile/benchmark configurations.",
+    "negative_control": "Missing app lock state rejected in disposable copy; exact retained state restored before passing build.",
+    "normal_graphs": "All nine components/artifact hashes exactly match reviewed CI in every normal flag combination. Installer runtime differs, but introduces no new unique tuple to the already queried union.",
+    "version_not_authentication": true
+  },
+  "source_analysis": {
+    "scanner": "Semgrep native1.184.0",
+    "rule_revision": "16b9e6d45f10649f6a531ec4838ed9924372c3bc",
+    "rules": 13,
+    "shipping_files": 69,
+    "controlled_detections": 3,
+    "retained_INFO_audit_prompts": 7,
+    "unreviewed_findings": 0,
+    "errors": 0,
+    "skipped_rules": 0,
+    "negative_control": "Stale source-review hash fails; restored exact metadata passes. Matches retained, not suppressed.",
+    "first_exploratory_scope": "73 total included same69 shipping files plus4 directAndroidTest files; not73 shipping files.",
+    "triage": "Reviewed encryption paths generate fresh nonces or only decrypt stored nonces; not demonstrated nonce reuse or cryptographic certification.",
+    "privacy": "No source or findings uploaded; raw reports and diagnostics private; upstream rule text not redistributed.",
+    "limits": "Intrafile patterns; not complete native/binary/tooling/cross-file analysis or platform security-service evidence."
+  },
+  "review_only_limits": "No main merge, signing, release, latest promotion, beta/tag deletion, personal-device destructive suite or account/security-setting changes. Source preparation and scoped CI/doc changes only.",
+  "ci_followups": [
+    {
+      "source": "16923a17ab25c163759c6aede8be624186ecf00b",
+      "run_id": 42317427829,
+      "jobs": 5,
+      "conclusion": "success",
+      "scope": "Four Android configurations plus secret scan; not a native screen-reader or physical acceptance run."
+    }
+  ],
+  "source_build_correspondence": {
+    "candidate_source": "7130be48c1bd4dc9136c8eb31c5426489ecc616d",
+    "qualified_build_source": "archived16923a1 plus exact committed2494f27 build script/locks",
+    "checked_files": 378,
+    "scope_prefixes": [
+      "app",
+      "core",
+      "feature",
+      "third_party",
+      "benchmark",
+      "gradle"
+    ],
+    "root_files": [
+      "build.gradle.kts",
+      "settings.gradle.kts",
+      "gradle.properties",
+      "buildscript-gradle.lockfile"
+    ],
+    "comparison": "Exact normalized text correspondence; byte-for-byte APK and test/driver identity separately verified. No app-source change from c72e5c7."
+  },
+  "signing_recovery": {
+    "metadata_inventory": "Approved and completed privately; no credential contents accessed.",
+    "recovery_canary": "Approved, not executed; genuine protected backup provenance and secure factor mechanism not established by metadata.",
+    "production_signing": "Separate authorization required; not executed.",
+    "no_secret_or_private_location_disclosure": true
+  },
+  "physical_target": {
+    "status": "Approved arm64 test target identified; separate prototype123 installed without replacing the existing production package. No camera/hardware acceptance result inferred. Software-key test fallback is false on the actual non-emulator hardware.",
+    "upgrade_prerequisite": "Existing production identity differs from GitHub channel; independent production baseline requires specifically confirmed irreversible Kura reset. No production reset, downgrade, upgrade, wallet-data read or permission auto-grant performed.",
+    "no_personal_wallet_suite": true
+  }
+}

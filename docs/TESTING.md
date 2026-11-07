@@ -1,5 +1,83 @@
 # Testing
 
+## Production preparation and final image fixes — 7 November 2026
+
+Proposed **2.2.0 / 123** is unpublished. Executed app/test/optimized inputs come
+from `c72e5c7`, including the horizontal ID-1 default and independent missing-side
+photo actions. Later strict-lock qualification produces **identical complete
+APK bytes**, including the app test and external driver. Current application,
+vendor and build inputs correspond to that qualified snapshot; documentation
+and scanner-tooling changes do not become fresh runtime executions.
+[Exact sources, hashes, failures and limits](evidence/production-preparation-20261107.json).
+
+| Verification | Result and scope |
+| --- | --- |
+| Complete enhanced app, API 37 / 16 KiB | **94 passed / 0 failed / 4 existing opt-in skips**, 98 cases, 994.168 s; exact canonical debug/test pair |
+| External nondebuggable/R8 selection | **4/4 passed**, 97.390 s, both documented `unlockTiming` and `permissionAcceptance` opt-ins supplied |
+| Parsed four-way CI at `c72e5c7` | [252 fresh JVM passes](https://github.com/phillip9933/Kura/actions/runs/42312339233), no failures/errors/skips; no lint errors; warnings 58 offline, 62 updater, 64 scanner, 67 both |
+| Later tooling CI at `16923a1` | [All five jobs pass](https://github.com/phillip9933/Kura/actions/runs/42317427829): four Android configurations plus the new pinned secret check; no new runtime count inferred |
+| Strict-lock control and build | Missing app lock state correctly fails; restored state passes **63 JVM tests**, no failures/errors/skips, lint **0 errors / 30 warnings** locally; debug/test/release/optimized/driver APK hashes equal the runtime-qualified inputs |
+| Dependency correspondence | Four normal flag sets match all nine reviewed component/artifact graphs; separate combined installer-harness lock state recorded. Version locking does not authenticate artifacts or cover all hidden configurations. |
+| Secret check | Gitleaks 8.30.1 detects the fabricated control and returns zero findings in the current tracked-tree scope; private 100% redacted reports, no history/binary-internal claim |
+| Kotlin source-security wrapper | 69 shipping files / 13 pinned rules; three controlled detections; seven retained informational audit prompts, no unreviewed finding/error/skipped rule. Stale audit hash is rejected; restored metadata passes. Earlier 73-file exploratory scope included four additional tests. |
+| Unsigned local release inspection | Production package, version 123, nondebuggable/non-test flags, scanner/updater models, providers/permissions, profiles, 64-bit ABIs and 16 KiB packaging pass. Local unsigned bytes are not the final tagged-CI release artifact. |
+
+The four full-app skips remain the existing cold-process, retained-upgrade,
+store-capture and empty-vault-timing opt-ins. Core/API 26, older prototype
+installer/version-change and cold-process evidence below is explicitly reused
+at its recorded source/artifact scope. The new UI fixes have their focused
+regressions below; earlier full-suite counts do not silently become current.
+
+The optimized transition is **same version 2.2.0-dev / 123**, package
+`app.kura.wallet.prototype`, debug to nondebuggable optimized via ADB without
+clear/uninstall. Pulled installed APKs match both inputs. This is not a
+production-package upgrade, Android-installer confirmation or independent
+all-record retention proof. The controlled fixture loader alters synthetic data.
+
+Preserved failed attempts:
+- Complete app attempt 1: **49 passed / 45 failed / 4 skips**, 835.509 s. The guest
+  was at Android's locked-phone screen; waking did not authenticate it. After
+  real synthetic phone unlock, the unchanged first failed journey passes 1/1,
+  then the unchanged complete pair passes 94/0/4. Do not report 45 established
+  product regressions or discard this failed execution.
+- Optimized attempt 1: **2 passed / 1 failed / 1 skip**, 75.007 s. The command
+  omitted `permissionAcceptance`, skipping its stopped-app cleanup; the next
+  repeated-authentication test expected a prompt while the app remained open.
+  Both documented opt-ins and the explicit stopped-app precondition yield the
+  complete 4/4 result. No test assertion was removed or weakened.
+
+The owner physically tested the newer crop and independent missing-side actions
+in local Beta 3 / 122, APK SHA-256
+`325e948720d0d74285c488f4814b70096d456990e71650394cfd17eae8aaf153`.
+Its source/build/vendor inputs match before the intentional version change.
+This is UI feedback, not a hardware-key, production-upgrade, difficult-card
+accuracy/arm64-performance or complete accessibility acceptance result.
+
+Real TalkBack binds and touch exploration enables; preview/Zoom direct focus
+and preview state are observed. Two injected crop swipes fail to advance focus.
+Review found forced text-leaf focus and injection assumptions unproven. A native
+Settings control changes ordinary app navigation, not established reader-next
+behavior; its in-process cleanup aborts JUnit completion. A separate initial
+probe paired with R8 crashes because the debug test references removed Kotlin
+runtime classes. Exact debug bytes are restored for that investigation after the
+independent optimized qualification. These are harness/setup findings, not an
+established Kura navigation bug, and none counts as a reader journey pass.
+SDK audio capture is denied `UNAUTHENTICATED`; no credentials, auth bypass or
+alternate audio endpoint is tried. Spoken feedback remains unverified. Native
+input help was inspected without a further input-injection workaround.
+
+**Stable remains held:** all five open issues must have verified closure
+criteria. #29's owner crop review is supplied; source merge is separate.
+#9/#10/#15 retain physical/hardware, production retained-upgrade and representative
+camera acceptance. #13 needs all prepublication gates, then verified actual
+publication to complete Stable. No waiver or numerical issue cleanup substitutes
+for verification. Final tagged CI bytes, approved recovery verification, separately authorized
+production signing and artifact checks remain pending. An approved physical
+test target has been identified and a separate prototype installed; no hardware/
+camera acceptance, production-wallet reset or upgrade is claimed. [CI/security scope](CI-VERIFICATION.md) and
+[dependency limits](DEPENDENCY-BASELINE.md) remain explicit. AI assisted work and
+review are not independent human approval.
+
 ## Combined candidate qualification — 7 November 2026
 
 The atomic-publication fix, fixed-mask crop editor, stable scanner 0.8.0/updater
