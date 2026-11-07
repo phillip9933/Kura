@@ -230,3 +230,17 @@ then run the named export with `--write-locks` under each supported flag set,
 including the combined installer harness. Compare the generated graphs before
 committing the explicit lockfiles. Do not regenerate them simply to silence a
 failed check or use a single variant's state for another optional build.
+
+
+## Current source/secret check follow-up — 7 November 2026
+
+[CI verification](CI-VERIFICATION.md) records the new pinned, private-report
+checks. Gitleaks 8.30.1 passes its fabricated failing control and current tracked
+tree with zero findings, both locally and in the hosted `secret-scan` job at
+`16923a1`. This is not Git-history or binary-internal coverage. The local Semgrep
+native 1.184.0 wrapper covers 69 shipping Kotlin files with 13 reviewed rules,
+three controlled detections and seven retained/reviewed informational audit
+prompts; no unreviewed matches, errors or skipped rules. Its new hosted check
+remains pending. These source checks do not replace dependency/native scanning,
+publisher authentication or signing-recovery evidence. Earlier no-scan statements
+above retain their dated scope; platform-managed service state is still unverified.

@@ -1,0 +1,48 @@
+{
+  "purpose": "Retain reviewed informational audit prompts; do not suppress matches. Any changed source, location or finding requires re-review. Warnings/errors and unreviewed findings fail.",
+  "review": "Encryption generates a fresh SecureRandom nonce or delegates generation to AndroidKeyStore; other matched paths only decrypt a stored nonce. This is scoped source review, not cryptographic certification.",
+  "findings": [
+    {
+      "rule": "gcm-detection",
+      "file": "core/security/src/main/kotlin/app/kura/nativecore/HardwareVaultKey.kt",
+      "line": 83,
+      "source_sha256": "23d403b2579da3a44bc2d535c86c2f0f2f0a1ff0ef0f24d8fe28e718ad4866ed"
+    },
+    {
+      "rule": "gcm-detection",
+      "file": "core/security/src/main/kotlin/app/kura/nativecore/HardwareVaultKey.kt",
+      "line": 85,
+      "source_sha256": "23d403b2579da3a44bc2d535c86c2f0f2f0a1ff0ef0f24d8fe28e718ad4866ed"
+    },
+    {
+      "rule": "gcm-detection",
+      "file": "core/security/src/main/kotlin/app/kura/nativecore/LegacyCrypto.kt",
+      "line": 24,
+      "source_sha256": "0075867014b7b160231f817c1263991fb03b4e11743838dacd8fde1aa4254bad"
+    },
+    {
+      "rule": "gcm-detection",
+      "file": "core/storage/src/main/kotlin/app/kura/nativecore/MediaStorage.kt",
+      "line": 19,
+      "source_sha256": "159a8674ea8aaa4e21ddba09198d3905f597abfc529e012ee4cf5b72aa8de4c4"
+    },
+    {
+      "rule": "gcm-detection",
+      "file": "core/storage/src/main/kotlin/app/kura/nativecore/MediaStorage.kt",
+      "line": 20,
+      "source_sha256": "159a8674ea8aaa4e21ddba09198d3905f597abfc529e012ee4cf5b72aa8de4c4"
+    },
+    {
+      "rule": "gcm-detection",
+      "file": "core/storage/src/main/kotlin/app/kura/nativecore/MediaStorage.kt",
+      "line": 30,
+      "source_sha256": "159a8674ea8aaa4e21ddba09198d3905f597abfc529e012ee4cf5b72aa8de4c4"
+    },
+    {
+      "rule": "gcm-detection",
+      "file": "core/storage/src/main/kotlin/app/kura/nativecore/MediaStorage.kt",
+      "line": 31,
+      "source_sha256": "159a8674ea8aaa4e21ddba09198d3905f597abfc529e012ee4cf5b72aa8de4c4"
+    }
+  ]
+}

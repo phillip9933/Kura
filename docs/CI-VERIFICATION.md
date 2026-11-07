@@ -1,5 +1,50 @@
 # CI dependencies and permissions
 
+## Kotlin source-security check
+
+`tools/run-kotlin-security-scan.py` uses the pinned Semgrep native 1.184.0
+scanner from its official PyPI wheel, without installing Python packages.
+Wheel/core/rule/license hashes are explicit in `tools/security/kotlin-scan-inputs.json`.
+The helper extracts only the native executable and its same-wheel libraries.
+Rules are downloaded from the pinned upstream commit into temporary storage,
+with their license; no upstream rule text is redistributed in Kura. The
+[Semgrep Rules License](https://semgrep.dev/legal/rules-license/) permits internal
+scanning and restricts redistribution/service use.
+
+The selected 13 Kotlin rules run over **69 current shipping Kotlin files**,
+covering main and both alternatives for the scanner/updater source sets.
+Instrumented/JVM tests, benchmark code, binary/native SDK internals, build/Python
+tooling and cross-file reachability are outside this check. This is bounded
+community pattern analysis, not a complete audit. CodeQL is not substituted with
+a Java-only no-build scan: its [published compiler range](https://codeql.github.com/docs/codeql-overview/supported-languages-and-frameworks/)
+currently ends at Kotlin 2.4.20, while this source uses 2.4.21.
+
+Three fabricated forbidden-algorithm detections must succeed before the scan
+can pass. Parser/rule errors, skipped rules, incomplete selected-file coverage,
+warning/error matches and unreviewed informational matches fail. Seven existing
+GCM informational audit prompts are retained in private results; explicit
+source-hash/location-bound review records are in `tools/security/kotlin-audit-findings.json`.
+Their reviewed paths generate fresh encryption nonces or only decrypt stored
+nonces. They are audit prompts, not demonstrated nonce reuse. Changing the
+source or finding set requires review; no match is silently removed, and no
+cryptographic certification is claimed.
+
+The local offline wrapper passes with 69 files, 13 rules, three control matches,
+seven retained informational prompts, no unreviewed findings, errors or skipped
+rules. An earlier direct-core scan also included four updater test files; it
+covered the same 69 shipping files, not 73 shipping files. Initial runtime-layout
+and library/CA setup stops are retained locally; no source scan pass is inferred
+from them. Only native child processes receive the bundled library path.
+
+CI runs on an ephemeral Linux x86_64 host with a 15-minute runaway limit; that is
+not a performance budget. Reports and diagnostics remain private temporary
+files outside the checkout, with no report upload; only counts reach logs.
+Downloads send public wheel/rule requests, not source. The child receives a
+minimal environment. Local equivalent execution is network-isolated with
+separately pinned inputs; no source or credentials are mounted in the downloader.
+The hosted job is not verified until its actual run succeeds. No account security
+service, alert integration or branch setting is enabled by this workflow.
+
 ## Tracked-tree secret check
 
 The verification workflow also runs `tools/run-secret-scan.py` on an ephemeral

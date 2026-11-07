@@ -1,0 +1,76 @@
+{
+  "version": "1.184.0",
+  "wheel_url": "https://files.pythonhosted.org/packages/3f/32/d5f5f37bbfa8fee1527c749a7bfc5a1ab57f4316f98e91783721b340a35d/semgrep-1.184.0-cp310.cp311.cp312.cp313.cp314.py310.py311.py312.py313.py314-none-manylinux_2_34_x86_64.whl",
+  "wheel_sha256": "d847abb8fb6fdde77d9e30a6bc869dbfcb68eff4142dcd77897c52635a7600d9",
+  "core_sha256": "440018d25dc528a902a1174f6d6b74676a5e9fa79e7d2cdd7404158a5c94aa55",
+  "rules_revision": "16b9e6d45f10649f6a531ec4838ed9924372c3bc",
+  "license": "Semgrep Rules License v1.0; internal scanning only; downloaded rules are not redistributed with Kura",
+  "rules": [
+    {
+      "path": "anonymous-ldap-bind.yaml",
+      "git_blob": "6db654063b4983dcc84a55297b67591b10756dfe",
+      "sha256": "6b2ce48bf3be8e26b9db477046520d049347ef846e34169cd5cff53dd4ab9516"
+    },
+    {
+      "path": "bad-hexa-conversion.yaml",
+      "git_blob": "b684e91bcea7c7a1733191ff7f96a3a298217977",
+      "sha256": "9bbc64d83abba6e9b8e02ac9ff0831fe530c6f62dffc4f683656e999103a0e35"
+    },
+    {
+      "path": "command-injection-formatted-runtime-call.yaml",
+      "git_blob": "235a2b23eb76d707f29b2f44b81ac200468a122c",
+      "sha256": "73083c93fcb2272a1857e537750d53ee7a01f4c22b3a738c55f35b878a432d28"
+    },
+    {
+      "path": "cookie-missing-httponly.yaml",
+      "git_blob": "7576f6f1bd8f6b2eea7e72c99a51272432af5a24",
+      "sha256": "d569616ee9c1d3db0dc67bffeced5da790eb693127985c79f42708453d678a7c"
+    },
+    {
+      "path": "cookie-missing-secure-flag.yaml",
+      "git_blob": "d34de36de02bd792a43669a77001908f0ec49c5d",
+      "sha256": "aac6672f12c53e4f21ec1567aa4bdee16317d065a67f642af426c537b0c60e11"
+    },
+    {
+      "path": "defaulthttpclient-is-deprecated.yaml",
+      "git_blob": "dc90e1435cbb036bcb46475fa672be824f35b991",
+      "sha256": "cf93d94cc57bf3a735de64dfb79144d76170fde9b7e6c0799f2533bc39912555"
+    },
+    {
+      "path": "ecb-cipher.yaml",
+      "git_blob": "a24275a229410cada580a2b4f69929e7f64e6962",
+      "sha256": "b467354c437d54ceeb43a06bfc39d28757658439456732e4e11de72d2132559d"
+    },
+    {
+      "path": "gcm-detection.yaml",
+      "git_blob": "a74e1491663425cf3f5ebfc7a83344aa7ff07739",
+      "sha256": "000f3cb8d4f342153ccc22d3a651d43becaf43c3331ee7f1daa0dd8f70f5f66a"
+    },
+    {
+      "path": "no-null-cipher.yaml",
+      "git_blob": "30ca14a511ad9a5f65536bbc947f474fd8e856cc",
+      "sha256": "8c82c5e3b6099b3dd1dfd1e18e367858bdcd2588e956549ca76c1a112886e12a"
+    },
+    {
+      "path": "unencrypted-socket.yaml",
+      "git_blob": "65ea1734dc35ce3e4ffed87342eb7a6b499cfc55",
+      "sha256": "e219a75bf1d106a27bc73db83782bbbda1739284ee1f93047a712f3cad59bc44"
+    },
+    {
+      "path": "use-of-md5.yaml",
+      "git_blob": "3237c20fd30dfb9b6fb2dcf8bd6f219db983b679",
+      "sha256": "54596739d51e995bd7c680b03e4ab01b9d8cd2dba7175e21b4b363908a54d288"
+    },
+    {
+      "path": "use-of-sha1.yaml",
+      "git_blob": "8fafd010cac269558acd3ea0ba9b1eaca2b64f91",
+      "sha256": "6eb4bce057d6a73a3590009d30bf7495979356e45ba385eed4ce7d0cc9a78751"
+    },
+    {
+      "path": "weak-rsa.yaml",
+      "git_blob": "02b11529ea99ef9fb66e43d4e47e00373e38d132",
+      "sha256": "5835759108a05c7c9a70afec17d5d457859c308e1294c94a3de0f64e3cb72eb8"
+    }
+  ],
+  "rules_license_sha256": "1a6466ae5f1c68631bbd13e3f1aa8f380d84219853c08f0456b853fccfacee1d"
+}
