@@ -23,4 +23,4 @@ Keep descriptions near their owner. Link to test results and security findings r
 
 - [Card recognition design and synthetic feasibility evidence](CARD-RECOGNITION.md).
 
-- [Crop design](design.md): stationary card mask, adaptive controls and scoped validation; broader design coverage remains a documented gap.
+- [Wallet design](design.md): screens, journeys, shared states, privacy/accessibility criteria and the detailed card-image interaction; whole-app acceptance gaps remain explicit.
