@@ -35,8 +35,10 @@ Requested photo/TalkBack checks are owner-reported complete; earlier agent camer
 measurements retain their narrower scope. Signing-backup possession is
 owner-reported and independent recovery was omitted at owner direction, not passed.
 The unconfirmed legacy backup report #21 remains shelved, not fixed.
-Existing beta releases/assets/tags remain retained pending separately confirmed
-cleanup. The following preparation and beta sections are dated historical records;
+After stable replacement verification and specific maintainer confirmation, the
+three beta release pages and their nine assets were withdrawn. All beta tags,
+source history, stable releases and local files remain preserved. Historical beta
+download links no longer work. The following preparation and beta sections are dated historical records;
 their former pending gates do not describe the published release's current state.
 
 AI assisted implementation, verification, documentation and publication. This

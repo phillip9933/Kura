@@ -147,5 +147,19 @@
     "limits": "Live current-version UI check; no newer-version popup is claimed on an already-current installation. Earlier offer/popup and negative installer tests remain separately source-scoped."
   },
   "published_release_url": "https://github.com/phillip9933/Kura/releases/tag/v2.2.0",
-  "documentation_closeout": "Post-publication documentation only; shipped APK and release tag unchanged."
+  "documentation_closeout": "Post-publication documentation only; shipped APK and release tag unchanged.",
+  "beta_cleanup": {
+    "deleted_beta_releases": [
+      "v2.2.0-beta.1",
+      "v2.2.0-beta.2",
+      "v2.2.0-beta.3"
+    ],
+    "deleted_assets": 9,
+    "release_and_asset_API_404_verified": true,
+    "all_three_beta_tags_unchanged": true,
+    "stable_latest_and_all_assets_unchanged": true,
+    "prior_stable_2_1_retained": true,
+    "local_files_not_deleted": true,
+    "executed": true
+  }
 }
