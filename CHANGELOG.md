@@ -1,18 +1,38 @@
 # Changelog
 
-## Unreleased
+## 2.2.0 — November 7, 2026
+
+### Breaking changes
+- The GitHub APK now requires Android 8.0 (API 26) or later and an arm64-v8a or x86_64 device.
+
+### Added
+- Automatic card-edge detection with an editable crop mask, rotation preview and photo-quality guidance.
+- Optional offline English/Japanese OCR with editable suggestions for existing empty fields. Review the suggestions and save the card to apply them.
+- GitHub update checks, a foreground new-version notification and optional automatic checks/downloads.
+- A Require app unlock setting for relying on the phone's screen lock while keeping wallet storage encrypted.
 
 ### Changed
-- Keep the card photo visible while adjusting the mask, pan, zoom, rotation and proportions, including small screens and large text.
-- Pin scanner 0.8.0 and updater 0.2.2 stable libraries.
+- Keep automatic and manual cropping in one screen; default to horizontal credit-card proportions.
+- Use scanner 0.8.0 and updater 0.2.2.
+
+### Removed
+- Donation link and settings row.
+- Android App Bundle distribution; GitHub releases provide an APK.
 
 ### Fixed
-- Report incomplete atomic file commits instead of claiming success before a later read rolls them back.
-- Default card cropping to horizontal credit-card proportions while rotating the photo inside the selected frame.
-- Keep the add-photo action available for each missing card side on the details screen.
+- Keep the add-photo action available for each missing card side in card details.
+- Honor the saved startup section and improve phone-only wake behavior.
+- Keep update controls off the loading screen and make manual update checks easy to find in Settings.
+- Recover from corrupted cached update downloads and reject stale camera/picker results.
+- Keep crop controls reachable on small screens and with large text.
+- Report failed atomic file commits instead of acknowledging uncommitted writes.
 
 ### Build information
 - Use Kotlin JVM/Compose 2.4.21 with the existing AGP, Gradle and KSP toolchain.
+- Version 2.2.0, Android version code 123; enhanced scanning and direct GitHub updates enabled.
+- The APK was built by [tagged CI](https://github.com/phillip9933/Kura/actions/runs/42343310292) from [10f17a9](https://github.com/phillip9933/Kura/commit/10f17a93c99b67cbe63b17417111b0e8a7ab34f1), then signed without rebuilding using the existing GitHub release identity.
+- See `SHA256SUMS.txt` for download integrity and `release-validation.json` for verification scopes and limitations. APK certificate SHA-256: `1e19598265c5c5920639da46261944463f8ec65793fe0dbd362a558599c6dfd1`.
+- OCR suggestions and photo-quality guidance can be inaccurate; review the image and details before saving.
 
 ## 2.2.0-beta.3 — November 6, 2026
 

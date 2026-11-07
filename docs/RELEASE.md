@@ -1,5 +1,49 @@
 # Release tooling
 
+## Android 2.2.0 / 123 — published 7 November 2026
+
+[Kura 2.2.0](https://github.com/phillip9933/Kura/releases/tag/v2.2.0) is the
+latest stable GitHub release: APK-only, API 26+, arm64-v8a/x86_64, scanner 0.8.0
+and updater 0.2.2. Source tag `v2.2.0` resolves to
+`10f17a93c99b67cbe63b17417111b0e8a7ab34f1`.
+
+The exact APK came from [tagged CI run 42343310292](https://github.com/phillip9933/Kura/actions/runs/42343310292)
+at the immutable source-freeze tag `candidate-android-2.2.0-123-20261107`, which
+resolves to that same commit. It was signed without rebuilding using the existing
+GitHub release identity. [All six post-merge CI jobs](https://github.com/phillip9933/Kura/actions/runs/42342158497)
+pass. Actual signature, production identity/version, permissions/providers,
+models/profiles and native/ZIP 16 KiB checks pass; signed and unsigned non-signature
+payloads match exactly.
+
+APK SHA-256: `4b426b811af2857761e27187ee65b462dfa43b2466ea11ce6df6c41be2f1e712`.
+Certificate SHA-256: `1e19598265c5c5920639da46261944463f8ec65793fe0dbd362a558599c6dfd1`.
+All three public assets (APK, SHA256SUMS.txt, release-validation.json) were freshly
+downloaded without credentials and matched the verified upload inputs byte-for-byte.
+Public latest metadata advertises v2.2.0 and its exact APK/checksum assets.
+A foreground manual check in the installed production app completed without an
+error or newer offer, with automatic checks/downloads and beta selection still off.
+
+Both actual production-package retained upgrades pass: published 2.1.0 / 119
+with app authentication, and Beta 3 / 122 in phone-only mode, to this exact
+2.2.0 / 123 APK through Android's foreground installer. Exact synthetic fields,
+leading zeros, decoded front/back images, theme/startup preferences and package
+UID were retained. Phone-only reopening also passes after force-stop. No reset
+occurred within either retained-data case. See [Testing](TESTING.md#published-stable-production-upgrades--7-november-2026)
+and [public evidence](evidence/production-release-20261107.json).
+
+Requested photo/TalkBack checks are owner-reported complete; earlier agent camera
+measurements retain their narrower scope. Signing-backup possession is
+owner-reported and independent recovery was omitted at owner direction, not passed.
+The unconfirmed legacy backup report #21 remains shelved, not fixed.
+After stable replacement verification and specific maintainer confirmation, the
+three beta release pages and their nine assets were withdrawn. All beta tags,
+source history, stable releases and local files remain preserved. Historical beta
+download links no longer work. The following preparation and beta sections are dated historical records;
+their former pending gates do not describe the published release's current state.
+
+AI assisted implementation, verification, documentation and publication. This
+closeout changes documentation only; it does not rebuild or replace the shipped APK.
+
 ## Android 2.2.0 preparation — unpublished
 
 The proposed stable source version is **2.2.0 / 123**, following published

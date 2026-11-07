@@ -1,0 +1,165 @@
+{
+  "version": "2.2.0",
+  "version_code": 123,
+  "package": "app.kura.wallet",
+  "source_commit": "10f17a93c99b67cbe63b17417111b0e8a7ab34f1",
+  "stable_tag": "v2.2.0",
+  "build": {
+    "workflow_run": 42343310292,
+    "workflow_url": "https://github.com/phillip9933/Kura/actions/runs/42343310292",
+    "source_freeze_tag": "candidate-android-2.2.0-123-20261107",
+    "artifact_id": 13561619760,
+    "unsigned_apk_sha256": "d018b924d1b9d0d89ed9fa80940bbdbfe3c64b81203ed774a92c710b92760bc5",
+    "built_in_CI": true,
+    "signed_without_rebuilding": true,
+    "non_signature_payload_equality": true,
+    "postmerge_checks": "https://github.com/phillip9933/Kura/actions/runs/42342158497",
+    "all_six_postmerge_jobs": "success"
+  },
+  "apk": {
+    "apk_sha256": "4b426b811af2857761e27187ee65b462dfa43b2466ea11ce6df6c41be2f1e712",
+    "apk_bytes": 116861362,
+    "signer_sha256": "1e19598265c5c5920639da46261944463f8ec65793fe0dbd362a558599c6dfd1",
+    "signed": true,
+    "debuggable": false,
+    "test_only": false,
+    "min_sdk": 26,
+    "target_sdk": 36,
+    "card_scanner": true,
+    "direct_updates": true,
+    "native_alignment_16k": true
+  },
+  "supplied_apk_verification": "pass: production identity/version, signature, release policy, permissions/components/providers, models/profiles and all24 native/ZIP16KiB checks",
+  "production_upgrade_acceptance": {
+    "device": "Pixel 6 Pro, GrapheneOS Android17/API37 arm64",
+    "synthetic_data_only": true,
+    "cases": [
+      {
+        "baseline": "2.1.0/119",
+        "unlock": "authenticated",
+        "result": "pass",
+        "exact_fields_and_leading_zeros_retained": true,
+        "front_and_back_images_decoded": true,
+        "theme_and_startup_preference_retained": true,
+        "package_uid_retained": true,
+        "owner_completed_system_authentication": true
+      },
+      {
+        "baseline": "2.2.0-beta.3/122",
+        "unlock": "phone-only",
+        "result": "pass",
+        "exact_fields_and_leading_zeros_retained": true,
+        "front_and_back_images_decoded": true,
+        "theme_and_startup_preference_retained": true,
+        "package_uid_retained": true,
+        "unlock_off_retained": true,
+        "post_upgrade_and_force_stop_reopened_without_app_authentication": true
+      }
+    ],
+    "no_clear_or_uninstall_within_each_case": true,
+    "case_boundary_reset": "Separately authorized synthetic-production app reset only between completed cases to install the older baseline.",
+    "limits": "Normal UI verifies decoded images and fields; encrypted-media file hashes not extracted. Not a destructive production instrumentation suite.",
+    "harness_limitations": [
+      "A clipped-row coordinate selection navigated Home; corrected visible-viewport tap and owner reauthentication completed settings verification.",
+      "A first post-install loading snapshot was premature; the same process subsequently opened without authentication. Failed assertions are preserved privately, not counted as additional app failures or passing tests."
+    ]
+  },
+  "software_qualification": {
+    "full_enhanced_app": {
+      "result_file": "0020-full-enhanced-app-after-readiness.json",
+      "seconds": 994.168,
+      "terminal_cases": 98,
+      "passed": 94,
+      "failed": 0,
+      "skipped": 4
+    },
+    "optimized": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 97.39,
+      "input_source": "c72e5c738caa6fadb90861795dcbadb7b5c6e979",
+      "apk_sha256": "0b30a7bce5fc4709d5a811b38a9d2d5e48de5689eb9bf8f7a8431c7db2808d74",
+      "installed_before_debug_sha256": "10c6fa4132332b2c68fb3d142d86bd4f7d6495786773caa11e34165015b9c77e",
+      "installed_after_optimized_sha256": "0b30a7bce5fc4709d5a811b38a9d2d5e48de5689eb9bf8f7a8431c7db2808d74",
+      "package_before_and_after": "app.kura.wallet.prototype",
+      "version_before_and_after": "2.2.0-dev / 123",
+      "operation": "ADB install -r -t, no uninstall/clear, same-version debug\u2192optimized. Not production identity, version upgrade, Android installer or independent all-record retention.",
+      "earlier_attempt": {
+        "passed": 2,
+        "failed": 1,
+        "skipped": 1,
+        "seconds": 75.007,
+        "cause": "permissionAcceptance opt-in omitted; permission case skipped and its expected stopped-app cleanup did not run. Subsequent repeated-auth journey failed from open app. Full documented selection with both opt-ins passes; no assertion changed."
+      }
+    },
+    "canonical_evidence": "https://github.com/phillip9933/Kura/blob/c8008c4d8cbc46fc30043042efb9fbaa1db19aa3/docs/evidence/production-preparation-20261107.json",
+    "scope": "Earlier executed prototype/emulator/software results retain their exact source/artifact scope in the canonical evidence; not rerun as production tests. Post-merge CI job success is separately verified, not a newly parsed test-count claim."
+  },
+  "physical_acceptance": {
+    "hardware_key_and_phone_lock": "Actual test-phone StrongBox authenticated unwrap and phone screen-off/app lock checks completed; restored-off state verified in prototype.",
+    "photo_and_TalkBack": "Requested checks maintainer-reported complete. Earlier agent camera observations retain their narrower prepared-scene scope; no new per-scene latency or peak-memory result inferred.",
+    "signing_backup": "Possession owner-reported; independent recovery omitted at owner direction, not passed."
+  },
+  "known_limits": [
+    "OCR suggestions and photo-quality guidance can be inaccurate; review before saving.",
+    "Historical unconfirmed legacy-backup issue21 remains shelved as not planned; no root-cause fix claimed.",
+    "Finite source/dependency applicability reviews are not exhaustive security certification."
+  ],
+  "ai_assistance": "Implementation, diagnosis, verification, documentation and publication assisted by AI; owner reports and agent observations distinguished.",
+  "publication_verification": {
+    "tag": "v2.2.0",
+    "release_id": 437442217,
+    "all_assets_publicly_downloaded_without_credentials": true,
+    "all_bytes_match_verified_upload_inputs": true,
+    "checksum_manifest_verified": true,
+    "assets": [
+      {
+        "name": "Kura-2.2.0.apk",
+        "bytes": 116861362,
+        "sha256": "4b426b811af2857761e27187ee65b462dfa43b2466ea11ce6df6c41be2f1e712",
+        "public_download_exact_match": true
+      },
+      {
+        "name": "release-validation.json",
+        "bytes": 5892,
+        "sha256": "99e8cc7e390803a54cec1c1606bf8595300e89971c99e9d27d21d5a26772e8ee",
+        "public_download_exact_match": true
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "bytes": 171,
+        "sha256": "3c506b1cd2f2c88e676168b9b5fc05b96fb14243ccb58ca96667be8496167a76",
+        "public_download_exact_match": true
+      }
+    ],
+    "APK_signature_identity": "Byte-identical to the previously signature-verified shipping APK; expected GitHub signer1e19598265c5c5920639da46261944463f8ec65793fe0dbd362a558599c6dfd1",
+    "stable_latest_API_verified": true
+  },
+  "live_update_discovery": {
+    "production_version": "2.2.0/123",
+    "manual_foreground_public_GitHub_check": "completed with Check for updates enabled, no error and no newer offer on current stable",
+    "automatic_checks": false,
+    "automatic_wifi_downloads": false,
+    "include_betas": false,
+    "optins_unchanged": true,
+    "installation_or_download_triggered": false,
+    "limits": "Live current-version UI check; no newer-version popup is claimed on an already-current installation. Earlier offer/popup and negative installer tests remain separately source-scoped."
+  },
+  "published_release_url": "https://github.com/phillip9933/Kura/releases/tag/v2.2.0",
+  "documentation_closeout": "Post-publication documentation only; shipped APK and release tag unchanged.",
+  "beta_cleanup": {
+    "deleted_beta_releases": [
+      "v2.2.0-beta.1",
+      "v2.2.0-beta.2",
+      "v2.2.0-beta.3"
+    ],
+    "deleted_assets": 9,
+    "release_and_asset_API_404_verified": true,
+    "all_three_beta_tags_unchanged": true,
+    "stable_latest_and_all_assets_unchanged": true,
+    "prior_stable_2_1_retained": true,
+    "local_files_not_deleted": true,
+    "executed": true
+  }
+}
