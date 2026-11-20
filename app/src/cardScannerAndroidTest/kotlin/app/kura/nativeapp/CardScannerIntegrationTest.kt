@@ -4,6 +4,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.RectF
 import android.os.Build
@@ -46,6 +47,46 @@ class CardScannerIntegrationTest {
             return output.toByteArray()
         } finally { bitmap.eraseColor(0); bitmap.recycle(); output.close() }
     }
+    @Test fun importedTwoToneCardUsesAllFourOuterCorners() = runBlocking {
+        disposable()
+        val width = 900
+        val height = 800
+        val corners = floatArrayOf(155f, 239f, 786f, 316f, 719f, 578f, 221f, 518f)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val jpeg = try {
+            val canvas = Canvas(bitmap)
+            canvas.drawColor(Color.rgb(214, 216, 214))
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+            paint.color = Color.rgb(205, 207, 205)
+            canvas.drawRect(32f, 120f, 475f, 638f, paint)
+            val transform = Matrix()
+            check(transform.setPolyToPoly(floatArrayOf(0f, 0f, 1080f, 0f, 1080f, 680f, 0f, 680f), 0, corners, 0, 4))
+            canvas.concat(transform)
+            paint.color = Color.rgb(174, 202, 220)
+            canvas.drawRect(0f, 0f, 1080f, 680f, paint)
+            paint.color = Color.rgb(42, 86, 129)
+            canvas.drawRect(0f, 0f, 291f, 680f, paint)
+            paint.color = Color.BLACK
+            paint.textSize = 48f
+            canvas.drawText("MEMBER 001234", 340f, 450f, paint)
+            ByteArrayOutputStream().use { output ->
+                check(bitmap.compress(Bitmap.CompressFormat.JPEG, 95, output))
+                output.toByteArray()
+            }
+        } finally {
+            bitmap.recycle()
+        }
+        try {
+            val detected = CardScanEngine(context).detect(jpeg)
+            detected.points.forEachIndexed { i, point ->
+                val error = kotlin.math.hypot(point.x * width - corners[i * 2], point.y * height - corners[i * 2 + 1])
+                assertTrue("Outer corner $i missed by ${error}px", error < 12.0)
+            }
+        } finally {
+            jpeg.fill(0)
+        }
+    }
+
     @Test fun realEngineDetectsCardAndRecognizesExistingFieldsOffline() = runBlocking {
         disposable()
         val bytes = image()

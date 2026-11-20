@@ -2,7 +2,7 @@
 
 ## Optional Android SDKs — 20 November 2026
 
-Kura now pins scanner 1.0.0 and updater 1.0.0. The published Maven bundles,
+Kura now pins scanner 1.1.0 and updater 1.0.0. The published Maven bundles,
 source revisions and archive digests are recorded in the
 [scanner provenance](../third_party/card-scanner/PROVENANCE.md) and
 [updater provenance](../third_party/android-updater/README.md).

@@ -71,9 +71,9 @@ kotlin { jvmToolchain(21); compilerOptions { jvmTarget.set(org.jetbrains.kotlin.
 dependencies {
  if (cardScanner) {
     implementation("androidx.compose.material:material-icons-core:1.7.8")
-    implementation("dev.offlinescan:scanner-core:1.0.0")
-    implementation("dev.offlinescan:scanner-processing-opencv:1.0.0")
-    implementation("dev.offlinescan:scanner-ocr-tesseract:1.0.0")
+    implementation("dev.offlinescan:scanner-core:1.1.0")
+    implementation("dev.offlinescan:scanner-processing-opencv:1.1.0")
+    implementation("dev.offlinescan:scanner-ocr-tesseract:1.1.0")
  }
  if (directUpdates) {
     implementation("io.github.phillip9933:android-updater:1.0.0")

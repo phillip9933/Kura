@@ -1,5 +1,25 @@
 # Testing
 
+## Scanner 1.1.0 — 20 November 2026
+
+On a disposable API 37 emulator with 16 KiB pages, all 21 scanner cases passed (6 integration, 6 scan safety, 5 crop layout and 4 rotation). These include
+English and Japanese OCR, optional autofill and cleanup on vault lock. Two
+initial UI cases stopped at wallet unlock. A separate preflight process exited
+before reporting a result. After a verified foreground unlock, the same APKs
+passed all four classes without skips.
+
+A tilted two-tone JPEG exercises Kura's file import path. All four detected
+corners were within 12 pixels of the outer border in the 900 × 800 image.
+The same test also passed with scanner 1.0.0. This fixture checks the crop
+boundary. Handheld recognition accuracy was outside this run.
+
+The scanner-only and combined unsigned release APKs passed model, permission
+and 16 KiB packaging checks. The scanner-only APK has no internet permission.
+The combined debug and instrumentation APKs built, and debug lint reported
+0 errors and 30 warnings. Gradle reproduced all five dependency lock
+configurations. The full-app regression results below apply to scanner 1.0.0.
+
+
 ## Backup and editor fixes with SDK 1.0.0 — 20 November 2026
 
 Fresh disposable Android API 37 emulators used x86_64, 16 KiB pages, a synthetic

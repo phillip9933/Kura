@@ -1,18 +1,15 @@
-# Scanner SDK 1.0.0
+# Scanner SDK 1.1.0
 
-## Page detection
+The viewfinder checks for page edges as soon as the learned detector misses a frame. On cards with a dark printed panel, it looks for the full card border before suggesting a crop. When you take a picture, the scanner refines the corners against the page edges and carries the selected photo’s crop into review.
 
-In the ready-made scanner, AI gets the first chance to find the page. If it misses on two consecutive frames of a similar scene, Standard checks the edges on the second frame. A successful fallback is checked afresh on subsequent missed frames. Captured images, imports and an explicit automatic crop get one immediate edge check after an AI miss. Standard mode remains available in settings. Automatic capture still requires a steady page and a passing focus check.
+Auto keeps the stock color on two-tone cards. On paper documents it reduces show-through, preserves pencil strokes and highlighter, and makes dim printed grids easier to read. Very faint writing gets a gentler contrast adjustment.
 
-In an emulator replay of 78 held-out synthetic scenes, the scanner drew a correct outline for 43 of 48 pages, compared with 1 using AI alone. The 42 recovered pages appeared in about 207 ms at the median. Neither path drew an outline on the 30 no-page scenes. Both retained one incorrect outline on a positive scene. Each scene supplied three identical frames 180 ms apart. Correctness required a visible outline covering at least 75% intersection over union with the reference. These measurements cover warmed detection on static inputs.
+## What we tested
 
-## Upgrading from 0.8.0
+On 32 synthetic scenes with pages and cards photographed at different angles and sizes, the first frame had the correct outline in 32 cases, up from 11 in 1.0.0. Both versions rejected all five empty scenes. On a shadowed form, measured show-through fell by 90% while pencil stroke contrast increased. These results come from Android emulator tests. Handheld timing varies with the phone, lighting and background. Manual corner adjustment remains available for difficult pages.
 
-Use version `1.0.0` for all six Maven modules you consume and recompile the app and any prebuilt wrappers that use `OcrConfig`. The configuration gained a working-memory budget. Android API 26+, arm64-v8a and x86_64 remain supported. Apps using offline English or Japanese OCR continue to supply the pinned language models.
+## Upgrade from 1.0.0
 
-- Selecting a small OCR field preserves its detail within the memory budget. Word boxes use the full rendered image coordinates.
-- The crop editor and export agree on mirrored image orientation. Manual capture uses the mode selected when the shutter is pressed.
-- A cancelled render preserves an existing destination file. Changing the host scan configuration starts a fresh session.
-- Preview rendering, OCR decoding and document-provider transfers have resource limits. The SDK archive includes dependency inventories from the audited build.
+Update every `dev.offlinescan` module your app uses to `1.1.0`. Apps using the ready-made scanner get the new behavior automatically. Custom camera integrations can use `ScannerCamera.captureWithDetection` to receive the saved JPEG and its detection together. For custom document import or capture, `DocumentOutlineFallback.refineStill` selects between the learned and measured outlines.
 
-A glossy card, a shadow or a rectangular background object can still lead to a missed or incorrect boundary. Users can adjust the crop and review recognized names and numbers before saving.
+The download contains the six-module Maven repository. Verify the ZIP with `sha256sum --check SHA256SUMS`, extract it and point Gradle at the extracted `maven` directory.
