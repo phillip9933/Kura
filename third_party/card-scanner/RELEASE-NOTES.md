@@ -1,28 +1,15 @@
-# 0.8.0 — offline OCR and card scanning
+# Scanner SDK 1.1.0
 
-Stable release of the scanner SDK. The owner confirmed physical-device acceptance for promotion on 6 November. The scanner implementation is the same as the tested beta.
+The viewfinder checks for page edges as soon as the learned detector misses a frame. On cards with a dark printed panel, it looks for the full card border before suggesting a crop. When you take a picture, the scanner refines the corners against the page edges and carries the selected photo’s crop into review.
 
-## Changes
+Auto keeps the stock color on two-tone cards. On paper documents it reduces show-through, preserves pencil strokes and highlighter, and makes dim printed grids easier to read. Very faint writing gets a gentler contrast adjustment.
 
-- Optional offline English/Japanese OCR through `scanner-ocr-tesseract`, with text, confidence and word positions. Hosts provide the pinned local models; the SDK performs no model downloads.
-- Selected single-line straightening (opt-in), with bounded processing and full-image word coordinates. This targets tilted printed fields; it does not guess or correct characters.
-- Ordered field OCR for up to 32 host/user-defined regions. IDs, raw text and leading zeros are preserved; the SDK does not infer card fields.
-- Color-edge detection and a supported enclosing-boundary preference to avoid selecting an internal text panel instead of a card.
-- Developer sample field selection, numeric-line diagnostics and visible OCR settings. The sample APK is not a public SDK release asset.
-- Native/model integrity checks, private model snapshots and strict dependency verification. See [OCR security](OCR-SECURITY.md).
+## What we tested
 
-## Integration
+On 32 synthetic scenes with pages and cards photographed at different angles and sizes, the first frame had the correct outline in 32 cases, up from 11 in 1.0.0. Both versions rejected all five empty scenes. On a shadowed form, measured show-through fell by 90% while pencil stroke contrast increased. These results come from Android emulator tests. Handheld timing varies with the phone, lighting and background. Manual corner adjustment remains available for difficult pages.
 
-All six Maven modules use `0.8.0`. Extract the release SDK Maven ZIP and configure its `maven` directory as a repository. Update modules together and recompile consumers. OCR is opt-in; plain scanner consumers need not add the OCR module. Android API 26+, arm64-v8a and x86_64 are unchanged. See [OCR integration](OCR.md), [general integration](INTEGRATION.md) and bundled license/native provenance.
+## Upgrade from 1.0.0
 
-## Verification and limitations
+Update every `dev.offlinescan` module your app uses to `1.1.0`. Apps using the ready-made scanner get the new behavior automatically. Custom camera integrations can use `ScannerCamera.captureWithDetection` to receive the saved JPEG and its detection together. For custom document import or capture, `DocumentOutlineFallback.refineStill` selects between the learned and measured outlines.
 
-Local JVM tests, lint, SDK assembly, archive checks and independent plain/OCR consumer compilation pass. Emulator evidence includes five OCR and 39 processing cases on API 37.2/x86_64/16 KB, covering a tilted numeric line, coordinate mapping and small/rounded/tilted/low-grayscale-contrast cards. The ordered-field helper is covered by core tests and archived-Maven consumer compilation. Physical acceptance was reported by the release owner.
-
-Synthetic host numeric experiments improved from 51/84 exact cases to 78/84 with line straightening. These host results are not device accuracy guarantees. Known-field Japanese-form experiments found all fields in 10/12 scenarios; supplied rectangles/order are not automatic form parsing.
-
-Known limitations: incorrect digits/Japanese characters, imperfect boxed-form reading order, missed or wrong crop proposals, glare/blur and ambiguous backgrounds. Real-camera detection latency/thermal impact and broader accuracy remain under evaluation. OCR confidence is not validation. Hosts must let users inspect/edit identifiers and names before saving. Original scans remain unchanged. Native OCR cannot be interrupted mid-call; cancellation is observed around it.
-
-Searchable PDF, automatic card-field interpretation, simultaneous multi-document capture, handwriting guarantees and cloud OCR are not included. Report reproducible problems through the [field-testing process](FIELD-TESTING.md).
-
-See [candidate validation](../evidence/ocr-card-candidate-validation.json), [OCR acceptance](OCR-ACCEPTANCE.md) and [card/form investigation](OCR-CARD-INVESTIGATION.md). The release contains the SDK Maven ZIP and SHA256SUMS, with GitHub-generated source archives; no standalone APK.
+The download contains the six-module Maven repository. Verify the ZIP with `sha256sum --check SHA256SUMS`, extract it and point Gradle at the extracted `maven` directory.

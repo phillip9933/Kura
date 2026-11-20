@@ -1,7 +1,7 @@
 8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef  LICENSE
-b4f56c8d2ad2faf48f89dbf6c3a8b21d6875507214fafd749396e197d66b42c3  SOURCE_REVISION.txt
-29b57bb4fe5168219b480d9fd16deef49880edacb64b93cc2548a9970d669359  android-app-updater-0.2.2-source.zip
-d40d75fe3f48efbcdeab76321eea465f5c151843d2d84392400def60dd9b7372  maven/io/github/phillip9933/android-updater/0.2.2/android-updater-0.2.2-sources.jar
-30bdad7bcdc32081ed0469bd5fbb62146c5cf7286f92d305bef5cb83cb341c75  maven/io/github/phillip9933/android-updater/0.2.2/android-updater-0.2.2.aar
-4a53e3e0175fb90d1fefceb523ec92409307a6f75342318e4a124324f16bcd0d  maven/io/github/phillip9933/android-updater/0.2.2/android-updater-0.2.2.module
-119f2bf5c3240e0c7aeb07b46957f53c764234c64cafe45651ea91e286b06d39  maven/io/github/phillip9933/android-updater/0.2.2/android-updater-0.2.2.pom
+01813623d150f6c6f7f8d101f580c3787062a82d851e45bf8b337a0a08414eaf  SOURCE_REVISION.txt
+9968c05e86b69065464d233c84fd7d66e63d7288c3006fb3ec386967406dd9dc  android-app-updater-1.0.0-source.zip
+4b81fc8f2bd03275269fff4012a1d0b82e414cfd6849386604a6fd0265e4f7ac  maven/io/github/phillip9933/android-updater/1.0.0/android-updater-1.0.0-sources.jar
+5be67e6bc30c370347631d5a1f3208f11b6f807f3a1aef84f6a1d615cb414c70  maven/io/github/phillip9933/android-updater/1.0.0/android-updater-1.0.0.aar
+0dfd37ff4da99d1148889dee8a0a2d0b915b5447fcd40e0a54f1c3b71db95426  maven/io/github/phillip9933/android-updater/1.0.0/android-updater-1.0.0.module
+803a2f644c359916fcffc4bcb8796cac423439675edf0479222d9232e051330b  maven/io/github/phillip9933/android-updater/1.0.0/android-updater-1.0.0.pom

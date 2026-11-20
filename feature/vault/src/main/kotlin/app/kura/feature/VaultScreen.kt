@@ -298,8 +298,13 @@ fun VaultScreen(items: List<VaultItem>, busy: Boolean, window: Window,
         else ItemDetailScreen(item,window,preferences,{selectedKey=null},{onArchive(item);selectedKey=null},{onDelete(item);selectedKey=null},
             {editing=item;selectedKey=null},loadImage,onImage,onRemoveImage,{onShare(item)},favorite=preferences.isFavorite(item),onFavorite={onFavorite(item)})
     }
+    if (memory.form.saving) {
+        AlertDialog(onDismissRequest = {}, title = { Text("Saving item…") },
+            text = { LinearProgressIndicator(Modifier.fillMaxWidth()) }, confirmButton = {})
+        return
+    }
     editing?.takeUnless(::isImportedPass)?.let { item -> RecordForm(item.table,item,preferences,preference=onPreference,dismiss={editing=null;memory.form.clear();onDiscardDraft()},memory=memory.form,loadImage=loadImage,draftImages=draftImages,
-        draftImage={column,source->onImage(item.copy(id=-1),column,source)},removeDraftImage={column->onRemoveImage(item.copy(id=-1),column)}) { json -> onEdit(item,json);editing=null;memory.form.clear() } }
+        draftImage={column,source->onImage(item.copy(id=-1),column,source)}) { json -> onEdit(item,json) } }
     if(adding && memory.manualSection.value=="wallets" && table=="wallets" && addCardKind==null) AlertDialog(onDismissRequest={adding=false},title={Text("Add card")},
         text={Column {
             TextButton(onClick={addCardKind="wallets";memory.manualCategory.value=defaultFormCategory("wallets",preferences)}) {Text("Payment-card reference")}
@@ -314,7 +319,7 @@ fun VaultScreen(items: List<VaultItem>, busy: Boolean, window: Window,
             embedded=true,loadImage=loadImage,draftImages=draftImages,discardDraft=onDiscardDraft,draftImage={column,source->
                 onImage(VaultItem(storageTable,-1,"New item","","",false,"{}"),column,source)
             }) {json->
-            onSaveRecord(storageTable,json);adding=false;addCardKind=null;memory.clearManual()
+            onSaveRecord(storageTable,json)
         }}}
     }
     if(preferences.bool("isExpiryNotificationEnabled") && !expiryDismissed && expiring.isNotEmpty() && !settings && !archive) AlertDialog(onDismissRequest={expiryDismissed=true},

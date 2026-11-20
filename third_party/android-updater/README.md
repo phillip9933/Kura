@@ -1,15 +1,15 @@
-# Pinned Android updater 0.2.2
+# Pinned Android updater 1.0.0
 
-Immutable `io.github.phillip9933:android-updater:0.2.2` from the
-[stable release](https://github.com/phillip9933/android-app-updater/releases/tag/v0.2.2).
+Kura's direct-update build uses `io.github.phillip9933:android-updater:1.0.0`.
+The Maven files, source archive, license, revision and checksum manifest come
+from the [1.0.0 release bundle](https://github.com/phillip9933/android-app-updater/releases/tag/v1.0.0).
 
-Source: `e98076dcc9cc980afef32b41949a6f529bc833c6`.
-Outer bundle SHA-256: `3e057a18afd0e681a49fb6aadd852f9678f825610267ba6552683fb1aa181e4e`.
-Source ZIP SHA-256: `29b57bb4fe5168219b480d9fd16deef49880edacb64b93cc2548a9970d669359`.
+| Release input | Verified value |
+| --- | --- |
+| Source revision | `0613457c079d675dffcb4b5181e37959628cbbc4` |
+| Bundle SHA-256 | `13b0fa5df7524091191e063c9b25bdb4d222866053228754d98ea3f1d1e72763` |
+| AAR SHA-256 | `5be67e6bc30c370347631d5a1f3208f11b6f807f3a1aef84f6a1d615cb414c70` |
+| Source archive SHA-256 | `9968c05e86b69065464d233c84fd7d66e63d7288c3006fb3ec386967406dd9dc` |
 
-All seven supplied inner pins and the source archive match. AAR and Maven source
-JAR are byte-identical to the prior 0.2.2-beta.1 candidate; Maven metadata changes
-the version only. The corrupt-cache recovery fix is retained. Gradle verifies
-the original inner pins and rejects unlisted Maven files. Consumers never follow
-a sibling checkout. Kura host/production acceptance remains separate from the
-upstream release. See the [host pin review](../../docs/evidence/stable-sdk-pins-20261107.json).
+Gradle checks all seven entries in `SHA256SUMS` and rejects unlisted Maven files.
+The default offline build omits the updater.

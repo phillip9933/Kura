@@ -161,6 +161,19 @@ class VaultStore internal constructor(
     }
     fun insert(vault: Opened, table: String, row: JSONObject) = write(vault, table, row, false)
     fun update(vault: Opened, table: String, row: JSONObject) = write(vault, table, row, true)
+    /** A failed editor write must leave the row and its draft media eligible for retry. */
+    fun saveRecord(vault: Opened, table: String, row: JSONObject, editId: Long?) {
+        if (editId != null) require(row.getLong("id") == editId)
+        val database = db(vault, table)
+        database.beginTransaction()
+        try {
+            write(vault, table, row, editId != null)
+            database.setTransactionSuccessful()
+        } finally {
+            database.endTransaction()
+        }
+    }
+
     private fun exactInteger(value: Any): Long {
         require(value is Number && value.toString().matches(Regex("-?[0-9]+"))) { "Invalid integer" }
         return value.toString().toLong()

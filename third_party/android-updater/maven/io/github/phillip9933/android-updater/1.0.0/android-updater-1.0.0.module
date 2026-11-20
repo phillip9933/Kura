@@ -1,0 +1,145 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.github.phillip9933",
+    "module": "android-updater",
+    "version": "1.0.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-android",
+          "version": {
+            "requires": "1.10.2"
+          }
+        },
+        {
+          "group": "com.squareup.okhttp3",
+          "module": "okhttp",
+          "version": {
+            "requires": "4.12.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "android-updater-1.0.0.aar",
+          "url": "android-updater-1.0.0.aar",
+          "size": 142950,
+          "sha512": "993c1dee3ad396d7a544f357347c224e10a5ce9a8f0902c6d07720f6199cd46b5c2493b20b48f0f7bef046a0dabd503d34ea72184b5bb2a0858546743a3253ab",
+          "sha256": "5be67e6bc30c370347631d5a1f3208f11b6f807f3a1aef84f6a1d615cb414c70",
+          "sha1": "3a0cd376ef1082a579d7a132a47c8d2b21bcf581",
+          "md5": "bab6dde581f7f5904e27c87b10dced67"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "androidx.core",
+          "module": "core",
+          "version": {
+            "requires": "1.16.0"
+          }
+        },
+        {
+          "group": "androidx.work",
+          "module": "work-runtime",
+          "version": {
+            "requires": "2.11.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-json",
+          "version": {
+            "requires": "1.8.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-android",
+          "version": {
+            "requires": "1.10.2"
+          }
+        },
+        {
+          "group": "com.squareup.okhttp3",
+          "module": "okhttp",
+          "version": {
+            "requires": "4.12.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "android-updater-1.0.0.aar",
+          "url": "android-updater-1.0.0.aar",
+          "size": 142950,
+          "sha512": "993c1dee3ad396d7a544f357347c224e10a5ce9a8f0902c6d07720f6199cd46b5c2493b20b48f0f7bef046a0dabd503d34ea72184b5bb2a0858546743a3253ab",
+          "sha256": "5be67e6bc30c370347631d5a1f3208f11b6f807f3a1aef84f6a1d615cb414c70",
+          "sha1": "3a0cd376ef1082a579d7a132a47c8d2b21bcf581",
+          "md5": "bab6dde581f7f5904e27c87b10dced67"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "android-updater-1.0.0-sources.jar",
+          "url": "android-updater-1.0.0-sources.jar",
+          "size": 20457,
+          "sha512": "3f5213c14e5508c8afdd7ee3e98f7e9601fe1c85313ffe6f0207305a330685e2518b5c683810c5cf28a69352208d0cc6b06abbc5ce51deba776d2386524b8c8a",
+          "sha256": "4b81fc8f2bd03275269fff4012a1d0b82e414cfd6849386604a6fd0265e4f7ac",
+          "sha1": "3d40f6f169aa0dca6a0714d1eb68c49d5e051517",
+          "md5": "50442533e9e9c84a90c1f6548bb6bb9d"
+        }
+      ]
+    }
+  ]
+}

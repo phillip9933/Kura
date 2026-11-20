@@ -38,7 +38,7 @@ import org.json.JSONObject
 fun mediaPreview(table:String,original:JSONObject,drafts:Map<String,String>,removed:List<String>):JSONObject {
  val row=JSONObject(original.toString())
  removed.forEach {if(it=="kuraLogo") ItemMedia.put(table,row,ItemMedia.get(table,row).put("logo","")) else row.put(it,JSONObject.NULL)}
- drafts.forEach {(column,path)->if(column=="kuraLogo") ItemMedia.put(table,row,ItemMedia.get(table,row).put("logo",path)) else row.put(column,path)}
+ drafts.filterKeys { it !in removed }.forEach {(column,path)->if(column=="kuraLogo") ItemMedia.put(table,row,ItemMedia.get(table,row).put("logo",path)) else row.put(column,path)}
  return row
 }
 @Composable fun ItemAttachments(item:VaultItem,action:(VaultItem,String,String)->Unit) {

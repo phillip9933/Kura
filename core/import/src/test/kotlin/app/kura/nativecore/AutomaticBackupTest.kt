@@ -25,6 +25,28 @@ class AutomaticBackupTest {
    assertTrue(root.listFiles()!!.isEmpty())
   } finally {root.deleteRecursively()}
  }
+ @Test fun entryLimitRoundTripsAndOversizedBackupPreservesPreviousCopy() {
+  val scratch = Files.createTempDirectory("backup-entry-count").toFile()
+  val destination = Destination()
+  val password = "boundary backup".toCharArray()
+  val names = (1..4095).map { "asset-$it" }.toSet()
+  fun withAssets(assets: Set<String>) = BackupPayload(payload().data, emptyMap(), assets, { byteArrayOf(7) })
+  try {
+   val name = withAssets(names).use { AutomaticBackup(scratch).write(it, password, 1, destination) }
+   val saved = destination.files.getValue(name)
+   StreamingBackup.read(saved.inputStream(), password, scratch).use { restored ->
+    assertEquals(names, restored.imageNames)
+    restored.consumeImage("asset-4095") { assertArrayEquals(byteArrayOf(7), it) }
+   }
+   withAssets(names + "one-more").use { oversized ->
+    assertThrows(IllegalArgumentException::class.java) { AutomaticBackup(scratch).write(oversized, password, 1, destination) }
+    assertThrows(IllegalArgumentException::class.java) { BackupCodec.write(oversized, password) }
+   }
+   assertEquals(setOf(name), destination.files.keys)
+   assertArrayEquals(saved, destination.files.getValue(name))
+   assertTrue(destination.deleted.isEmpty())
+  } finally { password.fill('\u0000'); scratch.deleteRecursively() }
+ }
  @Test fun failuresNeverRetireExistingBackupsAndRemovePending() {
   val root=Files.createTempDirectory("backup-fault").toFile()
   try {for(fault in listOf("write","read","rename")) {

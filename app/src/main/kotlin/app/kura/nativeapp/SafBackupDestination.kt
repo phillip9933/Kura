@@ -11,8 +11,17 @@ class SafBackupDestination(context:Context,private val tree:Uri):BackupDestinati
     private fun uri(id:String)=DocumentsContract.buildDocumentUriUsingTree(tree,id)
     override fun list():List<BackupDocument> {
         val children=DocumentsContract.buildChildDocumentsUriUsingTree(tree,DocumentsContract.getTreeDocumentId(tree))
-        return resolver.query(children,arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID,DocumentsContract.Document.COLUMN_DISPLAY_NAME),null,null,null)?.use {cursor->
-            buildList {while(cursor.moveToNext()) {require(size<10000) {"Backup folder is too large"};add(BackupDocument(cursor.getString(0),cursor.getString(1)))}}
+        val columns = arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+            DocumentsContract.Document.COLUMN_DISPLAY_NAME, DocumentsContract.Document.COLUMN_MIME_TYPE)
+        return resolver.query(children, columns, null, null, null)?.use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) {
+                    require(size < 10000) { "Backup folder is too large" }
+                    val mime = cursor.getString(2)
+                    val isFile = !mime.isNullOrBlank() && mime != DocumentsContract.Document.MIME_TYPE_DIR
+                    add(BackupDocument(cursor.getString(0), cursor.getString(1), isFile))
+                }
+            }
         } ?: error("Cannot read the backup folder. Choose it again.")
     }
     override fun create(name:String):BackupDocument {

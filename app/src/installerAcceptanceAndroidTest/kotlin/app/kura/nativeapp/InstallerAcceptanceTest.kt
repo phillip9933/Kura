@@ -196,6 +196,10 @@ class InstallerAcceptanceTest {
                 offer(File(fixtures, "candidate.apk")); runBlocking { manager.download() }
                 assertTrue("Verified fixture must become ready: ${manager.state.value.error}", manager.state.value.ready)
                 assertNotNull(runBlocking { manager.prepareInstall() })
+                // The runner may terminate the process as soon as this phase returns.
+                // Wait for the SDK's queued preference writes before testing cold restoration.
+                val preferences = context.getSharedPreferences(kuraUpdateConfig.stateName, 0)
+                assertTrue("Flush pending updater state before process death", preferences.edit().commit())
             }
             "ready-verify" -> {
                 waitFor("Verified candidate must restore after process death") { manager.state.value.ready }
