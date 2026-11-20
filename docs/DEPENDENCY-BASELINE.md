@@ -1,5 +1,19 @@
 # Dependency and security baseline — 6 November 2026
 
+## Optional Android SDKs — 20 November 2026
+
+Kura now pins scanner 1.0.0 and updater 1.0.0. The published Maven bundles,
+source revisions and archive digests are recorded in the
+[scanner provenance](../third_party/card-scanner/PROVENANCE.md) and
+[updater provenance](../third_party/android-updater/README.md).
+
+Regenerating the dependency locks in a disposable checkout reproduced the
+committed app lockfiles for all five configurations, including the installer
+test harness. Gradle resolved the new artifacts on both the debug and release
+runtime classpaths of the selected variants. The default offline build
+resolved neither SDK. The earlier advisory inventories below are dated.
+
+
 Source: `08d3f9e`, with the same tree as remote main `6ed466a`. This baseline
 records declarations, resolved configurations, bounded integrity checks and a
 current public-advisory lookup. It is **not an independent security audit or

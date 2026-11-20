@@ -1,28 +1,18 @@
-# 0.8.0 — offline OCR and card scanning
+# Scanner SDK 1.0.0
 
-Stable release of the scanner SDK. The owner confirmed physical-device acceptance for promotion on 6 November. The scanner implementation is the same as the tested beta.
+## Page detection
 
-## Changes
+In the ready-made scanner, AI gets the first chance to find the page. If it misses on two consecutive frames of a similar scene, Standard checks the edges on the second frame. A successful fallback is checked afresh on subsequent missed frames. Captured images, imports and an explicit automatic crop get one immediate edge check after an AI miss. Standard mode remains available in settings. Automatic capture still requires a steady page and a passing focus check.
 
-- Optional offline English/Japanese OCR through `scanner-ocr-tesseract`, with text, confidence and word positions. Hosts provide the pinned local models; the SDK performs no model downloads.
-- Selected single-line straightening (opt-in), with bounded processing and full-image word coordinates. This targets tilted printed fields; it does not guess or correct characters.
-- Ordered field OCR for up to 32 host/user-defined regions. IDs, raw text and leading zeros are preserved; the SDK does not infer card fields.
-- Color-edge detection and a supported enclosing-boundary preference to avoid selecting an internal text panel instead of a card.
-- Developer sample field selection, numeric-line diagnostics and visible OCR settings. The sample APK is not a public SDK release asset.
-- Native/model integrity checks, private model snapshots and strict dependency verification. See [OCR security](OCR-SECURITY.md).
+In an emulator replay of 78 held-out synthetic scenes, the scanner drew a correct outline for 43 of 48 pages, compared with 1 using AI alone. The 42 recovered pages appeared in about 207 ms at the median. Neither path drew an outline on the 30 no-page scenes. Both retained one incorrect outline on a positive scene. Each scene supplied three identical frames 180 ms apart. Correctness required a visible outline covering at least 75% intersection over union with the reference. These measurements cover warmed detection on static inputs.
 
-## Integration
+## Upgrading from 0.8.0
 
-All six Maven modules use `0.8.0`. Extract the release SDK Maven ZIP and configure its `maven` directory as a repository. Update modules together and recompile consumers. OCR is opt-in; plain scanner consumers need not add the OCR module. Android API 26+, arm64-v8a and x86_64 are unchanged. See [OCR integration](OCR.md), [general integration](INTEGRATION.md) and bundled license/native provenance.
+Use version `1.0.0` for all six Maven modules you consume and recompile the app and any prebuilt wrappers that use `OcrConfig`. The configuration gained a working-memory budget. Android API 26+, arm64-v8a and x86_64 remain supported. Apps using offline English or Japanese OCR continue to supply the pinned language models.
 
-## Verification and limitations
+- Selecting a small OCR field preserves its detail within the memory budget. Word boxes use the full rendered image coordinates.
+- The crop editor and export agree on mirrored image orientation. Manual capture uses the mode selected when the shutter is pressed.
+- A cancelled render preserves an existing destination file. Changing the host scan configuration starts a fresh session.
+- Preview rendering, OCR decoding and document-provider transfers have resource limits. The SDK archive includes dependency inventories from the audited build.
 
-Local JVM tests, lint, SDK assembly, archive checks and independent plain/OCR consumer compilation pass. Emulator evidence includes five OCR and 39 processing cases on API 37.2/x86_64/16 KB, covering a tilted numeric line, coordinate mapping and small/rounded/tilted/low-grayscale-contrast cards. The ordered-field helper is covered by core tests and archived-Maven consumer compilation. Physical acceptance was reported by the release owner.
-
-Synthetic host numeric experiments improved from 51/84 exact cases to 78/84 with line straightening. These host results are not device accuracy guarantees. Known-field Japanese-form experiments found all fields in 10/12 scenarios; supplied rectangles/order are not automatic form parsing.
-
-Known limitations: incorrect digits/Japanese characters, imperfect boxed-form reading order, missed or wrong crop proposals, glare/blur and ambiguous backgrounds. Real-camera detection latency/thermal impact and broader accuracy remain under evaluation. OCR confidence is not validation. Hosts must let users inspect/edit identifiers and names before saving. Original scans remain unchanged. Native OCR cannot be interrupted mid-call; cancellation is observed around it.
-
-Searchable PDF, automatic card-field interpretation, simultaneous multi-document capture, handwriting guarantees and cloud OCR are not included. Report reproducible problems through the [field-testing process](FIELD-TESTING.md).
-
-See [candidate validation](../evidence/ocr-card-candidate-validation.json), [OCR acceptance](OCR-ACCEPTANCE.md) and [card/form investigation](OCR-CARD-INVESTIGATION.md). The release contains the SDK Maven ZIP and SHA256SUMS, with GitHub-generated source archives; no standalone APK.
+A glossy card, a shadow or a rectangular background object can still lead to a missed or incorrect boundary. Users can adjust the crop and review recognized names and numbers before saving.

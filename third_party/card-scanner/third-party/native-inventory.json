@@ -24,9 +24,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 21,
-        "allocated_sections_sha256": "e1faee2e95e9c440efd09716be583265b9dfa6413a29f67a3dc55a72a837462d",
         "gnu_build_id": "a7846ae06d6bf6cf63fa7c5e056b5de493c71567",
+        "load_image_sha256": "b1d41ef910697a956ac661f722ddda30a14b78b2026159fd61ccb4a5f296dbb0",
         "machine": 183
       },
       "packaged_sha256": "41e9a793c43a0f4fddb19e33f346bace464f30f888ba7b9eaf96294ea115bfb6",
@@ -38,9 +37,8 @@
         "archive_sha256": "8ca4032b6d79b351f0b59ad4b580eddbb9423e1652f7c958830687f1eee2ec03",
         "coordinate": "androidx.graphics:graphics-path:1.0.1",
         "identity": {
-          "allocated_section_count": 21,
-          "allocated_sections_sha256": "e1faee2e95e9c440efd09716be583265b9dfa6413a29f67a3dc55a72a837462d",
           "gnu_build_id": "a7846ae06d6bf6cf63fa7c5e056b5de493c71567",
+          "load_image_sha256": "b1d41ef910697a956ac661f722ddda30a14b78b2026159fd61ccb4a5f296dbb0",
           "machine": 183
         },
         "kind": "resolved_dependency",
@@ -54,7 +52,7 @@
       "abi": "arm64-v8a",
       "apk_entry": "lib/arm64-v8a/libc++_shared.so",
       "mapping_gaps": [],
-      "match_method": "normalized_allocated_sections_sha256",
+      "match_method": "normalized_load_image_sha256",
       "name": "libc++_shared.so",
       "notice_evidence": [
         {
@@ -72,9 +70,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 27,
-        "allocated_sections_sha256": "1638139d0f22b023d6baedc8cf468f0db4ac71a9b6603ea0f3bf1b2e0e56d335",
         "gnu_build_id": "7befe631535aa853c4f4ac1293e49dcea34c9b6e",
+        "load_image_sha256": "20bd50f2af9ac116153783dbfb63c272a2c9583f90e8dfc71a5cae65c83a96ca",
         "machine": 183
       },
       "packaged_sha256": "cd61762848882a16c8244c964a6f396c0caa0b440588a210ce9cc4ab0e6d9f0c",
@@ -83,9 +80,8 @@
       "source": {
         "abi": "arm64-v8a",
         "identity": {
-          "allocated_section_count": 27,
-          "allocated_sections_sha256": "1638139d0f22b023d6baedc8cf468f0db4ac71a9b6603ea0f3bf1b2e0e56d335",
           "gnu_build_id": "7befe631535aa853c4f4ac1293e49dcea34c9b6e",
+          "load_image_sha256": "20bd50f2af9ac116153783dbfb63c272a2c9583f90e8dfc71a5cae65c83a96ca",
           "machine": 183
         },
         "kind": "source_build",
@@ -146,9 +142,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 22,
-        "allocated_sections_sha256": "d709bea93cba2ce2d616b658bc5c61bfb1469d04e9a243fe6c35d6f43f120588",
         "gnu_build_id": "e667d7f16c83b70a2cec5d8de25bd854a1a2ba53",
+        "load_image_sha256": "de240179f654f9cfda150dcff065cdc46494393a3b6ae5d0e3be264e2e1ff2a9",
         "machine": 183
       },
       "packaged_sha256": "3e0071afcdc7e321f839e196d266014182f18d0988e4455acc9857a085b2184e",
@@ -160,9 +155,8 @@
         "archive_sha256": "bbca13760ce1587502eb15723d0e17fa0a3495d084e609c4e4c8d3c2e1c85cf8",
         "coordinate": "androidx.camera:camera-core:1.4.2",
         "identity": {
-          "allocated_section_count": 22,
-          "allocated_sections_sha256": "d709bea93cba2ce2d616b658bc5c61bfb1469d04e9a243fe6c35d6f43f120588",
           "gnu_build_id": "e667d7f16c83b70a2cec5d8de25bd854a1a2ba53",
+          "load_image_sha256": "de240179f654f9cfda150dcff065cdc46494393a3b6ae5d0e3be264e2e1ff2a9",
           "machine": 183
         },
         "kind": "resolved_dependency",
@@ -213,9 +207,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 20,
-        "allocated_sections_sha256": "a334ebb0e59abb41c1f3d2e6dc94f0dd9721cc5670bbd13b275872df4844c6b1",
         "gnu_build_id": "e44f1779f56bff5dab1abdbc6f1618defcc06943",
+        "load_image_sha256": "ffc1021cb5bc551c6b854f56bb1642137919019eef822049e6eb6e922a87c1dc",
         "machine": 183
       },
       "packaged_sha256": "a1c7af9d2ab440c953d10967af5ccc3982fd65b23e6c8ecdeaad7f9a86d34b89",
@@ -225,9 +218,8 @@
         "abi": "arm64-v8a",
         "coordinate": "bundled OCR native sources",
         "identity": {
-          "allocated_section_count": 20,
-          "allocated_sections_sha256": "a334ebb0e59abb41c1f3d2e6dc94f0dd9721cc5670bbd13b275872df4844c6b1",
           "gnu_build_id": "e44f1779f56bff5dab1abdbc6f1618defcc06943",
+          "load_image_sha256": "ffc1021cb5bc551c6b854f56bb1642137919019eef822049e6eb6e922a87c1dc",
           "machine": 183
         },
         "kind": "ocr_source_build",
@@ -293,9 +285,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 23,
-        "allocated_sections_sha256": "5b165f3ad1cf717e99b2d1b701663bb36cdf75833a9cc401197f0d1e669fa424",
         "gnu_build_id": "81743329b33a2253fde64d933bc962d670b6f7df",
+        "load_image_sha256": "3a26dca9539ed54b0565224f204ace0f1203aa916789f13a93d8685439280199",
         "machine": 183
       },
       "packaged_sha256": "27a0d612241a5d973b1479aea308036e766507c9c6484de83389bbf7a8cc5509",
@@ -305,9 +296,8 @@
         "abi": "arm64-v8a",
         "coordinate": "bundled OCR native sources",
         "identity": {
-          "allocated_section_count": 23,
-          "allocated_sections_sha256": "5b165f3ad1cf717e99b2d1b701663bb36cdf75833a9cc401197f0d1e669fa424",
           "gnu_build_id": "81743329b33a2253fde64d933bc962d670b6f7df",
+          "load_image_sha256": "3a26dca9539ed54b0565224f204ace0f1203aa916789f13a93d8685439280199",
           "machine": 183
         },
         "kind": "ocr_source_build",
@@ -342,14 +332,13 @@
         }
       ],
       "mapping_gaps": [],
-      "match_method": "normalized_allocated_sections_sha256",
+      "match_method": "normalized_load_image_sha256",
       "name": "libonnxruntime.so",
       "notice_evidence": [],
       "notice_status": "gap",
       "packaged_identity": {
-        "allocated_section_count": 27,
-        "allocated_sections_sha256": "840b5166ab5462df681c7b72e9872b7ca00cbf1684b52a653bd91d33f525b46e",
         "gnu_build_id": "a15ecc0324c31118e944371e89ae38fa3d75b086",
+        "load_image_sha256": "787ad52e2db520e26d2561ad4270bc2dca309c049f9b43d27dcab15454849e3c",
         "machine": 183
       },
       "packaged_sha256": "50b4619acfd98bef794c85487f3b9dfa3c6939d00f3ab5974d8a49aad5eaca1b",
@@ -361,9 +350,8 @@
         "archive_sha256": "133134e2b01ffb91f8f66d46a3149f7fe402ac2e3e2d1df4f8fc679e999689f6",
         "coordinate": "com.microsoft.onnxruntime:onnxruntime-android:1.24.1",
         "identity": {
-          "allocated_section_count": 27,
-          "allocated_sections_sha256": "840b5166ab5462df681c7b72e9872b7ca00cbf1684b52a653bd91d33f525b46e",
           "gnu_build_id": "a15ecc0324c31118e944371e89ae38fa3d75b086",
+          "load_image_sha256": "787ad52e2db520e26d2561ad4270bc2dca309c049f9b43d27dcab15454849e3c",
           "machine": 183
         },
         "kind": "resolved_dependency",
@@ -383,14 +371,13 @@
         }
       ],
       "mapping_gaps": [],
-      "match_method": "normalized_allocated_sections_sha256",
+      "match_method": "normalized_load_image_sha256",
       "name": "libonnxruntime4j_jni.so",
       "notice_evidence": [],
       "notice_status": "gap",
       "packaged_identity": {
-        "allocated_section_count": 19,
-        "allocated_sections_sha256": "c1640889970b839bedc4b395b498b5a25f1f568e76f3ddb4f75c5a8b5b79670a",
         "gnu_build_id": "9f11e6c3ebfea6e7017f090d4220fae1c719a8e3",
+        "load_image_sha256": "e7ce586e9f88680d4aee0dbd612ce2a71d7cdbe63142a1387f319a7a78ea61dc",
         "machine": 183
       },
       "packaged_sha256": "21570f242553627895bfaa95224d8fc7f6dd0432381fb1739555310ee214f096",
@@ -402,9 +389,8 @@
         "archive_sha256": "133134e2b01ffb91f8f66d46a3149f7fe402ac2e3e2d1df4f8fc679e999689f6",
         "coordinate": "com.microsoft.onnxruntime:onnxruntime-android:1.24.1",
         "identity": {
-          "allocated_section_count": 19,
-          "allocated_sections_sha256": "c1640889970b839bedc4b395b498b5a25f1f568e76f3ddb4f75c5a8b5b79670a",
           "gnu_build_id": "9f11e6c3ebfea6e7017f090d4220fae1c719a8e3",
+          "load_image_sha256": "e7ce586e9f88680d4aee0dbd612ce2a71d7cdbe63142a1387f319a7a78ea61dc",
           "machine": 183
         },
         "kind": "resolved_dependency",
@@ -436,9 +422,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 24,
-        "allocated_sections_sha256": "75c07d15cd0c774583e3ef729407fddb619c971bd8dd2ce59eb3f5050cf0f127",
         "gnu_build_id": "ade2f6e9c3abd6125733d0bdef3716b57902ebbb",
+        "load_image_sha256": "299df6f86fa035a53143b282c514f98d92898dbe467299a15a6ac768948de71c",
         "machine": 183
       },
       "packaged_sha256": "a014a769ae11446af05cbdbd01b7273ad42f26cddfbf3f206a38290d0fb91bb9",
@@ -447,9 +432,8 @@
       "source": {
         "abi": "arm64-v8a",
         "identity": {
-          "allocated_section_count": 24,
-          "allocated_sections_sha256": "75c07d15cd0c774583e3ef729407fddb619c971bd8dd2ce59eb3f5050cf0f127",
           "gnu_build_id": "ade2f6e9c3abd6125733d0bdef3716b57902ebbb",
+          "load_image_sha256": "299df6f86fa035a53143b282c514f98d92898dbe467299a15a6ac768948de71c",
           "machine": 183
         },
         "kind": "source_build",
@@ -523,9 +507,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 20,
-        "allocated_sections_sha256": "d1cd5b3f923894420b0db275cac7d5e18fb3d913519f6e167f45d3a7d9ff27df",
         "gnu_build_id": "6dd3b3c22d20ce10a6584f598588d2c608f3937a",
+        "load_image_sha256": "f8744a556f1bdeb69bb4f25816e63f4c31c513e02eb0b2caac5d92fb6195a41f",
         "machine": 183
       },
       "packaged_sha256": "e894414c3e1592efc1b9ccd163b914504e9a416356746dd56a1e0263d206d0fa",
@@ -535,9 +518,8 @@
         "abi": "arm64-v8a",
         "coordinate": "bundled OCR native sources",
         "identity": {
-          "allocated_section_count": 20,
-          "allocated_sections_sha256": "d1cd5b3f923894420b0db275cac7d5e18fb3d913519f6e167f45d3a7d9ff27df",
           "gnu_build_id": "6dd3b3c22d20ce10a6584f598588d2c608f3937a",
+          "load_image_sha256": "f8744a556f1bdeb69bb4f25816e63f4c31c513e02eb0b2caac5d92fb6195a41f",
           "machine": 183
         },
         "kind": "ocr_source_build",
@@ -594,9 +576,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 19,
-        "allocated_sections_sha256": "d95f1fb48e10f7ab8a9ff08593ca47be84564052530e3867070beecee31da493",
         "gnu_build_id": "964a1cbe387c160f0a6286713d31d752e35c6801",
+        "load_image_sha256": "d0b02c8455e35d7fb0e25d19e0840b431060dd2180a635a4e9ec9fc84c56a3f2",
         "machine": 183
       },
       "packaged_sha256": "ee3f0d56f81cc0a301db32dc4fd51274c3216733b4c40172768e38bc5049a265",
@@ -608,9 +589,8 @@
         "archive_sha256": "bbca13760ce1587502eb15723d0e17fa0a3495d084e609c4e4c8d3c2e1c85cf8",
         "coordinate": "androidx.camera:camera-core:1.4.2",
         "identity": {
-          "allocated_section_count": 19,
-          "allocated_sections_sha256": "d95f1fb48e10f7ab8a9ff08593ca47be84564052530e3867070beecee31da493",
           "gnu_build_id": "964a1cbe387c160f0a6286713d31d752e35c6801",
+          "load_image_sha256": "d0b02c8455e35d7fb0e25d19e0840b431060dd2180a635a4e9ec9fc84c56a3f2",
           "machine": 183
         },
         "kind": "resolved_dependency",
@@ -661,9 +641,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 25,
-        "allocated_sections_sha256": "5d6681878b8a79b5089436beb09477f6de35b1b43f518270e0855f67cb96a4ea",
         "gnu_build_id": "6c048a7d56aa9fe77e64a80d834c50ca95940e98",
+        "load_image_sha256": "d82c1d65653eddce5d28be54834535d129dcbd3faaa5a97aa30b642aa1740c2c",
         "machine": 183
       },
       "packaged_sha256": "4a26cf85bbef59f64a9d114933a84ad81576f7ad7280f2ff03f90161f4a540b6",
@@ -673,9 +652,8 @@
         "abi": "arm64-v8a",
         "coordinate": "bundled OCR native sources",
         "identity": {
-          "allocated_section_count": 25,
-          "allocated_sections_sha256": "5d6681878b8a79b5089436beb09477f6de35b1b43f518270e0855f67cb96a4ea",
           "gnu_build_id": "6c048a7d56aa9fe77e64a80d834c50ca95940e98",
+          "load_image_sha256": "d82c1d65653eddce5d28be54834535d129dcbd3faaa5a97aa30b642aa1740c2c",
           "machine": 183
         },
         "kind": "ocr_source_build",
@@ -724,9 +702,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 21,
-        "allocated_sections_sha256": "544cdeca9c73b98c6d0d2f7365bb19f93cb74ac0f9c608639da7bff48a7e0833",
         "gnu_build_id": "f3e82b0a78f4c567cca77fe6c132199d806987d1",
+        "load_image_sha256": "5f70422b634d036edd836a3e1a0733c552148ced083c97ecf89045f038ec4d7a",
         "machine": 62
       },
       "packaged_sha256": "4e56c996f13670e70082658de7880c4020eabf4f25e43387f88ed78a713fc9f0",
@@ -738,9 +715,8 @@
         "archive_sha256": "8ca4032b6d79b351f0b59ad4b580eddbb9423e1652f7c958830687f1eee2ec03",
         "coordinate": "androidx.graphics:graphics-path:1.0.1",
         "identity": {
-          "allocated_section_count": 21,
-          "allocated_sections_sha256": "544cdeca9c73b98c6d0d2f7365bb19f93cb74ac0f9c608639da7bff48a7e0833",
           "gnu_build_id": "f3e82b0a78f4c567cca77fe6c132199d806987d1",
+          "load_image_sha256": "5f70422b634d036edd836a3e1a0733c552148ced083c97ecf89045f038ec4d7a",
           "machine": 62
         },
         "kind": "resolved_dependency",
@@ -754,7 +730,7 @@
       "abi": "x86_64",
       "apk_entry": "lib/x86_64/libc++_shared.so",
       "mapping_gaps": [],
-      "match_method": "normalized_allocated_sections_sha256",
+      "match_method": "normalized_load_image_sha256",
       "name": "libc++_shared.so",
       "notice_evidence": [
         {
@@ -772,9 +748,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 26,
-        "allocated_sections_sha256": "b9cafb06ec05f987676fab8317bff2e825cdce73cd2d70651f3eea806dbacf25",
         "gnu_build_id": "0f8f9b5a33c8898dc08ae1688f9b1d3d10ff68ab",
+        "load_image_sha256": "076d33303604742aebf88a693ae0f4c76284e2ad9ba6dec3a3f85234b4cd0051",
         "machine": 62
       },
       "packaged_sha256": "2e855857f80819737d25a663109fedf816a5e996a85423166806014a06593256",
@@ -783,9 +758,8 @@
       "source": {
         "abi": "x86_64",
         "identity": {
-          "allocated_section_count": 26,
-          "allocated_sections_sha256": "b9cafb06ec05f987676fab8317bff2e825cdce73cd2d70651f3eea806dbacf25",
           "gnu_build_id": "0f8f9b5a33c8898dc08ae1688f9b1d3d10ff68ab",
+          "load_image_sha256": "076d33303604742aebf88a693ae0f4c76284e2ad9ba6dec3a3f85234b4cd0051",
           "machine": 62
         },
         "kind": "source_build",
@@ -846,9 +820,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 22,
-        "allocated_sections_sha256": "4ec5e85ab4434c5ba4a3f11184aabf1e1115ef125cb5d822bbf94577e0f06634",
         "gnu_build_id": "2566b1ee2cf751e59072498843ebba4b969ab413",
+        "load_image_sha256": "1dede79d8644a15989895f04fe6a7e01d62cb5c905d96da3efb2c8c9e4de67d4",
         "machine": 62
       },
       "packaged_sha256": "676e3e280c10dcb9b71ef5bb727552610dc73c7ec85af54c7c898f82785c33d7",
@@ -860,9 +833,8 @@
         "archive_sha256": "bbca13760ce1587502eb15723d0e17fa0a3495d084e609c4e4c8d3c2e1c85cf8",
         "coordinate": "androidx.camera:camera-core:1.4.2",
         "identity": {
-          "allocated_section_count": 22,
-          "allocated_sections_sha256": "4ec5e85ab4434c5ba4a3f11184aabf1e1115ef125cb5d822bbf94577e0f06634",
           "gnu_build_id": "2566b1ee2cf751e59072498843ebba4b969ab413",
+          "load_image_sha256": "1dede79d8644a15989895f04fe6a7e01d62cb5c905d96da3efb2c8c9e4de67d4",
           "machine": 62
         },
         "kind": "resolved_dependency",
@@ -913,9 +885,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 20,
-        "allocated_sections_sha256": "d89a31480bf62a68825f4b4ef53af5643b7b167a18ba07f19b04f7b7965f4cf7",
         "gnu_build_id": "b714dc13525cb12c273546c8f5fe4811f6b2656b",
+        "load_image_sha256": "4870ecdba1487ea8f74677b7d9c66649dbce93145a91a064ff286bbab6d501f5",
         "machine": 62
       },
       "packaged_sha256": "c4adae9d3f2c309126986c6c4ea9e750897f5bf93172c59b642996365722cb06",
@@ -925,9 +896,8 @@
         "abi": "x86_64",
         "coordinate": "bundled OCR native sources",
         "identity": {
-          "allocated_section_count": 20,
-          "allocated_sections_sha256": "d89a31480bf62a68825f4b4ef53af5643b7b167a18ba07f19b04f7b7965f4cf7",
           "gnu_build_id": "b714dc13525cb12c273546c8f5fe4811f6b2656b",
+          "load_image_sha256": "4870ecdba1487ea8f74677b7d9c66649dbce93145a91a064ff286bbab6d501f5",
           "machine": 62
         },
         "kind": "ocr_source_build",
@@ -993,9 +963,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 22,
-        "allocated_sections_sha256": "be265b114f02782ab95e80c49673e2ece7dcedf64eb2907a4bcf3147f328f19a",
         "gnu_build_id": "64a9ba0dbeef82623eb57c0bd522753e5827907e",
+        "load_image_sha256": "b71f86f61c9292a32c42558fbfcc91411b9aebcae60d4eff091d18c87c21f037",
         "machine": 62
       },
       "packaged_sha256": "9f30c63f98729d193442b410e53e5d6cfc86a9c013189937fa1d51e121504129",
@@ -1005,9 +974,8 @@
         "abi": "x86_64",
         "coordinate": "bundled OCR native sources",
         "identity": {
-          "allocated_section_count": 22,
-          "allocated_sections_sha256": "be265b114f02782ab95e80c49673e2ece7dcedf64eb2907a4bcf3147f328f19a",
           "gnu_build_id": "64a9ba0dbeef82623eb57c0bd522753e5827907e",
+          "load_image_sha256": "b71f86f61c9292a32c42558fbfcc91411b9aebcae60d4eff091d18c87c21f037",
           "machine": 62
         },
         "kind": "ocr_source_build",
@@ -1042,14 +1010,13 @@
         }
       ],
       "mapping_gaps": [],
-      "match_method": "normalized_allocated_sections_sha256",
+      "match_method": "normalized_load_image_sha256",
       "name": "libonnxruntime.so",
       "notice_evidence": [],
       "notice_status": "gap",
       "packaged_identity": {
-        "allocated_section_count": 27,
-        "allocated_sections_sha256": "47ea1b4ccf372f80f23b3c03c553a98123ee406e6bc17dcb05f107e22e9a69b6",
         "gnu_build_id": "57dedc2b8b1bac06e31116c056cc73c2b866fe55",
+        "load_image_sha256": "8786b7ba62563befc0ce7b5d80076f7b274b945e2f04852f88bb7fa7bfc4f815",
         "machine": 62
       },
       "packaged_sha256": "788d8fcf5942b4d762deb6af3b5f6af0e59ad1a2047447dafacf310950de1465",
@@ -1061,9 +1028,8 @@
         "archive_sha256": "133134e2b01ffb91f8f66d46a3149f7fe402ac2e3e2d1df4f8fc679e999689f6",
         "coordinate": "com.microsoft.onnxruntime:onnxruntime-android:1.24.1",
         "identity": {
-          "allocated_section_count": 27,
-          "allocated_sections_sha256": "47ea1b4ccf372f80f23b3c03c553a98123ee406e6bc17dcb05f107e22e9a69b6",
           "gnu_build_id": "57dedc2b8b1bac06e31116c056cc73c2b866fe55",
+          "load_image_sha256": "8786b7ba62563befc0ce7b5d80076f7b274b945e2f04852f88bb7fa7bfc4f815",
           "machine": 62
         },
         "kind": "resolved_dependency",
@@ -1083,14 +1049,13 @@
         }
       ],
       "mapping_gaps": [],
-      "match_method": "normalized_allocated_sections_sha256",
+      "match_method": "normalized_load_image_sha256",
       "name": "libonnxruntime4j_jni.so",
       "notice_evidence": [],
       "notice_status": "gap",
       "packaged_identity": {
-        "allocated_section_count": 19,
-        "allocated_sections_sha256": "11257c4b0594b2637225846983a0910778293ee3c334fd336df715cd72e7a289",
         "gnu_build_id": "7b8055c8bb62540025eb388d39f1daf02be26b62",
+        "load_image_sha256": "355bc8dd57e49432166f55922ed5531ddb45999124309be5f644acd7dff37a28",
         "machine": 62
       },
       "packaged_sha256": "3263e414ff17b7cfcadd7054aa808a23cc9bfad9f0b91102d30bfb08dddc08fb",
@@ -1102,9 +1067,8 @@
         "archive_sha256": "133134e2b01ffb91f8f66d46a3149f7fe402ac2e3e2d1df4f8fc679e999689f6",
         "coordinate": "com.microsoft.onnxruntime:onnxruntime-android:1.24.1",
         "identity": {
-          "allocated_section_count": 19,
-          "allocated_sections_sha256": "11257c4b0594b2637225846983a0910778293ee3c334fd336df715cd72e7a289",
           "gnu_build_id": "7b8055c8bb62540025eb388d39f1daf02be26b62",
+          "load_image_sha256": "355bc8dd57e49432166f55922ed5531ddb45999124309be5f644acd7dff37a28",
           "machine": 62
         },
         "kind": "resolved_dependency",
@@ -1136,9 +1100,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 24,
-        "allocated_sections_sha256": "a61988893aa32609409954cdd7fe75dc0feaaf356bcc85d2accb62cc51f6d462",
         "gnu_build_id": "b3861e80d485414770bd9f5989b5b0e9ebaea629",
+        "load_image_sha256": "0dd31701336c9d400d24a81d93bdd63af483757c9bdb1af127d78473b1759c02",
         "machine": 62
       },
       "packaged_sha256": "2d1b2e08719ffb2650f04b253c3852c5da8aab887691764d4809c90be0f65575",
@@ -1147,9 +1110,8 @@
       "source": {
         "abi": "x86_64",
         "identity": {
-          "allocated_section_count": 24,
-          "allocated_sections_sha256": "a61988893aa32609409954cdd7fe75dc0feaaf356bcc85d2accb62cc51f6d462",
           "gnu_build_id": "b3861e80d485414770bd9f5989b5b0e9ebaea629",
+          "load_image_sha256": "0dd31701336c9d400d24a81d93bdd63af483757c9bdb1af127d78473b1759c02",
           "machine": 62
         },
         "kind": "source_build",
@@ -1223,9 +1185,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 20,
-        "allocated_sections_sha256": "f7a9634d24eb9658fa7287abdc34442a25bbb3f828c96eea3932062e1b98c0e2",
         "gnu_build_id": "2706303c28df3d321147bb9ebb8dc1db36ef4397",
+        "load_image_sha256": "e3a1bcda556b92070dd5c2f8468b40bc5ed00f680f8ff7c410382cc7e6ba6ae6",
         "machine": 62
       },
       "packaged_sha256": "211b10ebb613c4a8ef48912d0926488a5ace8870400d5e75a67df98ff1149e3e",
@@ -1235,9 +1196,8 @@
         "abi": "x86_64",
         "coordinate": "bundled OCR native sources",
         "identity": {
-          "allocated_section_count": 20,
-          "allocated_sections_sha256": "f7a9634d24eb9658fa7287abdc34442a25bbb3f828c96eea3932062e1b98c0e2",
           "gnu_build_id": "2706303c28df3d321147bb9ebb8dc1db36ef4397",
+          "load_image_sha256": "e3a1bcda556b92070dd5c2f8468b40bc5ed00f680f8ff7c410382cc7e6ba6ae6",
           "machine": 62
         },
         "kind": "ocr_source_build",
@@ -1294,9 +1254,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 19,
-        "allocated_sections_sha256": "da14fd5109a708be811aac313ffe9403ade90a035a5eaf2b0167b02e5c2da496",
         "gnu_build_id": "0443f8b36ff8731eae5ec0b6835adeaedc3aa291",
+        "load_image_sha256": "7cb3b1f82bb861f9434b45cbe81778f6bb99cf17a2b2ae39d5c611a1cbc52fbc",
         "machine": 62
       },
       "packaged_sha256": "cd425e10a365fb3695e53f1e46227d44d89f14854da4f1258ef079c80c752339",
@@ -1308,9 +1267,8 @@
         "archive_sha256": "bbca13760ce1587502eb15723d0e17fa0a3495d084e609c4e4c8d3c2e1c85cf8",
         "coordinate": "androidx.camera:camera-core:1.4.2",
         "identity": {
-          "allocated_section_count": 19,
-          "allocated_sections_sha256": "da14fd5109a708be811aac313ffe9403ade90a035a5eaf2b0167b02e5c2da496",
           "gnu_build_id": "0443f8b36ff8731eae5ec0b6835adeaedc3aa291",
+          "load_image_sha256": "7cb3b1f82bb861f9434b45cbe81778f6bb99cf17a2b2ae39d5c611a1cbc52fbc",
           "machine": 62
         },
         "kind": "resolved_dependency",
@@ -1361,9 +1319,8 @@
       ],
       "notice_status": "evidence_collected",
       "packaged_identity": {
-        "allocated_section_count": 25,
-        "allocated_sections_sha256": "2bfb393cccfbb2b3b47fcaf890fe8fcead4ecb218fc0b9e580c67ff83feecd1d",
         "gnu_build_id": "3ab3156c67bb423727ab5464d6456d59ffd26c20",
+        "load_image_sha256": "2fdec157bcb50ac3bdf91a44d907a305a3f57452aaa7295ebdb8c0fc9e63b210",
         "machine": 62
       },
       "packaged_sha256": "829091239d11f8f34b6660b63138ef406db93d1ec065ba9c073a816e42168564",
@@ -1373,9 +1330,8 @@
         "abi": "x86_64",
         "coordinate": "bundled OCR native sources",
         "identity": {
-          "allocated_section_count": 25,
-          "allocated_sections_sha256": "2bfb393cccfbb2b3b47fcaf890fe8fcead4ecb218fc0b9e580c67ff83feecd1d",
           "gnu_build_id": "3ab3156c67bb423727ab5464d6456d59ffd26c20",
+          "load_image_sha256": "2fdec157bcb50ac3bdf91a44d907a305a3f57452aaa7295ebdb8c0fc9e63b210",
           "machine": 62
         },
         "kind": "ocr_source_build",
@@ -1475,7 +1431,7 @@
     ],
     "usage": "historical_inspection_only_not_final_runtime"
   },
-  "inspected_apk_sha256": "3982bd7a7e5f267b4ef72043adbc13f5773066ce44ae2b42379830addfbd9514",
+  "inspected_apk_sha256": "b84fbac25d402bcef6a442197ea861b707b286168305df06c594c01b4d3b2abe",
   "license_review_status": "evidence_collected_reconciled",
   "mapping_gaps": [],
   "native_build": {

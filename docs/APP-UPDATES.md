@@ -19,7 +19,11 @@ Update metadata and APK cache are separate from vault files. The library's nonex
 
 ## Dependency and licensing
 
-The independent AGPL-3.0 updater is vendored as an immutable Maven/source/license bundle under `third_party/android-updater`. Gradle verifies its SHA256SUMS and rejects unlisted Maven files; builds never follow a sibling checkout. The current source pin is `io.github.phillip9933:android-updater:0.2.2`, from [the stable release](https://github.com/phillip9933/android-app-updater/releases/tag/v0.2.2). The AAR and Maven source JAR are byte-identical to the previously pinned candidate; the corrupt-cache recovery fix is retained. See the [host pin review](evidence/stable-sdk-pins-20261107.json). See the bundle README for source revision and archive checksum. Kura's existing LICENSE is AGPL-3.0; earlier README/contribution GPL labels were corrected. Do not replace already distributed artifacts under an existing version.
+Kura vendors the AGPL-3.0 updater as an immutable Maven bundle with its source and license.
+The direct-update build resolves `io.github.phillip9933:android-updater:1.0.0` from this bundle.
+Gradle checks the published file hashes and rejects unlisted Maven files. See the
+[bundle provenance](../third_party/android-updater/README.md) and the
+[upstream release](https://github.com/phillip9933/android-app-updater/releases/tag/v1.0.0).
 
 ## Acceptance limits
 

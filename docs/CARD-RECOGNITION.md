@@ -2,7 +2,7 @@
 
 ## Pinned integration
 
-The optional enhanced-scanning build pins [scanner 0.8.0](https://github.com/phillip9933/open-android-doc-scanner/releases/tag/v0.8.0), revision `e74d8cd8efd838f38820ee8ca48bc7ea765b2a8c`. This stable SDK retains the tested beta's AAR bytes; the core JAR's archive hash changes while all entry payloads remain identical. Upstream promotion does not establish Kura's photographed-card accuracy or host data-safety acceptance. Editable/manual recovery remains necessary. See the [pin review](evidence/stable-sdk-pins-20261107.json).
+The enhanced build pins [scanner 1.0.0](https://github.com/phillip9933/open-android-doc-scanner/releases/tag/v1.0.0), revision `b00b4f14ec0259edd748c2292418faf1b123a2f7`. See the [verified bundle provenance](../third_party/card-scanner/PROVENANCE.md). The [November 7 pin review](evidence/stable-sdk-pins-20261107.json) covers scanner 0.8.0.
 
 Build with `./gradlew -PcardScanner=true :app:assembleDebug`. This explicitly selects API 26+, arm64-v8a/x86_64, processing and OCR dependencies and bundled pinned English/Japanese models. The base build remains API 24 without scanner dependencies/models. `-PdirectUpdates=true` is independent and may be combined; scanning adds no network permissions or runtime downloads. SDK Maven artifacts, source JARs, checksums, provenance, licenses and notices are in `third_party/card-scanner/`; model hashes are checked at build time, packaging verification and before OCR. Use `python3 tools/verify-native-packaging.py --card-scanner` after the enhanced unsigned release build (add `--direct-updates` when selected).
 
