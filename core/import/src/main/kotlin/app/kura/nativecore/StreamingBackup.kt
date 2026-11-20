@@ -20,6 +20,7 @@ object StreamingBackup {
     private const val MAX_CIPHER = 110L * 1024 * 1024
     fun write(payload: BackupPayload, output: OutputStream, password: CharArray) {
         BackupCodec.validate(payload.data)
+        BackupCodec.checkEntryCount(payload)
         val salt = ByteArray(16).also(SecureRandom()::nextBytes)
         val iv = ByteArray(12).also(SecureRandom()::nextBytes)
         val key = BackupCodec.derive(password, salt)
@@ -128,7 +129,7 @@ object StreamingBackup {
                     val seen = hashSetOf<String>()
                     while(true) {
                         val entry = zip.nextEntry ?: break
-                        require(++count <= 4096)
+                        require(++count <= BackupCodec.MAX_ENTRIES)
                         val name = entry.name
                         require(name.length <= 512)
                         if(entry.isDirectory) {

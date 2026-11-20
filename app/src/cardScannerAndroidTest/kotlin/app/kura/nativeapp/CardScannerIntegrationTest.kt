@@ -126,7 +126,7 @@ class CardScannerIntegrationTest {
             }
         }
     }
-    @Test fun optionalAutofillReviewsExistingFieldsAndEncryptsOnlyAfterConfirmation() {
+    private fun openWallet(): VaultController {
         disposable()
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         // Android 15 with a hardware keyboard exposes a system PIN text field.
@@ -147,7 +147,40 @@ class CardScannerIntegrationTest {
             }
         }
         assertTrue(device.wait(Until.hasObject(By.desc("Settings")), 20_000))
-        val vm = controller()
+        return controller()
+    }
+
+    @Test fun legacyAutofillSurvivesSaveAndReopen() {
+        val vm = openWallet()
+        val title = "Legacy OCR " + java.util.UUID.randomUUID()
+        val raw = """[{"label":"Member number","value":"","issuer":"fixture"},{"label":"Tier","value":"Existing"},{"label":"Other","value":""},{"label":"Other","value":""}]"""
+        runBlocking {
+            vm.saveRecord("wallets", org.json.JSONObject().put("name", title).put("category", "Credit")
+                .put("number", "0042").put("customFields", raw).toString())
+        }
+        val record = vm.items.value.single { it.title == title }
+        try {
+            instrumentation.runOnMainSync { vm.pending.uiMemory.editing.value = record }
+            assertTrue(device.wait(Until.hasObject(By.text("Edit item")), 10000))
+            instrumentation.runOnMainSync {
+                val form = vm.pending.uiMemory.form
+                val fields = recognitionFields("wallets", form, vm.presentation.value.preferences)
+                val suggestions = app.kura.nativecore.CardAutofill.suggest("Member number: 00007\nTier: Changed\nOther: Ambiguous", fields)
+                assertEquals(listOf("custom:Member number"), suggestions.map { it.field.key })
+                applyCardSuggestions(form, app.kura.nativecore.CardAutofill.applicable(suggestions, fields.associate { it.key to it.current }))
+            }
+            click("Save")
+            assertTrue(device.wait(Until.gone(By.text("Edit item")), 10000))
+            val restored = runBlocking { vm.work { vm.store.rows(it, "wallets", record.id).single() } }
+            assertEquals("0042", restored.getString("number"))
+            val expected = org.json.JSONArray(raw)
+            expected.getJSONObject(0).put("value", "00007")
+            assertEquals(expected.toString(), org.json.JSONArray(restored.getString("customFields")).toString())
+        } finally { runBlocking { vm.deletePass(record) } }
+    }
+
+    @Test fun optionalAutofillReviewsExistingFieldsAndEncryptsOnlyAfterConfirmation() {
+        val vm = openWallet()
         val beforeIds = runBlocking { vm.work { vm.store.rows(it, "passes").map { row -> row.getLong("id") }.toSet() } }
         val before = beforeIds.size
         lateinit var form: FormMemory

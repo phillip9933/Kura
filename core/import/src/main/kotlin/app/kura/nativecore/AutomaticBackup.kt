@@ -4,7 +4,7 @@ import java.io.*
 import java.security.MessageDigest
 import java.util.UUID
 
-data class BackupDocument(val id:String,val name:String)
+data class BackupDocument(val id:String,val name:String, val isFile: Boolean = true)
 interface BackupDestination {
     fun list():List<BackupDocument>
     fun create(name:String):BackupDocument
@@ -35,9 +35,15 @@ class AutomaticBackup(private val scratch:File) {
                 StreamingBackup.write(payload,checked,password);output.fd.sync()
             }
             checkActive()
-            val previous=destination.list().filter {sequence(it.name)!=null}
-            val next=Math.addExact(previous.maxOfOrNull {sequence(it.name)!!} ?: 0,1)
-            val name="Kura_autobackup_"+next.toString().padStart(4,'0')+".wbk"
+            val documents = destination.list()
+            val previous = documents.filter { it.isFile && sequence(it.name) != null }
+            val occupiedNames = documents.mapTo(hashSetOf()) { it.name }
+            var next = previous.maxOfOrNull { sequence(it.name)!! } ?: 0L
+            var name: String
+            do {
+                next = Math.addExact(next, 1L)
+                name = "Kura_autobackup_" + next.toString().padStart(4, '0') + ".wbk"
+            } while (name in occupiedNames)
             pending=destination.create(name+".pending-"+UUID.randomUUID())
             destination.write(pending.id).use {output->file.inputStream().use {input->
                 val buffer=ByteArray(64*1024)

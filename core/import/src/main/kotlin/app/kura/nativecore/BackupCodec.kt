@@ -65,8 +65,16 @@ object BackupCodec {
         } catch (e: Throwable) { output.fill(0); if(e is OutOfMemoryError) throw IllegalStateException("Not enough memory to process this backup.",e); throw e }
         finally { bytes.fill(0); if (encoded.hasArray()) encoded.array().fill(0) }
     }
+    internal const val MAX_ENTRIES = 4096
+    internal fun checkEntryCount(payload: BackupPayload) {
+        require(payload.imageNames.size < MAX_ENTRIES) {
+            "A backup can contain at most ${MAX_ENTRIES - 1} media files."
+        }
+    }
+
     fun write(payload: BackupPayload, password: CharArray): ByteArray {
         validate(payload.data)
+        checkEntryCount(payload)
         val stream = ByteArrayOutputStream()
         ZipOutputStream(stream).use { zip ->
             fun entry(name: String, bytes: ByteArray) { zip.putNextEntry(ZipEntry(name)); zip.write(bytes); zip.closeEntry() }
@@ -120,7 +128,7 @@ object BackupCodec {
         require(plain.size <= MAX_BYTES)
         if (plain.firstOrNull() == '{'.code.toByte()) return BackupPayload(JSONObject(plain.toString(Charsets.UTF_8)), emptyMap()).also { validate(it.data) }
         val zipped = if (plain.size >= 2 && plain[0] == 80.toByte() && plain[1] == 75.toByte()) plain else Envelope.decode(plain.toString(Charsets.US_ASCII))
-        val entries = try { BoundedZip.read(zipped.inputStream(), ImportBudget(MAX_BYTES, 4096), MAX_BYTES) }
+        val entries = try { BoundedZip.read(zipped.inputStream(), ImportBudget(MAX_BYTES, MAX_ENTRIES), MAX_BYTES) }
         finally { if (zipped !== plain) zipped.fill(0) }
         try {
             val data = JSONObject(entries.getValue("data.json").toString(Charsets.UTF_8))
