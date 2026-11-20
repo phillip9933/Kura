@@ -7,6 +7,8 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.os.Build
+import android.os.Bundle
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -210,11 +212,23 @@ class CardScannerIntegrationTest {
         captureCropPreview("rotated-crop")
         clickJourneyControl(device, "270°")
         assertNotNull(device.wait(Until.findObject(By.checkable(true).checked(true).hasDescendant(By.text("270°"))), 5000))
-        val angleSlider = device.findObject(By.desc("Photo rotation angle"))
-        assertNotNull(angleSlider)
-        val sliderBounds = angleSlider.visibleBounds
-        device.swipe(sliderBounds.centerX(), sliderBounds.centerY(), sliderBounds.left + sliderBounds.width() * 2 / 3, sliderBounds.centerY(), 20)
-        assertTrue("Custom slider changes the live crop", device.wait(Until.gone(By.text("Fine rotation: 0.0°")), 5000))
+        assertNotNull(findJourneyNode(device, By.desc("Photo rotation angle")))
+        val root = requireNotNull(instrumentation.uiAutomation.rootInActiveWindow)
+        // Compose can expose the slider's range action on a child of its labelled container.
+        fun progressControls(node: AccessibilityNodeInfo): Sequence<AccessibilityNodeInfo> = sequence {
+            if (node.isVisibleToUser && AccessibilityNodeInfo.AccessibilityAction.ACTION_SET_PROGRESS in node.actionList) {
+                yield(node)
+            }
+            for (index in 0 until node.childCount) {
+                node.getChild(index)?.let { yieldAll(progressControls(it)) }
+            }
+        }
+        val slider = progressControls(root).single()
+        val progress = Bundle().apply {
+            putFloat(AccessibilityNodeInfo.ACTION_ARGUMENT_PROGRESS_VALUE, 15f)
+        }
+        assertTrue(slider.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SET_PROGRESS.id, progress))
+        assertNotNull("Custom slider sets the live crop angle", findJourneyNode(device, By.text("Fine rotation: 15.0°")))
         captureCropPreview("rotation-controls")
         clickJourneyControl(device, "0°")
         assertNotNull(device.wait(Until.findObject(By.checkable(true).checked(true).hasDescendant(By.text("0°"))), 5000))
