@@ -1,11 +1,5 @@
 # Testing
 
-## iPhone development and shared QR tests
-
-The [iPhone guide](../ios/README.md) gives the Xcode test command and the device acceptance procedure. The Kura scheme includes five tests for card validation, encrypted storage, corrupt data, and QR decoding. The iPhone pull request workflow selects an available simulator and runs the scheme.
-
-On 23 November 2026, the Android prototype and instrumentation APKs built from the offline source set. `NativePresentationTest.sharedQrPayloadsDecodeExactlyAsDisplayed` passed on a new 16 KiB Android emulator (one test, three shared payloads). The Android build packaged the fixture in the test assets. A local static check resolved the Xcode source files, resource, target dependency, and scheme references. The Linux host could not compile or launch the iPhone target. XCTest execution, device authentication, lock transitions, physical QR scanning, and VoiceOver remain unverified.
-
 ## Published stable production upgrades — 7 November 2026
 
 Release **2.2.0 / 123**, source `10f17a93c99b67cbe63b17417111b0e8a7ab34f1`,
@@ -1310,3 +1304,9 @@ screen-reader, production-package runtime or version-code upgrade qualification
 is claimed. No commit, push or release was performed. AI assisted implementation
 and verification. The owner's preceding crop-appearance acceptance is scoped to
 that local UI review, not stable-release/data-safety acceptance.
+
+## iPhone development and shared QR tests
+
+The [iPhone guide](../ios/README.md) gives the Xcode test command and the device acceptance procedure. The Kura scheme includes five tests for card validation, encrypted storage, corrupt data, and QR decoding. The iPhone pull request workflow selects an available simulator and runs the scheme.
+
+On 23 November 2026, the Android prototype and instrumentation APKs built from the offline source set. `NativePresentationTest.sharedQrPayloadsDecodeExactlyAsDisplayed` passed on a new 16 KiB Android emulator (one test, three shared payloads). The Android build packaged the fixture in the test assets. A local static check resolved the Xcode source files, resource, target dependency, and scheme references. The Linux host could not compile or launch the iPhone target. XCTest execution, device authentication, lock transitions, physical QR scanning, and VoiceOver remain unverified.
