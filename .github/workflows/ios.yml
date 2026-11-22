@@ -1,0 +1,30 @@
+name: iPhone tests
+on:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - 'shared/test-fixtures/**'
+      - '.github/workflows/ios.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  iphone:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Run Kura tests on an iPhone simulator
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          device=$(xcrun simctl list devices available --json | jq -er '
+            [.devices | to_entries[] | select(.key | contains(".iOS-")) | .value[]
+             | select(.name | startswith("iPhone"))][0].udid // empty')
+          xcodebuild -project ios/Kura.xcodeproj -scheme Kura \
+            -destination "platform=iOS Simulator,id=$device" \
+            -parallel-testing-enabled NO test

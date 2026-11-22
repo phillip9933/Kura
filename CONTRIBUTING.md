@@ -1,6 +1,6 @@
 # Contributing to Kura
 
-Kura is a Kotlin/Compose Android app. Start with [README](README.md), [Architecture](docs/ARCHITECTURE.md) and [Security](SECURITY.md).
+Kura has a Kotlin/Compose Android app and a SwiftUI iPhone app. Use the [iPhone guide](ios/README.md) for Xcode setup and tests. Start with [README](README.md), [Architecture](docs/ARCHITECTURE.md) and [Security](SECURITY.md).
 
 ## Development
 
@@ -34,6 +34,7 @@ Build from the repository root. Commands below use the Unix wrapper; substitute 
 | PKPASS, backup or transfer | `core/import`; encrypted streams in `core/storage` | `:core:import:testDebugUnitTest :core:import:testLowMemory`, import instrumentation for media/restore changes |
 | Cards, pass display, editors, sorting | `feature/vault`; Android callbacks in `app` | `:app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug`, relevant app journeys |
 | Permissions, dependencies, signing/build | Root/module Gradle, app manifests | Debug and unsigned release builds, lint, `python3 tools/verify-native-packaging.py`; inspect merged manifest |
+| iPhone wallet or shared QR fixtures | `ios/` and `shared/test-fixtures/` | Run the Kura Xcode scheme tests. For a fixture change, also run `NativePresentationTest.sharedQrPayloadsDecodeExactlyAsDisplayed` on a disposable Android emulator. |
 | Documentation | Relevant canonical doc in `docs/` | Check commands/paths/links against source; no app suite needed for prose alone |
 
 The paths in the table identify modules/classes, not shell file paths; the [architecture code map](docs/ARCHITECTURE.md#code-map) links to exact sources. [Testing](docs/TESTING.md) explains the full disposable-emulator runner and known failures. Tests should protect behavior or a meaningful failure boundary; do not add tests that merely duplicate an implementation.

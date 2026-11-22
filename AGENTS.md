@@ -1,6 +1,6 @@
 # Working on Kura
 
-Kura is an offline Kotlin/Jetpack Compose Android wallet. Read [README](README.md) for setup, [Architecture](docs/ARCHITECTURE.md) for ownership and [Contributing](CONTRIBUTING.md) for the change/test map. This file is the shared agent entry point; do not create competing copies of these instructions.
+Kura has a released Kotlin/Jetpack Compose Android wallet and a native SwiftUI iPhone app in development. Read [README](README.md) for setup, [Architecture](docs/ARCHITECTURE.md) for ownership and [Contributing](CONTRIBUTING.md) for the change/test map. This file is the shared agent entry point; do not create competing copies of these instructions.
 
 ## Central guidance for local owner work
 
@@ -18,6 +18,8 @@ Resolve an absolute `APP_GUIDELINES_ROOT` supplied by the trusted launch environ
 
 ## Find the owner before changing code
 
+- `ios/`: iPhone app, Xcode project, and XCTest targets. See the [iPhone guide](ios/README.md).
+- `shared/test-fixtures/`: synthetic inputs used by tests on both platforms.
 - `app`: Android host, activity results, authentication, session-owned orchestration.
 - `feature/vault`: Compose presentation, typed editors, classification, sorting and preferences.
 - `core/model`: framework-free session state, generations, secret ownership and lifecycle policy.

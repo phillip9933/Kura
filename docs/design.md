@@ -6,6 +6,10 @@ that every screen has completed accessibility or usability acceptance. The
 owner has reviewed the newer crop and missing-side photo behavior. Whole-app
 design review and the verification gaps below remain explicit.
 
+## iPhone card journey
+
+The iPhone app uses SwiftUI navigation, system colors, text styles, and labelled controls. Unlock opens the card list. Add card opens a draft. Back discards an unsaved draft. Save returns to the previous screen after the encrypted write succeeds. A write error keeps the draft available for retry. A card detail shows the exact QR text below its black-on-white code in both appearances. Locking removes the card and editor screens. The [iPhone guide](../ios/README.md) lists the physical-device and VoiceOver checks for this journey.
+
 ## Product, audience and priorities
 
 Kura keeps cards, passes and identity documents in an encrypted Android wallet.

@@ -1,6 +1,12 @@
 # Architecture
 
-The repository root is the only Android build. There is no Dart runtime or alternative app implementation.
+The root Gradle build owns Android. The independent Xcode project in [ios/](../ios/README.md) owns iPhone. Both apps use the native mobile security profile. Android distribution and update tooling operate on the Gradle modules. The iPhone target is a local development build.
+
+Use `shared/` for code or contracts with a consumer on each platform. The first shared contract is [synthetic QR payloads](../shared/test-fixtures/qr-payloads.json). Both platform tests render and decode the same strings. Each app owns its UI, authentication, storage, and lifecycle. Android backup formats have no iPhone consumer.
+
+On iPhone, `WalletSession` owns unlocked state. `VaultKey` opens a Keychain item with device-owner authentication. `VaultFile` reads and writes the encrypted card file. `CardQR` renders QR codes with Core Image. The [iPhone guide](../ios/README.md) describes storage, failure handling, and device acceptance.
+
+## Android modules
 
 | Module | Responsibility |
 | --- | --- |

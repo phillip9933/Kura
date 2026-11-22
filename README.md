@@ -28,6 +28,10 @@ Making it public does not mean it is a polished production product or suitable f
 - Unlock with biometrics or your device credential, or choose phone-unlock-only access in Settings. Wallet data remains encrypted and sessions close on lock.
 - Keep password-encrypted backups, optionally saved automatically to a folder you choose.
 
+## iPhone development
+
+The [iPhone app](ios/README.md) supports manual card entry and QR display in a local wallet. Use synthetic cards while device security and recovery are under development.
+
 ## Native Android
 
 Kura 2.0 is rebuilt in **Kotlin and Jetpack Compose**, using Material 3. The rewrite removes the Flutter engine and plugin bridges so startup, authentication and camera/file-picker handoffs can be managed directly through Android's lifecycle and security APIs.

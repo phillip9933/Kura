@@ -1,0 +1,404 @@
+// !$*UTF8*$!
+{
+  archiveVersion = 1;
+  classes = {};
+  objectVersion = 56;
+  objects = {
+    3F70806770FDC3E042AE03AB = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = CardQR.swift;
+      sourceTree = "<group>";
+    };
+    CE8E3B62BF1E84744234796F = {
+      isa = PBXBuildFile;
+      fileRef = 3F70806770FDC3E042AE03AB;
+    };
+    DC0AEFE5D06C33749D0844A9 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = CardsView.swift;
+      sourceTree = "<group>";
+    };
+    DE75F15D154C30666C712D8F = {
+      isa = PBXBuildFile;
+      fileRef = DC0AEFE5D06C33749D0844A9;
+    };
+    3B8879F8139F50DDD2C33D49 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = KuraApp.swift;
+      sourceTree = "<group>";
+    };
+    F2B5AE85D73E01B06C6D9670 = {
+      isa = PBXBuildFile;
+      fileRef = 3B8879F8139F50DDD2C33D49;
+    };
+    936D10A596B05DD860D0C41F = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = VaultFile.swift;
+      sourceTree = "<group>";
+    };
+    3CC3E5D578F197B47B57DAA3 = {
+      isa = PBXBuildFile;
+      fileRef = 936D10A596B05DD860D0C41F;
+    };
+    769AD96781A1C86B77556FE6 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = VaultKey.swift;
+      sourceTree = "<group>";
+    };
+    E9805B5D76ED3735703975EA = {
+      isa = PBXBuildFile;
+      fileRef = 769AD96781A1C86B77556FE6;
+    };
+    C788DCC26B24BEB46ED65F70 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = WalletCard.swift;
+      sourceTree = "<group>";
+    };
+    10691F1CA6B2D34948DEA3AF = {
+      isa = PBXBuildFile;
+      fileRef = C788DCC26B24BEB46ED65F70;
+    };
+    B6A226D6852F74EDF2E924F8 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = WalletSession.swift;
+      sourceTree = "<group>";
+    };
+    6AF102347E7E2279D01E9BD8 = {
+      isa = PBXBuildFile;
+      fileRef = B6A226D6852F74EDF2E924F8;
+    };
+    17D6301DD9037164007DFE58 = {
+      isa = PBXGroup;
+      children = (
+        3F70806770FDC3E042AE03AB,
+        DC0AEFE5D06C33749D0844A9,
+        3B8879F8139F50DDD2C33D49,
+        936D10A596B05DD860D0C41F,
+        769AD96781A1C86B77556FE6,
+        C788DCC26B24BEB46ED65F70,
+        B6A226D6852F74EDF2E924F8
+      );
+      sourceTree = "<group>";
+      path = Kura;
+    };
+    C7D854CE7525552FB01508F8 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = WalletTests.swift;
+      sourceTree = "<group>";
+    };
+    436DD2CB8B786C4BC01B5DCA = {
+      isa = PBXBuildFile;
+      fileRef = C7D854CE7525552FB01508F8;
+    };
+    6A35BFF03CF068C92316E049 = {
+      isa = PBXGroup;
+      children = (
+        C7D854CE7525552FB01508F8
+      );
+      sourceTree = "<group>";
+      path = KuraTests;
+    };
+    B525ACF5742866EE9F2C92CE = {
+      isa = PBXFileReference;
+      lastKnownFileType = text.json;
+      path = "../shared/test-fixtures/qr-payloads.json";
+      sourceTree = SOURCE_ROOT;
+    };
+    589454ABA5D24388E0CA3315 = {
+      isa = PBXBuildFile;
+      fileRef = B525ACF5742866EE9F2C92CE;
+    };
+    81EA81D282A15055A1CB37F2 = {
+      isa = PBXFileReference;
+      explicitFileType = wrapper.application;
+      includeInIndex = 0;
+      path = Kura.app;
+      sourceTree = BUILT_PRODUCTS_DIR;
+    };
+    12DF0581A2A9ED58667EA07C = {
+      isa = PBXFileReference;
+      explicitFileType = wrapper.cfbundle;
+      includeInIndex = 0;
+      path = KuraTests.xctest;
+      sourceTree = BUILT_PRODUCTS_DIR;
+    };
+    4EDC8BFAFC6BD936B849F38C = {
+      isa = PBXGroup;
+      children = (
+        81EA81D282A15055A1CB37F2,
+        12DF0581A2A9ED58667EA07C
+      );
+      sourceTree = "<group>";
+      name = Products;
+    };
+    CAF85B0888D78F1F83771A07 = {
+      isa = PBXGroup;
+      children = (
+        17D6301DD9037164007DFE58,
+        6A35BFF03CF068C92316E049,
+        B525ACF5742866EE9F2C92CE,
+        4EDC8BFAFC6BD936B849F38C
+      );
+      sourceTree = "<group>";
+      name = Sources;
+    };
+    7607E060366236497909AD63 = {
+      isa = XCBuildConfiguration;
+      buildSettings = {
+        IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+        SDKROOT = iphoneos;
+        SWIFT_VERSION = 5.0;
+        TARGETED_DEVICE_FAMILY = 1;
+        CLANG_ENABLE_MODULES = YES;
+        SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+        SUPPORTS_MACCATALYST = NO;
+        ENABLE_TESTABILITY = YES;
+        SWIFT_OPTIMIZATION_LEVEL = -Onone;
+        DEBUG_INFORMATION_FORMAT = dwarf;
+      };
+      name = Debug;
+    };
+    0CC31A010A9EAFED2597BEBC = {
+      isa = XCBuildConfiguration;
+      buildSettings = {
+        IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+        SDKROOT = iphoneos;
+        SWIFT_VERSION = 5.0;
+        TARGETED_DEVICE_FAMILY = 1;
+        CLANG_ENABLE_MODULES = YES;
+        SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+        SUPPORTS_MACCATALYST = NO;
+        SWIFT_COMPILATION_MODE = wholemodule;
+        DEBUG_INFORMATION_FORMAT = dwarf-with-dsym;
+      };
+      name = Release;
+    };
+    9C6F15689B11ACC7E0EBAB33 = {
+      isa = XCConfigurationList;
+      buildConfigurations = (
+        7607E060366236497909AD63,
+        0CC31A010A9EAFED2597BEBC
+      );
+      defaultConfigurationIsVisible = 0;
+      defaultConfigurationName = Release;
+    };
+    AF785743D44FCAAE33C991DA = {
+      isa = XCBuildConfiguration;
+      buildSettings = {
+        PRODUCT_NAME = Kura;
+        PRODUCT_BUNDLE_IDENTIFIER = app.kura.iphone.development;
+        GENERATE_INFOPLIST_FILE = YES;
+        INFOPLIST_KEY_CFBundleDisplayName = Kura;
+        INFOPLIST_KEY_NSFaceIDUsageDescription = "Use Face ID to unlock your Kura wallet.";
+        INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+        CURRENT_PROJECT_VERSION = 1;
+        MARKETING_VERSION = 0.1.0;
+        LD_RUNPATH_SEARCH_PATHS = (
+          "$(inherited)",
+          "@executable_path/Frameworks"
+        );
+      };
+      name = Debug;
+    };
+    DE3967B6D22FCA8685A60449 = {
+      isa = XCBuildConfiguration;
+      buildSettings = {
+        PRODUCT_NAME = Kura;
+        PRODUCT_BUNDLE_IDENTIFIER = app.kura.iphone.development;
+        GENERATE_INFOPLIST_FILE = YES;
+        INFOPLIST_KEY_CFBundleDisplayName = Kura;
+        INFOPLIST_KEY_NSFaceIDUsageDescription = "Use Face ID to unlock your Kura wallet.";
+        INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+        CURRENT_PROJECT_VERSION = 1;
+        MARKETING_VERSION = 0.1.0;
+        LD_RUNPATH_SEARCH_PATHS = (
+          "$(inherited)",
+          "@executable_path/Frameworks"
+        );
+      };
+      name = Release;
+    };
+    25BFC8A4B9F8ABD45E37EF08 = {
+      isa = XCConfigurationList;
+      buildConfigurations = (
+        AF785743D44FCAAE33C991DA,
+        DE3967B6D22FCA8685A60449
+      );
+      defaultConfigurationIsVisible = 0;
+      defaultConfigurationName = Release;
+    };
+    2ECA9C0679E22C1863233A47 = {
+      isa = XCBuildConfiguration;
+      buildSettings = {
+        PRODUCT_NAME = KuraTests;
+        PRODUCT_BUNDLE_IDENTIFIER = app.kura.iphone.development.tests;
+        GENERATE_INFOPLIST_FILE = YES;
+        TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Kura.app/Kura";
+        BUNDLE_LOADER = "$(TEST_HOST)";
+        LD_RUNPATH_SEARCH_PATHS = (
+          "$(inherited)",
+          "@executable_path/Frameworks",
+          "@loader_path/Frameworks"
+        );
+      };
+      name = Debug;
+    };
+    A98947425182DBAD4FCE32E8 = {
+      isa = XCBuildConfiguration;
+      buildSettings = {
+        PRODUCT_NAME = KuraTests;
+        PRODUCT_BUNDLE_IDENTIFIER = app.kura.iphone.development.tests;
+        GENERATE_INFOPLIST_FILE = YES;
+        TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Kura.app/Kura";
+        BUNDLE_LOADER = "$(TEST_HOST)";
+        LD_RUNPATH_SEARCH_PATHS = (
+          "$(inherited)",
+          "@executable_path/Frameworks",
+          "@loader_path/Frameworks"
+        );
+      };
+      name = Release;
+    };
+    6F62E54B28EC28AEDB61A6EB = {
+      isa = XCConfigurationList;
+      buildConfigurations = (
+        2ECA9C0679E22C1863233A47,
+        A98947425182DBAD4FCE32E8
+      );
+      defaultConfigurationIsVisible = 0;
+      defaultConfigurationName = Release;
+    };
+    36C7B002E7152F9403990008 = {
+      isa = PBXSourcesBuildPhase;
+      buildActionMask = 2147483647;
+      files = (
+        CE8E3B62BF1E84744234796F,
+        DE75F15D154C30666C712D8F,
+        F2B5AE85D73E01B06C6D9670,
+        3CC3E5D578F197B47B57DAA3,
+        E9805B5D76ED3735703975EA,
+        10691F1CA6B2D34948DEA3AF,
+        6AF102347E7E2279D01E9BD8
+      );
+      runOnlyForDeploymentPostprocessing = 0;
+    };
+    C7DAE215489B17A46E295533 = {
+      isa = PBXFrameworksBuildPhase;
+      buildActionMask = 2147483647;
+      files = ();
+      runOnlyForDeploymentPostprocessing = 0;
+    };
+    958973412F40A078F2BB66D3 = {
+      isa = PBXResourcesBuildPhase;
+      buildActionMask = 2147483647;
+      files = ();
+      runOnlyForDeploymentPostprocessing = 0;
+    };
+    3651747FFE676F1C925769BB = {
+      isa = PBXNativeTarget;
+      name = Kura;
+      productName = Kura;
+      productType = com.apple.product-type.application;
+      productReference = 81EA81D282A15055A1CB37F2;
+      buildConfigurationList = 25BFC8A4B9F8ABD45E37EF08;
+      buildPhases = (
+        36C7B002E7152F9403990008,
+        C7DAE215489B17A46E295533,
+        958973412F40A078F2BB66D3
+      );
+      buildRules = ();
+      dependencies = ();
+    };
+    EF1312D48C739F00FD1166D5 = {
+      isa = PBXContainerItemProxy;
+      containerPortal = 244210E48437B6556980A702;
+      proxyType = 1;
+      remoteGlobalIDString = 3651747FFE676F1C925769BB;
+      remoteInfo = Kura;
+    };
+    8FF7266AF7DED1D9FA08153A = {
+      isa = PBXTargetDependency;
+      target = 3651747FFE676F1C925769BB;
+      targetProxy = EF1312D48C739F00FD1166D5;
+    };
+    BDC48C1B1A011E515FCAC4EE = {
+      isa = PBXSourcesBuildPhase;
+      buildActionMask = 2147483647;
+      files = (
+        436DD2CB8B786C4BC01B5DCA
+      );
+      runOnlyForDeploymentPostprocessing = 0;
+    };
+    0E4130E12F1965EFA59FE994 = {
+      isa = PBXFrameworksBuildPhase;
+      buildActionMask = 2147483647;
+      files = ();
+      runOnlyForDeploymentPostprocessing = 0;
+    };
+    7D47EA4A6C37607A46B35B9B = {
+      isa = PBXResourcesBuildPhase;
+      buildActionMask = 2147483647;
+      files = (
+        589454ABA5D24388E0CA3315
+      );
+      runOnlyForDeploymentPostprocessing = 0;
+    };
+    49EDAA2FD63DEBA9B8B78861 = {
+      isa = PBXNativeTarget;
+      name = KuraTests;
+      productName = KuraTests;
+      productType = com.apple.product-type.bundle.unit-test;
+      productReference = 12DF0581A2A9ED58667EA07C;
+      buildConfigurationList = 6F62E54B28EC28AEDB61A6EB;
+      buildPhases = (
+        BDC48C1B1A011E515FCAC4EE,
+        0E4130E12F1965EFA59FE994,
+        7D47EA4A6C37607A46B35B9B
+      );
+      buildRules = ();
+      dependencies = (
+        8FF7266AF7DED1D9FA08153A
+      );
+    };
+    244210E48437B6556980A702 = {
+      isa = PBXProject;
+      attributes = {
+        LastUpgradeCheck = 1600;
+        TargetAttributes = {
+          49EDAA2FD63DEBA9B8B78861 = {
+            TestTargetID = 3651747FFE676F1C925769BB;
+          };
+        };
+      };
+      buildConfigurationList = 9C6F15689B11ACC7E0EBAB33;
+      compatibilityVersion = "Xcode 14.0";
+      developmentRegion = en;
+      hasScannedForEncodings = 0;
+      knownRegions = (
+        en,
+        Base
+      );
+      mainGroup = CAF85B0888D78F1F83771A07;
+      productRefGroup = 4EDC8BFAFC6BD936B849F38C;
+      projectDirPath = "";
+      projectRoot = "";
+      targets = (
+        3651747FFE676F1C925769BB,
+        49EDAA2FD63DEBA9B8B78861
+      );
+    };
+  };
+  rootObject = 244210E48437B6556980A702;
+}
