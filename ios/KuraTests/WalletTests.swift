@@ -11,14 +11,14 @@ final class WalletTests: XCTestCase {
         let key = SymmetricKey(size: .bits256)
         let card = try WalletCard(name: " Sample library ", payload: "00001842")
         XCTAssertNil(try file.readCiphertext())
-        try file.write([card], key: key)
+        try file.write(WalletSnapshot(cards: [card]), key: key)
         let ciphertext = try XCTUnwrap(file.readCiphertext())
-        XCTAssertEqual(try file.decode(ciphertext, key: key), [card])
+        XCTAssertEqual(try file.decodeSnapshot(ciphertext, key: key).cards, [card])
         XCTAssertNil(ciphertext.range(of: Data(card.name.utf8)))
         let edited = try WalletCard(id: card.id, name: "Branch library", payload: "00001843")
-        try file.write([edited], key: key)
+        try file.write(WalletSnapshot(cards: [edited]), key: key)
         let reopened = VaultFile(directory: directory)
-        XCTAssertEqual(try reopened.decode(XCTUnwrap(reopened.readCiphertext()), key: key), [edited])
+        XCTAssertEqual(try reopened.decodeSnapshot(XCTUnwrap(reopened.readCiphertext()), key: key).cards, [edited])
     }
 
     func testWrongKeyAndDamagedVaultKeepOriginalBytes() throws {
@@ -26,12 +26,12 @@ final class WalletTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
         let file = VaultFile(directory: directory)
         let key = SymmetricKey(size: .bits256)
-        try file.write([WalletCard(name: "Test", payload: "0001")], key: key)
+        try file.write(WalletSnapshot(cards: [WalletCard(name: "Test", payload: "0001")]), key: key)
         let ciphertext = try XCTUnwrap(file.readCiphertext())
-        XCTAssertThrowsError(try file.decode(ciphertext, key: SymmetricKey(size: .bits256)))
+        XCTAssertThrowsError(try file.decodeSnapshot(ciphertext, key: SymmetricKey(size: .bits256)))
         var damaged = ciphertext
         damaged[damaged.count - 1] ^= 1
-        XCTAssertThrowsError(try file.decode(damaged, key: key))
+        XCTAssertThrowsError(try file.decodeSnapshot(damaged, key: key))
         XCTAssertEqual(try file.readCiphertext(), ciphertext)
     }
 
@@ -49,8 +49,8 @@ final class WalletTests: XCTestCase {
         XCTAssertEqual(card.payload, " 0001 ")
         XCTAssertThrowsError(try WalletCard(name: "  ", payload: "1"))
         XCTAssertThrowsError(try WalletCard(name: "Library", payload: "  "))
-        XCTAssertThrowsError(try WalletCard(name: "Library", payload: "A\nB"))
-        XCTAssertThrowsError(try WalletCard(name: "Library", payload: String(repeating: "0", count: 513)))
+        XCTAssertEqual(try WalletCard(name: "Library", payload: "会員番号").payload, "会員番号")
+        XCTAssertThrowsError(try WalletCard(name: "Library", payload: String(repeating: "0", count: 8193)))
     }
 
     func testSharedQRPayloadsDecodeExactly() async throws {

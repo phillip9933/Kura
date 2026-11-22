@@ -4,6 +4,116 @@
   classes = {};
   objectVersion = 56;
   objects = {
+    B9FAC92EF632B2E2311DBBA1 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BackupAutomatic.swift;
+      sourceTree = "<group>";
+    };
+    DDB8752E0DAD61BA070D63CE = {
+      isa = PBXBuildFile;
+      fileRef = B9FAC92EF632B2E2311DBBA1;
+    };
+    52636589C7F8B2097F7D9C13 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BackupCodec.swift;
+      sourceTree = "<group>";
+    };
+    145435DF3709AE7CB017B5C1 = {
+      isa = PBXBuildFile;
+      fileRef = 52636589C7F8B2097F7D9C13;
+    };
+    1FDBFEEC05D2CEC9466FF5C9 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BackupRecovery.swift;
+      sourceTree = "<group>";
+    };
+    ECA72D67CF35EADE3573AF65 = {
+      isa = PBXBuildFile;
+      fileRef = 1FDBFEEC05D2CEC9466FF5C9;
+    };
+    E838D8B54F1223FB59924CA9 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BackupTransferCodec.swift;
+      sourceTree = "<group>";
+    };
+    8DC56171D7F17E56FE62F61E = {
+      isa = PBXBuildFile;
+      fileRef = E838D8B54F1223FB59924CA9;
+    };
+    D2237B479F063D5010D72634 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BackupTransferView.swift;
+      sourceTree = "<group>";
+    };
+    80F36FDD00124EE9D4A79B1F = {
+      isa = PBXBuildFile;
+      fileRef = D2237B479F063D5010D72634;
+    };
+    684A2202C7DB19C327AB4A8D = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BackupView.swift;
+      sourceTree = "<group>";
+    };
+    07E0B0240C0DBA849BBF9036 = {
+      isa = PBXBuildFile;
+      fileRef = 684A2202C7DB19C327AB4A8D;
+    };
+    DECDF5F4A32456205032286F = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BarcodeCamera.swift;
+      sourceTree = "<group>";
+    };
+    2F9382A204A6E2BBD34F993C = {
+      isa = PBXBuildFile;
+      fileRef = DECDF5F4A32456205032286F;
+    };
+    DD572D88AE413C970B819411 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BarcodeFormat.swift;
+      sourceTree = "<group>";
+    };
+    7885B77905F8801C1D6E70FB = {
+      isa = PBXBuildFile;
+      fileRef = DD572D88AE413C970B819411;
+    };
+    41D120334C0E85D316F49A3A = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BarcodePhoto.swift;
+      sourceTree = "<group>";
+    };
+    1E083F7266E51AA1BEDC5490 = {
+      isa = PBXBuildFile;
+      fileRef = 41D120334C0E85D316F49A3A;
+    };
+    3CB18CCCF162C6CC19AF7BCB = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BarcodeScannerView.swift;
+      sourceTree = "<group>";
+    };
+    8F459C8B34336B45AD3180CB = {
+      isa = PBXBuildFile;
+      fileRef = 3CB18CCCF162C6CC19AF7BCB;
+    };
+    350A90E5EB85CB2A764B98E7 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BarcodeViewer.swift;
+      sourceTree = "<group>";
+    };
+    8D5BE16ADA7179943DFDB392 = {
+      isa = PBXBuildFile;
+      fileRef = 350A90E5EB85CB2A764B98E7;
+    };
     3F70806770FDC3E042AE03AB = {
       isa = PBXFileReference;
       lastKnownFileType = sourcecode.swift;
@@ -33,6 +143,116 @@
     F2B5AE85D73E01B06C6D9670 = {
       isa = PBXBuildFile;
       fileRef = 3B8879F8139F50DDD2C33D49;
+    };
+    ADE2C3667557D6754A77ECCD = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = MediaCropView.swift;
+      sourceTree = "<group>";
+    };
+    10C9AF9A71C9A922C9823BE8 = {
+      isa = PBXBuildFile;
+      fileRef = ADE2C3667557D6754A77ECCD;
+    };
+    9ECDDE5CCFB627FFED06A824 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = MediaDetails.swift;
+      sourceTree = "<group>";
+    };
+    8F33D44227E00C8D15CFE18E = {
+      isa = PBXBuildFile;
+      fileRef = 9ECDDE5CCFB627FFED06A824;
+    };
+    B4272ABE2399D63C447B1460 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = MediaEditor.swift;
+      sourceTree = "<group>";
+    };
+    FCDDA97306AF733DE5C7B4AF = {
+      isa = PBXBuildFile;
+      fileRef = B4272ABE2399D63C447B1460;
+    };
+    9104E3404C0035B4CCAB76F6 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = MediaModels.swift;
+      sourceTree = "<group>";
+    };
+    0D8A05714D5136CA48891D82 = {
+      isa = PBXBuildFile;
+      fileRef = 9104E3404C0035B4CCAB76F6;
+    };
+    80EFD0318DA7C77F0A1179FD = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = MediaProcessor.swift;
+      sourceTree = "<group>";
+    };
+    4C4DC8F59279B6AFB3EC4102 = {
+      isa = PBXBuildFile;
+      fileRef = 80EFD0318DA7C77F0A1179FD;
+    };
+    3969DD4E58B9A14EE60773DF = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = PassImport.swift;
+      sourceTree = "<group>";
+    };
+    111FF000E1974670BF499231 = {
+      isa = PBXBuildFile;
+      fileRef = 3969DD4E58B9A14EE60773DF;
+    };
+    1F5A257581731AE461B932A2 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = PassImportArchive.swift;
+      sourceTree = "<group>";
+    };
+    1F1E20B0A4B649A67A9AA44B = {
+      isa = PBXBuildFile;
+      fileRef = 1F5A257581731AE461B932A2;
+    };
+    509F29449EEC0ABA349F29A2 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = PassImportExport.swift;
+      sourceTree = "<group>";
+    };
+    B0EBD390E122E4E9D19E45A8 = {
+      isa = PBXBuildFile;
+      fileRef = 509F29449EEC0ABA349F29A2;
+    };
+    538F50652186AF990D5F33E5 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = PassImportViews.swift;
+      sourceTree = "<group>";
+    };
+    65CB18D033D9E8D3DB95F9A1 = {
+      isa = PBXBuildFile;
+      fileRef = 538F50652186AF990D5F33E5;
+    };
+    62420E6E120C709E7F18750C = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = PhoneUnlock.swift;
+      sourceTree = "<group>";
+    };
+    9A7D850564EAE88B3AB1E97A = {
+      isa = PBXBuildFile;
+      fileRef = 62420E6E120C709E7F18750C;
+    };
+    18C0420464971F6A871E4292 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = PrivacyShield.swift;
+      sourceTree = "<group>";
+    };
+    5B63E9B3486CA6E2088350BD = {
+      isa = PBXBuildFile;
+      fileRef = 18C0420464971F6A871E4292;
     };
     936D10A596B05DD860D0C41F = {
       isa = PBXFileReference;
@@ -64,6 +284,46 @@
       isa = PBXBuildFile;
       fileRef = C788DCC26B24BEB46ED65F70;
     };
+    80609FC20C1E96BAF720646A = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = WalletDetail.swift;
+      sourceTree = "<group>";
+    };
+    D824734EEE2429E97AC7BEE9 = {
+      isa = PBXBuildFile;
+      fileRef = 80609FC20C1E96BAF720646A;
+    };
+    86CB20F51EC85D2E4BE139FE = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = WalletEditor.swift;
+      sourceTree = "<group>";
+    };
+    D0326A4A062177F5D018451D = {
+      isa = PBXBuildFile;
+      fileRef = 86CB20F51EC85D2E4BE139FE;
+    };
+    69FAFAE065C3F65D8BE55139 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = WalletFields.swift;
+      sourceTree = "<group>";
+    };
+    EAF1A7C876093D74CF42C772 = {
+      isa = PBXBuildFile;
+      fileRef = 69FAFAE065C3F65D8BE55139;
+    };
+    52D433F03407DCB977317061 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = WalletPreferences.swift;
+      sourceTree = "<group>";
+    };
+    A0AC8C8BDF638973D00F6D35 = {
+      isa = PBXBuildFile;
+      fileRef = 52D433F03407DCB977317061;
+    };
     B6A226D6852F74EDF2E924F8 = {
       isa = PBXFileReference;
       lastKnownFileType = sourcecode.swift;
@@ -74,19 +334,96 @@
       isa = PBXBuildFile;
       fileRef = B6A226D6852F74EDF2E924F8;
     };
+    4D992D4A13BC6149E6E2C066 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = WalletSettings.swift;
+      sourceTree = "<group>";
+    };
+    E15E98F90135D39D8837BDB4 = {
+      isa = PBXBuildFile;
+      fileRef = 4D992D4A13BC6149E6E2C066;
+    };
     17D6301DD9037164007DFE58 = {
       isa = PBXGroup;
       children = (
+        B9FAC92EF632B2E2311DBBA1,
+        52636589C7F8B2097F7D9C13,
+        1FDBFEEC05D2CEC9466FF5C9,
+        E838D8B54F1223FB59924CA9,
+        D2237B479F063D5010D72634,
+        684A2202C7DB19C327AB4A8D,
+        DECDF5F4A32456205032286F,
+        DD572D88AE413C970B819411,
+        41D120334C0E85D316F49A3A,
+        3CB18CCCF162C6CC19AF7BCB,
+        350A90E5EB85CB2A764B98E7,
         3F70806770FDC3E042AE03AB,
         DC0AEFE5D06C33749D0844A9,
         3B8879F8139F50DDD2C33D49,
+        ADE2C3667557D6754A77ECCD,
+        9ECDDE5CCFB627FFED06A824,
+        B4272ABE2399D63C447B1460,
+        9104E3404C0035B4CCAB76F6,
+        80EFD0318DA7C77F0A1179FD,
+        3969DD4E58B9A14EE60773DF,
+        1F5A257581731AE461B932A2,
+        509F29449EEC0ABA349F29A2,
+        538F50652186AF990D5F33E5,
+        62420E6E120C709E7F18750C,
+        18C0420464971F6A871E4292,
         936D10A596B05DD860D0C41F,
         769AD96781A1C86B77556FE6,
         C788DCC26B24BEB46ED65F70,
-        B6A226D6852F74EDF2E924F8
+        80609FC20C1E96BAF720646A,
+        86CB20F51EC85D2E4BE139FE,
+        69FAFAE065C3F65D8BE55139,
+        52D433F03407DCB977317061,
+        B6A226D6852F74EDF2E924F8,
+        4D992D4A13BC6149E6E2C066
       );
       sourceTree = "<group>";
       path = Kura;
+    };
+    322160B07E47F4C8FDBFE7F7 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BackupTests.swift;
+      sourceTree = "<group>";
+    };
+    7AA283A1CCCC9FC624283F7C = {
+      isa = PBXBuildFile;
+      fileRef = 322160B07E47F4C8FDBFE7F7;
+    };
+    A0713978AD97E230635011D5 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BarcodeTests.swift;
+      sourceTree = "<group>";
+    };
+    5892E1E382A68DD2B377E712 = {
+      isa = PBXBuildFile;
+      fileRef = A0713978AD97E230635011D5;
+    };
+    0E71DAC2FAD8DB2817B131E5 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = MediaPassTests.swift;
+      sourceTree = "<group>";
+    };
+    EAF2B0EDCB7E7C705034F220 = {
+      isa = PBXBuildFile;
+      fileRef = 0E71DAC2FAD8DB2817B131E5;
+    };
+    647ED20F541C294A741BBB27 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = OrganizationTests.swift;
+      sourceTree = "<group>";
+    };
+    9E26B63DCD067656FBCE0997 = {
+      isa = PBXBuildFile;
+      fileRef = 647ED20F541C294A741BBB27;
     };
     C7D854CE7525552FB01508F8 = {
       isa = PBXFileReference;
@@ -101,6 +438,10 @@
     6A35BFF03CF068C92316E049 = {
       isa = PBXGroup;
       children = (
+        322160B07E47F4C8FDBFE7F7,
+        A0713978AD97E230635011D5,
+        0E71DAC2FAD8DB2817B131E5,
+        647ED20F541C294A741BBB27,
         C7D854CE7525552FB01508F8
       );
       sourceTree = "<group>";
@@ -139,12 +480,23 @@
       sourceTree = "<group>";
       name = Products;
     };
+    55701A53403CC5A57D7D4172 = {
+      isa = PBXFileReference;
+      lastKnownFileType = text;
+      path = "BarcodeKit/Notices.txt";
+      sourceTree = SOURCE_ROOT;
+    };
+    9814E13B80D73E1CD60418D3 = {
+      isa = PBXBuildFile;
+      fileRef = 55701A53403CC5A57D7D4172;
+    };
     CAF85B0888D78F1F83771A07 = {
       isa = PBXGroup;
       children = (
         17D6301DD9037164007DFE58,
         6A35BFF03CF068C92316E049,
         B525ACF5742866EE9F2C92CE,
+        55701A53403CC5A57D7D4172,
         4EDC8BFAFC6BD936B849F38C
       );
       sourceTree = "<group>";
@@ -197,6 +549,7 @@
         PRODUCT_BUNDLE_IDENTIFIER = app.kura.iphone.development;
         GENERATE_INFOPLIST_FILE = YES;
         INFOPLIST_KEY_CFBundleDisplayName = Kura;
+        INFOPLIST_KEY_NSCameraUsageDescription = "Use the camera to scan a barcode or photograph a wallet item.";
         INFOPLIST_KEY_NSFaceIDUsageDescription = "Use Face ID to unlock your Kura wallet.";
         INFOPLIST_KEY_UILaunchScreen_Generation = YES;
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -217,6 +570,7 @@
         PRODUCT_BUNDLE_IDENTIFIER = app.kura.iphone.development;
         GENERATE_INFOPLIST_FILE = YES;
         INFOPLIST_KEY_CFBundleDisplayName = Kura;
+        INFOPLIST_KEY_NSCameraUsageDescription = "Use the camera to scan a barcode or photograph a wallet item.";
         INFOPLIST_KEY_NSFaceIDUsageDescription = "Use Face ID to unlock your Kura wallet.";
         INFOPLIST_KEY_UILaunchScreen_Generation = YES;
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -284,26 +638,58 @@
       isa = PBXSourcesBuildPhase;
       buildActionMask = 2147483647;
       files = (
+        DDB8752E0DAD61BA070D63CE,
+        145435DF3709AE7CB017B5C1,
+        ECA72D67CF35EADE3573AF65,
+        8DC56171D7F17E56FE62F61E,
+        80F36FDD00124EE9D4A79B1F,
+        07E0B0240C0DBA849BBF9036,
+        2F9382A204A6E2BBD34F993C,
+        7885B77905F8801C1D6E70FB,
+        1E083F7266E51AA1BEDC5490,
+        8F459C8B34336B45AD3180CB,
+        8D5BE16ADA7179943DFDB392,
         CE8E3B62BF1E84744234796F,
         DE75F15D154C30666C712D8F,
         F2B5AE85D73E01B06C6D9670,
+        10C9AF9A71C9A922C9823BE8,
+        8F33D44227E00C8D15CFE18E,
+        FCDDA97306AF733DE5C7B4AF,
+        0D8A05714D5136CA48891D82,
+        4C4DC8F59279B6AFB3EC4102,
+        111FF000E1974670BF499231,
+        1F1E20B0A4B649A67A9AA44B,
+        B0EBD390E122E4E9D19E45A8,
+        65CB18D033D9E8D3DB95F9A1,
+        9A7D850564EAE88B3AB1E97A,
+        5B63E9B3486CA6E2088350BD,
         3CC3E5D578F197B47B57DAA3,
         E9805B5D76ED3735703975EA,
         10691F1CA6B2D34948DEA3AF,
-        6AF102347E7E2279D01E9BD8
+        D824734EEE2429E97AC7BEE9,
+        D0326A4A062177F5D018451D,
+        EAF1A7C876093D74CF42C772,
+        A0AC8C8BDF638973D00F6D35,
+        6AF102347E7E2279D01E9BD8,
+        E15E98F90135D39D8837BDB4
       );
       runOnlyForDeploymentPostprocessing = 0;
     };
     C7DAE215489B17A46E295533 = {
       isa = PBXFrameworksBuildPhase;
       buildActionMask = 2147483647;
-      files = ();
+      files = (
+        778B3A181F65B71AEB90D702,
+        BA5F23F579C230E0D4C8F2F5
+      );
       runOnlyForDeploymentPostprocessing = 0;
     };
     958973412F40A078F2BB66D3 = {
       isa = PBXResourcesBuildPhase;
       buildActionMask = 2147483647;
-      files = ();
+      files = (
+        9814E13B80D73E1CD60418D3
+      );
       runOnlyForDeploymentPostprocessing = 0;
     };
     3651747FFE676F1C925769BB = {
@@ -320,6 +706,10 @@
       );
       buildRules = ();
       dependencies = ();
+      packageProductDependencies = (
+        8D8B738196EB3DB5664A60CD,
+        8CE9F912F1C167589F9FC754
+      );
     };
     EF1312D48C739F00FD1166D5 = {
       isa = PBXContainerItemProxy;
@@ -337,6 +727,10 @@
       isa = PBXSourcesBuildPhase;
       buildActionMask = 2147483647;
       files = (
+        7AA283A1CCCC9FC624283F7C,
+        5892E1E382A68DD2B377E712,
+        EAF2B0EDCB7E7C705034F220,
+        9E26B63DCD067656FBCE0997,
         436DD2CB8B786C4BC01B5DCA
       );
       runOnlyForDeploymentPostprocessing = 0;
@@ -398,6 +792,40 @@
         3651747FFE676F1C925769BB,
         49EDAA2FD63DEBA9B8B78861
       );
+      packageReferences = (
+        1A5327FC98A945C8D78C5A21,
+        EA52FC7080B2B46330A64D70
+      );
+    };
+    1A5327FC98A945C8D78C5A21 = {
+      isa = XCRemoteSwiftPackageReference;
+      repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
+      requirement = {
+        kind = revision;
+        revision = 22787ffb59de99e5dc1fbfe80b19c97a904ad48d;
+      };
+    };
+    EA52FC7080B2B46330A64D70 = {
+      isa = XCLocalSwiftPackageReference;
+      relativePath = BarcodeKit;
+    };
+    8D8B738196EB3DB5664A60CD = {
+      isa = XCSwiftPackageProductDependency;
+      package = 1A5327FC98A945C8D78C5A21;
+      productName = ZIPFoundation;
+    };
+    778B3A181F65B71AEB90D702 = {
+      isa = PBXBuildFile;
+      productRef = 8D8B738196EB3DB5664A60CD;
+    };
+    8CE9F912F1C167589F9FC754 = {
+      isa = XCSwiftPackageProductDependency;
+      package = EA52FC7080B2B46330A64D70;
+      productName = KuraBarcodeKit;
+    };
+    BA5F23F579C230E0D4C8F2F5 = {
+      isa = PBXBuildFile;
+      productRef = 8CE9F912F1C167589F9FC754;
     };
   };
   rootObject = 244210E48437B6556980A702;

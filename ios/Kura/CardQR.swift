@@ -1,21 +1,27 @@
-import CoreImage
-import CoreImage.CIFilterBuiltins
+import CoreGraphics
 import Foundation
+import KuraBarcodeKit
 
 actor CardQR {
     static let shared = CardQR()
-    private let context = CIContext()
 
-    func image(for payload: String) -> CGImage? {
-        let filter = CIFilter.qrCodeGenerator()
-        filter.message = Data(payload.utf8)
-        filter.correctionLevel = "M"
-        guard let code = filter.outputImage else { return nil }
-        // The QR filter produces one pixel per module. Add a white quiet zone.
-        let bounds = code.extent.insetBy(dx: -4, dy: -4)
-        let white = CIImage(color: .white).cropped(to: bounds)
-        let scaled = code.composited(over: white).samplingNearest()
-            .transformed(by: CGAffineTransform(scaleX: 8, y: 8))
-        return context.createCGImage(scaled, from: scaled.extent)
+    func image(for payload: String, format: BarcodeFormat = .qr) -> CGImage? {
+        guard !payload.isEmpty, payload.utf8.count <= 8192, !Task.isCancelled else { return nil }
+        let encoded = format == .isbn ? payload.filter { $0 != "-" && $0 != " " } : payload
+        var raster = KuraBarcodeImage()
+        let ok = Data(encoded.utf8).withUnsafeBytes { bytes in
+            kura_barcode_render(format.rawValue, bytes.bindMemory(to: UInt8.self).baseAddress,
+                                bytes.count, &raster)
+        }
+        guard ok, let pixels = raster.pixels else { return nil }
+        defer { kura_barcode_dispose(&raster) }
+        guard !Task.isCancelled else { return nil }
+        let width = Int(raster.width), height = Int(raster.height)
+        let data = Data(bytes: pixels, count: width * height)
+        guard let provider = CGDataProvider(data: data as CFData) else { return nil }
+        return CGImage(width: width, height: height, bitsPerComponent: 8, bitsPerPixel: 8,
+                       bytesPerRow: width, space: CGColorSpaceCreateDeviceGray(),
+                       bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.none.rawValue),
+                       provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
     }
 }

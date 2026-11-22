@@ -8,17 +8,24 @@ private actor VaultStorage {
         return VaultFile(directory: support.appendingPathComponent("Wallet", isDirectory: true))
     }
 
-    func open(context: LAContext) throws -> (SymmetricKey, [WalletCard]) {
+    func open(context: LAContext, phoneOnly: Bool) throws -> (SymmetricKey, WalletSnapshot) {
         try Task.checkCancellation()
         let data = try file.readCiphertext()
-        let key = try VaultKey.load(context: context, allowCreation: data == nil)
+        let key = try phoneOnly ? PhoneUnlock.read() : VaultKey.load(context: context, allowCreation: data == nil)
         try Task.checkCancellation()
-        return (key, try data.map { try file.decode($0, key: key) } ?? [])
+        return (key, try data.map { try file.decodeSnapshot($0, key: key) } ?? WalletSnapshot())
     }
 
-    func write(_ cards: [WalletCard], key: SymmetricKey) throws {
+    func write(_ snapshot: WalletSnapshot, key: SymmetricKey, retainPrevious: Bool) throws {
         try Task.checkCancellation()
-        try file.write(cards, key: key)
+        if retainPrevious { try file.recordRecoveryBeforeRestore(key: key) }
+        try Task.checkCancellation()
+        try file.write(snapshot, key: key)
+    }
+
+    func recovery(_ id: UUID, key: SymmetricKey) throws -> WalletSnapshot {
+        try Task.checkCancellation()
+        return try file.readRecovery(id: id, key: key)
     }
 }
 
@@ -26,19 +33,22 @@ private actor VaultStorage {
 final class WalletSession: ObservableObject {
     enum Phase { case locked, opening, unlocked }
     @Published private(set) var phase = Phase.locked
-    @Published private(set) var cards: [WalletCard] = []
+    @Published private(set) var snapshot = WalletSnapshot()
     @Published private(set) var saving = false
     @Published private(set) var unlockMessage: String?
-
+    var cards: [WalletCard] { snapshot.cards }
+    private(set) var generation = UUID()
     private let storage = VaultStorage()
     private var key: SymmetricKey?
     private var context: LAContext?
     private var opening: Task<Void, Never>?
     private var writing: Task<Void, Error>?
-    private var generation = UUID()
+    private var backgroundSince: Date?
+    private var backgroundLock: Task<Void, Never>?
 
-    func unlock() {
+    func unlock(requirePrompt: Bool = false) {
         guard phase == .locked else { return }
+        let phoneOnly = PhoneUnlock.enabled && !requirePrompt
         let auth = LAContext()
         context = auth
         let attempt = generation
@@ -47,64 +57,151 @@ final class WalletSession: ObservableObject {
         opening = Task {
             do {
                 try Task.checkCancellation()
-                guard try await auth.evaluatePolicy(.deviceOwnerAuthentication,
-                          localizedReason: "Unlock your Kura wallet.") else { throw WalletError.keyUnavailable }
-                let (newKey, records) = try await storage.open(context: auth)
+                if !phoneOnly {
+                    guard try await auth.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: "Unlock your Kura wallet.")
+                    else { throw WalletError.keyUnavailable }
+                }
+                let (newKey, records) = try await storage.open(context: auth, phoneOnly: phoneOnly)
                 guard attempt == generation else { return }
                 key = newKey
-                cards = records
+                snapshot = records
                 phase = .unlocked
+                BackupAutomatic.schedule(snapshot: records, key: newKey)
             } catch {
                 guard attempt == generation else { return }
                 lock()
                 if let authError = error as? LAError {
-                    if authError.code == .passcodeNotSet {
-                        unlockMessage = "Set a device passcode in Settings to use Kura."
-                    } else if ![.userCancel, .systemCancel, .appCancel].contains(authError.code) {
+                    if authError.code == .passcodeNotSet { unlockMessage = "Set a device passcode in Settings to use Kura." }
+                    else if ![.userCancel, .systemCancel, .appCancel].contains(authError.code) {
                         unlockMessage = "Authentication failed. Try unlocking again."
                     }
-                } else {
-                    unlockMessage = (error as? WalletError ?? .vaultUnavailable).localizedDescription
-                }
+                } else { unlockMessage = (error as? WalletError ?? .vaultUnavailable).localizedDescription }
             }
         }
     }
 
+    func changePhoneUnlock(_ enabled: Bool, generation token: UUID) async throws {
+        guard generation == token, phase == .unlocked, let key else { throw CancellationError() }
+        let auth = LAContext()
+        defer { auth.invalidate() }
+        guard try await auth.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: "Change how Kura unlocks.") else { throw WalletError.keyUnavailable }
+        guard generation == token, phase == .unlocked else { throw CancellationError() }
+        let original = try VaultKey.load(context: auth, allowCreation: false)
+        guard original == key else { throw WalletError.keyUnavailable }
+        try PhoneUnlock.setEnabled(enabled, verifiedKey: original)
+        objectWillChange.send()
+    }
+
+    func background() {
+        guard phase == .unlocked, snapshot.preferences.lockDelay > 0 else { lock(); return }
+        backgroundSince = Date()
+        backgroundLock?.cancel()
+        let delay = UInt64(snapshot.preferences.lockDelay)
+        backgroundLock = Task {
+            try? await Task.sleep(nanoseconds: delay * 1_000_000_000)
+            if !Task.isCancelled { lock() }
+        }
+    }
+
+    func foreground() {
+        if let start = backgroundSince, Date().timeIntervalSince(start) >= Double(snapshot.preferences.lockDelay) { lock() }
+        backgroundSince = nil
+        backgroundLock?.cancel()
+        backgroundLock = nil
+    }
+
     func lock() {
         generation = UUID()
+        backgroundLock?.cancel()
+        backgroundLock = nil
+        backgroundSince = nil
         opening?.cancel()
         opening = nil
         writing?.cancel()
         writing = nil
         context?.invalidate()
         context = nil
+        BackupAutomatic.cancel()
         key = nil
-        cards.removeAll()
+        snapshot = WalletSnapshot()
         saving = false
         unlockMessage = nil
         phase = .locked
     }
 
-    func save(_ card: WalletCard) async throws {
-        guard phase == .unlocked, let key, !saving else { throw CancellationError() }
-        let attempt = generation
-        var updated = cards
-        if let index = updated.firstIndex(where: { $0.id == card.id }) {
-            updated[index] = card
+    func save(_ card: WalletCard, generation token: UUID, replacing original: WalletCard?) async throws {
+        var next = snapshot
+        if let index = cards.firstIndex(where: { $0.id == card.id }) {
+            guard original == cards[index] else { throw WalletError.recordChanged }
+            next.cards[index] = card
         } else {
-            updated.append(card)
+            guard original == nil else { throw WalletError.recordChanged }
+            next.cards.append(card)
         }
+        try await commit(next, generation: token)
+    }
+
+    func delete(_ card: WalletCard, generation token: UUID) async throws {
+        guard let index = cards.firstIndex(of: card) else { throw WalletError.recordChanged }
+        var next = snapshot
+        next.cards.remove(at: index)
+        try await commit(next, generation: token)
+    }
+
+    func importCards(_ items: [WalletCard], generation token: UUID) async throws {
+        var next = snapshot
+        next.cards.append(contentsOf: items)
+        try await commit(next, generation: token)
+    }
+
+    func preferences(_ value: WalletPreferences, generation token: UUID) async throws {
+        var next = snapshot
+        next.preferences = value
+        try await commit(next, generation: token)
+    }
+
+    func reorder(_ ids: [UUID], section: WalletSection, generation token: UUID) async throws {
+        let set = Set(ids)
+        let indexed = Dictionary(uniqueKeysWithValues: cards.map { ($0.id, $0) })
+        guard set.count == ids.count, set.allSatisfy({ indexed[$0] != nil }) else { throw WalletError.recordChanged }
+        var ordered = ids.compactMap { indexed[$0] }.makeIterator()
+        var next = snapshot
+        next.cards = cards.map { set.contains($0.id) ? (ordered.next() ?? $0) : $0 }
+        next.preferences.sorting[section.rawValue] = .custom
+        try await commit(next, generation: token)
+    }
+
+    func replaceForRestore(_ restored: WalletSnapshot, generation token: UUID) async throws {
+        try await commit(restored, generation: token, retainPrevious: true)
+    }
+
+    func recoverySnapshot(_ id: UUID, generation token: UUID) async throws -> WalletSnapshot {
+        guard phase == .unlocked, generation == token, let key else { throw CancellationError() }
+        let result = try await storage.recovery(id, key: key)
+        guard generation == token else { throw CancellationError() }
+        return result
+    }
+
+    func configureAutomatic(folder: URL, password: String, retention: Int) throws {
+        guard phase == .unlocked, let key else { throw CancellationError() }
+        try BackupAutomatic.configure(folder: folder, password: password, retention: retention, key: key)
+        BackupAutomatic.schedule(snapshot: snapshot, key: key)
+    }
+
+    func disableAutomatic() throws {
+        guard phase == .unlocked else { throw CancellationError() }
+        try BackupAutomatic.disable()
+    }
+
+    private func commit(_ next: WalletSnapshot, generation token: UUID, retainPrevious: Bool = false) async throws {
+        guard phase == .unlocked, let key, token == generation, !saving else { throw CancellationError() }
         saving = true
-        let task = Task { try await storage.write(updated, key: key) }
+        let task = Task { try await storage.write(next, key: key, retainPrevious: retainPrevious) }
         writing = task
-        defer {
-            if generation == attempt {
-                saving = false
-                writing = nil
-            }
-        }
+        defer { if generation == token { saving = false; writing = nil } }
         try await task.value
-        guard generation == attempt else { throw CancellationError() }
-        cards = updated
+        guard generation == token else { throw CancellationError() }
+        snapshot = next
+        BackupAutomatic.schedule(snapshot: next, key: key)
     }
 }

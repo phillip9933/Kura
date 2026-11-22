@@ -4,11 +4,12 @@ import Foundation
 struct VaultFile {
     let directory: URL
     private var file: URL { directory.appendingPathComponent("cards.kura") }
-    private static let maximumBytes = 4 * 1024 * 1024
+    private static let maximumBytes = 96 * 1024 * 1024
 
     private struct Contents: Codable {
         let version: Int
         let cards: [WalletCard]
+        let preferences: WalletPreferences?
     }
 
     func readCiphertext() throws -> Data? {
@@ -27,17 +28,27 @@ struct VaultFile {
         return data
     }
 
-    func decode(_ ciphertext: Data, key: SymmetricKey) throws -> [WalletCard] {
+    func decodeSnapshot(_ ciphertext: Data, key: SymmetricKey) throws -> WalletSnapshot {
         let box = try AES.GCM.SealedBox(combined: ciphertext)
         let data = try AES.GCM.open(box, using: key)
         let contents = try JSONDecoder().decode(Contents.self, from: data)
-        guard contents.version == 1, Set(contents.cards.map(\.id)).count == contents.cards.count
-        else { throw WalletError.vaultUnavailable }
-        return contents.cards
+        let prefs: WalletPreferences
+        switch contents.version {
+        case 1: prefs = WalletPreferences()
+        case 2:
+            guard let saved = contents.preferences else { throw WalletError.vaultUnavailable }
+            prefs = saved
+        default: throw WalletError.vaultUnavailable
+        }
+        let snapshot = WalletSnapshot(cards: contents.cards, preferences: prefs)
+        try snapshot.validate()
+        return snapshot
     }
 
-    func write(_ cards: [WalletCard], key: SymmetricKey) throws {
-        let data = try JSONEncoder().encode(Contents(version: 1, cards: cards))
+    func write(_ snapshot: WalletSnapshot, key: SymmetricKey) throws {
+        try snapshot.validate()
+        let data = try JSONEncoder().encode(Contents(version: 2, cards: snapshot.cards, preferences: snapshot.preferences))
+        guard data.count <= Self.maximumBytes - 28 else { throw WalletError.tooLarge }
         guard let encrypted = try AES.GCM.seal(data, using: key).combined,
               encrypted.count <= Self.maximumBytes else { throw WalletError.tooLarge }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,

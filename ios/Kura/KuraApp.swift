@@ -9,9 +9,7 @@ struct KuraApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if scenePhase != .active {
-                    Label("Kura", systemImage: "lock.fill")
-                } else if wallet.phase == .unlocked {
+                if wallet.phase == .unlocked {
                     CardsView(wallet: wallet)
                         .privacySensitive()
                 } else {
@@ -21,18 +19,26 @@ struct KuraApp: App {
                         if wallet.phase == .opening {
                             ProgressView("Unlocking wallet")
                         } else {
+                            if PhoneUnlock.enabled { Button("Use Face ID or passcode") { wallet.unlock(requirePrompt: true) } }
                             if let message = wallet.unlockMessage { Text(message) }
-                            Button("Unlock wallet", action: wallet.unlock).buttonStyle(.borderedProminent)
+                            Button("Unlock wallet") { wallet.unlock() }.buttonStyle(.borderedProminent)
                         }
                     }
                     .padding()
                     .multilineTextAlignment(.center)
                 }
             }
+            .background(PrivacyShield())
+            .preferredColorScheme(wallet.snapshot.preferences.appearance == "Dark" ? .dark :
+                                  wallet.snapshot.preferences.appearance == "Light" ? .light : nil)
+            .onAppear {
+                if scenePhase == .active && PhoneUnlock.enabled { wallet.unlock() }
+            }
             .onChange(of: scenePhase) { phase in
-                // Authentication itself can briefly make the scene inactive.
-                if phase == .background || (phase == .inactive && wallet.phase == .unlocked) {
-                    wallet.lock()
+                if phase == .background { wallet.background() }
+                if phase == .active {
+                    wallet.foreground()
+                    if PhoneUnlock.enabled && wallet.phase == .locked { wallet.unlock() }
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.protectedDataWillBecomeUnavailableNotification)) { _ in
