@@ -26,7 +26,7 @@ object PkpassParser {
             require(manifests.size == 1 && files.keys.none { it.endsWith(".pkpass",true) || it.endsWith(".pkpasses",true) }) { "Ambiguous pass archive" }
             val jsonPath = manifests.single()
             val prefix = jsonPath.removeSuffix("pass.json")
-            val json = JSONObject(files.getValue(jsonPath).toString(Charsets.UTF_8))
+            val json = ImportJson.objectFrom(files.getValue(jsonPath).toString(Charsets.UTF_8))
             require(json.getInt("formatVersion") == 1)
             val types = listOf("storeCard", "coupon", "eventTicket", "generic", "boardingPass").filter(json::has)
             require(types.size == 1) { "Pass must have exactly one type" }
@@ -66,7 +66,7 @@ object PkpassParser {
             record.put("transitType", body.optString("transitType"))
             if (json.has("relevantDate")) record.put("relevantDate", json.getString("relevantDate"))
             if (json.has("expirationDate")) record.put("expiry_date", json.getString("expirationDate"))
-            val manifest = files[prefix + "manifest.json"]?.let { JSONObject(it.toString(Charsets.UTF_8)) }
+            val manifest = files[prefix + "manifest.json"]?.let { ImportJson.objectFrom(it.toString(Charsets.UTF_8)) }
             if (manifest != null) {
                 for ((path, bytes) in files) {
                     if (path == prefix + "manifest.json" || path == prefix + "signature") continue
@@ -94,8 +94,8 @@ object PkpassParser {
             (bytes[0] == 0xfe.toByte() && bytes[1] == 0xff.toByte()))) Charsets.UTF_16 else Charsets.UTF_8
         val pattern = Regex("\"((?:\\\\.|[^\"\\\\])*)\"\\s*=\\s*\"((?:\\\\.|[^\"\\\\])*)\"\\s*;")
         return pattern.findAll(bytes.toString(charset)).associate {
-            JSONObject("{\"v\":\"" + it.groupValues[1] + "\"}").getString("v") to
-                JSONObject("{\"v\":\"" + it.groupValues[2] + "\"}").getString("v")
+            ImportJson.objectFrom("{\"v\":\"" + it.groupValues[1] + "\"}").getString("v") to
+                ImportJson.objectFrom("{\"v\":\"" + it.groupValues[2] + "\"}").getString("v")
         }
     }
     fun color(value: String): String {

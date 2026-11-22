@@ -107,7 +107,8 @@ hosted runner. It downloads Gitleaks 8.30.1 from the official
 checking the pinned archive digest, pinned checksum-file digest and matching
 manifest entry before execution. This is build tooling, not an app dependency.
 The scanner first has to reject a fabricated credential-pattern control, then
-scans a fresh Git archive with its default rules. A finding fails the job.
+scans the committed blobs from the full Git tree with its default rules. Files marked
+`export-ignore` are included. The scanner reads a symbolic link as its stored text. A finding fails the job.
 No baseline, custom allowlist or new suppression is introduced.
 
 Reports use 100% secret redaction and private temporary files outside the source

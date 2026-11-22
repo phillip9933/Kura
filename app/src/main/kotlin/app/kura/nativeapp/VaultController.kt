@@ -130,7 +130,7 @@ class VaultController(app: Application) : AndroidViewModel(app) {
     }
     suspend fun setAutomaticBackupPassword(password:CharArray) {
         try {
-            require(password.size>=8) {"Use at least 8 characters"}
+            BackupCodec.requireNewPassword(password)
             work {opened->
                 val encoded=Charsets.UTF_8.encode(java.nio.CharBuffer.wrap(password))
                 val bytes=ByteArray(encoded.remaining()).also(encoded::get)
@@ -147,16 +147,25 @@ class VaultController(app: Application) : AndroidViewModel(app) {
         val name=try {work {opened->
             val settings=store.settings(opened)
             val tree=settings.optString("autoBackupUri").takeIf {it.startsWith("content://")} ?: error("Choose a backup folder")
-            val bytes=store.deviceSecret(opened,"auto-backup-password.enc") ?: error("Set an automatic-backup password")
-            val charsBuffer=Charsets.UTF_8.decode(java.nio.ByteBuffer.wrap(bytes))
-            val chars=CharArray(charsBuffer.remaining()).also(charsBuffer::get)
-            bytes.fill(0);if(charsBuffer.hasArray()) charsBuffer.array().fill('\u0000')
-            val context=currentCoroutineContext()
-            try {store.export(opened).use {payload->
-                AutomaticBackup(File(getApplication<Application>().cacheDir,"auto-backup")).write(payload,chars,
-                    settings.optInt("autoBackupRetentionCount",5).coerceIn(1,1000),
-                    SafBackupDestination(getApplication(),android.net.Uri.parse(tree))) {context.ensureActive()}
-            }} finally {chars.fill('\u0000')}
+            val app = getApplication<Application>()
+            FileWorker.files(app) { directory ->
+                val bytes = store.deviceSecret(opened, "auto-backup-password.enc") ?: error("Set an automatic-backup password")
+                val chars = try {
+                    val decoded = Charsets.UTF_8.decode(java.nio.ByteBuffer.wrap(bytes))
+                    try { CharArray(decoded.remaining()).also(decoded::get) }
+                    finally { if (decoded.hasArray()) decoded.array().fill('\u0000') }
+                } finally { bytes.fill(0) }
+                val job = currentCoroutineContext()
+                try {
+                    store.export(opened).use { payload ->
+                        AutomaticBackup.prepare(File(directory, "input"), payload, chars) { job.ensureActive() }
+                    }
+                } finally { chars.fill('\u0000') }
+                val request = documentJob("automatic", android.net.Uri.parse(tree)).apply {
+                    putInt("retention", settings.optInt("autoBackupRetentionCount", 5).coerceIn(1, 1000))
+                }
+                FileWorker.run(app, directory, request)
+            }
         }
         } catch(e:CancellationException) {autoBackupStatus.value="Backup paused until unlock";throw e}
         catch(e:Exception) {autoBackupStatus.value="Backup failed: "+(e.message ?: "Choose the folder again");throw e}

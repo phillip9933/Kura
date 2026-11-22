@@ -66,6 +66,25 @@ def run_scan(scanner, source, label, reports, work, environment):
     return {"scope": label, "exit_code": result.returncode, "finding_count": len(findings)}
 
 
+def write_tracked_tree(repository, destination):
+    entries = subprocess.check_output(["git", "ls-tree", "-rz", "--full-tree", "HEAD"], cwd=repository)
+    for entry in entries.split(b"\0"):
+        if not entry:
+            continue
+        metadata, path = entry.split(b"\t", 1)
+        mode, kind, object_id = metadata.split()
+        if kind != b"blob" or mode not in (b"100644", b"100755", b"120000"):
+            raise ValueError("Unsupported tracked entry in scanner input")
+        relative = Path(os.fsdecode(path))
+        if relative.is_absolute() or ".." in relative.parts:
+            raise ValueError("Invalid tracked path")
+        target = destination / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        # Treat symlink contents as data. Never follow a link from the scanned tree.
+        with target.open("xb") as output:
+            subprocess.run(["git", "cat-file", "blob", object_id], cwd=repository, stdout=output, check=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repository", type=Path, default=Path.cwd())
@@ -92,12 +111,7 @@ def main():
         else:
             source = work / "source"
             source.mkdir()
-            # Archive tracked bytes, excluding .git, ignored data and generated outputs.
-            archive = subprocess.Popen(["git", "archive", "HEAD"], cwd=repository, stdout=subprocess.PIPE)
-            with tarfile.open(fileobj=archive.stdout, mode="r|") as bundle:
-                bundle.extractall(source, filter="data")
-            if archive.wait() != 0:
-                raise RuntimeError("Tracked-tree archive failed")
+            write_tracked_tree(repository, source)
         fixture = work / "control"
         fixture.mkdir()
         # Fabricated base32 credential-pattern control; never a usable credential.

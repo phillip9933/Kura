@@ -11,6 +11,14 @@ import java.security.MessageDigest
 
 class StreamingBackupTest {
     private fun scratch() = java.nio.file.Files.createTempDirectory("kura-stream-test").toFile()
+    @Test fun newBackupsRequireEightCharactersBeforeAnyOutput() {
+        val payload = BackupPayload(JSONObject("""{"version":"4.0","wallets":[]}"""), emptyMap())
+        val output = ByteArrayOutputStream()
+        assertThrows(IllegalArgumentException::class.java) { StreamingBackup.write(payload, output, "short".toCharArray()) }
+        assertEquals(0, output.size())
+        assertThrows(IllegalArgumentException::class.java) { BackupCodec.write(payload, "short".toCharArray()) }
+    }
+
     @Test fun streamingV4InteroperatesWithOriginalCodecBothDirections() {
         val root = scratch()
         val payload = BackupPayload(JSONObject("""{"version":"4.0","wallets":[]}"""), mapOf("x.png" to byteArrayOf(3, 4, 5)))
@@ -42,6 +50,12 @@ class StreamingBackupTest {
         for(bytes in listOf(text, iv + encrypted)) StreamingBackup.read(bytes.inputStream(), "old".toCharArray(), root).use {
             assertEquals("1.0", it.data.getString("version"))
         }
+        val nested = """{"version":"1.0","wallets":[],"extra":""" + "[".repeat(64) + "]".repeat(64) + "}"
+        val archive = iv + cipher.doFinal(nested.toByteArray())
+        val streamingError = assertThrows(IllegalArgumentException::class.java) { StreamingBackup.read(archive.inputStream(), "old".toCharArray(), root) }
+        val codecError = assertThrows(IllegalArgumentException::class.java) { BackupCodec.read(archive.inputStream(), "old".toCharArray()) }
+        assertTrue(streamingError.message.orEmpty().contains("nesting"))
+        assertEquals(streamingError.message, codecError.message)
         key.fill(0); assertTrue(root.listFiles()!!.isEmpty()); root.delete()
     }
     @Test fun base64StreamsHandleChunkBoundariesAndRejectTrailingJunk() {
@@ -60,8 +74,8 @@ class StreamingBackupTest {
         val payload = BackupPayload(JSONObject("""{"version":"4.0","wallets":[]}"""), emptyMap(), names, {
             ByteArray(8 * 1024 * 1024).also { java.util.Random(42).nextBytes(it) }
         })
-        archive.outputStream().use { StreamingBackup.write(payload, it, "large".toCharArray()) }
-        StreamingBackup.read(archive.inputStream(), "large".toCharArray(), temp).use {
+        archive.outputStream().use { StreamingBackup.write(payload, it, "large backup".toCharArray()) }
+        StreamingBackup.read(archive.inputStream(), "large backup".toCharArray(), temp).use {
             assertEquals(names, it.imageNames)
             for(name in names) it.consumeImage(name) { bytes -> assertEquals(8*1024*1024, bytes.size) }
         }

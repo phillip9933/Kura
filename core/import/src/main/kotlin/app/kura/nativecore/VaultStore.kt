@@ -58,7 +58,7 @@ class VaultStore internal constructor(
         val file = File(vault.directory, "settings.json.enc")
         if(!file.isFile) return JSONObject()
         val bytes = EncryptedMediaStorage(vault.directory).read(file.name, vault.key)
-        try { return JSONObject(bytes.toString(Charsets.UTF_8)) } finally { bytes.fill(0) }
+        try { return ImportJson.objectFrom(bytes.toString(Charsets.UTF_8)) } finally { bytes.fill(0) }
     }
     private fun secretFile(directory:File,name:String):AtomicFile {
         require(name in setOf("auto-backup-password.enc","legacy-transfer-key.enc"))
@@ -152,6 +152,7 @@ class VaultStore internal constructor(
                         }
                         else -> cursor.getString(i)
                     }
+                    if (value is String && (name == "fields" || name == "customFields")) ImportJson.checked(value)
                     json.put(name, value)
                 }
                 rows.add(json)
@@ -195,8 +196,8 @@ class VaultStore internal constructor(
                     require(value is String) { "Record field must be text: " + name }
                     if (name == "fields" || name == "customFields") {
                         if (value.isNotEmpty()) require(value.trim().startsWith("{") || value.trim().startsWith("["))
-                        if (value.trim().startsWith("{")) JSONObject(value)
-                        if (value.trim().startsWith("[")) JSONArray(value)
+                        if (value.trim().startsWith("{")) ImportJson.objectFrom(value)
+                        if (value.trim().startsWith("[")) ImportJson.arrayFrom(value)
                     }
                     if (encrypted(table, name)) {
                         val bytes = value.toByteArray()
@@ -284,7 +285,7 @@ class VaultStore internal constructor(
         val settingsFile = File(vault.directory, "settings.json.enc")
         if (passId == null && settingsFile.isFile) {
             val settingsBytes = EncryptedMediaStorage(vault.directory).read(settingsFile.name, vault.key)
-            try { data.put("settings", JSONObject(settingsBytes.toString(Charsets.UTF_8))) } finally { settingsBytes.fill(0) }
+            try { data.put("settings", ImportJson.objectFrom(settingsBytes.toString(Charsets.UTF_8))) } finally { settingsBytes.fill(0) }
         }
         val currentSettings=settings(vault)
         val order=currentSettings.optJSONArray("nativeItemOrder")

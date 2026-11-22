@@ -47,7 +47,7 @@ object TransferCodec {
         }
         try {
             require(bytes.size<=MAX_PLAIN)
-            val payload=JSONObject(bytes.toString(Charsets.UTF_8))
+            val payload=ImportJson.objectFrom(bytes.toString(Charsets.UTF_8))
             val table=when(payload.getString("type")) {"wallet"->"wallets";"pass"->"passes";"identity"->"identities";else->error("Invalid transfer type")}
             val row=JSONObject(payload.getJSONObject("data").toString())
             row.keys().asSequence().toList().filter {it.endsWith("ImagePath") || it in setOf("id","orderIndex")}.forEach(row::remove)

@@ -52,6 +52,10 @@ class KuraUpdateApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        val process = if (android.os.Build.VERSION.SDK_INT >= 28) Application.getProcessName()
+            else getSystemService(android.app.ActivityManager::class.java).runningAppProcesses
+                ?.firstOrNull { it.pid == android.os.Process.myPid() }?.processName
+        if (process != packageName) return
         // Network activity is opt-in on the first run, including background workers.
         val preferences = getSharedPreferences(kuraUpdateConfig.stateName, MODE_PRIVATE)
         initializeKuraUpdatePreferences(preferences)
