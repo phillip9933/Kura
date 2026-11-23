@@ -20,6 +20,7 @@ struct WalletEditor: View {
     @State private var expiryByMonth: Bool
     @State private var expiry: Date
     @State private var error: String?
+    @State private var submitting = false
     @State private var scanning = false
     @State private var extraLabel = ""
     @State private var customLabels: [String] = []
@@ -119,11 +120,11 @@ struct WalletEditor: View {
                         validateOCR: validateSuggestions)
             if let error { Text(error) }
         }
-        .autocorrectionDisabled().disabled(wallet.saving)
+        .autocorrectionDisabled().disabled(wallet.saving || submitting)
         .navigationTitle(original == nil ? "Add item" : "Edit item")
-        .navigationBarBackButtonHidden(wallet.saving)
+        .navigationBarBackButtonHidden(wallet.saving || submitting)
         .toolbar {
-            Button("Save") { Task { await save() } }.disabled(wallet.saving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            Button("Save") { Task { await save() } }.disabled(wallet.saving || submitting || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
         .fullScreenCover(isPresented: $scanning) {
             BarcodeScannerView { text, detected in
@@ -169,7 +170,11 @@ struct WalletEditor: View {
         }
     }
 
+    @MainActor
     private func save() async {
+        guard !submitting, wallet.generation == token else { return }
+        submitting = true
+        defer { submitting = false }
         do {
             if !payload.isEmpty, (payload != original?.payload || format != original?.format),
                await CardQR.shared.image(for: payload, format: format) == nil {
