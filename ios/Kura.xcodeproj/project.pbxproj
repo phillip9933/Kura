@@ -693,7 +693,15 @@
       buildSettings = {
         ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
         PRODUCT_NAME = Kura;
-        PRODUCT_BUNDLE_IDENTIFIER = app.kura.iphone.development;
+        KURA_BUNDLE_ID = app.kura.wallet;
+        KURA_BUILD_NUMBER = 1;
+        KURA_SIGNING_STYLE = Automatic;
+        KURA_SIGNING_IDENTITY = "Apple Development";
+        PRODUCT_BUNDLE_IDENTIFIER = "$(KURA_BUNDLE_ID)";
+        CODE_SIGN_STYLE = "$(KURA_SIGNING_STYLE)";
+        "CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "$(KURA_SIGNING_IDENTITY)";
+        DEVELOPMENT_TEAM = "$(KURA_SIGNING_TEAM)";
+        "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "$(KURA_SIGNING_PROFILE)";
         GENERATE_INFOPLIST_FILE = YES;
         INFOPLIST_KEY_CFBundleDisplayName = Kura;
         INFOPLIST_KEY_NSCameraUsageDescription = "Use the camera to scan a barcode or photograph a wallet item.";
@@ -701,7 +709,7 @@
         INFOPLIST_KEY_UILaunchScreen_Generation = YES;
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-        CURRENT_PROJECT_VERSION = 1;
+        CURRENT_PROJECT_VERSION = "$(KURA_BUILD_NUMBER)";
         MARKETING_VERSION = 0.1.0;
         LD_RUNPATH_SEARCH_PATHS = (
           "$(inherited)",

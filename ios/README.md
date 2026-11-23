@@ -16,6 +16,8 @@ Kura is an offline SwiftUI wallet for iPhone running iOS 16 or later. A new wall
 
 Both platforms use the same synthetic QR fixtures. The iPhone app owns its Keychain items, vault, backup and encrypted transfer formats. Android/iPhone wallet migration is deferred. Android's standalone packages and direct APK updater apply to Android only.
 
+For installation on a physical iPhone using a hosted Mac, follow the [internal TestFlight setup](TESTFLIGHT.md).
+
 ## Build and test
 
 Open `ios/Kura.xcodeproj` in Xcode, choose the **Kura** scheme and a disposable iPhone simulator, then choose **Product → Test**. The [iPhone workflow](../.github/workflows/ios.yml) runs the same scheme on a hosted Mac. To run from the repository root with the UUID of an installed simulator:
