@@ -3,7 +3,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 enum PassExport {
-    static func encode(_ card: WalletCard) async throws -> Data {
+    static func encode(_ card: WalletCard, timeZone: TimeZone = .current) async throws -> Data {
         try card.validate()
         let style = card.passStyle
         let type = style?.type ?? (card.section == .cards ? "storeCard" : "generic")
@@ -12,6 +12,7 @@ enum PassExport {
             body[name] = fields.map(\.passJSON)
         }
         if type == "boardingPass" { body["transitType"] = style?.transitType ?? "PKTransitTypeGeneric" }
+        let organization = style?.organization.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let section: String
         switch card.section {
         case .cards: section = "wallets"
@@ -20,20 +21,29 @@ enum PassExport {
         }
         var json: [String: Any] = [
             "formatVersion": 1, "passTypeIdentifier": "pass.app.kura.wallet", "teamIdentifier": "KURA",
-            "serialNumber": card.id.uuidString, "organizationName": style?.organization ?? card.name,
+            "serialNumber": card.id.uuidString, "organizationName": organization.isEmpty ? card.name : organization,
             "description": card.name, type: body,
             "userInfo": ["app.kura.wallet": ["section": section, "category": card.category, "customFields": card.fields] as [String: Any]]
         ]
-        json["relevantDate"] = style?.relevantDate?.formatted(.iso8601)
-        json["expirationDate"] = card.expires?.formatted(.iso8601)
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        json["relevantDate"] = style?.relevantDate.map(formatter.string(from:))
+        if let expires = card.expires {
+            var calendar = Calendar(identifier: .gregorian)
+            calendar.timeZone = timeZone
+            let endOfDay = calendar.dateInterval(of: .day, for: expires)?.end.addingTimeInterval(-0.001)
+            json["expirationDate"] = formatter.string(from: card.isImportedPass ? expires : (endOfDay ?? expires))
+        }
         json["logoText"] = style?.logoText
-        json["backgroundColor"] = style?.backgroundColor
+        json["backgroundColor"] = style?.backgroundColor ?? card.fields["Background color"] ?? card.fields["Card color"] ?? card.fields["color"]
         json["foregroundColor"] = style?.foregroundColor
         json["labelColor"] = style?.labelColor
         if !card.payload.isEmpty {
             let names: [BarcodeFormat: String] = [.qr: "PKBarcodeFormatQR", .aztec: "PKBarcodeFormatAztec",
                                                    .pdf417: "PKBarcodeFormatPDF417", .code128: "PKBarcodeFormatCode128"]
-            json["barcodes"] = [["format": names[card.format] ?? card.format.rawValue, "message": card.payload, "messageEncoding": "utf-8"]]
+            var barcode = ["format": names[card.format] ?? card.format.rawValue, "message": card.payload, "messageEncoding": "utf-8"]
+            barcode["altText"] = style?.barcodeAlternative
+            json["barcodes"] = [barcode]
         }
         let descriptor = try JSONSerialization.data(withJSONObject: json, options: [.sortedKeys])
         guard descriptor.count <= PassArchive.jsonLimit else { throw WalletMediaError.size }
@@ -65,16 +75,19 @@ struct PassExportButton: View {
     @State private var confirming = false
     @State private var preparing = false
     @State private var export = false
+    @State private var sharing = false
+    @State private var showingShare = false
     @State private var document: PassDocument?
     @State private var errorMessage: String?
 
     var body: some View {
         VStack(alignment: .leading) {
-            Button(preparing ? "Preparing pass…" : "Export pass file") { confirming = true }.disabled(preparing)
+            Button(preparing ? "Preparing pass…" : "Export pass file") { sharing = false; confirming = true }.disabled(preparing)
+            Button("Share pass file") { sharing = true; confirming = true }.disabled(preparing)
             if let errorMessage { Text(errorMessage) }
         }
         .confirmationDialog("Export an unencrypted pass?", isPresented: $confirming, titleVisibility: .visible) {
-            Button("Choose destination") { preparing = true }
+            Button(sharing ? "Prepare for sharing" : "Choose destination") { preparing = true }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Anyone with the file can read its fields, barcode and artwork. Attachments and back photos stay in Kura. This unsigned file is for compatible pass readers.")
@@ -86,9 +99,21 @@ struct PassExportButton: View {
                 try Task.checkCancellation()
                 document = PassDocument(bytes: data)
                 errorMessage = nil
-                export = true
+                if sharing { showingShare = true } else { export = true }
             } catch is CancellationError { return } catch { errorMessage = "Kura could not export this pass." }
             preparing = false
+        }
+        .sheet(isPresented: $showingShare, onDismiss: { document = nil }) {
+            if let document {
+                NavigationStack {
+                    ShareLink(item: SharedPassFile(bytes: document.bytes),
+                              preview: SharePreview("Kura pass", image: Image(systemName: "ticket"))) {
+                        Label("Choose where to share", systemImage: "square.and.arrow.up")
+                    }
+                    .navigationTitle("Share pass file")
+                    .toolbar { Button("Done") { showingShare = false } }
+                }.presentationDetents([.medium])
+            }
         }
         .fileExporter(isPresented: $export, document: document, contentType: PassDocument.type,
                       defaultFilename: "Kura-pass.pkpass") { result in
@@ -111,4 +136,13 @@ private struct PassDocument: FileDocument {
         bytes = data
     }
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper { FileWrapper(regularFileWithContents: bytes) }
+}
+
+
+private struct SharedPassFile: Transferable {
+    let bytes: Data
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: PassDocument.type) { (file: SharedPassFile) in file.bytes }
+            .suggestedFileName("Kura-pass.pkpass")
+    }
 }

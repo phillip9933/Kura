@@ -1,37 +1,49 @@
 # Kura for iPhone
 
-This development build starts with an empty wallet. Unlock it, enter a card name and its QR code text, then tap **Save card**. Open the card to display its QR code. Use synthetic cards during testing. The build has no backup or restore feature.
+Kura is an offline SwiftUI wallet for iPhone running iOS 16 or later. A new wallet opens empty. Unlock it, choose Cards, Passes or Identity, then choose **Add item**. The app keeps wallet data on the device. The development bundle ID is `app.kura.iphone.development`.
 
-## Build and run
+## Wallet features
 
-1. On a Mac with Xcode and an iPhone simulator runtime, open `ios/Kura.xcodeproj`.
-2. Select the **Kura** scheme and a disposable iPhone simulator with iOS 16 or later.
-3. Choose **Product → Test** to run the host tests. Choose **Product → Run** to open the app.
-4. For the unlock journey, use a disposable test device or simulator that supports device-owner authentication. Set a test passcode. Kura requires authentication each time it opens the wallet.
+| Android wallet journey | On iPhone |
+| --- | --- |
+| Create and organize items | Add, edit, favorite, search, filter, sort, reorder, archive, restore from the archive, or delete. Manage categories, typed fields, visible sections, list/grid appearance, upcoming passes and expiry reminders in Settings. |
+| Present and scan barcodes | Render all 21 Android output formats, choose a full-screen format and orientation, and optionally raise brightness. Scan supported symbols with the camera or choose an image. The [barcode guide](BarcodeKit/README.md) lists reader capabilities and format-specific behavior. |
+| Photograph cards and recognize details | Add front, back or logo images, adjust the crop and orientation, and review on-device text recognition suggestions before applying them to empty fields. Add, preview and export attachments. |
+| Create or import passes | Edit manual pass layouts and ordered field groups. Preview a .pkpass file or .pkpasses bundle, select individual passes and review duplicates. Import preserves supported issuer fields, images and formatting. Kura checks the archive manifest when present. It does not authenticate the issuer signature. |
+| Export or send an item | Export an unsigned .pkpass for compatible readers, share item text through password-encrypted QR frames, or export an encrypted item file with media. Apple Wallet requires an issuer-signed pass. |
+| Back up and recover | Create password-encrypted backups in Files. Configure automatic backups to a selected folder, change the password and retention, review a backup before replacing a wallet, or recover a previous local generation. Store the backup password separately. |
+| Protect or erase a wallet | Device-owner authentication is the default. Settings supports device-passcode authentication, phone-unlock-only access, a background lock delay, and authenticated erasure. Files previously exported to another location remain there. |
 
-The app uses Apple frameworks. It has no third-party packages, online account, or camera permission. Its development bundle ID is `app.kura.iphone.development`.
+Both platforms use the same synthetic QR fixtures. The iPhone app owns its Keychain items, vault, backup and encrypted transfer formats. Android/iPhone wallet migration is deferred. Android's standalone packages and direct APK updater apply to Android only.
 
-From the repository root, use the ID of an installed simulator:
+## Build and test
+
+Open `ios/Kura.xcodeproj` in Xcode, choose the **Kura** scheme and a disposable iPhone simulator, then choose **Product → Test**. The [iPhone workflow](../.github/workflows/ios.yml) runs the same scheme on a hosted Mac. To run from the repository root with the UUID of an installed simulator:
 
 ```sh
 xcodebuild -project ios/Kura.xcodeproj -scheme Kura -showdestinations
 xcodebuild -project ios/Kura.xcodeproj -scheme Kura \
-  -destination "platform=iOS Simulator,id=$SIMULATOR_ID" test
+  -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+  -parallel-testing-enabled NO test
 ```
 
-## Storage and privacy
+Swift Package Manager resolves ZIPFoundation 0.9.20 at the revision in the project lockfile. [ZIPFoundation's license](Kura/LICENSE-ZIPFoundation.txt) and the [vendored Zint encoder notices](BarcodeKit/Notices.txt) ship with the app.
 
-The app stores names and QR values in a versioned file in Application Support. CryptoKit encrypts each write with AES-GCM and a fresh nonce. Kura reads the 256-bit key from a device-only Keychain item that requires a passcode and user presence. Each save replaces the encrypted file atomically. Kura requests complete file protection and excludes the wallet directory from device backup. Removing the device passcode can make the wallet inaccessible. Removing the app can delete the wallet file.
+## Storage and authentication
 
-The locked screen hides card data. Locking drops the session key and the list of cards. The app also locks an open wallet when the scene becomes inactive or the system withdraws protected data. An unlock attempt that completes after the wallet locks cannot open it. A save that has started its atomic write can finish on disk. Its result cannot repopulate a locked screen. The app presents errors without logging card data.
+The versioned wallet in Application Support uses CryptoKit AES-GCM with a fresh nonce per atomic write. It includes records, preferences, photos and attachments. The original iPhone QR-only vault can be opened and saved in the newer format. The encrypted file limit is 96 MiB. The vault directory uses complete file protection and is excluded from device backup.
 
-The first version accepts printable ASCII QR values with a maximum of 512 bytes. It preserves spaces and leading zeros. It does not read Android backups. See [platform ownership](../docs/ARCHITECTURE.md) and [wallet design](../docs/design.md).
+The default 256-bit Keychain key is device-only, requires a device passcode and is gated by user presence. Optional phone-unlock-only mode uses a separately protected copy available while the device is unlocked. Switching access modes requires authentication. Removing the passcode can make the wallet unrecoverable without a password-encrypted export.
 
-## Acceptance on Apple hardware
+An opaque window covers the app switcher and active screen recording or mirroring. Ordinary user screenshots of a visible wallet are possible. [Apple capture behavior](https://developer.apple.com/documentation/uikit/uiapplication/userdidtakescreenshotnotification)
 
-Use synthetic data for these checks. Record the device, OS, and actual result.
+Locking drops the session's records and key and invalidates pending editors. A successful restore also discards older editors. Kura keeps a previous encrypted copy before replacing a readable vault. Recovery from damaged ciphertext preserves that file before replacement. Password-encrypted backups use PBKDF2-HMAC-SHA256 with a random salt and AES-GCM. Choose a Files destination appropriate for the backup, including an on-device location if you want it to stay local.
 
-- Cancel the unlock prompt. Check that the wallet stays locked. Unlock with a device passcode and with the available biometric method.
-- Save and edit a test card with leading zeros. Close the app, reopen it, and check the name and QR text. Read the displayed code with a second scanner.
-- Lock from the list, switch apps from the card editor, and lock the device during unlock. Check the app switcher for exposed card data. Confirm that a new session has no unsaved draft.
-- Review the locked, empty, editing, and detail screens in light and dark appearance, in portrait and landscape, with large text and VoiceOver.
+## Acceptance on an iPhone
+
+Use synthetic records and a disposable device. Record the device, OS and actual results in the [testing record](../docs/TESTING.md).
+
+- Enroll biometrics, cancel an unlock, unlock with biometrics and device passcode, try phone-only mode and the background lock delay. Inspect the app-switcher snapshot over an open editor and a document picker.
+- Capture front and back images, crop and rotate them, review English and Japanese recognition on representative cards, scan a separate display and read the iPhone's barcodes with another device.
+- Export and restore a synthetic wallet through the intended Files provider. Reopen it, verify photos and preferences, then verify that a wrong password preserves the active wallet.
+- Check the locked, list, grid, editor, pass, barcode, backup and recovery screens using light and dark appearance, portrait and landscape, large text and VoiceOver. Check focus order, system sheet dismissal and the return to the wallet.

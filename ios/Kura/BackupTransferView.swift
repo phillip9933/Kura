@@ -149,7 +149,7 @@ struct BackupTransferReceiveView: View {
     private func receive(_ text: String) {
         guard generation == wallet.generation, wallet.phase == .unlocked else { return }
         do { try input.append(text); message = nil }
-        catch { message = BackupError.transfer.localizedDescription }
+        catch { message = (error as? BackupError)?.localizedDescription ?? BackupError.transfer.localizedDescription }
     }
 
     private func reset() {
@@ -176,7 +176,7 @@ struct BackupTransferReceiveView: View {
                 staged = result
                 password = ""
             } catch {
-                if !Task.isCancelled { message = "Kura could not unlock this transfer. Check the codes and password." }
+                if !Task.isCancelled { message = (error as? BackupError)?.localizedDescription ?? "Kura could not unlock this transfer. Check the codes and password." }
             }
             if !Task.isCancelled { busy = false }
         }

@@ -3,8 +3,8 @@ import Foundation
 
 struct PassField: Codable, Equatable {
     let key: String
-    let label: String
-    let value: String
+    var label: String
+    var value: String
     var numberValue: Bool?
     var currencyCode: String?
     var numberStyle: String?
@@ -57,6 +57,8 @@ struct PassAppearance: Codable, Equatable {
     var transitType: String
     var serialNumber: String
     var passTypeIdentifier: String?
+    var manualEntry: Bool?
+    var barcodeAlternative: String?
     var relevantDate: Date?
     var backgroundColor: String?
     var foregroundColor: String?
@@ -79,6 +81,12 @@ struct PassAppearance: Codable, Equatable {
               artwork.keys.allSatisfy(Self.artNames.contains),
               artwork.values.reduce(0, { $0 + $1.count }) <= PassArchive.expandedLimit
         else { throw WalletMediaError.damagedPass }
+        guard (barcodeAlternative?.utf8.count ?? 0) <= 8192 else { throw WalletMediaError.damagedPass }
+        if manualEntry == true {
+            let fields = groups.values.flatMap { $0 }
+            guard Set(fields.map(\.key)).count == fields.count, fields.allSatisfy({ !$0.key.isEmpty && $0.validManualValue })
+            else { throw PassDraftError.invalidField }
+        }
         for bytes in artwork.values { _ = try WalletMedia.imageSource(bytes) }
     }
 }
@@ -233,7 +241,9 @@ enum PassImport {
         }
         let extensionData = (pass["userInfo"] as? [String: Any])?["app.kura.wallet"] as? [String: Any] ?? [:]
         let fields = extensionData["customFields"] as? [String: String] ?? [:]
-        let fallback: [String: String] = ["boardingPass": "Boarding Pass", "eventTicket": "Event", "coupon": "Coupon", "storeCard": "Loyalty"]
+        let transit = body["transitType"] as? String ?? ""
+        let boardingCategory = ["PKTransitTypeTrain", "PKTransitTypeBus", "PKTransitTypeBoat"].contains(transit) ? "Transit" : "Boarding Pass"
+        let fallback: [String: String] = ["boardingPass": boardingCategory, "eventTicket": "Event", "coupon": "Coupon", "storeCard": "Loyalty"]
         let section: WalletSection
         switch extensionData["section"] as? String {
         case "wallets": section = .cards
@@ -243,10 +253,10 @@ enum PassImport {
         }
         let codes = (pass["barcodes"] as? [[String: Any]]) ?? (pass["barcode"] as? [String: Any]).map { [$0] } ?? []
         guard codes.count <= 32 else { throw WalletMediaError.damagedPass }
-        let code = codes.compactMap { item -> (BarcodeFormat, String)? in
+        let code = codes.compactMap { item -> (BarcodeFormat, String, String?)? in
             guard let name = item["format"] as? String, let format = BarcodeFormat(passKitName: name) ?? BarcodeFormat(rawValue: name),
                   let message = item["message"] as? String else { return nil }
-            return (format, message)
+            return (format, message, item["altText"] as? String)
         }.first
         if !codes.isEmpty && code == nil { throw WalletMediaError.damagedPass }
 
@@ -256,8 +266,8 @@ enum PassImport {
         var art: [String: Data] = [:]
         for name in PassAppearance.artNames { art[name] = asset(name) }
         let appearance = PassAppearance(type: type, logoText: local(pass["logoText"]), organization: organization,
-            transitType: body["transitType"] as? String ?? "", serialNumber: pass["serialNumber"] as? String ?? "",
-            passTypeIdentifier: pass["passTypeIdentifier"] as? String, relevantDate: Self.date(pass["relevantDate"]),
+            transitType: transit, serialNumber: pass["serialNumber"] as? String ?? "",
+            passTypeIdentifier: pass["passTypeIdentifier"] as? String, barcodeAlternative: code?.2, relevantDate: Self.date(pass["relevantDate"]),
             backgroundColor: pass["backgroundColor"] as? String, foregroundColor: pass["foregroundColor"] as? String,
             labelColor: pass["labelColor"] as? String, groups: groups, artwork: art)
         try appearance.validate()

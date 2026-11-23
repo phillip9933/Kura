@@ -118,11 +118,16 @@ private struct SectionSettings: View {
     @State private var category = ""
     @State private var newField = ""
     @State private var kind = FieldKind.text
+    @State private var dateFormat = WalletDateFormat.iso
     @State private var message: String?
     private var key: String { section.rawValue }
     var body: some View {
         Form {
             Section("Display") {
+                Stepper("Grid columns: \(prefs.layout.columns(for: section))", value: Binding(get: { prefs.layout.columns(for: section) }, set: { count in
+                    var columns = prefs.layout.sectionColumns ?? [:]
+                    columns[key] = count; prefs.layout.sectionColumns = columns
+                }), in: 1...3)
                 Toggle("Show front image in grid", isOn: Binding(get: { prefs.layout.frontImage[key] ?? true },
                     set: { prefs.layout.frontImage[key] = $0 }))
                 if section == .passes { Toggle("Offer upcoming passes", isOn: $prefs.layout.showUpcoming) }
@@ -137,6 +142,8 @@ private struct SectionSettings: View {
                     .onMove { positions, target in
                         var names = prefs.categories(for: section); names.move(fromOffsets: positions, toOffset: target); prefs.categories[key] = names
                     }
+                Button("Sort categories A–Z") { prefs.categories[key] = prefs.categories(for: section).sorted { $0.localizedStandardCompare($1) == .orderedAscending } }
+                Button("Restore default categories") { prefs.categories.removeValue(forKey: key) }
                 TextField("Category name", text: $category)
                 Button("Add category") {
                     let name = clean(category)
@@ -152,6 +159,14 @@ private struct SectionSettings: View {
                     })) {
                         ForEach(FieldKind.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }
+                    if field.kind == .date {
+                        dateFormats(Binding(get: { field.dateFormat ?? .iso }, set: { format in
+                            var fields = prefs.definitions(for: section)
+                            if let index = fields.firstIndex(where: { $0.id == field.id }) {
+                                fields[index].dateFormat = format; prefs.definitions[key] = fields
+                            }
+                        }))
+                    }
                 }
                 .onDelete { offsets in
                     var fields = prefs.definitions(for: section); fields.remove(atOffsets: offsets); prefs.definitions[key] = fields
@@ -160,10 +175,11 @@ private struct SectionSettings: View {
                 Picker("Field type", selection: $kind) {
                     ForEach(FieldKind.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                 }
+                if kind == .date { dateFormats($dateFormat) }
                 Button("Add field") {
                     let name = clean(newField)
                     guard valid(name, among: prefs.definitions(for: section).map(\.name)) else { return }
-                    prefs.definitions[key] = prefs.definitions(for: section) + [FieldDefinition(name: name, kind: kind)]
+                    prefs.definitions[key] = prefs.definitions(for: section) + [FieldDefinition(name: name, kind: kind, dateFormat: kind == .date ? dateFormat : nil)]
                     newField = ""
                 }.disabled(newField.isEmpty)
             } header: { Text("Custom fields") } footer: {
@@ -183,6 +199,12 @@ private struct SectionSettings: View {
                 renames.append(CategoryChange(section: section, old: old, new: replacement))
                 renameFrom = nil
             }
+        }
+    }
+
+    private func dateFormats(_ selected: Binding<WalletDateFormat>) -> some View {
+        Picker("Date format", selection: selected) {
+            ForEach(WalletDateFormat.allCases, id: \.self) { Text($0.rawValue.uppercased()).tag($0) }
         }
     }
 

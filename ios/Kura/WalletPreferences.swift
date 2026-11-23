@@ -45,6 +45,7 @@ struct WalletPreferences: Codable, Equatable {
         guard !layout.visible.isEmpty, Set(layout.visible).count == layout.visible.count,
               layout.visible.contains(startSection), (1...3).contains(layout.gridColumns)
         else { throw WalletError.invalidFields }
+        guard (layout.sectionColumns ?? [:]).allSatisfy({ WalletSection(rawValue: $0.key) != nil && (1...3).contains($0.value) }) else { throw WalletError.invalidFields }
         for section in WalletSection.allCases {
             for names in [categories(for: section), definitions(for: section).map(\.name)] {
                 guard names.count <= 128, Set(names.map { $0.lowercased() }).count == names.count,

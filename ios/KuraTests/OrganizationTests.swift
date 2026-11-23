@@ -53,4 +53,48 @@ final class OrganizationTests: XCTestCase {
         XCTAssertFalse(FieldDefinition(name: "Issued", kind: .date).accepts("2025-02-29"))
         XCTAssertTrue(FieldDefinition(name: "Issued", kind: .date).accepts("2024-02-29"))
     }
+
+    @MainActor
+    func testDateFormatsAndBillingDayPreserveUserValues() throws {
+        let field = FieldDefinition(name: "Renewal", kind: .date, dateFormat: .month)
+        XCTAssertTrue(field.accepts("02/29"))
+        XCTAssertFalse(field.accepts("13/29"))
+        XCTAssertEqual(field.display("2024-02-29", currency: "JPY"), "02/24")
+        XCTAssertFalse(FieldDefinition(name: "Issued", kind: .date, dateFormat: .short).accepts("31/02/27"))
+        let billing = FieldDefinition(name: "Billing day", kind: .number)
+        XCTAssertTrue(billing.accepts("31"))
+        XCTAssertFalse(billing.accepts("0"))
+        XCTAssertFalse(billing.accepts("1.5"))
+        let february = try XCTUnwrap(WalletDateFormat.iso.parse("2024-02-06"))
+        XCTAssertEqual(WalletDateFormat.iso.formatter.string(from: MonthSelection.lastDay(of: february)), "2024-02-29")
+    }
+
+    func testLayoutKeepsAccessibleSectionsAndValidGridColumns() throws {
+        var prefs = WalletPreferences()
+        prefs.layout.visible = [.passes]
+        XCTAssertThrowsError(try prefs.validate())
+        prefs.startSection = .passes
+        prefs.layout.sectionColumns = ["Passes": 3]
+        XCTAssertNoThrow(try prefs.validate())
+        XCTAssertEqual(prefs.layout.columns(for: .passes), 3)
+        XCTAssertEqual(prefs.layout.columns(for: .cards), 2)
+        prefs.layout.sectionColumns = ["Passes": 0]
+        XCTAssertThrowsError(try prefs.validate())
+    }
+
+    func testPendingEraseRetriesCredentialCleanupBeforeOpeningAnotherWallet() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let vault = VaultFile(directory: root.appendingPathComponent("Wallet"))
+        try vault.write(WalletSnapshot(), key: SymmetricKey(size: .bits256))
+        var attempts = 0
+        XCTAssertThrowsError(try vault.erase {
+            attempts += 1
+            throw WalletError.keyUnavailable
+        })
+        XCTAssertNil(try vault.readCiphertext())
+        try vault.finishPendingErase { attempts += 1 }
+        try vault.finishPendingErase { XCTFail("Key cleanup should run only while an erase is pending") }
+        XCTAssertEqual(attempts, 2)
+    }
 }

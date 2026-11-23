@@ -32,6 +32,8 @@ struct MediaEditor: View {
     @Binding var media: WalletMedia
     let ocrFields: [String: String]
     let applyOCR: ([String: String]) -> Void
+    let validateOCR: ([String: String]) -> String?
+    let requestedCapture: Binding<MediaCaptureRequest?>?
     let imagesEditable: Bool
     let initialCapture: MediaCaptureRequest?
     @State private var didStart = false
@@ -50,12 +52,15 @@ struct MediaEditor: View {
 
     init(media: Binding<WalletMedia>, ocrFields: [String: String],
          applyOCR: @escaping ([String: String]) -> Void, imagesEditable: Bool = true,
-         initialCapture: MediaCaptureRequest? = nil) {
+         initialCapture: MediaCaptureRequest? = nil, requestedCapture: Binding<MediaCaptureRequest?>? = nil,
+         validateOCR: @escaping ([String: String]) -> String? = { _ in nil }) {
         _media = media
         self.ocrFields = ocrFields
         self.applyOCR = applyOCR
         self.imagesEditable = imagesEditable
         self.initialCapture = initialCapture
+        self.requestedCapture = requestedCapture
+        self.validateOCR = validateOCR
     }
 
     var body: some View {
@@ -69,6 +74,12 @@ struct MediaEditor: View {
             didStart = true
             selectedSlot = request.slot
             if request.source == .photo { selectingPhoto = true } else { requestingCamera = true }
+        }
+        .onChange(of: requestedCapture?.wrappedValue?.id) { _ in
+            guard let request = requestedCapture?.wrappedValue else { return }
+            selectedSlot = request.slot
+            if request.source == .photo { selectingPhoto = true } else { requestingCamera = true }
+            requestedCapture?.wrappedValue = nil
         }
         .photosPicker(isPresented: $selectingPhoto, selection: $picked, matching: .images)
         .task(id: picked) {
@@ -114,7 +125,7 @@ struct MediaEditor: View {
             if request.source == .camera { requestingCamera = true } else { selectingPhoto = true }
         }) { draft in
             MediaCropView(bytes: draft.bytes, slot: draft.slot, fields: ocrFields,
-                          source: draft.source, requestAnother: {
+                          validateOCR: validateOCR, source: draft.source, requestAnother: {
                 if let source = draft.source { repeatCapture = MediaCaptureRequest(slot: draft.slot, source: source) }
             }) { image, suggestion in
                 do {

@@ -4,6 +4,7 @@ struct MediaCropView: View {
     let bytes: Data
     let slot: WalletImageSlot
     let fields: [String: String]
+    let validateOCR: ([String: String]) -> String?
     let source: MediaCaptureRequest.Source?
     let requestAnother: () -> Void
     let finish: (Data, [String: String]) -> Void
@@ -82,6 +83,11 @@ struct MediaCropView: View {
             guard saving, let rendered else { return }
             do {
                 let chosen = editingSuggestions ? suggestions.filter { selected.contains($0.key) } : [:]
+                if let message = validateOCR(chosen) {
+                    errorMessage = message
+                    saving = false
+                    return
+                }
                 let image = try await MediaProcessor.jpeg(rendered)
                 try Task.checkCancellation()
                 finish(image, chosen)

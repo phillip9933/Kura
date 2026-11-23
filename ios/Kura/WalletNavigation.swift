@@ -11,6 +11,9 @@ struct WalletNavigation: Codable, Equatable {
     var showUpcoming = true
     var frontImage: [String: Bool] = [:]
     var gridColumns = 2
+    var sectionColumns: [String: Int]?
+
+    func columns(for section: WalletSection) -> Int { sectionColumns?[section.rawValue] ?? gridColumns }
 }
 
 struct NavigationSettings: View {
@@ -52,17 +55,59 @@ struct CategoryChange {
 
 struct WalletArchive: View {
     @ObservedObject var wallet: WalletSession
+    @State private var query = ""
+    @State private var order = "Name"
+    @State private var reverse = false
+    @State private var removal: [WalletCard] = []
+    @State private var confirming = false
+    @State private var error: String?
+    private var archive: [WalletCard] { wallet.cards.filter(\.archived) }
+    private var rows: [WalletCard] {
+        let sorted = archive.filter { card in
+            query.isEmpty || [card.name, card.category, card.section.rawValue].contains { $0.localizedCaseInsensitiveContains(query) }
+        }.sorted { a, b in
+            if order == "Section", a.section != b.section { return a.section.rawValue < b.section.rawValue }
+            if order == "Expiry", a.expires != b.expires { return (a.expires ?? .distantFuture) < (b.expires ?? .distantFuture) }
+            return a.name.localizedStandardCompare(b.name) == .orderedAscending
+        }
+        return reverse ? Array(sorted.reversed()) : sorted
+    }
+
     var body: some View {
         List {
-            if !wallet.cards.contains(where: { $0.archived }) { Text("No archived items") }
-            ForEach(WalletSection.allCases) { section in
-                let rows = wallet.cards.filter { $0.archived && $0.section == section }
-                if !rows.isEmpty {
-                    Section(section.rawValue) {
-                        ForEach(rows) { card in NavigationLink(card.name, value: WalletRoute.item(card.id)) }
+            if let error { Text(error) }
+            if rows.isEmpty { Text(query.isEmpty ? "No archived items" : "No matching items") }
+            ForEach(rows) { card in
+                NavigationLink(value: WalletRoute.item(card.id)) {
+                    VStack(alignment: .leading) {
+                        Text(card.name)
+                        Text([card.section.rawValue, card.category].filter { !$0.isEmpty }.joined(separator: " · "))
+                            .font(.caption)
                     }
                 }
             }
-        }.navigationTitle("Archive")
+        }
+        .searchable(text: $query, prompt: "Search archive")
+        .navigationTitle("Archive")
+        .toolbar {
+            Menu {
+                Picker("Sort by", selection: $order) {
+                    ForEach(["Name", "Section", "Expiry"], id: \.self) { Text($0) }
+                }
+                Toggle("Reverse order", isOn: $reverse)
+                Button("Delete all archived items", role: .destructive) { removal = archive; confirming = true }
+                    .disabled(archive.isEmpty || wallet.saving)
+            } label: { Label("Archive options", systemImage: "ellipsis.circle") }
+        }
+        .confirmationDialog("Delete all \(removal.count) archived items?", isPresented: $confirming, titleVisibility: .visible) {
+            Button("Delete archived items", role: .destructive) {
+                let token = wallet.generation
+                Task {
+                    do { try await wallet.deleteArchived(removal, generation: token) }
+                    catch is CancellationError {} catch { self.error = "The archive changed. Review it and try again." }
+                    removal = []
+                }
+            }
+        }
     }
 }

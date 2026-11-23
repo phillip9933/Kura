@@ -2,12 +2,14 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct PassImportView: View {
+    var existingCards: [WalletCard] = []
     let importItems: ([ImportedPass]) async throws -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var choosing = false
     @State private var url: URL?
     @State private var items: [ImportedPass] = []
     @State private var selected: Set<UUID> = []
+    @State private var duplicateIDs: Set<UUID> = []
     @State private var reading = false
     @State private var saving = false
     @State private var errorMessage: String?
@@ -27,6 +29,7 @@ struct PassImportView: View {
                         })) {
                             VStack(alignment: .leading) {
                                 Text(item.name)
+                                if duplicateIDs.contains(item.id) { Text("Duplicate pass · Import another copy").font(.subheadline) }
                                 if !item.organization.isEmpty { Text(item.organization).font(.subheadline) }
                                 Text(item.manifestChecked ? "File checksums matched" : "No checksum manifest")
                                     .font(.caption)
@@ -57,7 +60,8 @@ struct PassImportView: View {
                 let found = try await PassImport.read(url)
                 try Task.checkCancellation()
                 items = found
-                selected = Set(found.map(\.id))
+                duplicateIDs = PassImport.duplicates(found, existing: existingCards)
+                selected = Set(found.map(\.id)).subtracting(duplicateIDs)
             } catch is CancellationError { return } catch {
                 errorMessage = (error as? WalletMediaError)?.localizedDescription ?? WalletMediaError.damagedPass.localizedDescription
             }
@@ -83,17 +87,24 @@ struct PassAppearanceView: View {
         if let style = card.passStyle {
             let palette = PassPalette(style)
             VStack(alignment: .leading, spacing: 12) {
+                if !style.organization.isEmpty && style.organization != card.name { Text(style.organization).font(.headline) }
                 if !style.logoText.isEmpty { Text(style.logoText).font(.title3.bold()) }
                 if let art = style.artwork["strip"] ?? style.artwork["thumbnail"] {
                     MediaThumbnail(data: art, maximumPixels: 800).frame(maxHeight: 160)
                         .accessibilityHidden(true)
                 }
                 ForEach(PassAppearance.groupNames, id: \.self) { group in
-                    ForEach(Array((style.groups[group] ?? []).enumerated()), id: \.offset) { _, field in
-                        VStack(alignment: .leading) {
-                            if !field.label.isEmpty { Text(field.label).font(.caption.bold()).foregroundStyle(palette.label) }
-                            Text(field.displayValue).font(group == "primaryFields" ? .title3 : .body)
-                        }.accessibilityElement(children: .combine)
+                    if group == "backFields", let fields = style.groups[group], !fields.isEmpty {
+                        DisclosureGroup("Terms and additional information") {
+                            ForEach(Array(fields.enumerated()), id: \.offset) { _, field in
+                                passField(field, palette: palette, primary: false)
+                                PassFieldLinks(value: field.value)
+                            }
+                        }
+                    } else {
+                        ForEach(Array((style.groups[group] ?? []).enumerated()), id: \.offset) { _, field in
+                            passField(field, palette: palette, primary: group == "primaryFields")
+                        }
                     }
                 }
                 if let art = style.artwork["footer"] {
@@ -107,6 +118,13 @@ struct PassAppearanceView: View {
             .background(palette.background, in: RoundedRectangle(cornerRadius: 12))
         }
     }
+    private func passField(_ field: PassField, palette: PassPalette, primary: Bool) -> some View {
+        VStack(alignment: .leading) {
+            if !field.label.isEmpty { Text(field.label).font(.caption.bold()).foregroundStyle(palette.label) }
+            Text(verbatim: field.displayValue).font(primary ? .title3 : .body)
+        }.accessibilityElement(children: .combine)
+    }
+
 }
 
 private struct PassPalette {
@@ -114,43 +132,64 @@ private struct PassPalette {
     let label: Color
     let background: Color
 
-    private struct RGB {
-        let r: Double, g: Double, b: Double
-        var color: Color { Color(red: r, green: g, blue: b) }
-        var luminance: Double {
-            func linear(_ v: Double) -> Double { v <= 0.04045 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4) }
-            return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b)
-        }
-        func contrast(_ other: RGB) -> Double {
-            (max(luminance, other.luminance) + 0.05) / (min(luminance, other.luminance) + 0.05)
-        }
-        static func parse(_ source: String?) -> RGB? {
-            guard let s = source?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() else { return nil }
-            if s.count == 7, s.first == "#", let hex = Int(s.dropFirst(), radix: 16) {
-                return RGB(r: Double((hex >> 16) & 255) / 255, g: Double((hex >> 8) & 255) / 255, b: Double(hex & 255) / 255)
-            }
-            guard s.hasPrefix("rgb("), s.hasSuffix(")") else { return nil }
-            let triple = s.dropFirst(4).dropLast().split(separator: ",", omittingEmptySubsequences: false)
-            guard triple.count == 3 else { return nil }
-            let components = triple.compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-            guard components.count == 3, components.allSatisfy({ (0...255).contains($0) }) else { return nil }
-            return RGB(r: Double(components[0]) / 255, g: Double(components[1]) / 255, b: Double(components[2]) / 255)
-        }
-    }
 
     init(_ style: PassAppearance) {
-        guard let bg = RGB.parse(style.backgroundColor) else {
+        guard let bg = WalletTileColor.parse(style.backgroundColor)?.over(.base) else {
             text = .primary; label = .secondary; background = Color(uiColor: .secondarySystemBackground)
             return
         }
-        let black = RGB(r: 0, g: 0, b: 0), white = RGB(r: 1, g: 1, b: 1)
-        let fallback = bg.contrast(black) > bg.contrast(white) ? black : white
+        let fallback: WalletTileColor = bg.contrast(with: .black) > bg.contrast(with: .white) ? .black : .white
         func ink(_ source: String?) -> Color {
-            guard let proposed = RGB.parse(source), bg.contrast(proposed) >= 4.5 else { return fallback.color }
+            guard let proposed = WalletTileColor.parse(source)?.over(bg), bg.contrast(with: proposed) >= 4.5 else { return fallback.color }
             return proposed.color
         }
         background = bg.color
         text = ink(style.foregroundColor)
         label = ink(style.labelColor)
+    }
+}
+
+enum PassLinks {
+    static func destinations(in text: String) -> [URL] {
+        guard text.utf8.count <= 8192 else { return [] }
+        let ns = text as NSString
+        let source = NSRange(location: 0, length: ns.length)
+        var links: [URL] = []
+        var urlRanges: [NSRange] = []
+        let web = try? NSRegularExpression(pattern: #"https?://[^\s<>"]+"#, options: .caseInsensitive)
+        for match in web?.matches(in: text, range: source) ?? [] {
+            urlRanges.append(match.range)
+            let raw = ns.substring(with: match.range)
+            let trimmed = String(raw.reversed().drop(while: { ".,;)".contains($0) }).reversed())
+            guard let parts = URLComponents(string: trimmed), let host = parts.host, !host.isEmpty,
+                  ["https", "http"].contains(parts.scheme?.lowercased() ?? ""),
+                  parts.user == nil, parts.password == nil, let url = parts.url else { continue }
+            if !links.contains(url) { links.append(url) }
+        }
+        let phones = try? NSRegularExpression(pattern: #"(?<!\w)\+?[0-9][0-9 ()-]{6,}[0-9](?!\w)"#)
+        for match in phones?.matches(in: text, range: source) ?? [] {
+            guard !urlRanges.contains(where: { NSIntersectionRange($0, match.range).length != 0 }) else { continue }
+            let digits = ns.substring(with: match.range).filter { $0 == "+" || $0.isNumber }
+            guard digits.filter(\.isNumber).count >= 7, let url = URL(string: "tel:" + digits) else { continue }
+            if !links.contains(url) { links.append(url) }
+        }
+        return links
+    }
+}
+
+private struct PassFieldLinks: View {
+    let value: String
+    @Environment(\.openURL) private var openURL
+    @State private var unavailable = false
+
+    var body: some View {
+        ForEach(PassLinks.destinations(in: value), id: \.self) { url in
+            Button {
+                openURL(url) { accepted in unavailable = !accepted }
+            } label: {
+                Label(url.absoluteString, systemImage: url.scheme == "tel" ? "phone" : "safari")
+            }
+        }
+        if unavailable { Text("No app is available to open this link.").font(.caption) }
     }
 }

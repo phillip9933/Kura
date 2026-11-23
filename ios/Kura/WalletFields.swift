@@ -1,16 +1,5 @@
 import Foundation
 
-extension DateFormatter {
-    static let walletDate: DateFormatter = {
-        let value = DateFormatter()
-        value.locale = Locale(identifier: "en_US_POSIX")
-        value.calendar = Calendar(identifier: .gregorian)
-        value.dateFormat = "yyyy-MM-dd"
-        value.isLenient = false
-        return value
-    }()
-}
-
 enum WalletDateFormat: String, Codable, CaseIterable {
     case iso = "yyyy-MM-dd", short = "dd/MM/yy", month = "MM/yy"
 

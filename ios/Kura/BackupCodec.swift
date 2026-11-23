@@ -3,7 +3,7 @@ import CryptoKit
 import Foundation
 
 enum BackupError: LocalizedError {
-    case password, invalid, tooLarge, unavailable, expired, verifyFailed, transfer
+    case password, invalid, tooLarge, unavailable, expired, verifyFailed, transfer, transferExpired
 
     var errorDescription: String? {
         switch self {
@@ -13,6 +13,7 @@ enum BackupError: LocalizedError {
         case .unavailable: return "Kura could not access the file or folder. Choose it again in Files."
         case .expired: return "Unlock the wallet and try again."
         case .verifyFailed: return "Kura could not verify the saved backup. Earlier backups were kept."
+        case .transferExpired: return "This transfer expired. Start over and scan all the codes within five minutes."
         case .transfer: return "This code does not belong to the current transfer or exceeds its limits."
         }
     }

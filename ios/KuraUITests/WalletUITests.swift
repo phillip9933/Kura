@@ -29,6 +29,7 @@ final class WalletUITests: XCTestCase {
         ]
         app.launch()
         assertLocked(app)
+        capture("lock-large-text", app)
         if #available(iOS 17.0, *) {
             try app.performAccessibilityAudit(for: [.dynamicType, .textClipped])
         }
@@ -61,6 +62,8 @@ final class WalletUITests: XCTestCase {
         app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
         try unlockWithBiometrics(app)
+        XCUIDevice.shared.orientation = .portrait
+        defer { XCUIDevice.shared.orientation = .portrait }
         let name = "Library " + String(UUID().uuidString.prefix(8))
         app.navigationBars.buttons["Add"].tap()
         app.buttons["Add item"].tap()
@@ -72,17 +75,25 @@ final class WalletUITests: XCTestCase {
 
         let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 8))
+        capture("wallet-portrait", app)
         row.tap()
+        XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 5))
+        XCUIDevice.shared.orientation = .landscapeLeft
+        XCTAssertGreaterThan(app.frame.width, app.frame.height)
+        capture("item-landscape", app)
+        XCUIDevice.shared.orientation = .portrait
         let favorite = app.buttons["Add to favorites"]
         reveal(favorite, in: app)
         favorite.tap()
         XCTAssertTrue(app.buttons["Remove from favorites"].waitForExistence(timeout: 5))
 
         app.terminate()
+        app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXL"]
         app.launch()
         assertLocked(app)
         try unlockWithBiometrics(app)
         XCTAssertTrue(row.waitForExistence(timeout: 8))
+        capture("wallet-large-text", app)
         row.tap()
         reveal(app.buttons["Remove from favorites"], in: app)
 
@@ -140,6 +151,14 @@ final class WalletUITests: XCTestCase {
         XCTAssertTrue(element.isHittable)
     }
     #endif
+
+    @MainActor
+    private func capture(_ name: String, _ app: XCUIApplication) {
+        let image = XCTAttachment(data: app.screenshot().pngRepresentation, uniformTypeIdentifier: "public.png")
+        image.name = "Kura-QA-" + name + ".png"
+        image.lifetime = .keepAlways
+        add(image)
+    }
 
     @MainActor
     private func assertLocked(_ app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {

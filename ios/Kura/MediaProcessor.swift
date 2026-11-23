@@ -139,16 +139,17 @@ enum MediaProcessor {
 
     static func suggestions(lines: [String], fields: [String: String]) -> [String: String] {
         let aliases = [
-            (["member number", "borrower number", "card number", "document number"], ["Member ID", "Member number", "Membership number", "Card number", "Card No", "会員番号", "カード番号"]),
-            (["member name", "borrower name", "cardholder", "full name"], ["Member name", "Cardholder", "Name", "氏名", "お名前"]),
+            (["member number", "borrower number", "card number", "document number", "number"], ["Member ID", "Member number", "Membership number", "Card number", "Card No", "会員番号", "カード番号"]),
+            (["member name", "borrower name", "cardholder", "full name"], ["Member name", "Cardholder", "Name", "Name on card", "氏名", "お名前", "名義人"]),
             (["expiry", "expiry date"], ["Expires", "Expiry", "Expiry date", "Valid until", "有効期限"]),
-            (["issuer", "name / organization", "card name"], ["Issuer", "Organization", "発行元"])
+            (["issuer", "name / organization", "card name"], ["Issuer", "Organization", "Card name", "発行元", "カード名"]),
+            (["network"], ["Card network", "Payment network", "国際ブランド"])
         ]
         var found: [String: String] = [:]
         for (field, current) in fields where current.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             guard !field.isEmpty, field.count <= 160 else { continue }
             let names = [field] + (aliases.first { $0.0.contains(field.lowercased()) }?.1 ?? [])
-            let patterns = names.map { name in
+            let patterns = Set(names).sorted { $0.count > $1.count }.map { name in
                 name.unicodeScalars.contains(where: { $0.value >= 0x3000 })
                     ? name.map { NSRegularExpression.escapedPattern(for: String($0)) }.joined(separator: #"\s*"#)
                     : NSRegularExpression.escapedPattern(for: name)
@@ -168,3 +169,21 @@ enum MediaProcessor {
     }
 }
 
+
+struct RecognizedExpiry {
+    let date: Date
+    let monthOnly: Bool
+
+    static func parse(_ value: String) -> Self? {
+        let text = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let date = WalletDateFormat.iso.parse(text) { return Self(date: date, monthOnly: false) }
+        let formatter = WalletDateFormat.month.formatter
+        for shape in ["MM/yy", "MM/yyyy", "yyyy-MM", "yyyy/MM", "yyyy年MM月", "yyyy年MM月dd日"] {
+            formatter.dateFormat = shape
+            if let date = formatter.date(from: text), formatter.string(from: date) == text {
+                return Self(date: date, monthOnly: !shape.contains("dd"))
+            }
+        }
+        return nil
+    }
+}

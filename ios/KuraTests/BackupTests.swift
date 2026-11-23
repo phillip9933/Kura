@@ -183,7 +183,8 @@ final class BackupTests: XCTestCase {
     }
 
     func testSingleItemFileKeepsMediaAndCannotReplaceAnEntireWallet() throws {
-        let source = try XCTUnwrap(sample().cards.first)
+        var source = try XCTUnwrap(sample().cards.first)
+        source.archived = true
         let bytes = try BackupPassFile.encode(source, password: password)
         let copy = try BackupPassFile.decode(bytes, password: password)
         XCTAssertNotEqual(copy.id, source.id)
@@ -191,6 +192,7 @@ final class BackupTests: XCTestCase {
         XCTAssertEqual(copy.media, source.media)
         XCTAssertEqual(copy.fields, source.fields)
         XCTAssertEqual(copy.section, source.section)
+        XCTAssertFalse(copy.archived)
         XCTAssertThrowsError(try BackupCodec.decode(bytes, password: password))
         XCTAssertThrowsError(try BackupTransferCodec.open(bytes, password: password))
         XCTAssertThrowsError(try BackupPassFile.decode(bytes, password: "incorrect"))
@@ -215,8 +217,19 @@ final class BackupTests: XCTestCase {
         XCTAssertThrowsError(try BackupTransferCodec.open(embedded, password: password))
     }
 
+    func testTransferExpiresFiveMinutesAfterFirstAcceptedChunk() throws {
+        let code = "KURA1:" + UUID().uuidString + ":0:1:AQ=="
+        var collection = BackupTransferCollection()
+        try collection.append(code, now: 100)
+        try collection.append(code, now: 300)
+        XCTAssertEqual(try collection.assembled(now: 400), Data([1]))
+        XCTAssertThrowsError(try collection.assembled(now: 401))
+        XCTAssertThrowsError(try collection.append(code, now: 401))
+    }
+
     func testTransferHandlesUnorderedDuplicateAndMixedCodesAndOmitsMedia() throws {
         var card = try XCTUnwrap(sample().cards.first)
+        card.archived = true
         card.notes = String(repeating: "synthetic", count: 200)
         let parts = try BackupTransferCodec.chunks(for: card, password: password)
         XCTAssertGreaterThan(parts.count, 1)
@@ -234,6 +247,7 @@ final class BackupTests: XCTestCase {
         XCTAssertThrowsError(try BackupTransferCodec.open(encrypted, password: "incorrect"))
         let copy = try BackupTransferCodec.open(encrypted, password: password)
         XCTAssertNotEqual(copy.id, card.id)
+        XCTAssertFalse(copy.archived)
         XCTAssertEqual(copy.notes, card.notes)
         XCTAssertEqual(copy.payload, card.payload)
         XCTAssertEqual(copy.media, WalletMedia())

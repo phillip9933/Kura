@@ -234,6 +234,16 @@
       isa = PBXBuildFile;
       fileRef = 1F5A257581731AE461B932A2;
     };
+    8F63AC2E463585F6E29AC01D = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = PassImportEditor.swift;
+      sourceTree = "<group>";
+    };
+    06DAEE637F464D1C840F3375 = {
+      isa = PBXBuildFile;
+      fileRef = 8F63AC2E463585F6E29AC01D;
+    };
     509F29449EEC0ABA349F29A2 = {
       isa = PBXFileReference;
       lastKnownFileType = sourcecode.swift;
@@ -410,6 +420,7 @@
         80EFD0318DA7C77F0A1179FD,
         3969DD4E58B9A14EE60773DF,
         1F5A257581731AE461B932A2,
+        8F63AC2E463585F6E29AC01D,
         509F29449EEC0ABA349F29A2,
         538F50652186AF990D5F33E5,
         62420E6E120C709E7F18750C,
@@ -754,6 +765,7 @@
         4C4DC8F59279B6AFB3EC4102,
         111FF000E1974670BF499231,
         1F1E20B0A4B649A67A9AA44B,
+        06DAEE637F464D1C840F3375,
         B0EBD390E122E4E9D19E45A8,
         65CB18D033D9E8D3DB95F9A1,
         9A7D850564EAE88B3AB1E97A,

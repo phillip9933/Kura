@@ -142,6 +142,71 @@ final class MediaPassTests: XCTestCase {
         XCTAssertEqual(pass.serialNumber, "001")
     }
 
+    func testDuplicateReviewUsesIssuerAndSerialWithoutOverwriting() throws {
+        func pass(_ issuer: String, _ serial: String) throws -> ImportedPass {
+            let bytes = try document("Club", additions: ["passTypeIdentifier": issuer, "serialNumber": serial])
+            return try XCTUnwrap(PassImport.parse(PassArchive.pack(["pass.json": bytes])).first)
+        }
+        let saved = try pass("pass.example.A", "0007").makeCard()
+        let unchanged = saved
+        let first = try pass("pass.example.B", "0007")
+        let second = try pass("pass.example.B", "0007")
+        let existing = try pass("pass.example.A", "0007")
+        let missing = try pass("", "0007")
+        XCTAssertEqual(PassImport.duplicates([first, existing, missing, second], existing: [saved]), [existing.id, second.id])
+        XCTAssertNotEqual(try existing.makeCard().id, saved.id)
+        XCTAssertEqual(saved, unchanged)
+    }
+
+    func testManualPassFieldsValidateAndRoundTripAsReadOnlyIssuerFields() async throws {
+        var style = PassAppearance.manual(category: "Transit")
+        style.organization = "Example trains"
+        style.barcodeAlternative = "Show this at the gate"
+        style.groups["headerFields"] = [PassField(key: "p", label: "Price", value: "13.50", numberValue: true, currencyCode: "USD")]
+        style.groups["backFields"] = [PassField(key: "a", label: "Platform", value: "0007")]
+        let card = try WalletCard(name: "Day ticket", payload: "0007", section: .passes, passStyle: style)
+        XCTAssertFalse(card.isImportedPass)
+        let bytes = try await PassExport.encode(card)
+        let result = try XCTUnwrap(PassImport.parse(bytes).first).makeCard()
+        XCTAssertTrue(result.isImportedPass)
+        XCTAssertEqual(result.passStyle?.type, "boardingPass")
+        XCTAssertEqual(result.passStyle?.transitType, "PKTransitTypeTrain")
+        XCTAssertEqual(result.passStyle?.barcodeAlternative, style.barcodeAlternative)
+        XCTAssertEqual(result.passStyle?.groups["backFields"]?.first?.value, "0007")
+        let price = try XCTUnwrap(result.passStyle?.groups["headerFields"]?.first)
+        XCTAssertEqual(price.currencyCode, "USD")
+        XCTAssertEqual(price.numberValue, true)
+        XCTAssertEqual(Decimal(string: price.value), Decimal(string: "13.50"))
+        style.groups["headerFields"]?[0].value = "13 to 15"
+        XCTAssertThrowsError(try style.validate())
+        style.groups["headerFields"] = [PassField(key: "p", label: "Date", value: "tomorrow", dateStyle: "PKDateStyleMedium")]
+        XCTAssertThrowsError(try style.validate())
+        style.groups["headerFields"]?[0].value = "2030-04-23T10:00:00Z"
+        XCTAssertNoThrow(try style.validate())
+    }
+
+    func testPassBackLinksOfferOnlyExplicitWebLinksAndTelephoneNumbers() {
+        let text = "Visit https://example.org/track/123456789. Call +1 (415) 555-0123. " +
+                   "See https://example.org/track/123456789 or mailto:a@example.org, custom://wallet or file:///tmp/test."
+        XCTAssertEqual(PassLinks.destinations(in: text).map(\.absoluteString),
+                       ["https://example.org/track/123456789", "tel:+14155550123"])
+        XCTAssertTrue(PassLinks.destinations(in: "javascript:alert(1) 12345 user@example.org").isEmpty)
+    }
+
+    func testManualExpiryUsesLocalCalendarEndAndColorSurvivesExport() async throws {
+        let card = try WalletCard(name: "Tokyo pass", payload: "01", fields: ["Card color": "#4488aa"],
+                                  expires: XCTUnwrap(PassImport.date("2030-02-03T01:30:00Z")))
+        let zone = try XCTUnwrap(TimeZone(secondsFromGMT: 9 * 3600))
+        let bytes = try await PassExport.encode(card, timeZone: zone)
+        let exported = try XCTUnwrap(PassImport.parse(bytes).first).makeCard()
+        let end = try XCTUnwrap(exported.expires)
+        let expected = try XCTUnwrap(PassImport.date("2030-02-03T14:59:59.999Z"))
+        XCTAssertEqual(end.timeIntervalSince(expected), 0, accuracy: 0.001)
+        XCTAssertEqual(exported.passStyle?.backgroundColor, "#4488aa")
+        let again = try await PassExport.encode(exported, timeZone: TimeZone(secondsFromGMT: 0)!)
+        XCTAssertEqual(try PassImport.parse(again).first?.expires, exported.expires)
+    }
+
     func testRelevantAndExpirationDatesAreIndependent() throws {
         let json = try document("Reserved seat", additions: [
             "relevantDate": "2030-09-21T19:00:00+09:00", "expirationDate": "2030-09-22T03:00:00.125Z"
@@ -156,6 +221,24 @@ final class MediaPassTests: XCTestCase {
         let fields = ["Member number": "", "Member name": "Already filled", "Expiry": "", "Email": ""]
         let lines = ["会 員 番 号：00013", "Name: Example", "Expires: 2030-01", "Expires: 2031-09", "untagged"]
         XCTAssertEqual(MediaProcessor.suggestions(lines: lines, fields: fields), ["Member number": "00013"])
+    }
+
+    func testScanCardMatchesDisplayedBasicFieldsWithoutGuessing() throws {
+        let available = ["Card name": "", "Number": "", "Network": "", "Cardholder": "", "Issuer": "Existing", "Expiry": ""]
+        let lines = ["Card name: Sample gold", "カ ー ド 番 号：000123", "Payment network: Sample network",
+                     "Name on card: Example User", "有効期限：08/35"]
+        let result = MediaProcessor.suggestions(lines: lines, fields: available)
+        XCTAssertEqual(result, ["Card name": "Sample gold", "Number": "000123", "Network": "Sample network",
+                                "Cardholder": "Example User", "Expiry": "08/35"])
+        XCTAssertTrue(MediaProcessor.suggestions(lines: ["000123", "08/35", "EXAMPLE GOLD"], fields: available).isEmpty)
+        XCTAssertNil(MediaProcessor.suggestions(lines: ["Card No: 0001", "Card No: 0002"], fields: available)["Number"])
+        let month = try XCTUnwrap(RecognizedExpiry.parse("08/35"))
+        XCTAssertTrue(month.monthOnly)
+        XCTAssertEqual(WalletDateFormat.month.formatter.string(from: month.date), "08/35")
+        XCTAssertFalse(try XCTUnwrap(RecognizedExpiry.parse("2035-08-31")).monthOnly)
+        XCTAssertTrue(try XCTUnwrap(RecognizedExpiry.parse("2035年08月")).monthOnly)
+        XCTAssertNil(RecognizedExpiry.parse("13/35"))
+        XCTAssertNil(RecognizedExpiry.parse("2035-02-30"))
     }
 
     func testAttachmentsAndImagesValidateBeforeReplacingDraft() throws {

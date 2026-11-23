@@ -7,7 +7,12 @@ extension VaultFile {
     /// Failing to copy or verify prevents the caller from replacing the active file.
     func recordDamagedBeforeRestore() throws {
         let source = ciphertextURL
-        let values = try source.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+        let values: URLResourceValues
+        do { values = try source.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey]) }
+        catch let error as CocoaError where [.fileNoSuchFile, .fileReadNoSuchFile].contains(error.code) {
+            // Recovering a missing active file keeps the previously saved generations intact.
+            return
+        }
         guard values.isRegularFile == true, values.isSymbolicLink != true else { throw BackupError.unavailable }
         let input = try FileHandle(forReadingFrom: source)
         defer { try? input.close() }

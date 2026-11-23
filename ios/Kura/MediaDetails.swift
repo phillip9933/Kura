@@ -56,8 +56,7 @@ struct MediaDetails: View {
         .sheet(item: $viewingImage) { slot in
             NavigationStack {
                 if let bytes = media[slot] {
-                    MediaThumbnail(data: bytes, maximumPixels: 2048).padding()
-                        .accessibilityLabel(slot.title + " image")
+                    MediaImageViewer(bytes: bytes, label: slot.title + " image")
                         .navigationTitle(slot.title)
                         .toolbar { Button("Done") { viewingImage = nil } }
                 }
@@ -81,8 +80,7 @@ private struct MediaAttachmentView: View {
         NavigationStack {
             VStack {
                 if type.conforms(to: .image) {
-                    MediaThumbnail(data: attachment.bytes, maximumPixels: 2048)
-                        .accessibilityLabel(attachment.name)
+                    MediaImageViewer(bytes: attachment.bytes, label: attachment.name)
                 } else if type.conforms(to: .pdf) {
                     MediaPDF(data: attachment.bytes)
                 } else if type.conforms(to: .plainText), attachment.bytes.count <= 512 * 1024,
@@ -134,9 +132,10 @@ struct MediaMissingSlots: View {
     let card: WalletCard
     let save: (WalletCard, WalletMedia) async throws -> Void
     @State private var request: MediaCaptureRequest?
+    @State private var editingFiles = false
 
     var body: some View {
-        if card.passStyle == nil {
+        if !card.isImportedPass {
             ForEach([WalletImageSlot.front, .back]) { slot in
                 if card.media[slot] == nil {
                     Menu {
@@ -148,22 +147,24 @@ struct MediaMissingSlots: View {
                 }
             }
             .sheet(item: $request) { item in
-                MissingImageEditor(card: card, request: item, save: save)
+                ItemMediaDraft(card: card, request: item, save: save)
             }
         }
+        Button(card.media.attachments.isEmpty ? "Add attachment" : "Manage attachments") { editingFiles = true }
+            .sheet(isPresented: $editingFiles) { ItemMediaDraft(card: card, request: nil, save: save) }
     }
 }
 
-private struct MissingImageEditor: View {
+private struct ItemMediaDraft: View {
     let card: WalletCard
-    let request: MediaCaptureRequest
+    let request: MediaCaptureRequest?
     let save: (WalletCard, WalletMedia) async throws -> Void
     @State private var media: WalletMedia
     @State private var saving = false
     @State private var errorMessage: String?
     @Environment(\.dismiss) private var dismiss
 
-    init(card: WalletCard, request: MediaCaptureRequest, save: @escaping (WalletCard, WalletMedia) async throws -> Void) {
+    init(card: WalletCard, request: MediaCaptureRequest?, save: @escaping (WalletCard, WalletMedia) async throws -> Void) {
         self.card = card
         self.request = request
         self.save = save
@@ -173,14 +174,14 @@ private struct MissingImageEditor: View {
     var body: some View {
         NavigationStack {
             Form {
-                MediaEditor(media: $media, ocrFields: [:], applyOCR: { _ in }, initialCapture: request)
+                MediaEditor(media: $media, ocrFields: [:], applyOCR: { _ in }, imagesEditable: request != nil, initialCapture: request)
                 if let errorMessage { Text(errorMessage) }
             }
-            .navigationTitle("Add " + request.slot.title.lowercased() + " image")
+            .navigationTitle(request.map { "Add " + $0.slot.title.lowercased() + " image" } ?? "Attachments")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save image") { saving = true }.disabled(media[request.slot] == nil || saving)
+                    Button("Save") { saving = true }.disabled(media == card.media || saving)
                 }
             }
             .disabled(saving)
@@ -191,9 +192,67 @@ private struct MissingImageEditor: View {
                     try await save(card, media)
                     try Task.checkCancellation()
                     dismiss()
-                } catch is CancellationError { return } catch { errorMessage = "Kura could not save this image. Try again." }
+                } catch is CancellationError { return } catch { errorMessage = "Kura could not save these changes. Try again." }
                 saving = false
             }
         }
+    }
+}
+
+private struct MediaImageViewer: View {
+    let bytes: Data
+    let label: String
+    @State private var image: CGImage?
+    @State private var failed = false
+    @State private var zoom: CGFloat = 1
+    @State private var center = CGSize.zero
+    @GestureState private var pinch: CGFloat = 1
+    @GestureState private var translation = CGSize.zero
+
+    var body: some View {
+        VStack {
+            GeometryReader { area in
+                if let image {
+                    let scale = min(5, max(1, zoom * pinch))
+                    let size = area.size
+                    let fit = min(size.width / CGFloat(image.width), size.height / CGFloat(image.height))
+                    let limitX = max(0, (CGFloat(image.width) * fit * scale - size.width) / 2)
+                    let limitY = max(0, (CGFloat(image.height) * fit * scale - size.height) / 2)
+                    Image(decorative: image, scale: 1).resizable().scaledToFit()
+                        .frame(width: size.width, height: size.height)
+                        .scaleEffect(scale)
+                        .offset(x: min(limitX, max(-limitX, center.width + translation.width)),
+                                y: min(limitY, max(-limitY, center.height + translation.height)))
+                        .accessibilityLabel(label)
+                        .frame(width: size.width, height: size.height)
+                        .clipped().contentShape(Rectangle())
+                        .gesture(MagnificationGesture().updating($pinch) { value, state, _ in state = value }
+                            .onEnded { value in zoom = min(5, max(1, zoom * value)); if zoom == 1 { center = .zero } })
+                        .simultaneousGesture(DragGesture().updating($translation) { value, state, _ in state = value.translation }
+                            .onEnded { value in
+                                center = CGSize(width: min(limitX, max(-limitX, center.width + value.translation.width)),
+                                                height: min(limitY, max(-limitY, center.height + value.translation.height)))
+                            })
+                } else if failed {
+                    Text("Kura could not display this image.")
+                } else { ProgressView("Loading image") }
+            }
+            if image != nil {
+                HStack {
+                    Slider(value: $zoom, in: 1...5).accessibilityLabel("Image zoom")
+                    Button("Reset zoom") { zoom = 1; center = .zero }
+                }.padding()
+            }
+        }
+        .task(id: bytes) {
+            let prepared = await Self.image(from: bytes)
+            guard !Task.isCancelled else { return }
+            image = prepared
+            failed = prepared == nil
+        }
+    }
+
+    nonisolated private static func image(from bytes: Data) async -> CGImage? {
+        try? MediaProcessor.thumbnail(bytes)
     }
 }

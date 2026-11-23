@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct WalletDetail: View {
     @ObservedObject var wallet: WalletSession
@@ -21,29 +22,51 @@ struct WalletDetail: View {
                 if card.passStyle != nil { PassAppearanceView(card: card) }
                 Section {
                     if !card.category.isEmpty { LabeledContent("Category", value: card.category) }
-                    if let expiration = card.expires { LabeledContent("Expires", value: expiration.formatted(date: .abbreviated, time: .omitted)) }
+                    if let scheduled = card.passStyle?.relevantDate {
+                        LabeledContent("Relevant date", value: scheduled.formatted(date: .abbreviated, time: .shortened))
+                    }
+                    if let expiration = card.expires {
+                        LabeledContent("Expires", value: expiration.formatted(date: .abbreviated, time: card.isImportedPass ? .shortened : .omitted))
+                    }
                     if !card.payload.isEmpty {
                         Button { barcode = true } label: {
                             Label("Show \(card.format.rawValue)", systemImage: "barcode.viewfinder")
                         }
-                        Text(card.payload).font(.body.monospaced()).textSelection(.enabled)
+                        let display = card.passStyle?.barcodeAlternative.flatMap { $0.isEmpty ? nil : $0 } ?? card.payload
+                        HStack {
+                            Text(verbatim: display).font(.body.monospaced())
+                            Spacer()
+                            PrivateCopyButton(label: "Copy ticket code", value: display)
+                        }
                     }
                 }
                 if !card.fields.isEmpty {
                     Section("Details") {
                         ForEach(card.fields.keys.sorted(), id: \.self) { key in
-                            LabeledContent(key, value: card.fields[key] ?? "").textSelection(.enabled)
+                            let prefs = wallet.snapshot.preferences
+                            let def = (prefs.definitions(for: card.section) + FieldDefinition.suggested(section: card.section, category: card.category)).first { $0.name == key }
+                            let raw = card.fields[key] ?? ""
+                            HStack {
+                                LabeledContent(key, value: def?.display(raw, currency: prefs.currency) ?? raw)
+                                PrivateCopyButton(label: "Copy " + key, value: raw)
+                            }
                         }
                     }
                 }
-                if !card.notes.isEmpty { Section("Notes") { Text(card.notes).textSelection(.enabled) } }
-                MediaDetails(media: card.media)
-                if card.passStyle == nil {
-                    MediaMissingSlots(card: card) { original, media in
-                        var updated = original
-                        updated.media = media
-                        try await wallet.save(updated, generation: token, replacing: original)
+                if !card.notes.isEmpty {
+                    Section("Notes") {
+                        HStack {
+                            Text(verbatim: card.notes)
+                            Spacer()
+                            PrivateCopyButton(label: "Copy notes", value: card.notes)
+                        }
                     }
+                }
+                MediaDetails(media: card.media)
+                MediaMissingSlots(card: card) { original, media in
+                    var updated = original
+                    updated.media = media
+                    try await wallet.save(updated, generation: token, replacing: original)
                 }
                 Section {
                     Button(card.favorite ? "Remove from favorites" : "Add to favorites") {
@@ -61,7 +84,7 @@ struct WalletDetail: View {
             }
             .disabled(wallet.saving)
             .navigationTitle(card.name)
-            .toolbar { Button("Edit", action: edit) }
+            .toolbar { if !card.isImportedPass { Button("Edit", action: edit) } }
             .confirmationDialog("Delete this item?", isPresented: $confirmDelete, titleVisibility: .visible) {
                 Button("Delete item", role: .destructive) {
                     Task {
@@ -83,6 +106,29 @@ struct WalletDetail: View {
             do { try await wallet.save(updated, generation: token, replacing: original) }
             catch is CancellationError {}
             catch { self.error = "Kura could not update this item." }
+        }
+    }
+}
+
+
+private struct PrivateCopyButton: View {
+    let label: String
+    let value: String
+    @State private var copied = false
+
+    var body: some View {
+        Button {
+            UIPasteboard.general.setItems([[UTType.utf8PlainText.identifier: value]],
+                                         options: [.localOnly: true, .expirationDate: Date().addingTimeInterval(40)])
+            copied = true
+        } label: {
+            Label(copied ? "Copied" : label, systemImage: copied ? "checkmark" : "doc.on.doc")
+                .labelStyle(.iconOnly)
+        }
+        .buttonStyle(.borderless)
+        .task(id: copied) {
+            guard copied else { return }
+            do { try await Task.sleep(nanoseconds: 2_000_000_000); copied = false } catch {}
         }
     }
 }

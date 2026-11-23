@@ -30,6 +30,11 @@ struct VaultFile {
         try finishPendingErase(removingKeys: removingKeys)
     }
 
+    func containsPriorState() throws -> Bool {
+        do { return try !FileManager.default.contentsOfDirectory(atPath: directory.path).isEmpty }
+        catch let error as CocoaError where [.fileNoSuchFile, .fileReadNoSuchFile].contains(error.code) { return false }
+    }
+
     func readCiphertext() throws -> Data? {
         let handle: FileHandle
         do {

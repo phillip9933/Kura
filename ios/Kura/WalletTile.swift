@@ -7,7 +7,7 @@ enum WalletUpcoming {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
         // The manual expiry picker stores a calendar day. Imported pass timestamps retain their exact instant.
-        let expiry = card.expires.map { card.passStyle == nil ? endOfDay($0, calendar: calendar) : $0 }
+        let expiry = card.expires.map { !card.isImportedPass ? endOfDay($0, calendar: calendar) : $0 }
         if let expiry, expiry < now { return nil }
         let scheduled = card.passStyle?.relevantDate ?? [
             "Relevant date", "relevantDate", "Event date", "eventDate"

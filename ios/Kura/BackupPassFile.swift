@@ -16,6 +16,7 @@ enum BackupPassFile {
         try card.validate()
         card.id = UUID()
         card.created = Date()
+        card.archived = false
         return card
     }
 }

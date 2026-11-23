@@ -13,7 +13,7 @@ private actor VaultStorage {
         try file.finishPendingErase { try VaultKey.eraseAll(context: context) }
         let read = Result { try file.readCiphertext() }
         let isNew: Bool
-        if case .success(nil) = read { isNew = true } else { isNew = false }
+        if case .success(nil) = read { isNew = try !file.containsPriorState() } else { isNew = false }
         let key: SymmetricKey
         if phoneOnly { key = try PhoneUnlock.read() }
         else if passcodeOnly {
@@ -23,7 +23,15 @@ private actor VaultStorage {
         else { key = try VaultKey.load(context: context, allowCreation: isNew) }
         try Task.checkCancellation()
         do {
-            guard let data = try read.get() else { return (key, WalletSnapshot()) }
+            guard let data = try read.get() else {
+                if !isNew {
+                    let generations = try BackupRecovery.entries(in: file.directory)
+                    if !generations.isEmpty { throw WalletError.vaultUnavailable }
+                }
+                let empty = WalletSnapshot()
+                try file.write(empty, key: key)
+                return (key, empty)
+            }
             return (key, try file.decodeSnapshot(data, key: key))
         } catch {
             guard !phoneOnly else { throw WalletError.keyUnavailable }

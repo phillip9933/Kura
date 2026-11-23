@@ -31,4 +31,53 @@ jobs:
              | select(.name | startswith("iPhone"))][0].udid // empty')
           xcodebuild -project ios/Kura.xcodeproj -scheme Kura \
             -destination "platform=iOS Simulator,id=$device" \
+            -resultBundlePath "$RUNNER_TEMP/Kura.xcresult" \
             -parallel-testing-enabled NO test
+
+      - name: Collect named simulator screenshots
+        if: always() && !cancelled()
+        run: |
+          set -euo pipefail
+          results="$RUNNER_TEMP/Kura.xcresult"
+          if [[ ! -d "$results" ]]; then exit 0; fi
+          xcrun xcresulttool export attachments --path "$results" --output-path "$RUNNER_TEMP/kura-attachments"
+          python3 - <<'PYTHON'
+          import json
+          import os
+          from pathlib import Path
+          from shutil import copyfile
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          attachments = temp / "kura-attachments"
+          output = temp / "kura-visual-checks"
+          output.mkdir(exist_ok=True)
+          manifest = attachments / "manifest.json"
+          if not manifest.exists():
+              raise SystemExit(0)
+          names = ["lock-large-text", "wallet-portrait", "item-landscape", "wallet-large-text"]
+          for suite in json.loads(manifest.read_text()):
+              identifier = suite.get("testIdentifier", "").split("/")
+              if len(identifier) < 2 or identifier[-2].split(".")[-1] != "WalletUITests":
+                  continue
+              for entry in suite["attachments"]:
+                  title = entry.get("suggestedHumanReadableName", "")
+                  for name in names:
+                      prefix = "Kura-QA-" + name
+                      if not (title == prefix or title.startswith(prefix + ".") or title.startswith(prefix + "_")):
+                          continue
+                      path = attachments / Path(entry["exportedFileName"]).name
+                      if not (0 < path.stat().st_size <= 8 * 1024 * 1024):
+                          raise ValueError("Unexpected screenshot size")
+                      with path.open("rb") as stream:
+                          if stream.read(8) != bytes.fromhex("89504e470d0a1a0a"):
+                              raise ValueError("Expected a PNG screenshot")
+                      copyfile(path, output / (name + ".png"))
+          PYTHON
+      - name: Upload iPhone visual checks
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: iphone-simulator-visual-checks
+          path: ${{ runner.temp }}/kura-visual-checks/*.png
+          if-no-files-found: error
+          retention-days: 7

@@ -33,6 +33,7 @@ struct WalletCard: Codable, Equatable, Identifiable {
     var notes: String
     var fields: [String: String]
     var expires: Date?
+    var expiresByMonth: Bool?
     var created: Date
     var favorite: Bool
     var archived: Bool
@@ -41,7 +42,7 @@ struct WalletCard: Codable, Equatable, Identifiable {
 
     init(id: UUID = UUID(), name: String, payload: String, section: WalletSection = .cards,
          format: BarcodeFormat = .qr, category: String = "", notes: String = "",
-         fields: [String: String] = [:], expires: Date? = nil, created: Date = Date(),
+         fields: [String: String] = [:], expires: Date? = nil, expiresByMonth: Bool? = nil, created: Date = Date(),
          favorite: Bool = false, archived: Bool = false, media: WalletMedia = WalletMedia(), passStyle: PassAppearance? = nil) throws {
         self.id = id
         self.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -52,6 +53,7 @@ struct WalletCard: Codable, Equatable, Identifiable {
         self.notes = notes
         self.fields = fields
         self.expires = expires
+        self.expiresByMonth = expiresByMonth
         self.created = created
         self.favorite = favorite
         self.archived = archived
@@ -80,7 +82,8 @@ struct WalletCard: Codable, Equatable, Identifiable {
             format: v.decodeIfPresent(BarcodeFormat.self, forKey: .format) ?? .qr,
             category: v.decodeIfPresent(String.self, forKey: .category) ?? "", notes: v.decodeIfPresent(String.self, forKey: .notes) ?? "",
             fields: v.decodeIfPresent([String: String].self, forKey: .fields) ?? [:],
-            expires: v.decodeIfPresent(Date.self, forKey: .expires), created: v.decodeIfPresent(Date.self, forKey: .created) ?? .distantPast,
+            expires: v.decodeIfPresent(Date.self, forKey: .expires), expiresByMonth: v.decodeIfPresent(Bool.self, forKey: .expiresByMonth),
+            created: v.decodeIfPresent(Date.self, forKey: .created) ?? .distantPast,
             favorite: v.decodeIfPresent(Bool.self, forKey: .favorite) ?? false, archived: v.decodeIfPresent(Bool.self, forKey: .archived) ?? false,
             media: v.decodeIfPresent(WalletMedia.self, forKey: .media) ?? WalletMedia(),
             passStyle: v.decodeIfPresent(PassAppearance.self, forKey: .passStyle))

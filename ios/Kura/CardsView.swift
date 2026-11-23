@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum WalletRoute: Hashable {
-    case item(UUID), edit(UUID), add(WalletSection), settings, importPass, receive, importEncrypted, reorder(WalletSection)
+    case item(UUID), edit(UUID), add(WalletSection), scanCard, settings, importPass, receive, importEncrypted, reorder(WalletSection)
 }
 
 struct CardsView: View {
@@ -72,7 +72,7 @@ struct CardsView: View {
                     }.frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if wallet.snapshot.preferences.useGrid {
                     ScrollView {
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: layout.gridColumns), alignment: .leading) {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: layout.columns(for: section)), alignment: .leading) {
                             ForEach(visible) { card in
                                 NavigationLink(value: WalletRoute.item(card.id)) {
                                     WalletTile(card: card, showFront: layout.frontImage[section.rawValue] ?? true, currency: wallet.snapshot.preferences.currency)
@@ -116,6 +116,7 @@ struct CardsView: View {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Menu {
                         Button("Add item") { path.append(.add(section)) }
+                        Button("Scan card") { path.append(.scanCard) }
                         Button("Import passes") { path.append(.importPass) }
                         Button("Import encrypted item") { path.append(.importEncrypted) }
                         Button("Receive secure transfer") { path.append(.receive) }
@@ -149,6 +150,7 @@ struct CardsView: View {
             }
             .navigationDestination(for: WalletRoute.self) { route in
                 switch route {
+                case .scanCard: WalletEditor(wallet: wallet, section: .cards, original: nil, scanCard: true)
                 case .add(let target): WalletEditor(wallet: wallet, section: target, original: nil)
                 case .edit(let id):
                     if let card = wallet.cards.first(where: { $0.id == id }) { WalletEditor(wallet: wallet, section: card.section, original: card) }
@@ -157,7 +159,7 @@ struct CardsView: View {
                 case .reorder(let target): WalletOrderView(wallet: wallet, section: target)
                 case .importEncrypted: BackupPassImportView(wallet: wallet)
                 case .receive: BackupTransferReceiveView(wallet: wallet)
-                case .importPass: PassImportView { passes in
+                case .importPass: PassImportView(existingCards: wallet.cards) { passes in
                     let cards = try passes.map { try $0.makeCard() }
                     try await wallet.importCards(cards, generation: generation)
                     section = cards.first?.section ?? .passes

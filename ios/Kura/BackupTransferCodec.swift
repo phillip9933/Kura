@@ -27,6 +27,7 @@ enum BackupTransferCodec {
         // A transfer creates a new item, even when the sender also owns this wallet.
         item.id = UUID()
         item.created = Date()
+        item.archived = false
         return item
     }
 }
@@ -35,9 +36,11 @@ struct BackupTransferCollection {
     private(set) var id: UUID?
     private(set) var total = 0
     private var chunks: [Int: Data] = [:]
+    private var started: TimeInterval?
     var count: Int { chunks.count }
 
-    mutating func append(_ code: String) throws {
+    mutating func append(_ code: String, now: TimeInterval = ProcessInfo.processInfo.systemUptime) throws {
+        if let started, now - started > 300 { throw BackupError.transferExpired }
         guard code.utf8.count <= 700 else { throw BackupError.transfer }
         let fields = code.split(separator: ":", omittingEmptySubsequences: false)
         guard fields.count == 5, fields[0] == "KURA1",
@@ -50,12 +53,14 @@ struct BackupTransferCollection {
         else { throw BackupError.transfer }
         if let id, id != incomingID || total != count { throw BackupError.transfer }
         if let existing = chunks[index], existing != bytes { throw BackupError.transfer }
+        if started == nil { started = now }
         id = incomingID
         total = count
         chunks[index] = bytes
     }
 
-    func assembled() throws -> Data {
+    func assembled(now: TimeInterval = ProcessInfo.processInfo.systemUptime) throws -> Data {
+        if let started, now - started > 300 { throw BackupError.transferExpired }
         guard total > 0, count == total else { throw BackupError.transfer }
         var data = Data()
         for index in 0..<total {
