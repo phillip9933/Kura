@@ -125,6 +125,8 @@ struct CardsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) { Button("Lock", action: wallet.lock) }
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button { path.append(.settings) } label: { Label("Settings", systemImage: "gearshape") }
+                        .accessibilityIdentifier("wallet.settings")
                     Menu {
                         Button("Add item") { path.append(.add(section)) }
                         Button("Scan card") { path.append(.scanCard) }
@@ -156,7 +158,6 @@ struct CardsView: View {
                             }
                             Button("Reorder items") { path.append(.reorder(section)) }
                         }
-                        Button("Settings") { path.append(.settings) }
                     } label: { Label("Options", systemImage: "ellipsis.circle") }
                 }
             }

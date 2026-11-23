@@ -130,20 +130,19 @@ final class WalletUITests: XCTestCase {
 
     @MainActor
     private func setWalletAppearance(_ choice: String, in app: XCUIApplication) {
-        let options = app.descendants(matching: .any).matching(identifier: "Options").firstMatch
-        XCTAssertTrue(options.waitForExistence(timeout: 5))
-        options.tap()
-        let settings = app.buttons["Settings"]
+        let settings = app.descendants(matching: .any).matching(identifier: "wallet.settings").firstMatch
         XCTAssertTrue(settings.waitForExistence(timeout: 5))
         settings.tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
-        let picker = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Appearance")).firstMatch
-        reveal(picker, in: app)
-        picker.tap()
-        let option = app.descendants(matching: .any).matching(identifier: choice).firstMatch
+        let appearance = app.descendants(matching: .any).matching(identifier: "wallet.appearance").firstMatch
+        reveal(appearance, in: app)
+        appearance.tap()
+        let option = app.descendants(matching: .any).matching(identifier: "wallet.appearance." + choice).firstMatch
         XCTAssertTrue(option.waitForExistence(timeout: 5))
         option.tap()
-        app.navigationBars.buttons["Save"].tap()
+        let save = app.descendants(matching: .any).matching(identifier: "wallet.settings.save").firstMatch
+        XCTAssertTrue(save.waitForExistence(timeout: 5))
+        save.tap()
         XCTAssertTrue(app.navigationBars["Cards"].waitForExistence(timeout: 8))
     }
 

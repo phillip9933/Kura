@@ -43,9 +43,11 @@ struct WalletSettings: View {
             }
             Section("Display and navigation") {
                 NavigationLink("Navigation and layout") { NavigationSettings(prefs: $prefs) }
-                Picker("Appearance", selection: $prefs.appearance) {
-                    ForEach(["System", "Light", "Dark"], id: \.self) { Text($0) }
-                }
+                NavigationLink {
+                    AppearanceSettings(selection: $prefs.appearance)
+                } label: {
+                    LabeledContent("Appearance", value: prefs.appearance)
+                }.accessibilityIdentifier("wallet.appearance")
                 Picker("Start section", selection: $prefs.startSection) {
                     ForEach(prefs.layout.visible) { Text($0.rawValue).tag($0) }
                 }
@@ -85,7 +87,7 @@ struct WalletSettings: View {
                         dismiss()
                     } catch is CancellationError {} catch { self.error = "Check your settings and try again." }
                 }
-            }
+            }.accessibilityIdentifier("wallet.settings.save")
         }
         .alert("Erase this wallet and its local recovery copies?", isPresented: $confirmErase) {
             Button("Cancel", role: .cancel) {}
@@ -106,6 +108,28 @@ struct WalletSettings: View {
             do { try await wallet.changePhoneUnlock(enabled, generation: token) }
             catch is CancellationError {} catch { self.error = "The unlock method was not changed." }
         }
+    }
+}
+
+private struct AppearanceSettings: View {
+    @Binding var selection: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        List(["System", "Light", "Dark"], id: \.self) { mode in
+            Button {
+                selection = mode
+                dismiss()
+            } label: {
+                HStack {
+                    Text(mode)
+                    Spacer()
+                    if selection == mode { Image(systemName: "checkmark").accessibilityHidden(true) }
+                }
+            }
+            .accessibilityIdentifier("wallet.appearance." + mode)
+            .accessibilityAddTraits(selection == mode ? .isSelected : [])
+        }.navigationTitle("Appearance")
     }
 }
 
