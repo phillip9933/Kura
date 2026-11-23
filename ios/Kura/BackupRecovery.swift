@@ -24,7 +24,7 @@ struct BackupRecovery: Identifiable {
         do {
             urls = try FileManager.default.contentsOfDirectory(at: folder(in: directory),
                 includingPropertiesForKeys: [.isRegularFileKey, .contentModificationDateKey, .fileSizeKey])
-        } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
+        } catch let error as CocoaError where error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile {
             return []
         }
         return try urls.compactMap { url in

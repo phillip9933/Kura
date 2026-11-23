@@ -61,10 +61,8 @@ final class WalletTests: XCTestCase {
             let card = try WalletCard(name: "Test card", payload: payload)
             let rendered = await CardQR.shared.image(for: card.payload)
             let image = try XCTUnwrap(rendered)
-            let request = VNDetectBarcodesRequest()
-            request.symbologies = [.qr]
-            try VNImageRequestHandler(cgImage: image, options: [:]).perform([request])
-            XCTAssertEqual(request.results?.first?.payloadStringValue, payload)
+            let found = try BarcodePhoto.observations(in: image, symbologies: [.qr])
+            XCTAssertEqual(found.first?.payloadStringValue, payload)
         }
     }
 }

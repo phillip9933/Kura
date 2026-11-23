@@ -7,6 +7,7 @@ private struct AutomaticDestination: Codable {
     let bookmark: Data
     let password: String
     let retention: Int
+    var passwordRevision: UUID?
 }
 
 private struct BackupReceipt: Codable {
@@ -60,22 +61,27 @@ actor AutomaticWriter {
         defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
 
         try write(snapshot: snapshot, key: key, folder: folder, password: config.password,
-                  retention: config.retention, ledgerURL: BackupSettingsFile.ledger(config.id), access: access)
+                  retention: config.retention, ledgerURL: BackupSettingsFile.ledger(config.id),
+                  passwordRevision: config.passwordRevision, access: access)
     }
 
     func write(snapshot: WalletSnapshot, key: SymmetricKey, folder: URL, password: String,
-               retention: Int, ledgerURL: URL, access: BackupFileAccess = BackupFileAccess()) throws {
+               retention: Int, ledgerURL: URL, passwordRevision: UUID? = nil,
+               access: BackupFileAccess = BackupFileAccess()) throws {
         try Task.checkCancellation()
         guard (1...1000).contains(retention) else { throw BackupError.invalid }
         var ledger: BackupLedger
         do { ledger = try BackupSettingsFile.read(BackupLedger.self, at: ledgerURL, key: key) }
-        catch let error as CocoaError where error.code == .fileReadNoSuchFile { ledger = BackupLedger() }
+        catch let error as CocoaError where error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile { ledger = BackupLedger() }
 
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         var plain = try encoder.encode(snapshot)
         defer { plain.resetBytes(in: 0..<plain.count) }
-        let digest = Data(SHA256.hash(data: plain))
+        var hash = SHA256()
+        if let passwordRevision { hash.update(data: Data(passwordRevision.uuidString.utf8)) }
+        hash.update(data: plain)
+        let digest = Data(hash.finalize())
         func location(_ id: UUID) -> URL {
             folder.appendingPathComponent("Kura-" + id.uuidString).appendingPathExtension("kurabackup")
         }
@@ -164,9 +170,25 @@ final class BackupAutomatic: ObservableObject {
         let bookmark = try folder.bookmarkData(options: .minimalBookmark,
             includingResourceValuesForKeys: nil, relativeTo: nil)
         cancel()
-        let config = AutomaticDestination(id: UUID(), bookmark: bookmark, password: password, retention: retention)
+        let config = AutomaticDestination(id: UUID(), bookmark: bookmark, password: password, retention: retention, passwordRevision: UUID())
         try BackupSettingsFile.write(config, to: BackupSettingsFile.config, key: key)
         shared.status = "Automatic backups are enabled."
+    }
+
+    static func retention(key: SymmetricKey) throws -> Int {
+        try BackupSettingsFile.read(AutomaticDestination.self, at: BackupSettingsFile.config, key: key).retention
+    }
+
+    static func update(password: String?, retention: Int, key: SymmetricKey) throws {
+        guard (1...1000).contains(retention) else { throw BackupError.invalid }
+        if let password { try BackupCodec.checkNewPassword(password) }
+        let old = try BackupSettingsFile.read(AutomaticDestination.self, at: BackupSettingsFile.config, key: key)
+        let revision = password == nil ? old.passwordRevision : UUID()
+        let updated = AutomaticDestination(id: old.id, bookmark: old.bookmark, password: password ?? old.password,
+                                           retention: retention, passwordRevision: revision)
+        cancel()
+        try BackupSettingsFile.write(updated, to: BackupSettingsFile.config, key: key)
+        shared.status = "Automatic backup settings saved."
     }
 
     static func disable() throws {

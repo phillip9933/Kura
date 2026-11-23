@@ -8,13 +8,16 @@ private actor VaultStorage {
         return VaultFile(directory: support.appendingPathComponent("Wallet", isDirectory: true))
     }
 
-    func open(context: LAContext, phoneOnly: Bool) throws -> (SymmetricKey, WalletSnapshot?) {
+    func open(context: LAContext, phoneOnly: Bool, passcodeOnly: Bool) throws -> (SymmetricKey, WalletSnapshot?) {
         try Task.checkCancellation()
         try file.finishPendingErase()
         let read = Result { try file.readCiphertext() }
         let isNew: Bool
         if case .success(nil) = read { isNew = true } else { isNew = false }
-        let key = try phoneOnly ? PhoneUnlock.read() : VaultKey.load(context: context, allowCreation: isNew)
+        let key: SymmetricKey
+        if phoneOnly { key = try PhoneUnlock.read() }
+        else if passcodeOnly { key = try PasscodeUnlock.read(context: context) }
+        else { key = try VaultKey.load(context: context, allowCreation: isNew) }
         try Task.checkCancellation()
         do {
             guard let data = try read.get() else { return (key, WalletSnapshot()) }
@@ -53,12 +56,13 @@ final class WalletSession: ObservableObject {
     private var context: LAContext?
     private var opening: Task<Void, Never>?
     private var writing: Task<Void, Error>?
-    private var backgroundSince: Date?
+    private var backgroundSince: TimeInterval?
     private var backgroundLock: Task<Void, Never>?
 
     func unlock(requirePrompt: Bool = false) {
         guard phase == .locked else { return }
         let phoneOnly = PhoneUnlock.enabled && !requirePrompt
+        let passcodeOnly = PasscodeUnlock.enabled && !phoneOnly && !requirePrompt
         let auth = LAContext()
         context = auth
         let attempt = generation
@@ -67,11 +71,11 @@ final class WalletSession: ObservableObject {
         opening = Task {
             do {
                 try Task.checkCancellation()
-                if !phoneOnly {
+                if !phoneOnly && !passcodeOnly {
                     guard try await auth.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: "Unlock your Kura wallet.")
                     else { throw WalletError.keyUnavailable }
                 }
-                let (newKey, records) = try await storage.open(context: auth, phoneOnly: phoneOnly)
+                let (newKey, records) = try await storage.open(context: auth, phoneOnly: phoneOnly, passcodeOnly: passcodeOnly)
                 guard attempt == generation else { return }
                 key = newKey
                 if let records {
@@ -106,9 +110,23 @@ final class WalletSession: ObservableObject {
         objectWillChange.send()
     }
 
+    func changePasscodeOnly(_ enabled: Bool, generation token: UUID) async throws {
+        guard generation == token, phase == .unlocked, let key else { throw CancellationError() }
+        let auth = LAContext()
+        defer { auth.invalidate() }
+        guard try await auth.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: "Change how Kura authenticates.") else {
+            throw WalletError.keyUnavailable
+        }
+        guard generation == token, phase == .unlocked, try VaultKey.load(context: auth, allowCreation: false) == key else {
+            throw WalletError.keyUnavailable
+        }
+        try PasscodeUnlock.configure(enabled, verifiedKey: key)
+        objectWillChange.send()
+    }
+
     func background() {
         guard phase == .unlocked, snapshot.preferences.lockDelay > 0 else { lock(); return }
-        backgroundSince = Date()
+        backgroundSince = ProcessInfo.processInfo.systemUptime
         backgroundLock?.cancel()
         let delay = UInt64(snapshot.preferences.lockDelay)
         backgroundLock = Task {
@@ -118,7 +136,7 @@ final class WalletSession: ObservableObject {
     }
 
     func foreground() {
-        if let start = backgroundSince, Date().timeIntervalSince(start) >= Double(snapshot.preferences.lockDelay) { lock() }
+        if let start = backgroundSince, (ProcessInfo.processInfo.systemUptime - start) >= Double(snapshot.preferences.lockDelay) { lock() }
         backgroundSince = nil
         backgroundLock?.cancel()
         backgroundLock = nil
@@ -168,9 +186,14 @@ final class WalletSession: ObservableObject {
         try await commit(next, generation: token)
     }
 
-    func preferences(_ value: WalletPreferences, generation token: UUID) async throws {
+    func preferences(_ value: WalletPreferences, generation token: UUID, renames: [CategoryChange] = []) async throws {
         var next = snapshot
         next.preferences = value
+        for change in renames {
+            for index in next.cards.indices where next.cards[index].section == change.section && next.cards[index].category == change.old {
+                next.cards[index].category = change.new
+            }
+        }
         try await commit(next, generation: token)
     }
 
@@ -187,6 +210,9 @@ final class WalletSession: ObservableObject {
 
     func replaceForRestore(_ restored: WalletSnapshot, generation token: UUID) async throws {
         try await commit(restored, generation: token, retainPrevious: true)
+        // Discard editors and import previews that belonged to the replaced wallet.
+        generation = UUID()
+        objectWillChange.send()
     }
 
     func recoverySnapshot(_ id: UUID, generation token: UUID) async throws -> WalletSnapshot {
@@ -206,11 +232,23 @@ final class WalletSession: ObservableObject {
         guard verified == key else { throw WalletError.keyUnavailable }
         saving = true
         defer { if generation == token { lock() } }
+        try PasscodeUnlock.configure(false, verifiedKey: verified)
         try PhoneUnlock.setEnabled(false, verifiedKey: verified)
         BackupAutomatic.cancel()
         let job = Task { try await storage.erase() }
         writing = job
         try await job.value
+    }
+
+    func automaticRetention() throws -> Int {
+        guard phase == .unlocked, let key else { throw CancellationError() }
+        return try BackupAutomatic.retention(key: key)
+    }
+
+    func updateAutomatic(password: String?, retention: Int) throws {
+        guard phase == .unlocked, let key else { throw CancellationError() }
+        try BackupAutomatic.update(password: password, retention: retention, key: key)
+        BackupAutomatic.schedule(snapshot: snapshot, key: key)
     }
 
     func configureAutomatic(folder: URL, password: String, retention: Int) throws {

@@ -42,11 +42,13 @@ enum BackupCodec {
         let status = output.withUnsafeMutableBytes { destination in
             salt.withUnsafeBytes { saltBuffer in
                 bytes.withUnsafeBytes { input in
-                    CCKeyDerivationPBKDF(CCPBKDFAlgorithm(kCCPBKDF2),
-                        input.bindMemory(to: Int8.self).baseAddress, input.count,
-                        saltBuffer.bindMemory(to: UInt8.self).baseAddress, saltBuffer.count,
-                        CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256), rounds,
-                        destination.bindMemory(to: UInt8.self).baseAddress, destination.count)
+                    guard let pass = input.bindMemory(to: Int8.self).baseAddress,
+                          let salt = saltBuffer.bindMemory(to: UInt8.self).baseAddress,
+                          let key = destination.bindMemory(to: UInt8.self).baseAddress
+                    else { return Int32(kCCParamError) }
+                    return CCKeyDerivationPBKDF(CCPBKDFAlgorithm(kCCPBKDF2),
+                        pass, input.count, salt, saltBuffer.count,
+                        CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256), rounds, key, destination.count)
                 }
             }
         }
@@ -75,11 +77,11 @@ enum BackupCodec {
 
     static func open(_ data: Data, password: String, kind: Kind) throws -> Data {
         try Task.checkCancellation()
-        let prefix = prefix(for: kind)
-        let offset = prefix.count + saltLength
+        let expectedPrefix = prefix(for: kind)
+        let offset = expectedPrefix.count + saltLength
         let limit = kind == .item ? maximumTransferBytes : maximumFileBytes
         guard data.count <= limit else { throw BackupError.tooLarge }
-        guard data.count >= offset + 28, data.starts(with: prefix) else { throw BackupError.invalid }
+        guard data.count >= offset + 28, data.starts(with: expectedPrefix) else { throw BackupError.invalid }
         let header = Data(data.prefix(offset))
         let key = try deriveKey(password: password, salt: Data(header.suffix(saltLength)))
         try Task.checkCancellation()

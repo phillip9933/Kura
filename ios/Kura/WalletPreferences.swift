@@ -7,10 +7,18 @@ enum FieldKind: String, Codable, CaseIterable {
 struct FieldDefinition: Codable, Equatable, Identifiable {
     var name: String
     var kind: FieldKind
+    var dateFormat: WalletDateFormat?
     var id: String { name }
 }
 
 struct WalletPreferences: Codable, Equatable {
+    private var navigation: WalletNavigation?
+    var layout: WalletNavigation {
+        get { navigation ?? WalletNavigation() }
+        set { navigation = newValue }
+    }
+    init() {}
+
     var startSection = WalletSection.cards
     var appearance = "System"
     var favoritesFirst = false
@@ -33,6 +41,9 @@ struct WalletPreferences: Codable, Equatable {
         guard ["System", "Light", "Dark"].contains(appearance), (0...365).contains(expiryDays),
               (0...300).contains(lockDelay), currency.utf8.count == 3, currency.utf8.allSatisfy({ (65...90).contains($0) }),
               Set(Array(categories.keys) + Array(definitions.keys) + Array(sorting.keys)).isSubset(of: Set(WalletSection.allCases.map(\.rawValue)))
+        else { throw WalletError.invalidFields }
+        guard !layout.visible.isEmpty, Set(layout.visible).count == layout.visible.count,
+              layout.visible.contains(startSection), (1...3).contains(layout.gridColumns)
         else { throw WalletError.invalidFields }
         for section in WalletSection.allCases {
             for names in [categories(for: section), definitions(for: section).map(\.name)] {

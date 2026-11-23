@@ -4,6 +4,7 @@ import UIKit
 @main
 struct KuraApp: App {
     @StateObject private var wallet = WalletSession()
+    @State private var returningFromBackground = false
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
@@ -12,7 +13,7 @@ struct KuraApp: App {
                 if wallet.phase == .recoveryRequired {
                     BackupRescueView(wallet: wallet).privacySensitive()
                 } else if wallet.phase == .unlocked {
-                    CardsView(wallet: wallet)
+                    CardsView(wallet: wallet).id(wallet.generation)
                         .privacySensitive()
                 } else {
                     VStack(spacing: 20) {
@@ -21,7 +22,7 @@ struct KuraApp: App {
                         if wallet.phase == .opening {
                             ProgressView("Unlocking wallet")
                         } else {
-                            if PhoneUnlock.enabled { Button("Use Face ID or passcode") { wallet.unlock(requirePrompt: true) } }
+                            if PhoneUnlock.enabled || (PasscodeUnlock.enabled && wallet.unlockMessage != nil) { Button("Use app authentication") { wallet.unlock(requirePrompt: true) } }
                             if let message = wallet.unlockMessage { Text(message) }
                             Button("Unlock wallet") { wallet.unlock() }.buttonStyle(.borderedProminent)
                         }
@@ -37,10 +38,11 @@ struct KuraApp: App {
                 if scenePhase == .active && PhoneUnlock.enabled { wallet.unlock() }
             }
             .onChange(of: scenePhase) { phase in
-                if phase == .background { wallet.background() }
+                if phase == .background { returningFromBackground = true; wallet.background() }
                 if phase == .active {
                     wallet.foreground()
-                    if PhoneUnlock.enabled && wallet.phase == .locked { wallet.unlock() }
+                    if returningFromBackground && PhoneUnlock.enabled && wallet.phase == .locked { wallet.unlock() }
+                    returningFromBackground = false
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.protectedDataWillBecomeUnavailableNotification)) { _ in

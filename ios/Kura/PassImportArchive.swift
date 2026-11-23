@@ -51,7 +51,9 @@ enum PassArchive {
         throw WalletMediaError.damagedPass
     }
 
-    static func unpack(_ data: Data, budget: inout Budget) throws -> [String: Data] {
+    static func unpack(_ input: Data, budget: inout Budget) throws -> [String: Data] {
+        guard input.count <= inputLimit else { throw WalletMediaError.size }
+        let data = input.startIndex == 0 ? input : Data(input)
         let expected = try entryCount(in: data)
         guard expected <= budget.entries else { throw WalletMediaError.size }
         budget.entries -= expected

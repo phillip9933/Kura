@@ -39,12 +39,9 @@ final class BarcodeTests: XCTestCase {
                                (.pdf417, .pdf417), (.code128, .code128), (.dataMatrix, .dataMatrix)] {
             let rendered = await CardQR.shared.image(for: payload, format: format)
             let image = try XCTUnwrap(rendered)
-            let request = VNDetectBarcodesRequest()
-            request.symbologies = [type]
-            try VNImageRequestHandler(cgImage: image, options: [:]).perform([request])
-            let observation = try XCTUnwrap(request.results?.first)
-            XCTAssertEqual(observation.payloadStringValue, payload)
-            XCTAssertEqual(BarcodeFormat(vision: observation.symbology), format)
+            let found = try BarcodePhoto.observations(in: image, symbologies: [type])
+            XCTAssertEqual(found.first?.payloadStringValue, payload, format.rawValue)
+            XCTAssertEqual(found.first.flatMap { BarcodeFormat(vision: $0.symbology) }, format, format.rawValue)
         }
     }
 

@@ -56,6 +56,7 @@ struct PassAppearance: Codable, Equatable {
     var organization: String
     var transitType: String
     var serialNumber: String
+    var passTypeIdentifier: String?
     var relevantDate: Date?
     var backgroundColor: String?
     var foregroundColor: String?
@@ -69,7 +70,7 @@ struct PassAppearance: Codable, Equatable {
 
     func validate() throws {
         guard Self.types.contains(type), groups.keys.allSatisfy(Self.groupNames.contains),
-              [logoText, organization, transitType, serialNumber].allSatisfy({ $0.utf8.count <= 8192 }),
+              [logoText, organization, transitType, serialNumber, passTypeIdentifier ?? ""].allSatisfy({ $0.utf8.count <= 8192 }),
               [backgroundColor, foregroundColor, labelColor].allSatisfy({ ($0?.utf8.count ?? 0) <= 128 }),
               groups.values.allSatisfy({ $0.count <= 100 }),
               groups.values.joined().allSatisfy({ field in
@@ -256,7 +257,8 @@ enum PassImport {
         for name in PassAppearance.artNames { art[name] = asset(name) }
         let appearance = PassAppearance(type: type, logoText: local(pass["logoText"]), organization: organization,
             transitType: body["transitType"] as? String ?? "", serialNumber: pass["serialNumber"] as? String ?? "",
-            relevantDate: Self.date(pass["relevantDate"]), backgroundColor: pass["backgroundColor"] as? String, foregroundColor: pass["foregroundColor"] as? String,
+            passTypeIdentifier: pass["passTypeIdentifier"] as? String, relevantDate: Self.date(pass["relevantDate"]),
+            backgroundColor: pass["backgroundColor"] as? String, foregroundColor: pass["foregroundColor"] as? String,
             labelColor: pass["labelColor"] as? String, groups: groups, artwork: art)
         try appearance.validate()
         let item = ImportedPass(name: title, category: extensionData["category"] as? String ?? fallback[type] ?? "Other",

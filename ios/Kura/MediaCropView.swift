@@ -4,6 +4,8 @@ struct MediaCropView: View {
     let bytes: Data
     let slot: WalletImageSlot
     let fields: [String: String]
+    let source: MediaCaptureRequest.Source?
+    let requestAnother: () -> Void
     let finish: (Data, [String: String]) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var photo: PreparedPhoto?
@@ -12,6 +14,7 @@ struct MediaCropView: View {
     @State private var renderedCrop: PhotoCrop?
     @State private var editingSuggestions = false
     @State private var recognizing = false
+    @State private var saving = false
     @State private var suggestions: [String: String] = [:]
     @State private var selected: Set<String> = []
     @State private var errorMessage: String?
@@ -32,22 +35,25 @@ struct MediaCropView: View {
                             if let errorMessage { Text(errorMessage) }
                             if editingSuggestions { review }
                             else if photo != nil { controls }
-                            if rendered != nil {
-                                Button(editingSuggestions ? "Apply selected details and use image" : "Use image") {
-                                    guard let rendered, renderedCrop == crop else { return }
-                                    do {
-                                        let chosen = editingSuggestions ? suggestions.filter { selected.contains($0.key) } : [:]
-                                        finish(try MediaProcessor.jpeg(rendered), chosen)
-                                        dismiss()
-                                    } catch { errorMessage = error.localizedDescription }
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .disabled(recognizing || renderedCrop != crop)
-                            }
+
                         }.padding()
                     }
                 }
             }
+            .safeAreaInset(edge: .bottom) {
+                if rendered != nil {
+                    VStack {
+                        if saving { ProgressView("Saving image") }
+                        Button(editingSuggestions ? "Apply selected details and use image" : "Use image") { saving = true }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(recognizing || renderedCrop != crop)
+                    }
+                    .padding(8)
+                    .frame(maxWidth: .infinity)
+                    .background(.bar)
+                }
+            }
+            .disabled(saving)
             .navigationTitle(slot.title + " image")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
@@ -62,13 +68,26 @@ struct MediaCropView: View {
         }
         .task(id: RenderKey(crop: crop, ready: photo != nil)) {
             guard let photo else { return }
+            let requested = crop
             do {
-                let value = try await MediaProcessor.cropped(photo, using: crop)
+                let value = try await MediaProcessor.cropped(photo, using: requested)
                 try Task.checkCancellation()
+                guard requested == crop else { return }
                 rendered = value
-                renderedCrop = crop
+                renderedCrop = requested
                 errorMessage = nil
             } catch is CancellationError {} catch { errorMessage = error.localizedDescription }
+        }
+        .task(id: saving) {
+            guard saving, let rendered else { return }
+            do {
+                let chosen = editingSuggestions ? suggestions.filter { selected.contains($0.key) } : [:]
+                let image = try await MediaProcessor.jpeg(rendered)
+                try Task.checkCancellation()
+                finish(image, chosen)
+                dismiss()
+            } catch is CancellationError { return } catch { errorMessage = error.localizedDescription }
+            saving = false
         }
         .task(id: recognizing) {
             guard recognizing, let rendered else { return }
@@ -134,7 +153,14 @@ struct MediaCropView: View {
             Slider(value: $crop.x, in: -1...1).accessibilityLabel("Horizontal position")
             Text("Vertical position")
             Slider(value: $crop.y, in: -1...1).accessibilityLabel("Vertical position")
+            Button("Auto fit") { crop = PhotoCrop() }
             Button("Use full photo") { crop = PhotoCrop(shape: .original, autoAlign: false) }
+            if let source {
+                Button(source == .camera ? "Retake photo" : "Choose another photo") {
+                    requestAnother()
+                    dismiss()
+                }
+            }
             if slot != .logo && fields.contains(where: { $0.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
                 Button("Review autofill") { recognizing = true }
                     .disabled(renderedCrop != crop)

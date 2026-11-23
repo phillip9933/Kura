@@ -100,6 +100,31 @@ final class BackupTests: XCTestCase {
         XCTAssertEqual(try BackupCodec.decode(BackupFiles.read(active), password: password), latest)
     }
 
+    func testAutomaticPasswordChangeReencryptsUnchangedWalletInExistingHistory() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let folder = root.appendingPathComponent("Folder")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let ledger = root.appendingPathComponent("Private/ledger")
+        let snapshot = try sample()
+        let key = SymmetricKey(size: .bits256)
+        let writer = AutomaticWriter()
+        try await writer.write(snapshot: snapshot, key: key, folder: folder, password: password,
+                               retention: 2, ledgerURL: ledger)
+        let first = try XCTUnwrap(FileManager.default.contentsOfDirectory(atPath: folder.path).first)
+        let newPassword = "new synthetic password"
+        try await writer.write(snapshot: snapshot, key: key, folder: folder, password: newPassword,
+                               retention: 2, ledgerURL: ledger, passwordRevision: UUID())
+        let files = try FileManager.default.contentsOfDirectory(atPath: folder.path)
+        XCTAssertEqual(files.count, 2)
+        let second = try XCTUnwrap(files.first { $0 != first })
+        let previous = try BackupFiles.read(folder.appendingPathComponent(first))
+        let next = try BackupFiles.read(folder.appendingPathComponent(second))
+        XCTAssertEqual(try BackupCodec.decode(previous, password: password), snapshot)
+        XCTAssertEqual(try BackupCodec.decode(next, password: newPassword), snapshot)
+        XCTAssertThrowsError(try BackupCodec.decode(next, password: password))
+    }
+
     func testSingleItemFileKeepsMediaAndCannotReplaceAnEntireWallet() throws {
         let source = try XCTUnwrap(sample().cards.first)
         let bytes = try BackupPassFile.encode(source, password: password)

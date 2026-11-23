@@ -11,25 +11,62 @@ extension DateFormatter {
     }()
 }
 
+enum WalletDateFormat: String, Codable, CaseIterable {
+    case iso = "yyyy-MM-dd", short = "dd/MM/yy", month = "MM/yy"
+
+    var formatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = .current
+        formatter.dateFormat = rawValue
+        formatter.isLenient = false
+        formatter.twoDigitStartDate = Date(timeIntervalSince1970: 946684800)
+        return formatter
+    }
+
+    func parse(_ raw: String) -> Date? {
+        let format = formatter
+        guard let date = format.date(from: raw), format.string(from: date) == raw else { return nil }
+        return date
+    }
+}
+
 extension FieldDefinition {
     func accepts(_ value: String) -> Bool {
         if value.isEmpty { return true }
+        if name == "Billing day" { return Int(value).map { (1...31).contains($0) } ?? false }
+        if name == "Event date" { return PassImport.date(value) != nil || WalletDateFormat.iso.parse(value) != nil }
+        if Self.colorFields.contains(name) { return WalletTileColor.parse(value) != nil }
         switch kind {
         case .date:
-            guard let date = DateFormatter.walletDate.date(from: value) else { return false }
-            return DateFormatter.walletDate.string(from: date) == value
+            return parsedDate(value) != nil
         case .currency, .number:
             return value.range(of: #"^[+-]?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)$"#, options: .regularExpression) != nil
         default: return true
         }
     }
 
+    static let colorFields = ["Card color", "Background color", "Text color", "Label color"]
+
+    func parsedDate(_ raw: String) -> Date? {
+        WalletDateFormat.iso.parse(raw) ?? (dateFormat ?? .iso).parse(raw)
+    }
+
+    func display(_ raw: String, currency: String) -> String {
+        if kind == .date, let date = parsedDate(raw) { return (dateFormat ?? .iso).formatter.string(from: date) }
+        if kind == .currency, accepts(raw), let amount = Decimal(string: raw, locale: Locale(identifier: "en_US_POSIX")) {
+            return amount.formatted(.currency(code: currency))
+        }
+        return raw
+    }
+
     static func suggested(section: WalletSection, category: String) -> [Self] {
         let base: [String]
         switch section {
-        case .cards: base = ["Number", "Issuer", "Network"]
-        case .passes: base = ["Organization", "Description"]
-        case .identities: base = ["Document number", "Issuing authority"]
+        case .cards: base = ["Number", "Issuer", "Network", "Card color"]
+        case .passes: base = ["Organization", "Description", "Event date", "Background color", "Text color", "Label color"]
+        case .identities: base = ["Document number", "Issuing authority", "Card color"]
         }
         let extra: [String]
         switch category.lowercased() {
@@ -37,14 +74,18 @@ extension FieldDefinition {
         case "debit", "prepaid": extra = ["Cardholder", "Balance"]
         case "gift card": extra = ["Recipient", "Balance", "Purchase date"]
         case "library": extra = ["Borrower name", "Borrower number", "Library branch"]
-        case "loyalty", "membership": extra = ["Member name", "Member number", "Tier", "Points", "Member since"]
-        case "passport", "national id", "residence card": extra = ["Date of birth", "Nationality", "Issuing country", "Issue date"]
+        case "loyalty", "store card": extra = ["Member name", "Member number", "Tier", "Points"]
+        case "membership": extra = ["Member name", "Member number", "Membership level", "Member since"]
+        case "gym": extra = ["Member name", "Member number", "Home club", "Plan", "Member since"]
+        case "residence card": extra = ["Nationality", "Residence status", "Issuing country", "Issue date"]
+        case "passport", "national id": extra = ["Date of birth", "Nationality", "Issuing country", "Issue date"]
         case "driver's license": extra = ["Date of birth", "License class", "Issue date"]
         case "health insurance": extra = ["Insurer", "Policy number", "Group number"]
         case "employee id": extra = ["Employer", "Department", "Job title"]
         case "student id": extra = ["Institution", "Course", "Academic year"]
-        case "boarding pass", "transit": extra = ["Passenger", "From", "To", "Flight number", "Terminal", "Gate", "Seat", "Booking reference"]
-        case "event": extra = ["Venue", "Section", "Row", "Seat", "Booking reference"]
+        case "transit": extra = ["From", "To", "Service number", "Zone", "Ticket class"]
+        case "boarding pass": extra = ["Passenger", "From", "To", "Flight number", "Terminal", "Gate", "Seat", "Travel class", "Booking reference"]
+        case "event", "event ticket", "concert", "sports": extra = ["Venue", "Section", "Row", "Seat", "Booking reference"]
         case "reservation": extra = ["Location", "Guest name", "Booking reference", "Guests", "Check-out date"]
         case "parking": extra = ["Vehicle registration", "Location", "Space"]
         case "coupon": extra = ["Offer", "Minimum spend", "Redemption code"]

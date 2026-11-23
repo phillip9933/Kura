@@ -35,3 +35,36 @@ enum PhoneUnlock {
         UserDefaults.standard.set(value, forKey: flag)
     }
 }
+
+enum PasscodeUnlock {
+    static var enabled: Bool { UserDefaults.standard.bool(forKey: "passcode-unlock-only") }
+    private static var identity: [CFString: Any] {
+        [kSecClass: kSecClassGenericPassword, kSecAttrService: "app.kura.iphone.vault", kSecAttrAccount: "passcode-unlock-v1"]
+    }
+
+    static func read(context: LAContext) throws -> SymmetricKey {
+        var query = identity
+        query[kSecReturnData] = true
+        query[kSecUseAuthenticationContext] = context
+        var result: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+              let bytes = result as? Data, bytes.count == 32 else { throw WalletError.keyUnavailable }
+        return SymmetricKey(data: bytes)
+    }
+
+    static func configure(_ enabled: Bool, verifiedKey: SymmetricKey) throws {
+        if enabled {
+            guard let control = SecAccessControlCreateWithFlags(nil, kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly, .devicePasscode, nil)
+            else { throw WalletError.keyUnavailable }
+            var query = identity
+            query[kSecAttrAccessControl] = control
+            query[kSecValueData] = verifiedKey.withUnsafeBytes { Data($0) }
+            let status = SecItemAdd(query as CFDictionary, nil)
+            guard status == errSecSuccess || status == errSecDuplicateItem else { throw WalletError.keyUnavailable }
+        } else {
+            let status = SecItemDelete(identity as CFDictionary)
+            guard status == errSecSuccess || status == errSecItemNotFound else { throw WalletError.keyUnavailable }
+        }
+        UserDefaults.standard.set(enabled, forKey: "passcode-unlock-only")
+    }
+}

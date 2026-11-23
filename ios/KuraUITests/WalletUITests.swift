@@ -1,4 +1,7 @@
 import XCTest
+#if targetEnvironment(simulator)
+import notify
+#endif
 
 /// Run on the suite's clean simulator with default authentication preferences.
 final class WalletUITests: XCTestCase {
@@ -36,6 +39,107 @@ final class WalletUITests: XCTestCase {
         app.launch()
         assertLocked(app)
     }
+
+    #if targetEnvironment(simulator)
+    @MainActor
+    func testCreateFavoriteAndReopenAfterRealSimulatorAuthentication() throws {
+        // These simulator notifications correspond to Features > Face ID in Simulator.app.
+        let enrollment = "com.apple.BiometricKit.enrollmentChanged"
+        var token: Int32 = 0
+        XCTAssertEqual(notify_register_check(enrollment, &token), 0)
+        defer { notify_cancel(token) }
+        var previous: UInt64 = 0
+        XCTAssertEqual(notify_get_state(token, &previous), 0)
+        defer {
+            notify_set_state(token, previous)
+            notify_post(enrollment)
+        }
+        XCTAssertEqual(notify_set_state(token, 1), 0)
+        XCTAssertEqual(notify_post(enrollment), 0)
+
+        let app = XCUIApplication()
+        app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        try unlockWithBiometrics(app)
+        let name = "Library " + String(UUID().uuidString.prefix(8))
+        app.navigationBars.buttons["Add"].tap()
+        app.buttons["Add item"].tap()
+        let field = app.textFields["Name"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.tap()
+        field.typeText(name)
+        app.navigationBars.buttons["Save"].tap()
+
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 8))
+        row.tap()
+        let favorite = app.buttons["Add to favorites"]
+        reveal(favorite, in: app)
+        favorite.tap()
+        XCTAssertTrue(app.buttons["Remove from favorites"].waitForExistence(timeout: 5))
+
+        app.terminate()
+        app.launch()
+        assertLocked(app)
+        try unlockWithBiometrics(app)
+        XCTAssertTrue(row.waitForExistence(timeout: 8))
+        row.tap()
+        reveal(app.buttons["Remove from favorites"], in: app)
+
+        // Remove only the record created by this test.
+        let delete = app.buttons["Delete item"]
+        reveal(delete, in: app)
+        delete.tap()
+        let confirmation = app.sheets.buttons["Delete item"]
+        if confirmation.waitForExistence(timeout: 2) { confirmation.tap() }
+        else { app.alerts.buttons["Delete item"].tap() }
+        XCTAssertTrue(app.navigationBars["Cards"].waitForExistence(timeout: 5))
+        XCTAssertFalse(row.exists)
+    }
+
+    @MainActor
+    private func unlockWithBiometrics(_ app: XCUIApplication) throws {
+        let unlock = app.buttons["Unlock wallet"]
+        XCTAssertTrue(unlock.waitForExistence(timeout: 5))
+        unlock.tap()
+        let timer = DispatchSource.makeTimerSource(queue: .global(qos: .userInitiated))
+        timer.schedule(deadline: .now() + .milliseconds(250), repeating: .milliseconds(500))
+        timer.setEventHandler {
+            notify_post("com.apple.BiometricKit_Sim.pearl.match")
+            notify_post("com.apple.BiometricKit_Sim.fingerTouch.match")
+        }
+        timer.resume()
+        defer { timer.cancel() }
+
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let deadline = Date().addingTimeInterval(25)
+        let cards = app.navigationBars["Cards"]
+        while Date() < deadline {
+            if cards.exists { return }
+            let facePermission = springboard.alerts.containing(
+                NSPredicate(format: "label CONTAINS[c] %@", "Face ID")
+            ).firstMatch
+            if facePermission.exists {
+                let approval = facePermission.buttons.matching(NSPredicate(format: "label IN %@", ["Allow", "OK"])).firstMatch
+                if approval.exists { approval.tap() }
+            }
+            if app.staticTexts["Set a device passcode in Settings to use Kura."].exists {
+                throw XCTSkip("This simulator reports LAError.passcodeNotSet. The unlocked journey requires device-owner authentication and a passcode-protected Keychain.")
+            }
+            if cards.waitForExistence(timeout: 0.5) { return }
+        }
+        XCTFail("Simulator biometric authentication did not open the wallet. Screen hierarchy: " + app.debugDescription)
+    }
+
+    @MainActor
+    private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
+        for _ in 0..<8 {
+            if element.exists && element.isHittable { return }
+            app.swipeUp()
+        }
+        XCTAssertTrue(element.isHittable)
+    }
+    #endif
 
     @MainActor
     private func assertLocked(_ app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {

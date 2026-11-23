@@ -334,6 +334,16 @@
       isa = PBXBuildFile;
       fileRef = 69FAFAE065C3F65D8BE55139;
     };
+    75E8C904651C093773DEF3CB = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = WalletNavigation.swift;
+      sourceTree = "<group>";
+    };
+    FDD35D9795E4B945F800AE72 = {
+      isa = PBXBuildFile;
+      fileRef = 75E8C904651C093773DEF3CB;
+    };
     52D433F03407DCB977317061 = {
       isa = PBXFileReference;
       lastKnownFileType = sourcecode.swift;
@@ -363,6 +373,16 @@
     E15E98F90135D39D8837BDB4 = {
       isa = PBXBuildFile;
       fileRef = 4D992D4A13BC6149E6E2C066;
+    };
+    D492DC4A214CED3184AF55E3 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = WalletTile.swift;
+      sourceTree = "<group>";
+    };
+    63BF32C07519CF5C4B2E9D20 = {
+      isa = PBXBuildFile;
+      fileRef = D492DC4A214CED3184AF55E3;
     };
     17D6301DD9037164007DFE58 = {
       isa = PBXGroup;
@@ -400,9 +420,12 @@
         80609FC20C1E96BAF720646A,
         86CB20F51EC85D2E4BE139FE,
         69FAFAE065C3F65D8BE55139,
+        75E8C904651C093773DEF3CB,
         52D433F03407DCB977317061,
         B6A226D6852F74EDF2E924F8,
-        4D992D4A13BC6149E6E2C066
+        4D992D4A13BC6149E6E2C066,
+        D492DC4A214CED3184AF55E3,
+        B78709A3FF4E29187C215D63
       );
       sourceTree = "<group>";
       path = Kura;
@@ -467,6 +490,16 @@
       isa = PBXBuildFile;
       fileRef = C7D854CE7525552FB01508F8;
     };
+    45870640DAFD71D8F01EDF11 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = WalletTileTests.swift;
+      sourceTree = "<group>";
+    };
+    6AB9D4CAC326580D2BC33879 = {
+      isa = PBXBuildFile;
+      fileRef = 45870640DAFD71D8F01EDF11;
+    };
     6A35BFF03CF068C92316E049 = {
       isa = PBXGroup;
       children = (
@@ -475,7 +508,8 @@
         0E71DAC2FAD8DB2817B131E5,
         647ED20F541C294A741BBB27,
         07E7D157CF7F42F456BD09FC,
-        C7D854CE7525552FB01508F8
+        C7D854CE7525552FB01508F8,
+        45870640DAFD71D8F01EDF11
       );
       sourceTree = "<group>";
       path = KuraTests;
@@ -514,6 +548,16 @@
       sourceTree = "<group>";
       name = Products;
     };
+    B78709A3FF4E29187C215D63 = {
+      isa = PBXFileReference;
+      lastKnownFileType = folder.assetcatalog;
+      path = Assets.xcassets;
+      sourceTree = "<group>";
+    };
+    EAA2301FC3CF34A5AEB786D6 = {
+      isa = PBXBuildFile;
+      fileRef = B78709A3FF4E29187C215D63;
+    };
     55701A53403CC5A57D7D4172 = {
       isa = PBXFileReference;
       lastKnownFileType = text;
@@ -524,6 +568,16 @@
       isa = PBXBuildFile;
       fileRef = 55701A53403CC5A57D7D4172;
     };
+    1FDD75A30AD45C476434927E = {
+      isa = PBXFileReference;
+      lastKnownFileType = text;
+      path = "Kura/LICENSE-ZIPFoundation.txt";
+      sourceTree = SOURCE_ROOT;
+    };
+    1256C4D484242DF9BA011A6C = {
+      isa = PBXBuildFile;
+      fileRef = 1FDD75A30AD45C476434927E;
+    };
     CAF85B0888D78F1F83771A07 = {
       isa = PBXGroup;
       children = (
@@ -532,6 +586,7 @@
         BDF04F4A46D1AEC52B35B336,
         B525ACF5742866EE9F2C92CE,
         55701A53403CC5A57D7D4172,
+        1FDD75A30AD45C476434927E,
         4EDC8BFAFC6BD936B849F38C
       );
       sourceTree = "<group>";
@@ -581,6 +636,7 @@
     AF785743D44FCAAE33C991DA = {
       isa = XCBuildConfiguration;
       buildSettings = {
+        ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
         PRODUCT_NAME = Kura;
         PRODUCT_BUNDLE_IDENTIFIER = app.kura.iphone.development;
         GENERATE_INFOPLIST_FILE = YES;
@@ -602,6 +658,7 @@
     DE3967B6D22FCA8685A60449 = {
       isa = XCBuildConfiguration;
       buildSettings = {
+        ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
         PRODUCT_NAME = Kura;
         PRODUCT_BUNDLE_IDENTIFIER = app.kura.iphone.development;
         GENERATE_INFOPLIST_FILE = YES;
@@ -707,9 +764,11 @@
         D824734EEE2429E97AC7BEE9,
         D0326A4A062177F5D018451D,
         EAF1A7C876093D74CF42C772,
+        FDD35D9795E4B945F800AE72,
         A0AC8C8BDF638973D00F6D35,
         6AF102347E7E2279D01E9BD8,
-        E15E98F90135D39D8837BDB4
+        E15E98F90135D39D8837BDB4,
+        63BF32C07519CF5C4B2E9D20
       );
       runOnlyForDeploymentPostprocessing = 0;
     };
@@ -726,7 +785,9 @@
       isa = PBXResourcesBuildPhase;
       buildActionMask = 2147483647;
       files = (
-        9814E13B80D73E1CD60418D3
+        9814E13B80D73E1CD60418D3,
+        1256C4D484242DF9BA011A6C,
+        EAA2301FC3CF34A5AEB786D6
       );
       runOnlyForDeploymentPostprocessing = 0;
     };
@@ -770,7 +831,8 @@
         EAF2B0EDCB7E7C705034F220,
         9E26B63DCD067656FBCE0997,
         38E0113D1B8C0FD60DB93840,
-        436DD2CB8B786C4BC01B5DCA
+        436DD2CB8B786C4BC01B5DCA,
+        6AB9D4CAC326580D2BC33879
       );
       runOnlyForDeploymentPostprocessing = 0;
     };

@@ -5,6 +5,8 @@ struct WalletSettings: View {
     @Environment(\.dismiss) private var dismiss
     @State private var prefs: WalletPreferences
     @State private var confirmPhone = false
+    @State private var confirmErase = false
+    @State private var renames: [CategoryChange] = []
     @State private var error: String?
     @State private var authenticating = false
     private let token: UUID
@@ -18,10 +20,21 @@ struct WalletSettings: View {
     var body: some View {
         Form {
             Section("Data and security") {
+                NavigationLink("Archive") { WalletArchive(wallet: wallet) }
                 NavigationLink("Backup and recovery") { BackupView(wallet: wallet) }
                 Button(PhoneUnlock.enabled ? "Require app authentication" : "Use phone unlock only") {
                     if PhoneUnlock.enabled { changeAuth(false) } else { confirmPhone = true }
                 }.disabled(authenticating)
+                if !PhoneUnlock.enabled {
+                    Toggle("Use biometrics when available", isOn: Binding(get: { !PasscodeUnlock.enabled }, set: { useBiometrics in
+                        Task {
+                            authenticating = true
+                            defer { authenticating = false }
+                            do { try await wallet.changePasscodeOnly(!useBiometrics, generation: token) }
+                            catch is CancellationError {} catch { self.error = "The authentication preference was not changed." }
+                        }
+                    })).disabled(authenticating)
+                }
                 Picker("Lock after leaving Kura", selection: $prefs.lockDelay) {
                     ForEach([0, 15, 30, 60, 120, 300], id: \.self) { value in
                         Text(value == 0 ? "Immediately" : "\(value) seconds").tag(value)
@@ -29,11 +42,12 @@ struct WalletSettings: View {
                 }
             }
             Section("Display and navigation") {
+                NavigationLink("Navigation and layout") { NavigationSettings(prefs: $prefs) }
                 Picker("Appearance", selection: $prefs.appearance) {
                     ForEach(["System", "Light", "Dark"], id: \.self) { Text($0) }
                 }
                 Picker("Start section", selection: $prefs.startSection) {
-                    ForEach(WalletSection.allCases) { Text($0.rawValue).tag($0) }
+                    ForEach(prefs.layout.visible) { Text($0.rawValue).tag($0) }
                 }
                 Toggle("Grid view", isOn: $prefs.useGrid)
                 Toggle("Favorites first", isOn: $prefs.favoritesFirst)
@@ -48,12 +62,16 @@ struct WalletSettings: View {
             }
             Section("Categories and fields") {
                 ForEach(WalletSection.allCases) { section in
-                    NavigationLink(section.rawValue) { SectionSettings(section: section, prefs: $prefs) }
+                    NavigationLink(section.rawValue) { SectionSettings(section: section, prefs: $prefs, renames: $renames) }
                 }
             }
             Section("About") {
                 LabeledContent("Kura for iPhone", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")
+                Link("Source and issue tracker", destination: URL(string: "https://github.com/phillip9933/Kura")!)
                 NavigationLink("Open-source notices") { LicenseView() }
+            }
+            Section {
+                Button("Erase local wallet", role: .destructive) { confirmErase = true }
             }
             if let error { Text(error) }
         }.navigationTitle("Settings").disabled(wallet.saving)
@@ -63,12 +81,19 @@ struct WalletSettings: View {
                     do {
                         prefs.currency = prefs.currency.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
                         try prefs.validate()
-                        try await wallet.preferences(prefs, generation: token)
+                        try await wallet.preferences(prefs, generation: token, renames: renames)
                         dismiss()
                     } catch is CancellationError {} catch { self.error = "Check your settings and try again." }
                 }
             }
         }
+        .alert("Erase this wallet and its local recovery copies?", isPresented: $confirmErase) {
+            Button("Cancel", role: .cancel) {}
+            Button("Erase wallet", role: .destructive) { Task {
+                do { try await wallet.eraseWallet(generation: token) }
+                catch is CancellationError {} catch { self.error = "Kura could not finish erasing the wallet." }
+            } }
+        } message: { Text("You must authenticate to continue. Backups saved to Files will remain available.") }
         .confirmationDialog("Use phone unlock only?", isPresented: $confirmPhone, titleVisibility: .visible) {
             Button("Use phone unlock") { changeAuth(true) }
         } message: { Text("Anyone with access to this unlocked iPhone will be able to open your wallet.") }
@@ -87,6 +112,9 @@ struct WalletSettings: View {
 private struct SectionSettings: View {
     let section: WalletSection
     @Binding var prefs: WalletPreferences
+    @Binding var renames: [CategoryChange]
+    @State private var renameFrom: String?
+    @State private var renamed = ""
     @State private var category = ""
     @State private var newField = ""
     @State private var kind = FieldKind.text
@@ -94,8 +122,15 @@ private struct SectionSettings: View {
     private var key: String { section.rawValue }
     var body: some View {
         Form {
+            Section("Display") {
+                Toggle("Show front image in grid", isOn: Binding(get: { prefs.layout.frontImage[key] ?? true },
+                    set: { prefs.layout.frontImage[key] = $0 }))
+                if section == .passes { Toggle("Offer upcoming passes", isOn: $prefs.layout.showUpcoming) }
+            }
             Section("Categories") {
-                ForEach(prefs.categories(for: section), id: \.self) { name in Text(name) }
+                ForEach(prefs.categories(for: section), id: \.self) { name in
+                    Button(name) { renameFrom = name; renamed = name }
+                }
                     .onDelete { offsets in
                         var names = prefs.categories(for: section); names.remove(atOffsets: offsets); prefs.categories[key] = names
                     }
@@ -136,6 +171,19 @@ private struct SectionSettings: View {
             }
             if let message { Text(message) }
         }.navigationTitle(section.rawValue).toolbar { EditButton() }
+        .alert("Rename category", isPresented: Binding(get: { renameFrom != nil }, set: { if !$0 { renameFrom = nil } })) {
+            TextField("Category name", text: $renamed)
+            Button("Cancel", role: .cancel) { renameFrom = nil }
+            Button("Rename") {
+                guard let old = renameFrom else { return }
+                let replacement = clean(renamed)
+                let names = prefs.categories(for: section)
+                guard valid(replacement, among: names.filter { $0 != old }) else { return }
+                prefs.categories[key] = names.map { $0 == old ? replacement : $0 }
+                renames.append(CategoryChange(section: section, old: old, new: replacement))
+                renameFrom = nil
+            }
+        }
     }
 
     private func clean(_ name: String) -> String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -152,8 +200,9 @@ private struct SectionSettings: View {
 private struct LicenseView: View {
     var body: some View {
         ScrollView {
-            Text(verbatim: (try? Bundle.main.url(forResource: "Notices", withExtension: "txt")
-                .map { try String(contentsOf: $0, encoding: .utf8) }) ?? "Notices unavailable.")
+            Text(verbatim: ["Notices", "LICENSE-ZIPFoundation"].compactMap { name in
+                Bundle.main.url(forResource: name, withExtension: "txt").flatMap { try? String(contentsOf: $0, encoding: .utf8) }
+            }.joined(separator: "\n\n"))
                 .frame(maxWidth: .infinity, alignment: .leading).padding()
         }.navigationTitle("Notices")
     }

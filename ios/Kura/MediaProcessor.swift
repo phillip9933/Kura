@@ -113,7 +113,8 @@ enum MediaProcessor {
         return output
     }
 
-    static func jpeg(_ image: CGImage) throws -> Data {
+    static func jpeg(_ image: CGImage) async throws -> Data {
+        try Task.checkCancellation()
         let bytes = NSMutableData()
         guard let writer = CGImageDestinationCreateWithData(bytes, UTType.jpeg.identifier as CFString, 1, nil)
         else { throw WalletMediaError.invalidImage }

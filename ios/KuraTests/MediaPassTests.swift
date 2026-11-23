@@ -1,4 +1,6 @@
-import CryptoKit
+import CoreImage
+import ImageIO
+import UniformTypeIdentifiers
 import SwiftUI
 import XCTest
 @testable import Kura
@@ -81,6 +83,34 @@ final class MediaPassTests: XCTestCase {
         XCTAssertEqual(PhotoCrop(shape: .original).rect(in: bounds), bounds)
     }
 
+    func testCroppedPhotoHonorsOrientationAndDropsSourceMetadata() async throws {
+        let extent = CGRect(x: 0, y: 0, width: 180, height: 100)
+        let pixels = CIImage(color: CIColor(red: 0, green: 0.5, blue: 1)).cropped(to: extent)
+        let source = try XCTUnwrap(CIContext().createCGImage(pixels, from: extent))
+        let file = NSMutableData()
+        let writer = try XCTUnwrap(CGImageDestinationCreateWithData(file, UTType.jpeg.identifier as CFString, 1, nil))
+        let metadata: [CFString: Any] = [
+            kCGImagePropertyOrientation: 6,
+            kCGImagePropertyTIFFDictionary: [kCGImagePropertyTIFFArtist: "Synthetic Artist"],
+            kCGImagePropertyGPSDictionary: [kCGImagePropertyGPSLatitude: 1.0, kCGImagePropertyGPSLatitudeRef: "N"]
+        ]
+        CGImageDestinationAddImage(writer, source, metadata as CFDictionary)
+        XCTAssertTrue(CGImageDestinationFinalize(writer))
+
+        let oriented = try MediaProcessor.thumbnail(file as Data)
+        XCTAssertEqual(oriented.width, 100)
+        XCTAssertEqual(oriented.height, 180)
+        let crop = PhotoCrop(shape: .square, zoom: 2, autoAlign: false)
+        let image = try await MediaProcessor.cropped(PreparedPhoto(original: oriented, aligned: nil), using: crop)
+        XCTAssertEqual(image.width, 50)
+        XCTAssertEqual(image.height, 50)
+        let encoded = try await MediaProcessor.jpeg(image)
+        let result = try WalletMedia.imageSource(encoded)
+        let properties = try XCTUnwrap(CGImageSourceCopyPropertiesAtIndex(result, 0, nil) as? [CFString: Any])
+        XCTAssertNil(properties[kCGImagePropertyGPSDictionary])
+        XCTAssertNil((properties[kCGImagePropertyTIFFDictionary] as? [CFString: Any])?[kCGImagePropertyTIFFArtist])
+    }
+
     func testAngledCropNeverExposesCornersOutsideSource() {
         let bounds = CGRect(x: 0, y: 0, width: 1600, height: 901)
         for shape in CropShape.allCases {
@@ -100,6 +130,16 @@ final class MediaPassTests: XCTestCase {
                 }
             }
         }
+    }
+
+    func testPassIdentitySurvivesImportFromDataSlice() throws {
+        let json = try document("Entry", additions: ["passTypeIdentifier": "pass.example.club", "serialNumber": "001"])
+        let archive = try PassArchive.pack(["pass.json": json])
+        let slice = (Data([0xff]) + archive).dropFirst()
+        XCTAssertNotEqual(slice.startIndex, 0)
+        let pass = try XCTUnwrap(PassImport.parse(slice).first)
+        XCTAssertEqual(pass.appearance.passTypeIdentifier, "pass.example.club")
+        XCTAssertEqual(pass.serialNumber, "001")
     }
 
     func testRelevantAndExpirationDatesAreIndependent() throws {

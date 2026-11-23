@@ -18,6 +18,7 @@ private struct PhotoDraft: Identifiable {
     let id = UUID()
     let slot: WalletImageSlot
     let bytes: Data
+    var source: MediaCaptureRequest.Source?
 }
 
 struct MediaCaptureRequest: Identifiable {
@@ -40,11 +41,12 @@ struct MediaEditor: View {
     @State private var requestingCamera = false
     @State private var capturing = false
     @State private var pendingPhoto: PhotoDraft?
+    @State private var repeatCapture: MediaCaptureRequest?
     @State private var draft: PhotoDraft?
     @State private var importingFile = false
     @State private var attachmentURL: URL?
     @State private var errorMessage: String?
-    @State private var removedImages: [WalletImageSlot: Data] = [:]
+    @State private var previousImages: [WalletImageSlot: Data] = [:]
 
     init(media: Binding<WalletMedia>, ocrFields: [String: String],
          applyOCR: @escaping ([String: String]) -> Void, imagesEditable: Bool = true,
@@ -77,7 +79,7 @@ struct MediaEditor: View {
                     throw WalletMediaError.invalidImage
                 }
                 try Task.checkCancellation()
-                draft = PhotoDraft(slot: slot, bytes: value.bytes)
+                draft = PhotoDraft(slot: slot, bytes: value.bytes, source: .photo)
             } catch is CancellationError { return } catch { errorMessage = "Kura could not read this photo." }
             picked = nil
         }
@@ -98,18 +100,27 @@ struct MediaEditor: View {
         }) {
             MediaCamera { result in
                 switch result {
-                case .success(let bytes): pendingPhoto = PhotoDraft(slot: selectedSlot, bytes: bytes)
+                case .success(let bytes): pendingPhoto = PhotoDraft(slot: selectedSlot, bytes: bytes, source: .camera)
                 case .failure(let error): errorMessage = error.localizedDescription
                 case nil: break
                 }
                 capturing = false
             }.ignoresSafeArea()
         }
-        .sheet(item: $draft) { draft in
-            MediaCropView(bytes: draft.bytes, slot: draft.slot, fields: ocrFields) { image, suggestion in
+        .sheet(item: $draft, onDismiss: {
+            guard let request = repeatCapture else { return }
+            repeatCapture = nil
+            selectedSlot = request.slot
+            if request.source == .camera { requestingCamera = true } else { selectingPhoto = true }
+        }) { draft in
+            MediaCropView(bytes: draft.bytes, slot: draft.slot, fields: ocrFields,
+                          source: draft.source, requestAnother: {
+                if let source = draft.source { repeatCapture = MediaCaptureRequest(slot: draft.slot, source: source) }
+            }) { image, suggestion in
                 do {
+                    let previous = media[draft.slot]
                     try media.replace(draft.slot, with: image)
-                    removedImages.removeValue(forKey: draft.slot)
+                    previousImages[draft.slot] = previous
                     applyOCR(suggestion.filter {
                         ocrFields[$0.key]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == true
                     })
@@ -150,14 +161,15 @@ struct MediaEditor: View {
                             Button("Remove image", role: .destructive) {
                                 do {
                                     try media.replace(slot, with: nil)
-                                    removedImages[slot] = bytes
+                                    previousImages[slot] = bytes
                                 } catch { errorMessage = error.localizedDescription }
                             }
-                        } else if let bytes = removedImages[slot] {
-                            Button("Undo removal") {
+                        }
+                        if let bytes = previousImages[slot] {
+                            Button(media[slot] == nil ? "Undo removal" : "Undo image change") {
                                 do {
                                     try media.replace(slot, with: bytes)
-                                    removedImages.removeValue(forKey: slot)
+                                    previousImages.removeValue(forKey: slot)
                                 } catch { errorMessage = error.localizedDescription }
                             }
                         }
@@ -186,7 +198,7 @@ struct MediaEditor: View {
 
     }
 
-    private static func readAttachment(_ url: URL) async throws -> WalletAttachment {
+    nonisolated private static func readAttachment(_ url: URL) async throws -> WalletAttachment {
         try WalletAttachment(name: url.lastPathComponent, bytes: WalletMedia.read(url))
     }
 }
