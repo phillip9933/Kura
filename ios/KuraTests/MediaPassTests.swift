@@ -81,6 +81,37 @@ final class MediaPassTests: XCTestCase {
         XCTAssertEqual(PhotoCrop(shape: .original).rect(in: bounds), bounds)
     }
 
+    func testAngledCropNeverExposesCornersOutsideSource() {
+        let bounds = CGRect(x: 0, y: 0, width: 1600, height: 901)
+        for shape in CropShape.allCases {
+            for angle in [CGFloat(-45), -17, 23, 45] {
+                for x in [CGFloat(-1), 1] {
+                    for y in [CGFloat(-1), 1] {
+                        let crop = PhotoCrop(shape: shape, x: x, y: y, angleDegrees: angle)
+                        let rect = crop.rect(in: bounds)
+                        let inverse = CGAffineTransform(rotationAngle: -angle * .pi / 180)
+                        for cx in [rect.minX, rect.maxX] {
+                            for cy in [rect.minY, rect.maxY] {
+                                let point = CGPoint(x: cx, y: cy).applying(inverse)
+                                XCTAssertTrue(bounds.insetBy(dx: -0.001, dy: -0.001).contains(point))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    func testRelevantAndExpirationDatesAreIndependent() throws {
+        let json = try document("Reserved seat", additions: [
+            "relevantDate": "2030-09-21T19:00:00+09:00", "expirationDate": "2030-09-22T03:00:00.125Z"
+        ])
+        let item = try XCTUnwrap(PassImport.parse(PassArchive.pack(["pass.json": json])).first)
+        let start = try XCTUnwrap(item.appearance.relevantDate)
+        let expiry = try XCTUnwrap(item.expires)
+        XCTAssertEqual(expiry.timeIntervalSince(start), 17 * 3600 + 0.125, accuracy: 0.001)
+    }
+
     func testFieldRecognitionRequiresUniqueLabelledValueAndPreservesZeros() {
         let fields = ["Member number": "", "Member name": "Already filled", "Expiry": "", "Email": ""]
         let lines = ["会 員 番 号：00013", "Name: Example", "Expires: 2030-01", "Expires: 2031-09", "untagged"]

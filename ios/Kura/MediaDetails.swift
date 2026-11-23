@@ -129,3 +129,71 @@ private struct MediaPDF: UIViewRepresentable {
     }
     func updateUIView(_ view: PDFView, context: Context) {}
 }
+
+struct MediaMissingSlots: View {
+    let card: WalletCard
+    let save: (WalletCard, WalletMedia) async throws -> Void
+    @State private var request: MediaCaptureRequest?
+
+    var body: some View {
+        if card.passStyle == nil {
+            ForEach([WalletImageSlot.front, .back]) { slot in
+                if card.media[slot] == nil {
+                    Menu {
+                        Button("Choose photo") { request = MediaCaptureRequest(slot: slot, source: .photo) }
+                        Button("Take photo") { request = MediaCaptureRequest(slot: slot, source: .camera) }
+                    } label: {
+                        Label("Add " + slot.title.lowercased() + " image", systemImage: "photo.badge.plus")
+                    }
+                }
+            }
+            .sheet(item: $request) { item in
+                MissingImageEditor(card: card, request: item, save: save)
+            }
+        }
+    }
+}
+
+private struct MissingImageEditor: View {
+    let card: WalletCard
+    let request: MediaCaptureRequest
+    let save: (WalletCard, WalletMedia) async throws -> Void
+    @State private var media: WalletMedia
+    @State private var saving = false
+    @State private var errorMessage: String?
+    @Environment(\.dismiss) private var dismiss
+
+    init(card: WalletCard, request: MediaCaptureRequest, save: @escaping (WalletCard, WalletMedia) async throws -> Void) {
+        self.card = card
+        self.request = request
+        self.save = save
+        _media = State(initialValue: card.media)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                MediaEditor(media: $media, ocrFields: [:], applyOCR: { _ in }, initialCapture: request)
+                if let errorMessage { Text(errorMessage) }
+            }
+            .navigationTitle("Add " + request.slot.title.lowercased() + " image")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save image") { saving = true }.disabled(media[request.slot] == nil || saving)
+                }
+            }
+            .disabled(saving)
+            .interactiveDismissDisabled(saving)
+            .task(id: saving) {
+                guard saving else { return }
+                do {
+                    try await save(card, media)
+                    try Task.checkCancellation()
+                    dismiss()
+                } catch is CancellationError { return } catch { errorMessage = "Kura could not save this image. Try again." }
+                saving = false
+            }
+        }
+    }
+}

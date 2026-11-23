@@ -1,7 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-private struct EncryptedBackupDocument: FileDocument {
+struct EncryptedBackupDocument: FileDocument {
     static let readableContentTypes: [UTType] = [.data]
     let bytes: Data
 
@@ -21,6 +21,7 @@ struct BackupView: View {
     private enum PickerPurpose { case restore, automaticFolder }
     @ObservedObject var wallet: WalletSession
     @ObservedObject private var automatic = BackupAutomatic.shared
+    @State private var viewGeneration: UUID?
     @State private var password = ""
     @State private var confirmation = ""
     @State private var autoPassword = ""
@@ -83,6 +84,7 @@ struct BackupView: View {
                 }.disabled(autoPassword.count < 8 || autoPassword != autoConfirmation || busy)
                 if BackupAutomatic.configured {
                     Button("Turn off automatic backups") {
+                        guard viewGeneration == wallet.generation else { return }
                         do { try wallet.disableAutomatic() }
                         catch { status = "Kura could not disable automatic backups." }
                     }
@@ -117,7 +119,7 @@ struct BackupView: View {
         }
         .autocorrectionDisabled()
         .navigationTitle("Backup & Storage")
-        .onAppear { refreshRecovery() }
+        .onAppear { viewGeneration = wallet.generation; refreshRecovery() }
         .onDisappear { clearSensitiveState() }
         .onChange(of: wallet.generation) { _ in clearSensitiveState() }
         .fileImporter(isPresented: $showPicker,
@@ -153,7 +155,7 @@ struct BackupView: View {
         } message: { Text("This uses the reviewed copy. The current wallet becomes a recovery copy.") }
         .alert("Delete this recovery copy?", isPresented: $showDelete) {
             Button("Delete copy", role: .destructive) {
-                guard let entry = deleteCandidate, wallet.phase == .unlocked else { return }
+                guard let entry = deleteCandidate, wallet.phase == .unlocked, viewGeneration == wallet.generation else { return }
                 do { try BackupRecovery.remove(entry.id); refreshRecovery() }
                 catch { status = "Kura could not delete the recovery copy." }
                 deleteCandidate = nil
@@ -222,7 +224,7 @@ struct BackupView: View {
     }
 
     private func perform(_ action: @escaping @MainActor (UUID) async throws -> Void) {
-        guard wallet.phase == .unlocked, !busy else { return }
+        guard wallet.phase == .unlocked, viewGeneration == wallet.generation, !busy else { return }
         let generation = wallet.generation
         busy = true
         status = nil
@@ -254,6 +256,7 @@ struct BackupView: View {
         discardPreview()
         pickedBackup = nil
         pickerGeneration = nil
+        viewGeneration = nil
         document = nil
         password = ""
         confirmation = ""

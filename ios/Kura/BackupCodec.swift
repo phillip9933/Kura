@@ -19,7 +19,7 @@ enum BackupError: LocalizedError {
 }
 
 enum BackupCodec {
-    enum Kind: UInt8 { case wallet = 1, item = 2 }
+    enum Kind: UInt8 { case wallet = 1, item = 2, passFile = 3 }
 
     private static let magic = Data("Kura-iOS".utf8)
     private static let saltLength = 16
@@ -62,7 +62,7 @@ enum BackupCodec {
     static func seal(_ plaintext: Data, password: String, kind: Kind) throws -> Data {
         try checkNewPassword(password)
         try Task.checkCancellation()
-        let limit = kind == .wallet ? maximumFileBytes : maximumTransferBytes
+        let limit = kind == .item ? maximumTransferBytes : maximumFileBytes
         let salt = SymmetricKey(size: .bits128).withUnsafeBytes { Data($0) }
         let header = prefix(for: kind) + salt
         guard plaintext.count <= limit - header.count - 28 else { throw BackupError.tooLarge }
@@ -77,7 +77,7 @@ enum BackupCodec {
         try Task.checkCancellation()
         let prefix = prefix(for: kind)
         let offset = prefix.count + saltLength
-        let limit = kind == .wallet ? maximumFileBytes : maximumTransferBytes
+        let limit = kind == .item ? maximumTransferBytes : maximumFileBytes
         guard data.count <= limit else { throw BackupError.tooLarge }
         guard data.count >= offset + 28, data.starts(with: prefix) else { throw BackupError.invalid }
         let header = Data(data.prefix(offset))

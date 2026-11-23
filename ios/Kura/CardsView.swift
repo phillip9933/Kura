@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum WalletRoute: Hashable {
-    case item(UUID), edit(UUID), add(WalletSection), settings, importPass, receive, reorder(WalletSection)
+    case item(UUID), edit(UUID), add(WalletSection), settings, importPass, receive, importEncrypted, reorder(WalletSection)
 }
 
 struct CardsView: View {
@@ -79,6 +79,7 @@ struct CardsView: View {
                     Menu {
                         Button("Add item") { path.append(.add(section)) }
                         Button("Import passes") { path.append(.importPass) }
+                        Button("Import encrypted item") { path.append(.importEncrypted) }
                         Button("Receive secure transfer") { path.append(.receive) }
                     } label: { Label("Add", systemImage: "plus") }
                     Menu {
@@ -111,12 +112,12 @@ struct CardsView: View {
                 case .item(let id): WalletDetail(wallet: wallet, id: id) { path.append(.edit(id)) }
                 case .settings: WalletSettings(wallet: wallet)
                 case .reorder(let target): WalletOrderView(wallet: wallet, section: target)
+                case .importEncrypted: BackupPassImportView(wallet: wallet)
                 case .receive: BackupTransferReceiveView(wallet: wallet)
                 case .importPass: PassImportView { passes in
                     let cards = try passes.map { try $0.makeCard() }
                     try await wallet.importCards(cards, generation: generation)
-                    path.removeAll()
-                    section = .passes
+                    section = cards.first?.section ?? .passes
                 }
                 }
             }

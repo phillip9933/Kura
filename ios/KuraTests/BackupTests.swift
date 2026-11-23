@@ -100,6 +100,20 @@ final class BackupTests: XCTestCase {
         XCTAssertEqual(try BackupCodec.decode(BackupFiles.read(active), password: password), latest)
     }
 
+    func testSingleItemFileKeepsMediaAndCannotReplaceAnEntireWallet() throws {
+        let source = try XCTUnwrap(sample().cards.first)
+        let bytes = try BackupPassFile.encode(source, password: password)
+        let copy = try BackupPassFile.decode(bytes, password: password)
+        XCTAssertNotEqual(copy.id, source.id)
+        XCTAssertEqual(copy.name, source.name)
+        XCTAssertEqual(copy.media, source.media)
+        XCTAssertEqual(copy.fields, source.fields)
+        XCTAssertEqual(copy.section, source.section)
+        XCTAssertThrowsError(try BackupCodec.decode(bytes, password: password))
+        XCTAssertThrowsError(try BackupTransferCodec.open(bytes, password: password))
+        XCTAssertThrowsError(try BackupPassFile.decode(bytes, password: "incorrect"))
+    }
+
     func testTransferHandlesUnorderedDuplicateAndMixedCodesAndOmitsMedia() throws {
         var card = try XCTUnwrap(sample().cards.first)
         card.notes = String(repeating: "synthetic", count: 200)

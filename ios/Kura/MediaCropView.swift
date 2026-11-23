@@ -15,37 +15,38 @@ struct MediaCropView: View {
     @State private var suggestions: [String: String] = [:]
     @State private var selected: Set<String> = []
     @State private var errorMessage: String?
+    @State private var gestureZoom: CGFloat?
+    @State private var gesturePosition: CGPoint?
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    if let rendered {
-                        Image(decorative: rendered, scale: 1).resizable().scaledToFit()
-                            .frame(maxWidth: .infinity, maxHeight: 320)
-                            .accessibilityLabel("Crop preview")
-                    } else if errorMessage == nil {
-                        ProgressView("Preparing image")
+            GeometryReader { geometry in
+                let wide = geometry.size.width > geometry.size.height
+                let layout = wide ? AnyLayout(HStackLayout(alignment: .top)) : AnyLayout(VStackLayout())
+                layout {
+                    preview
+                        .frame(maxWidth: wide ? geometry.size.width * 0.5 : .infinity)
+                        .frame(maxHeight: wide ? .infinity : geometry.size.height * 0.38)
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            if let errorMessage { Text(errorMessage) }
+                            if editingSuggestions { review }
+                            else if photo != nil { controls }
+                            if rendered != nil {
+                                Button(editingSuggestions ? "Apply selected details and use image" : "Use image") {
+                                    guard let rendered, renderedCrop == crop else { return }
+                                    do {
+                                        let chosen = editingSuggestions ? suggestions.filter { selected.contains($0.key) } : [:]
+                                        finish(try MediaProcessor.jpeg(rendered), chosen)
+                                        dismiss()
+                                    } catch { errorMessage = error.localizedDescription }
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(recognizing || renderedCrop != crop)
+                            }
+                        }.padding()
                     }
-                    if let errorMessage { Text(errorMessage) }
-                    if editingSuggestions {
-                        review
-                    } else if photo != nil {
-                        controls
-                    }
-                    if rendered != nil {
-                        Button(editingSuggestions ? "Apply selected details and use image" : "Use image") {
-                            guard let rendered, renderedCrop == crop else { return }
-                            do {
-                                let chosen = editingSuggestions ? suggestions.filter { selected.contains($0.key) } : [:]
-                                finish(try MediaProcessor.jpeg(rendered), chosen)
-                                dismiss()
-                            } catch { errorMessage = error.localizedDescription }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(recognizing || renderedCrop != crop)
-                    }
-                }.padding()
+                }
             }
             .navigationTitle(slot.title + " image")
             .navigationBarTitleDisplayMode(.inline)
@@ -83,6 +84,34 @@ struct MediaCropView: View {
         }
     }
 
+    @ViewBuilder
+    private var preview: some View {
+        if let rendered {
+            GeometryReader { geometry in
+                Image(decorative: rendered, scale: 1).resizable().scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .accessibilityLabel("Crop preview")
+                    .contentShape(Rectangle())
+                    .gesture(DragGesture().onChanged { value in
+                        guard !recognizing, !editingSuggestions else { return }
+                        let start = gesturePosition ?? CGPoint(x: crop.x, y: crop.y)
+                        gesturePosition = start
+                        crop.x = min(1, max(-1, start.x - 2 * value.translation.width / max(1, geometry.size.width)))
+                        crop.y = min(1, max(-1, start.y - 2 * value.translation.height / max(1, geometry.size.height)))
+                    }.onEnded { _ in gesturePosition = nil })
+                    .simultaneousGesture(MagnificationGesture().onChanged { scale in
+                        guard !recognizing, !editingSuggestions else { return }
+                        let start = gestureZoom ?? crop.zoom
+                        gestureZoom = start
+                        crop.zoom = min(4, max(1, start * scale))
+                    }.onEnded { _ in gestureZoom = nil })
+                    .padding(8)
+            }
+        } else if errorMessage == nil {
+            ProgressView("Preparing image").frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
     private struct RenderKey: Equatable {
         let crop: PhotoCrop
         let ready: Bool
@@ -97,6 +126,8 @@ struct MediaCropView: View {
                 Toggle("Correct perspective", isOn: $crop.autoAlign)
             }
             Button("Rotate 90°") { crop.quarterTurns = (crop.quarterTurns + 1) % 4 }
+            Text("Fine rotation: " + String(Int(crop.angleDegrees)) + "°")
+            Slider(value: $crop.angleDegrees, in: -45...45, step: 1).accessibilityLabel("Fine rotation")
             Text("Zoom")
             Slider(value: $crop.zoom, in: 1...4).accessibilityLabel("Zoom")
             Text("Horizontal position")

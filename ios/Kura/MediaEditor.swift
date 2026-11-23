@@ -20,10 +20,20 @@ private struct PhotoDraft: Identifiable {
     let bytes: Data
 }
 
+struct MediaCaptureRequest: Identifiable {
+    enum Source { case photo, camera }
+    let id = UUID()
+    let slot: WalletImageSlot
+    let source: Source
+}
+
 struct MediaEditor: View {
     @Binding var media: WalletMedia
     let ocrFields: [String: String]
     let applyOCR: ([String: String]) -> Void
+    let imagesEditable: Bool
+    let initialCapture: MediaCaptureRequest?
+    @State private var didStart = false
     @State private var picked: PhotosPickerItem?
     @State private var selectedSlot: WalletImageSlot = .front
     @State private var selectingPhoto = false
@@ -36,51 +46,27 @@ struct MediaEditor: View {
     @State private var errorMessage: String?
     @State private var removedImages: [WalletImageSlot: Data] = [:]
 
+    init(media: Binding<WalletMedia>, ocrFields: [String: String],
+         applyOCR: @escaping ([String: String]) -> Void, imagesEditable: Bool = true,
+         initialCapture: MediaCaptureRequest? = nil) {
+        _media = media
+        self.ocrFields = ocrFields
+        self.applyOCR = applyOCR
+        self.imagesEditable = imagesEditable
+        self.initialCapture = initialCapture
+    }
+
     var body: some View {
-        Section("Images") {
-            ForEach(WalletImageSlot.allCases) { slot in
-                HStack {
-                    if let bytes = media[slot] { MediaThumbnail(data: bytes).frame(width: 56, height: 46) }
-                    Text(slot.title)
-                    Spacer()
-                    Menu {
-                        Button("Choose photo") { selectedSlot = slot; selectingPhoto = true }
-                        Button("Take photo") { selectedSlot = slot; requestingCamera = true }
-                        if let bytes = media[slot] {
-                            Button("Adjust crop") { draft = PhotoDraft(slot: slot, bytes: bytes) }
-                            Button("Remove image", role: .destructive) {
-                                do {
-                                    try media.replace(slot, with: nil)
-                                    removedImages[slot] = bytes
-                                } catch { errorMessage = error.localizedDescription }
-                            }
-                        } else if let bytes = removedImages[slot] {
-                            Button("Undo removal") {
-                                do {
-                                    try media.replace(slot, with: bytes)
-                                    removedImages.removeValue(forKey: slot)
-                                } catch { errorMessage = error.localizedDescription }
-                            }
-                        }
-                    } label: {
-                        Label("Edit " + slot.title.lowercased() + " image", systemImage: "pencil")
-                            .labelStyle(.iconOnly)
-                    }
-                }
-            }
+        Group {
+            if imagesEditable { imageSection }
+            if initialCapture == nil { attachmentSection }
+            if let errorMessage { Section { Text(errorMessage) } }
         }
-        Section("Attachments") {
-            ForEach(media.attachments) { attachment in
-                HStack {
-                    Text(attachment.name)
-                    Spacer()
-                    Button(role: .destructive) { media.removeAttachment(attachment.id) } label: {
-                        Label("Remove " + attachment.name, systemImage: "minus.circle").labelStyle(.iconOnly)
-                    }.buttonStyle(.borderless)
-                }
-            }
-            Button("Add attachment") { importingFile = true }
-            if let errorMessage { Text(errorMessage) }
+        .onAppear {
+            guard !didStart, let request = initialCapture else { return }
+            didStart = true
+            selectedSlot = request.slot
+            if request.source == .photo { selectingPhoto = true } else { requestingCamera = true }
         }
         .photosPicker(isPresented: $selectingPhoto, selection: $picked, matching: .images)
         .task(id: picked) {
@@ -147,6 +133,57 @@ struct MediaEditor: View {
             }
             attachmentURL = nil
         }
+    }
+
+    private var imageSection: some View {
+        Section("Images") {
+            ForEach(initialCapture.map { [$0.slot] } ?? WalletImageSlot.allCases) { slot in
+                HStack {
+                    if let bytes = media[slot] { MediaThumbnail(data: bytes).frame(width: 56, height: 46) }
+                    Text(slot.title)
+                    Spacer()
+                    Menu {
+                        Button("Choose photo") { selectedSlot = slot; selectingPhoto = true }
+                        Button("Take photo") { selectedSlot = slot; requestingCamera = true }
+                        if let bytes = media[slot] {
+                            Button("Adjust crop") { draft = PhotoDraft(slot: slot, bytes: bytes) }
+                            Button("Remove image", role: .destructive) {
+                                do {
+                                    try media.replace(slot, with: nil)
+                                    removedImages[slot] = bytes
+                                } catch { errorMessage = error.localizedDescription }
+                            }
+                        } else if let bytes = removedImages[slot] {
+                            Button("Undo removal") {
+                                do {
+                                    try media.replace(slot, with: bytes)
+                                    removedImages.removeValue(forKey: slot)
+                                } catch { errorMessage = error.localizedDescription }
+                            }
+                        }
+                    } label: {
+                        Label("Edit " + slot.title.lowercased() + " image", systemImage: "pencil")
+                            .labelStyle(.iconOnly)
+                    }
+                }
+            }
+        }
+    }
+
+    private var attachmentSection: some View {
+        Section("Attachments") {
+            ForEach(media.attachments) { attachment in
+                HStack {
+                    Text(attachment.name)
+                    Spacer()
+                    Button(role: .destructive) { media.removeAttachment(attachment.id) } label: {
+                        Label("Remove " + attachment.name, systemImage: "minus.circle").labelStyle(.iconOnly)
+                    }.buttonStyle(.borderless)
+                }
+            }
+            Button("Add attachment") { importingFile = true }
+        }
+
     }
 
     private static func readAttachment(_ url: URL) async throws -> WalletAttachment {

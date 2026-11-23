@@ -24,15 +24,26 @@ struct PhotoCrop: Equatable {
     var x: CGFloat = 0
     var y: CGFloat = 0
     var autoAlign = true
+    var angleDegrees: CGFloat = 0
 
     func rect(in bounds: CGRect) -> CGRect {
         let ratio = shape.ratio(bounds)
-        let width = min(bounds.width, bounds.height * ratio) / min(4, max(1, zoom))
+        let angle = angleDegrees * .pi / 180
+        let c = abs(cos(angle)), s = abs(sin(angle))
+        // Inverse-map all four mask corners to the photo. These two inequalities
+        // keep even the most tilted mask fully covered at the pan extremes.
+        let width = min(bounds.width / (c + s / ratio), bounds.height / (s + c / ratio))
+            / min(4, max(1, zoom))
         let height = width / ratio
-        let left = bounds.minX + (bounds.width - width) * (min(1, max(-1, x)) + 1) / 2
-        let bottom = bounds.minY + (bounds.height - height) * (1 - min(1, max(-1, y))) / 2
-        return CGRect(x: left, y: bottom, width: width, height: height)
-            .integral.intersection(bounds)
+        let panWidth = max(0, (bounds.width - c * width - s * height) / 2)
+        let panHeight = max(0, (bounds.height - s * width - c * height) / 2)
+        let center = CGPoint(x: bounds.midX + min(1, max(-1, x)) * panWidth,
+                             y: bounds.midY - min(1, max(-1, y)) * panHeight)
+            .applying(CGAffineTransform(rotationAngle: angle))
+        let left = ceil(center.x - width / 2)
+        let bottom = ceil(center.y - height / 2)
+        return CGRect(x: left, y: bottom, width: max(0, floor(center.x + width / 2) - left),
+                      height: max(0, floor(center.y + height / 2) - bottom))
     }
 }
 
@@ -65,7 +76,12 @@ enum MediaProcessor {
         request.minimumAspectRatio = 0.35
         request.minimumSize = 0.25
         request.maximumObservations = 1
-        try VNImageRequestHandler(cgImage: image, options: [:]).perform([request])
+        do {
+            try VNImageRequestHandler(cgImage: image, options: [:]).perform([request])
+        } catch {
+            try Task.checkCancellation()
+            return PreparedPhoto(original: image, aligned: nil)
+        }
         try Task.checkCancellation()
         guard let rectangle = request.results?.first else { return PreparedPhoto(original: image, aligned: nil) }
         let input = CIImage(cgImage: image)
@@ -91,8 +107,9 @@ enum MediaProcessor {
         let orientation: [CGImagePropertyOrientation] = [.up, .right, .down, .left]
         let input = CIImage(cgImage: source).oriented(orientation[crop.quarterTurns % 4])
         let rect = crop.rect(in: input.extent)
+        let rotated = input.transformed(by: CGAffineTransform(rotationAngle: crop.angleDegrees * .pi / 180))
         guard rect.width >= 1, rect.height >= 1,
-              let output = context.createCGImage(input, from: rect) else { throw WalletMediaError.invalidImage }
+              let output = context.createCGImage(rotated, from: rect) else { throw WalletMediaError.invalidImage }
         return output
     }
 

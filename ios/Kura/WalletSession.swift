@@ -8,20 +8,30 @@ private actor VaultStorage {
         return VaultFile(directory: support.appendingPathComponent("Wallet", isDirectory: true))
     }
 
-    func open(context: LAContext, phoneOnly: Bool) throws -> (SymmetricKey, WalletSnapshot) {
+    func open(context: LAContext, phoneOnly: Bool) throws -> (SymmetricKey, WalletSnapshot?) {
         try Task.checkCancellation()
-        let data = try file.readCiphertext()
-        let key = try phoneOnly ? PhoneUnlock.read() : VaultKey.load(context: context, allowCreation: data == nil)
+        try file.finishPendingErase()
+        let read = Result { try file.readCiphertext() }
+        let isNew: Bool
+        if case .success(nil) = read { isNew = true } else { isNew = false }
+        let key = try phoneOnly ? PhoneUnlock.read() : VaultKey.load(context: context, allowCreation: isNew)
         try Task.checkCancellation()
-        return (key, try data.map { try file.decodeSnapshot($0, key: key) } ?? WalletSnapshot())
+        do {
+            guard let data = try read.get() else { return (key, WalletSnapshot()) }
+            return (key, try file.decodeSnapshot(data, key: key))
+        } catch { return (key, nil) }
     }
 
-    func write(_ snapshot: WalletSnapshot, key: SymmetricKey, retainPrevious: Bool) throws {
+    func write(_ snapshot: WalletSnapshot, key: SymmetricKey, retainPrevious: Bool, damaged: Bool) throws {
         try Task.checkCancellation()
-        if retainPrevious { try file.recordRecoveryBeforeRestore(key: key) }
+        try snapshot.validate()
+        if damaged { try file.recordDamagedBeforeRestore() }
+        else if retainPrevious { try file.recordRecoveryBeforeRestore(key: key) }
         try Task.checkCancellation()
         try file.write(snapshot, key: key)
     }
+
+    func erase() throws { try Task.checkCancellation(); try file.erase() }
 
     func recovery(_ id: UUID, key: SymmetricKey) throws -> WalletSnapshot {
         try Task.checkCancellation()
@@ -31,7 +41,7 @@ private actor VaultStorage {
 
 @MainActor
 final class WalletSession: ObservableObject {
-    enum Phase { case locked, opening, unlocked }
+    enum Phase { case locked, opening, unlocked, recoveryRequired }
     @Published private(set) var phase = Phase.locked
     @Published private(set) var snapshot = WalletSnapshot()
     @Published private(set) var saving = false
@@ -64,9 +74,13 @@ final class WalletSession: ObservableObject {
                 let (newKey, records) = try await storage.open(context: auth, phoneOnly: phoneOnly)
                 guard attempt == generation else { return }
                 key = newKey
-                snapshot = records
-                phase = .unlocked
-                BackupAutomatic.schedule(snapshot: records, key: newKey)
+                if let records {
+                    snapshot = records
+                    phase = .unlocked
+                    BackupAutomatic.schedule(snapshot: records, key: newKey)
+                } else {
+                    phase = .recoveryRequired
+                }
             } catch {
                 guard attempt == generation else { return }
                 lock()
@@ -176,10 +190,27 @@ final class WalletSession: ObservableObject {
     }
 
     func recoverySnapshot(_ id: UUID, generation token: UUID) async throws -> WalletSnapshot {
-        guard phase == .unlocked, generation == token, let key else { throw CancellationError() }
+        guard (phase == .unlocked || phase == .recoveryRequired), generation == token, let key else { throw CancellationError() }
         let result = try await storage.recovery(id, key: key)
         guard generation == token else { throw CancellationError() }
         return result
+    }
+
+    func eraseWallet(generation token: UUID) async throws {
+        guard generation == token, phase == .unlocked, !saving, let key else { throw CancellationError() }
+        let auth = LAContext()
+        defer { auth.invalidate() }
+        guard try await auth.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: "Erase your local Kura wallet.") else { throw WalletError.keyUnavailable }
+        guard generation == token, phase == .unlocked, !saving else { throw CancellationError() }
+        let verified = try VaultKey.load(context: auth, allowCreation: false)
+        guard verified == key else { throw WalletError.keyUnavailable }
+        saving = true
+        defer { if generation == token { lock() } }
+        try PhoneUnlock.setEnabled(false, verifiedKey: verified)
+        BackupAutomatic.cancel()
+        let job = Task { try await storage.erase() }
+        writing = job
+        try await job.value
     }
 
     func configureAutomatic(folder: URL, password: String, retention: Int) throws {
@@ -194,14 +225,16 @@ final class WalletSession: ObservableObject {
     }
 
     private func commit(_ next: WalletSnapshot, generation token: UUID, retainPrevious: Bool = false) async throws {
-        guard phase == .unlocked, let key, token == generation, !saving else { throw CancellationError() }
+        let rescuing = phase == .recoveryRequired && retainPrevious
+        guard (phase == .unlocked || rescuing), let key, token == generation, !saving else { throw CancellationError() }
         saving = true
-        let task = Task { try await storage.write(next, key: key, retainPrevious: retainPrevious) }
+        let task = Task { try await storage.write(next, key: key, retainPrevious: retainPrevious, damaged: rescuing) }
         writing = task
         defer { if generation == token { saving = false; writing = nil } }
         try await task.value
         guard generation == token else { throw CancellationError() }
         snapshot = next
+        phase = .unlocked
         BackupAutomatic.schedule(snapshot: next, key: key)
     }
 }

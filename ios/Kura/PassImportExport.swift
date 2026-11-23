@@ -9,7 +9,7 @@ enum PassExport {
         let type = style?.type ?? (card.section == .cards ? "storeCard" : "generic")
         var body: [String: Any] = [:]
         for (name, fields) in style?.groups ?? [:] {
-            body[name] = fields.map { ["key": $0.key, "label": $0.label, "value": $0.value] }
+            body[name] = fields.map(\.passJSON)
         }
         if type == "boardingPass" { body["transitType"] = style?.transitType ?? "PKTransitTypeGeneric" }
         let section: String
@@ -24,6 +24,7 @@ enum PassExport {
             "description": card.name, type: body,
             "userInfo": ["app.kura.wallet": ["section": section, "category": card.category, "customFields": card.fields] as [String: Any]]
         ]
+        json["relevantDate"] = style?.relevantDate?.formatted(.iso8601)
         json["expirationDate"] = card.expires?.formatted(.iso8601)
         json["logoText"] = style?.logoText
         json["backgroundColor"] = style?.backgroundColor

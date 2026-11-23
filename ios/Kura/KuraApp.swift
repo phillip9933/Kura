@@ -9,7 +9,9 @@ struct KuraApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if wallet.phase == .unlocked {
+                if wallet.phase == .recoveryRequired {
+                    BackupRescueView(wallet: wallet).privacySensitive()
+                } else if wallet.phase == .unlocked {
                     CardsView(wallet: wallet)
                         .privacySensitive()
                 } else {

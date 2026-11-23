@@ -12,6 +12,9 @@
       <TestableReference skipped="NO">
         <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="49EDAA2FD63DEBA9B8B78861" BuildableName="KuraTests.xctest" BlueprintName="KuraTests" ReferencedContainer="container:Kura.xcodeproj" />
       </TestableReference>
+      <TestableReference skipped="NO">
+        <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="83325D61F628C0D6BE91114B" BuildableName="KuraUITests.xctest" BlueprintName="KuraUITests" ReferencedContainer="container:Kura.xcodeproj" />
+      </TestableReference>
     </Testables>
   </TestAction>
   <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO">

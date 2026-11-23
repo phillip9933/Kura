@@ -24,6 +24,16 @@
       isa = PBXBuildFile;
       fileRef = 52636589C7F8B2097F7D9C13;
     };
+    BC2ED2294D757B5C8DF86C93 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BackupPassFile.swift;
+      sourceTree = "<group>";
+    };
+    A4AFCA3C38F402FDC6293AB3 = {
+      isa = PBXBuildFile;
+      fileRef = BC2ED2294D757B5C8DF86C93;
+    };
     1FDBFEEC05D2CEC9466FF5C9 = {
       isa = PBXFileReference;
       lastKnownFileType = sourcecode.swift;
@@ -33,6 +43,16 @@
     ECA72D67CF35EADE3573AF65 = {
       isa = PBXBuildFile;
       fileRef = 1FDBFEEC05D2CEC9466FF5C9;
+    };
+    B24745C89A951C4C500D28F1 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = BackupRescue.swift;
+      sourceTree = "<group>";
+    };
+    37DAFEBABC15AAC1D97B6EC5 = {
+      isa = PBXBuildFile;
+      fileRef = B24745C89A951C4C500D28F1;
     };
     E838D8B54F1223FB59924CA9 = {
       isa = PBXFileReference;
@@ -349,7 +369,9 @@
       children = (
         B9FAC92EF632B2E2311DBBA1,
         52636589C7F8B2097F7D9C13,
+        BC2ED2294D757B5C8DF86C93,
         1FDBFEEC05D2CEC9466FF5C9,
+        B24745C89A951C4C500D28F1,
         E838D8B54F1223FB59924CA9,
         D2237B479F063D5010D72634,
         684A2202C7DB19C327AB4A8D,
@@ -425,6 +447,16 @@
       isa = PBXBuildFile;
       fileRef = 647ED20F541C294A741BBB27;
     };
+    07E7D157CF7F42F456BD09FC = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = SessionTests.swift;
+      sourceTree = "<group>";
+    };
+    38E0113D1B8C0FD60DB93840 = {
+      isa = PBXBuildFile;
+      fileRef = 07E7D157CF7F42F456BD09FC;
+    };
     C7D854CE7525552FB01508F8 = {
       isa = PBXFileReference;
       lastKnownFileType = sourcecode.swift;
@@ -442,6 +474,7 @@
         A0713978AD97E230635011D5,
         0E71DAC2FAD8DB2817B131E5,
         647ED20F541C294A741BBB27,
+        07E7D157CF7F42F456BD09FC,
         C7D854CE7525552FB01508F8
       );
       sourceTree = "<group>";
@@ -475,7 +508,8 @@
       isa = PBXGroup;
       children = (
         81EA81D282A15055A1CB37F2,
-        12DF0581A2A9ED58667EA07C
+        12DF0581A2A9ED58667EA07C,
+        EDBC60807E8EECF88AA0EE43
       );
       sourceTree = "<group>";
       name = Products;
@@ -495,6 +529,7 @@
       children = (
         17D6301DD9037164007DFE58,
         6A35BFF03CF068C92316E049,
+        BDF04F4A46D1AEC52B35B336,
         B525ACF5742866EE9F2C92CE,
         55701A53403CC5A57D7D4172,
         4EDC8BFAFC6BD936B849F38C
@@ -512,6 +547,7 @@
         CLANG_ENABLE_MODULES = YES;
         SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
         SUPPORTS_MACCATALYST = NO;
+        ONLY_ACTIVE_ARCH = YES;
         ENABLE_TESTABILITY = YES;
         SWIFT_OPTIMIZATION_LEVEL = -Onone;
         DEBUG_INFORMATION_FORMAT = dwarf;
@@ -640,7 +676,9 @@
       files = (
         DDB8752E0DAD61BA070D63CE,
         145435DF3709AE7CB017B5C1,
+        A4AFCA3C38F402FDC6293AB3,
         ECA72D67CF35EADE3573AF65,
+        37DAFEBABC15AAC1D97B6EC5,
         8DC56171D7F17E56FE62F61E,
         80F36FDD00124EE9D4A79B1F,
         07E0B0240C0DBA849BBF9036,
@@ -731,6 +769,7 @@
         5892E1E382A68DD2B377E712,
         EAF2B0EDCB7E7C705034F220,
         9E26B63DCD067656FBCE0997,
+        38E0113D1B8C0FD60DB93840,
         436DD2CB8B786C4BC01B5DCA
       );
       runOnlyForDeploymentPostprocessing = 0;
@@ -766,12 +805,118 @@
         8FF7266AF7DED1D9FA08153A
       );
     };
+    83332F32FB84F531C5B17041 = {
+      isa = PBXFileReference;
+      lastKnownFileType = sourcecode.swift;
+      path = WalletUITests.swift;
+      sourceTree = "<group>";
+    };
+    AA123F76113BF4489175380E = {
+      isa = PBXBuildFile;
+      fileRef = 83332F32FB84F531C5B17041;
+    };
+    BDF04F4A46D1AEC52B35B336 = {
+      isa = PBXGroup;
+      children = (
+        83332F32FB84F531C5B17041
+      );
+      sourceTree = "<group>";
+      path = KuraUITests;
+    };
+    EDBC60807E8EECF88AA0EE43 = {
+      isa = PBXFileReference;
+      explicitFileType = wrapper.cfbundle;
+      includeInIndex = 0;
+      path = KuraUITests.xctest;
+      sourceTree = BUILT_PRODUCTS_DIR;
+    };
+    1F6C140A8981F535FD6EA6FE = {
+      isa = XCBuildConfiguration;
+      buildSettings = {
+        PRODUCT_NAME = KuraUITests;
+        PRODUCT_BUNDLE_IDENTIFIER = app.kura.iphone.development.uitests;
+        TEST_TARGET_NAME = Kura;
+        GENERATE_INFOPLIST_FILE = YES;
+      };
+      name = Debug;
+    };
+    D41948CCB2FAB60709D61A35 = {
+      isa = XCBuildConfiguration;
+      buildSettings = {
+        PRODUCT_NAME = KuraUITests;
+        PRODUCT_BUNDLE_IDENTIFIER = app.kura.iphone.development.uitests;
+        TEST_TARGET_NAME = Kura;
+        GENERATE_INFOPLIST_FILE = YES;
+      };
+      name = Release;
+    };
+    CEF8D431172BD4051656EB54 = {
+      isa = XCConfigurationList;
+      buildConfigurations = (
+        1F6C140A8981F535FD6EA6FE,
+        D41948CCB2FAB60709D61A35
+      );
+      defaultConfigurationIsVisible = 0;
+      defaultConfigurationName = Release;
+    };
+    476577BFACDBC618D417F8C3 = {
+      isa = PBXContainerItemProxy;
+      containerPortal = 244210E48437B6556980A702;
+      proxyType = 1;
+      remoteGlobalIDString = 3651747FFE676F1C925769BB;
+      remoteInfo = Kura;
+    };
+    A929101E73C70D4FA6B67871 = {
+      isa = PBXTargetDependency;
+      target = 3651747FFE676F1C925769BB;
+      targetProxy = 476577BFACDBC618D417F8C3;
+    };
+    C7359AFEA7BC0AFD466ADCE2 = {
+      isa = PBXSourcesBuildPhase;
+      buildActionMask = 2147483647;
+      files = (
+        AA123F76113BF4489175380E
+      );
+      runOnlyForDeploymentPostprocessing = 0;
+    };
+    57B06B3EB23312A8CCDDEF52 = {
+      isa = PBXFrameworksBuildPhase;
+      buildActionMask = 2147483647;
+      files = ();
+      runOnlyForDeploymentPostprocessing = 0;
+    };
+    DAAECC841C96AD40739296F0 = {
+      isa = PBXResourcesBuildPhase;
+      buildActionMask = 2147483647;
+      files = ();
+      runOnlyForDeploymentPostprocessing = 0;
+    };
+    83325D61F628C0D6BE91114B = {
+      isa = PBXNativeTarget;
+      name = KuraUITests;
+      productName = KuraUITests;
+      productType = com.apple.product-type.bundle.ui-testing;
+      productReference = EDBC60807E8EECF88AA0EE43;
+      buildConfigurationList = CEF8D431172BD4051656EB54;
+      buildPhases = (
+        C7359AFEA7BC0AFD466ADCE2,
+        57B06B3EB23312A8CCDDEF52,
+        DAAECC841C96AD40739296F0
+      );
+      buildRules = ();
+      dependencies = (
+        A929101E73C70D4FA6B67871
+      );
+    };
     244210E48437B6556980A702 = {
       isa = PBXProject;
       attributes = {
         LastUpgradeCheck = 1600;
         TargetAttributes = {
           49EDAA2FD63DEBA9B8B78861 = {
+            TestTargetID = 3651747FFE676F1C925769BB;
+          };
+          83325D61F628C0D6BE91114B = {
             TestTargetID = 3651747FFE676F1C925769BB;
           };
         };
@@ -790,7 +935,8 @@
       projectRoot = "";
       targets = (
         3651747FFE676F1C925769BB,
-        49EDAA2FD63DEBA9B8B78861
+        49EDAA2FD63DEBA9B8B78861,
+        83325D61F628C0D6BE91114B
       );
       packageReferences = (
         1A5327FC98A945C8D78C5A21,

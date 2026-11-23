@@ -38,6 +38,13 @@ struct WalletDetail: View {
                 }
                 if !card.notes.isEmpty { Section("Notes") { Text(card.notes).textSelection(.enabled) } }
                 MediaDetails(media: card.media)
+                if card.passStyle == nil {
+                    MediaMissingSlots(card: card) { original, media in
+                        var updated = original
+                        updated.media = media
+                        try await wallet.save(updated, generation: token, replacing: original)
+                    }
+                }
                 Section {
                     Button(card.favorite ? "Remove from favorites" : "Add to favorites") {
                         var updated = card; updated.favorite.toggle(); save(updated, original: card)
@@ -46,6 +53,7 @@ struct WalletDetail: View {
                         var updated = card; updated.archived.toggle(); save(updated, original: card)
                     }
                     NavigationLink("Share securely") { BackupTransferSendView(card: card) }
+                    NavigationLink("Export encrypted item") { BackupPassExportView(wallet: wallet, card: card) }
                     PassExportButton(card: card)
                     Button("Delete item", role: .destructive) { confirmDelete = true }
                 }

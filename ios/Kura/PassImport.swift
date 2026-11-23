@@ -5,6 +5,49 @@ struct PassField: Codable, Equatable {
     let key: String
     let label: String
     let value: String
+    var numberValue: Bool?
+    var currencyCode: String?
+    var numberStyle: String?
+    var dateStyle: String?
+    var timeStyle: String?
+
+    var displayValue: String {
+        if let currencyCode, let number = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")) {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .currency
+            formatter.currencyCode = currencyCode
+            return formatter.string(from: NSDecimalNumber(decimal: number)) ?? value
+        }
+        if let numberStyle, let number = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")) {
+            let formatter = NumberFormatter()
+            let styles: [String: NumberFormatter.Style] = ["PKNumberStylePercent": .percent, "PKNumberStyleDecimal": .decimal,
+                                                           "PKNumberStyleSpellOut": .spellOut, "PKNumberStyleScientific": .scientific]
+            formatter.numberStyle = styles[numberStyle] ?? .decimal
+            return formatter.string(from: NSDecimalNumber(decimal: number)) ?? value
+        }
+        if (dateStyle != nil || timeStyle != nil), let date = PassImport.date(value) {
+            let styles: [String: DateFormatter.Style] = ["PKDateStyleShort": .short, "PKDateStyleMedium": .medium,
+                                                         "PKDateStyleLong": .long, "PKDateStyleFull": .full]
+            let formatter = DateFormatter()
+            formatter.dateStyle = styles[dateStyle ?? ""] ?? .none
+            formatter.timeStyle = styles[timeStyle ?? ""] ?? .none
+            let result = formatter.string(from: date)
+            if !result.isEmpty { return result }
+        }
+        return value
+    }
+
+    var passJSON: [String: Any] {
+        var result: [String: Any] = ["key": key, "label": label, "value": value]
+        if numberValue == true, let decimal = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")) {
+            result["value"] = NSDecimalNumber(decimal: decimal)
+        }
+        result["currencyCode"] = currencyCode
+        result["numberStyle"] = numberStyle
+        result["dateStyle"] = dateStyle
+        result["timeStyle"] = timeStyle
+        return result
+    }
 }
 
 struct PassAppearance: Codable, Equatable {
@@ -13,6 +56,7 @@ struct PassAppearance: Codable, Equatable {
     var organization: String
     var transitType: String
     var serialNumber: String
+    var relevantDate: Date?
     var backgroundColor: String?
     var foregroundColor: String?
     var labelColor: String?
@@ -126,6 +170,15 @@ enum PassImport {
         Insecure.SHA1.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
     }
 
+    static func date(_ value: Any?) -> Date? {
+        guard let text = value as? String else { return nil }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: text) { return date }
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.date(from: text)
+    }
+
     private static func decode(_ files: [String: Data], languages: [String]) throws -> ImportedPass {
         guard let descriptor = files["pass.json"] else { throw WalletMediaError.damagedPass }
         if let bytes = files["manifest.json"] {
@@ -171,7 +224,10 @@ enum PassImport {
             guard body[group] != nil else { continue }
             guard let values = body[group] as? [[String: Any]], values.count <= 100 else { throw WalletMediaError.damagedPass }
             groups[group] = values.map {
-                PassField(key: $0["key"] as? String ?? "", label: local($0["label"]), value: local($0["value"]))
+                PassField(key: $0["key"] as? String ?? "", label: local($0["label"]), value: local($0["value"]),
+                          numberValue: $0["value"] is NSNumber, currencyCode: $0["currencyCode"] as? String,
+                          numberStyle: $0["numberStyle"] as? String, dateStyle: $0["dateStyle"] as? String,
+                          timeStyle: $0["timeStyle"] as? String)
             }
         }
         let extensionData = (pass["userInfo"] as? [String: Any])?["app.kura.wallet"] as? [String: Any] ?? [:]
@@ -187,7 +243,7 @@ enum PassImport {
         let codes = (pass["barcodes"] as? [[String: Any]]) ?? (pass["barcode"] as? [String: Any]).map { [$0] } ?? []
         guard codes.count <= 32 else { throw WalletMediaError.damagedPass }
         let code = codes.compactMap { item -> (BarcodeFormat, String)? in
-            guard let name = item["format"] as? String, let format = BarcodeFormat(passKitName: name),
+            guard let name = item["format"] as? String, let format = BarcodeFormat(passKitName: name) ?? BarcodeFormat(rawValue: name),
                   let message = item["message"] as? String else { return nil }
             return (format, message)
         }.first
@@ -200,12 +256,12 @@ enum PassImport {
         for name in PassAppearance.artNames { art[name] = asset(name) }
         let appearance = PassAppearance(type: type, logoText: local(pass["logoText"]), organization: organization,
             transitType: body["transitType"] as? String ?? "", serialNumber: pass["serialNumber"] as? String ?? "",
-            backgroundColor: pass["backgroundColor"] as? String, foregroundColor: pass["foregroundColor"] as? String,
+            relevantDate: Self.date(pass["relevantDate"]), backgroundColor: pass["backgroundColor"] as? String, foregroundColor: pass["foregroundColor"] as? String,
             labelColor: pass["labelColor"] as? String, groups: groups, artwork: art)
         try appearance.validate()
         let item = ImportedPass(name: title, category: extensionData["category"] as? String ?? fallback[type] ?? "Other",
             section: section, payload: code?.1 ?? "", barcodeFormat: code?.0 ?? .qr, fields: fields, media: media,
-            expires: (pass["expirationDate"] as? String).flatMap { try? Date($0, strategy: .iso8601) },
+            expires: Self.date(pass["expirationDate"]),
             appearance: appearance, manifestChecked: files["manifest.json"] != nil)
         _ = try item.makeCard()
         return item

@@ -87,11 +87,11 @@ struct WalletEditor: View {
                 }
                 TextField("Notes", text: $notes, axis: .vertical)
             }
-            MediaEditor(media: $media, ocrFields: Dictionary(uniqueKeysWithValues: definitions.map { ($0.name, fields[$0.name] ?? "") })) { suggestions in
+            MediaEditor(media: $media, ocrFields: Dictionary(uniqueKeysWithValues: definitions.map { ($0.name, fields[$0.name] ?? "") }), applyOCR: { suggestions in
                 for field in definitions where (fields[field.name] ?? "").isEmpty {
                     if let value = suggestions[field.name] { fields[field.name] = value }
                 }
-            }
+            }, imagesEditable: original?.passStyle == nil)
             if let error { Text(error) }
         }
         .autocorrectionDisabled().disabled(wallet.saving)

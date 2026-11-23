@@ -4,6 +4,7 @@ import Foundation
 struct VaultFile {
     let directory: URL
     private var file: URL { directory.appendingPathComponent("cards.kura") }
+    var ciphertextURL: URL { file }
     private static let maximumBytes = 96 * 1024 * 1024
 
     private struct Contents: Codable {
@@ -12,11 +13,25 @@ struct VaultFile {
         let preferences: WalletPreferences?
     }
 
+    private var pendingErase: URL { directory.appendingPathExtension("pending-erase") }
+
+    func finishPendingErase() throws {
+        do { try FileManager.default.removeItem(at: pendingErase) }
+        catch let error as CocoaError where error.code == .fileNoSuchFile { }
+    }
+
+    func erase() throws {
+        try finishPendingErase()
+        do { try FileManager.default.moveItem(at: directory, to: pendingErase) }
+        catch let error as CocoaError where error.code == .fileNoSuchFile || error.code == .fileReadNoSuchFile { return }
+        try finishPendingErase()
+    }
+
     func readCiphertext() throws -> Data? {
         let handle: FileHandle
         do {
             handle = try FileHandle(forReadingFrom: file)
-        } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
+        } catch let error as CocoaError where error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile {
             return nil
         }
         defer { try? handle.close() }
