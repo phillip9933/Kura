@@ -11,10 +11,9 @@ struct KuraApp: App {
         WindowGroup {
             Group {
                 if wallet.phase == .recoveryRequired {
-                    BackupRescueView(wallet: wallet).privacySensitive()
+                    BackupRescueView(wallet: wallet)
                 } else if wallet.phase == .unlocked {
                     CardsView(wallet: wallet).id(wallet.generation)
-                        .privacySensitive()
                 } else {
                     VStack(spacing: 20) {
                         Image(systemName: "lock.fill").font(.largeTitle).accessibilityHidden(true)
