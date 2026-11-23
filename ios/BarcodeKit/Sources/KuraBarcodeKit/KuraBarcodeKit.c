@@ -107,6 +107,16 @@ bool kura_barcode_render(const char *format, const uint8_t *payload, size_t leng
     if (symbol == NULL) return false;
     symbol->symbology = symbology;
     symbol->input_mode = symbology == BARCODE_GS1_128 ? GS1_MODE | GS1PARENS_MODE : UNICODE_MODE;
+    /* Declare UTF-8 for non-ASCII text. QR otherwise falls back to undeclared
+       Shift JIS for some Japanese input and warns that the symbol is noncompliant. */
+    if (ZBarcode_Cap(symbology, ZINT_CAP_ECI)) {
+        for (size_t i = 0; i < length; ++i) {
+            if (payload[i] >= 0x80) {
+                symbol->eci = 26;
+                break;
+            }
+        }
+    }
     symbol->output_options = BARCODE_QUIET_ZONES | OUT_BUFFER_INTERMEDIATE;
     symbol->show_hrt = 0;
     symbol->scale = 2.0f;

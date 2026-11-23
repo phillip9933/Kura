@@ -6,6 +6,7 @@ enum WalletRoute: Hashable {
 
 struct CardsView: View {
     @ObservedObject var wallet: WalletSession
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var path: [WalletRoute] = []
     @State private var section: WalletSection
     @State private var query = ""
@@ -38,9 +39,19 @@ struct CardsView: View {
 
     @ViewBuilder private var controls: some View {
         if layout.showSectionBar {
-            Picker("Wallet section", selection: $section) {
-                ForEach(layout.visible) { Text($0.rawValue).tag($0) }
-            }.pickerStyle(.segmented).padding(.horizontal)
+            if typeSize.isAccessibilitySize {
+                Menu {
+                    sectionPicker
+                } label: { Label("Choose section", systemImage: "rectangle.stack") }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+            } else { sectionPicker.pickerStyle(.segmented).padding(.horizontal) }
+        }
+    }
+
+    private var sectionPicker: some View {
+        Picker("Wallet section", selection: $section) {
+            ForEach(layout.visible) { Text($0.rawValue).tag($0) }
         }
     }
 

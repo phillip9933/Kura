@@ -1,3 +1,4 @@
+import UIKit
 import XCTest
 #if targetEnvironment(simulator)
 import notify
@@ -94,7 +95,7 @@ final class WalletUITests: XCTestCase {
         row.tap()
         XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 5))
         XCUIDevice.shared.orientation = .landscapeLeft
-        XCTAssertGreaterThan(app.frame.width, app.frame.height)
+        waitForLandscape(app, title: name)
         capture("item-landscape", app)
         XCUIDevice.shared.orientation = .portrait
         let favorite = app.buttons["Add to favorites"]
@@ -103,6 +104,10 @@ final class WalletUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Remove from favorites"].waitForExistence(timeout: 5))
 
         app.terminate()
+        let previousAppearance = XCUIDevice.shared.appearance
+        defer { XCUIDevice.shared.appearance = previousAppearance }
+        XCUIDevice.shared.appearance = .dark
+        XCTAssertEqual(XCUIDevice.shared.appearance, .dark)
         app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXL"]
         app.launch()
         assertLocked(app)
@@ -154,7 +159,11 @@ final class WalletUITests: XCTestCase {
             }
             if cards.waitForExistence(timeout: 0.5) { return }
         }
-        XCTFail("Simulator biometric authentication did not open the wallet. Screen hierarchy: " + app.debugDescription)
+        let shield = app.staticTexts["Wallet hidden"].exists
+        let locked = app.buttons["Unlock wallet"].exists
+        let navigation = app.navigationBars.firstMatch
+        let bar = navigation.exists ? navigation.label : "absent"
+        XCTFail("Wallet did not open. Shield visible: \(shield), lock visible: \(locked), navigation bar: \(bar), system alerts: \(springboard.alerts.count).")
     }
 
     @MainActor
@@ -168,11 +177,45 @@ final class WalletUITests: XCTestCase {
     #endif
 
     @MainActor
+    private func waitForLandscape(_ app: XCUIApplication, title: String) {
+        let bar = app.navigationBars[title]
+        let row = app.buttons["Add front image"]
+        var previous = CGRect.null
+        var stableSince = Date()
+        let deadline = Date().addingTimeInterval(6)
+        while Date() < deadline {
+            let bounds = app.frame
+            if bounds.width > bounds.height, bar.frame.width >= bounds.width * 0.85,
+               row.exists, row.isHittable, row.frame.intersects(bounds) {
+                if row.frame == previous {
+                    if Date().timeIntervalSince(stableSince) >= 0.65 { return }
+                } else {
+                    previous = row.frame
+                    stableSince = Date()
+                }
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.15))
+        }
+        XCTFail("The detail toolbar and front-image row did not settle in landscape.")
+    }
+
+    @MainActor
     private func capture(_ name: String, _ app: XCUIApplication) {
-        let image = XCTAttachment(data: app.screenshot().pngRepresentation, uniformTypeIdentifier: "public.png")
-        image.name = "Kura-QA-" + name + ".png"
-        image.lifetime = .keepAlways
-        add(image)
+        var image = XCUIScreen.main.screenshot().image
+        let landscape = app.frame.width > app.frame.height
+        // On some simulators a full-device screenshot is returned in sensor coordinates.
+        if landscape && image.size.height > image.size.width, let pixels = image.cgImage {
+            image = UIImage(cgImage: pixels, scale: image.scale, orientation: .left)
+        }
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = image.scale
+        let data = UIGraphicsImageRenderer(size: image.size, format: format).pngData { _ in
+            image.draw(in: CGRect(origin: .zero, size: image.size))
+        }
+        let attachment = XCTAttachment(data: data, uniformTypeIdentifier: "public.png")
+        attachment.name = "Kura-QA-" + name + ".png"
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 
     @MainActor

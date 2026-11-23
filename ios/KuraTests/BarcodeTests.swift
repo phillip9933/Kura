@@ -41,7 +41,7 @@ final class BarcodeTests: XCTestCase {
         ]
         for (format, payload) in samples {
             let rendered = await CardQR.shared.image(for: payload, format: format)
-            let image = try XCTUnwrap(rendered)
+            let image = try XCTUnwrap(rendered, "Failed to render " + format.rawValue)
             let found = try BarcodePhoto.codes(in: image)
             XCTAssertEqual(found.first?.payload, payload, format.rawValue)
             XCTAssertEqual(found.first?.format, format, format.rawValue)
