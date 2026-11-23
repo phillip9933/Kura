@@ -128,7 +128,7 @@ profile_id = str(uuid.UUID(profile["UUID"])).upper()
 (directory / "export.plist").write_bytes(plistlib.dumps({
     "method": "app-store-connect",
     "destination": "upload",
-    "testFlightInternalTestingOnly": True,
+    "testFlightInternalTestingOnly": False,
     "manageAppVersionAndBuildNumber": False,
     "signingStyle": "manual",
     "signingCertificate": identity,
@@ -163,7 +163,7 @@ actual_identity=$(shasum -a 1 "$temp/codesign0" | awk '{print toupper($1)}')
 [[ $actual_identity == "$identity" ]] || fail "Unexpected signing identity in archive."
 cmp -s "$app/embedded.mobileprovision" "$installed_profile" || fail "Unexpected embedded provisioning profile."
 
-echo "Uploading the verified archive to App Store Connect for internal TestFlight testing."
+echo "Uploading the verified archive to App Store Connect for TestFlight."
 if ! xcodebuild -exportArchive -archivePath "$archive" -exportPath "$temp/export" \
     -exportOptionsPlist "$temp/export.plist" -authenticationKeyPath "$upload_key" \
     -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \

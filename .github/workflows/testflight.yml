@@ -52,7 +52,7 @@ jobs:
             KURA_BUILD_NUMBER="$BUILD_NUMBER" CODE_SIGNING_ALLOWED=NO archive
           python3 ios/ci/verify-archive.py "$archive" app.kura.wallet "$BUILD_NUMBER"
   upload:
-    name: Upload to internal TestFlight
+    name: Upload to TestFlight
     needs: archive
     if: github.event_name == 'push' && github.event.deleted == false && startsWith(github.ref, 'refs/tags/kura-testflight-')
     environment: testflight

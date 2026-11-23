@@ -52,8 +52,15 @@ base64 -w0 Kura.mobileprovision | gh secret set APPLE_PROVISIONING_PROFILE_BASE6
 gh secret set ASC_PRIVATE_KEY --env testflight --repo phillip9933/Kura < AuthKey.p8
 ```
 
-## Install the build
+## Upload the build
 
 1. The pull request rehearses the unsigned device build. When the owner is ready to upload, the release maintainer tags the reviewed commit `kura-testflight-<build number>` and pushes that one tag. The suffix sets the build number and must be an integer from 1 to 9999 without leading zeros. For the first upload of version `0.1.0`, use `git tag kura-testflight-1 REVIEWED_COMMIT_SHA` and `git push origin refs/tags/kura-testflight-1` if build 1 is available. Substitute the exact reviewed commit SHA. Use a higher unused number for each subsequent upload. The tag push starts signing and uploading. Wait for Apple to process the upload in App Store Connect → Kura → TestFlight. [Apple build uploads](https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds/)
 2. If Apple shows **Missing Compliance**, open **Manage** beside the build. The vault and backups use Apple CryptoKit AES-GCM. Password-based backups use CommonCrypto PBKDF2-HMAC-SHA256. Review the shipped app, its dependencies and planned territories when answering Apple's export questionnaire. The Account Holder, Admin or App Manager completes any required declaration. [Apple encryption documentation](https://developer.apple.com/help/app-store-connect/manage-app-information/determine-and-upload-app-encryption-documentation/)
-3. In **TestFlight → Internal Testing**, create a group, add the processed build, then invite your own App Store Connect user with access to Kura. On your iPhone, install Apple’s TestFlight app, open the invitation, accept it and tap **Install**. Builds are available for up to 90 days. [Add internal testers](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers/)
+
+## Invite testers
+
+The uploaded build supports internal and external TestFlight groups. The maintainer controls invitations in App Store Connect.
+
+1. Create a group in **TestFlight → Internal Testing**. To test with your own App Store Connect account, add the processed build and invite that account to the group. Apple requires an internal group before you can create an external group. [Add internal testers](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers/) · [Invite external testers](https://developer.apple.com/help/app-store-connect/test-a-beta-version/invite-external-testers/)
+2. For external testing, complete **TestFlight → Test Information**, including the beta description, feedback email and review contact details. Create a group under **External Testing**, add the build, enter what to test, and submit the first build for TestFlight App Review. Leave automatic tester notifications off if you want to choose when testing starts. [Apple TestFlight](https://developer.apple.com/testflight/) · [Invite external testers](https://developer.apple.com/help/app-store-connect/test-a-beta-version/invite-external-testers/)
+3. After Apple approves the beta, add the intended testers to the external group by email. If you chose manual notifications, select **Notify Testers** for the build. Each tester installs Apple’s TestFlight app on their iPhone, opens the invitation, taps **Accept**, then **Install**. Builds are available for up to 90 days. [Invite external testers](https://developer.apple.com/help/app-store-connect/test-a-beta-version/invite-external-testers/)
