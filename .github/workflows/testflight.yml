@@ -32,8 +32,8 @@ jobs:
           set -euo pipefail
           build=1
           if [[ "$GITHUB_EVENT_NAME" == push ]]; then
-            [[ "$GITHUB_REF_NAME" =~ ^kura-testflight-([1-9][0-9]{0,3})$ ]] || {
-              echo "Use a kura-testflight tag with a build number from 1 to 9999." >&2
+            [[ "$GITHUB_REF_NAME" =~ ^kura-testflight-([1-9][0-9]{0,3})(-retry-[1-9][0-9]{0,3})?$ ]] || {
+              echo "Use a kura-testflight build number from 1 to 9999 and an optional -retry-N suffix." >&2
               exit 1
             }
             build=${BASH_REMATCH[1]}

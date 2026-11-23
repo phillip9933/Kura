@@ -122,9 +122,14 @@ matches = allowed & available
 if len(matches) != 1:
     sys.exit("Provide one valid Apple Distribution identity listed in this profile, including its private key.")
 identity = matches.pop()
-profile_id = str(uuid.UUID(profile["UUID"])).upper()
+profile_id = profile["UUID"]
+uuid.UUID(profile_id)
+profile_name = profile["Name"]
+if not profile_name or any(character in profile_name for character in "\r\n\x00"):
+    sys.exit("The provisioning profile needs a valid Xcode profile name.")
 (directory / "identity").write_text(identity)
 (directory / "profile-id").write_text(profile_id)
+(directory / "profile-name").write_text(profile_name)
 (directory / "export.plist").write_bytes(plistlib.dumps({
     "method": "app-store-connect",
     "destination": "upload",
@@ -138,6 +143,7 @@ profile_id = str(uuid.UUID(profile["UUID"])).upper()
 PY
 
 profile_id=$(cat "$temp/profile-id")
+profile_name=$(cat "$temp/profile-name")
 identity=$(cat "$temp/identity")
 profiles="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
 mkdir -p "$profiles"
@@ -150,10 +156,30 @@ archive="$temp/Kura.xcarchive"
 xcodebuild -quiet -project "$project" -scheme Kura -configuration Release \
     -destination 'generic/platform=iOS' -archivePath "$archive" -derivedDataPath "$temp/build" \
     -onlyUsePackageVersionsFromResolvedFile KURA_SIGNING_STYLE=Manual \
-    "KURA_SIGNING_TEAM=$APPLE_TEAM_ID" "KURA_SIGNING_IDENTITY=$identity" \
-    "KURA_SIGNING_PROFILE=$profile_id" "KURA_BUNDLE_ID=$IOS_BUNDLE_ID" \
-    "KURA_BUILD_NUMBER=$TESTFLIGHT_BUILD_NUMBER" archive > "$temp/archive.log" 2>&1 ||
+    "KURA_SIGNING_TEAM=$APPLE_TEAM_ID" "KURA_SIGNING_IDENTITY=Apple Distribution" \
+    "KURA_SIGNING_PROFILE=$profile_name" "KURA_BUNDLE_ID=$IOS_BUNDLE_ID" \
+    "KURA_BUILD_NUMBER=$TESTFLIGHT_BUILD_NUMBER" archive > "$temp/archive.log" 2>&1 || {
+    # Only fixed diagnostic labels may leave the runner. Raw Xcode errors name signing accounts.
+    python3 - "$temp/archive.log" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+log = Path(sys.argv[1]).read_text(errors="replace")
+for pattern, message in (
+    (r"no (?:matching )?(?:provisioning )?profile|profile.+(?:not found|doesn.t exist)", "Xcode could not find the provisioning profile."),
+    (r"doesn.t include signing certificate|no signing certificate|no certificate matching", "Xcode could not match the profile to a signing identity."),
+    (r"requires a development team|no account for team", "Xcode could not select a development team."),
+    (r"conflicting provisioning settings|does not support provisioning profiles", "Xcode reported conflicting target signing settings."),
+    (r"errSecInternalComponent|unable to build chain|user interaction is not allowed", "codesign could not access or trust the signing key."),
+    (r"could not resolve package dependencies|failed to clone|couldn.t check out revision", "Swift package resolution failed."),
+    (r"command codesign failed", "The codesign command failed."),
+):
+    if re.search(pattern, log, re.I):
+        print(message, file=sys.stderr)
+PY
     fail "The signed archive failed. Verify the distribution certificate, profile and Release configuration."
+}
 
 python3 "$ci_dir/verify-archive.py" "$archive" "$IOS_BUNDLE_ID" "$TESTFLIGHT_BUILD_NUMBER"
 app="$archive/Products/Applications/Kura.app"
