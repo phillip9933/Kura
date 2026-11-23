@@ -31,9 +31,25 @@ jobs:
              | select(.name | startswith("iPhone"))][0].udid // empty')
           xcodebuild -project ios/Kura.xcodeproj -scheme Kura \
             -destination "platform=iOS Simulator,id=$device" \
+            -derivedDataPath "$RUNNER_TEMP/KuraDerivedData" \
             -resultBundlePath "$RUNNER_TEMP/Kura.xcresult" \
             -parallel-testing-enabled NO test
 
+      - name: Compile unsigned Release for arm64 iPhone
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/Kura.xcodeproj -scheme Kura -configuration Release \
+            -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/KuraDerivedData" \
+            -disableAutomaticPackageResolution CODE_SIGNING_ALLOWED=NO build
+          app="$RUNNER_TEMP/KuraDerivedData/Build/Products/Release-iphoneos/Kura.app"
+          executable=$(plutil -extract CFBundleExecutable raw -o - "$app/Info.plist")
+          binary="$app/$executable"
+          test "$(lipo -archs "$binary")" = arm64
+          xcrun vtool -show-build "$binary" | grep -E 'platform[[:space:]]+IOS$'
+          if grep -aFq 'com.apple.BiometricKit_Sim.' "$binary"; then
+            echo "Simulator biometric controls found in the device executable" >&2
+            exit 1
+          fi
       - name: Collect named simulator screenshots
         if: always() && !cancelled()
         run: |

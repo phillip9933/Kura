@@ -230,6 +230,7 @@ final class MediaPassTests: XCTestCase {
         let result = MediaProcessor.suggestions(lines: lines, fields: available)
         XCTAssertEqual(result, ["Card name": "Sample gold", "Number": "000123", "Network": "Sample network",
                                 "Cardholder": "Example User", "Expiry": "08/35"])
+        XCTAssertNil(MediaProcessor.suggestions(lines: ["Card name: Store rewards"], fields: ["Issuer": ""])["Issuer"])
         XCTAssertTrue(MediaProcessor.suggestions(lines: ["000123", "08/35", "EXAMPLE GOLD"], fields: available).isEmpty)
         XCTAssertNil(MediaProcessor.suggestions(lines: ["Card No: 0001", "Card No: 0002"], fields: available)["Number"])
         let month = try XCTUnwrap(RecognizedExpiry.parse("08/35"))

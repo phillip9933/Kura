@@ -3,7 +3,7 @@ import XCTest
 @testable import Kura
 
 final class BackupTests: XCTestCase {
-    private let password = "synthetic-pass-007"
+    private let password = UUID().uuidString
 
     private func sample(_ title: String = "Library") throws -> WalletSnapshot {
         var card = try WalletCard(name: title, payload: "000260", section: .passes)

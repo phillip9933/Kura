@@ -142,7 +142,8 @@ enum MediaProcessor {
             (["member number", "borrower number", "card number", "document number", "number"], ["Member ID", "Member number", "Membership number", "Card number", "Card No", "会員番号", "カード番号"]),
             (["member name", "borrower name", "cardholder", "full name"], ["Member name", "Cardholder", "Name", "Name on card", "氏名", "お名前", "名義人"]),
             (["expiry", "expiry date"], ["Expires", "Expiry", "Expiry date", "Valid until", "有効期限"]),
-            (["issuer", "name / organization", "card name"], ["Issuer", "Organization", "Card name", "発行元", "カード名"]),
+            (["issuer", "name / organization"], ["Issuer", "Organization", "発行元"]),
+            (["card name"], ["Organization", "Issuer", "カード名", "発行元"]),
             (["network"], ["Card network", "Payment network", "国際ブランド"])
         ]
         var found: [String: String] = [:]
