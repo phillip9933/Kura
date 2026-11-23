@@ -150,40 +150,54 @@ final class WalletUITests: XCTestCase {
     private func unlockWithBiometrics(_ app: XCUIApplication) throws {
         let unlock = app.buttons["Unlock wallet"]
         XCTAssertTrue(unlock.waitForExistence(timeout: 5))
-        unlock.tap()
-        let timer = DispatchSource.makeTimerSource(queue: .global(qos: .userInitiated))
-        timer.schedule(deadline: .now() + .milliseconds(250), repeating: .milliseconds(500))
-        timer.setEventHandler {
-            notify_post("com.apple.BiometricKit_Sim.pearl.match")
-            notify_post("com.apple.BiometricKit_Sim.fingerTouch.match")
-        }
-        timer.resume()
-        defer { timer.cancel() }
-
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        let deadline = Date().addingTimeInterval(25)
+        let coreAuth = XCUIApplication(bundleIdentifier: "com.apple.CoreAuthUI")
+        let hosts = [app, springboard, coreAuth]
+        unlock.tap()
+        let deadline = Date().addingTimeInterval(35)
         let cards = app.navigationBars["Cards"]
+        let opening = app.descendants(matching: .any).matching(identifier: "Unlocking wallet").firstMatch
         while Date() < deadline {
             if cards.exists { return }
-            let facePermission = springboard.alerts.containing(
-                NSPredicate(format: "label CONTAINS[c] %@", "Face ID")
-            ).firstMatch
-            if facePermission.exists {
-                let approval = facePermission.buttons.matching(NSPredicate(format: "label IN %@", ["Allow", "OK"])).firstMatch
-                if approval.exists { approval.tap() }
-            }
+            if approveFaceID(in: hosts, coreAuth: coreAuth) { continue }
             if app.staticTexts["Set a device passcode in Settings to use Kura."].exists {
                 throw XCTSkip("This simulator reports LAError.passcodeNotSet. The unlocked journey requires device-owner authentication and a passcode-protected Keychain.")
             }
-            if cards.waitForExistence(timeout: 0.5) { return }
+            // Face ID usually starts matching without an interactive sheet. Scope sensor
+            // events to the application's actual unlock request or the foreground OS service.
+            if coreAuth.state == .runningForeground || opening.exists {
+                notify_post("com.apple.BiometricKit_Sim.pearl.match")
+                notify_post("com.apple.BiometricKit_Sim.fingerTouch.match")
+            }
+            if cards.waitForExistence(timeout: 0.6) { return }
         }
-        let shield = app.staticTexts["Wallet hidden"].exists
-        let inactive = app.descendants(matching: .any)["privacy.inactive"].exists
-        let capture = app.descendants(matching: .any)["privacy.capture"].exists
-        let locked = app.buttons["Unlock wallet"].exists
-        let navigation = app.navigationBars.firstMatch
-        let bar = navigation.exists ? navigation.label : "absent"
-        XCTFail("Wallet did not open. Shield visible: \(shield) (inactive: \(inactive), captured: \(capture)), lock visible: \(locked), navigation bar: \(bar), system alerts: \(springboard.alerts.count).")
+        let shielded = app.staticTexts["Wallet hidden"].exists
+        let background = app.descendants(matching: .any)["privacy.background"].exists
+        let captured = app.descendants(matching: .any)["privacy.capture"].exists
+        let bar = app.navigationBars.firstMatch
+        capture("auth-prompt-failure", app)
+        XCTFail("Wallet did not open. Shield: \(shielded) (background: \(background), captured: \(captured)), lock: \(unlock.exists), opening: \(opening.exists), navigation: \(bar.exists ? bar.label : "absent"), Kura state: \(app.state.rawValue), CoreAuthUI state: \(coreAuth.state.rawValue), SpringBoard alerts: \(springboard.alerts.count).")
+    }
+
+    @MainActor
+    private func approveFaceID(in hosts: [XCUIApplication], coreAuth: XCUIApplication) -> Bool {
+        let faceID = NSPredicate(format: "label CONTAINS[c] %@", "Face ID")
+        let allow = NSPredicate(format: "label IN %@", ["Allow", "OK", "Continue"])
+        for host in hosts where host.state == .runningForeground || host.state == .runningBackground {
+            let prompt = host.alerts.firstMatch
+            if prompt.exists && (prompt.label.localizedCaseInsensitiveContains("Face ID") ||
+                                 prompt.staticTexts.matching(faceID).firstMatch.exists) {
+                let approval = prompt.buttons.matching(allow).firstMatch
+                if approval.exists && approval.isHittable { approval.tap(); return true }
+            }
+            // CoreAuthUI can host consent in a remote view without an AXAlert container.
+            if host === coreAuth, host.state == .runningForeground,
+               host.staticTexts.matching(faceID).firstMatch.exists {
+                let approval = host.buttons.matching(allow).firstMatch
+                if approval.exists && approval.isHittable { approval.tap(); return true }
+            }
+        }
+        return false
     }
 
     @MainActor

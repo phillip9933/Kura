@@ -58,6 +58,23 @@ jobs:
               print(f"Kura UI test capture: {prior} -> screenshots")
           path.write_bytes(plistlib.dumps(run))
           PYTHON
+          # CoreSimulator's permission service list varies by Xcode. Grant only Face ID
+          # when the installed CLI lists it, otherwise XCTest answers the native consent UI.
+          privacy_help=$(xcrun simctl help privacy 2>&1 || true)
+          face_service=$(awk 'tolower($1) ~ /^face[-_]?id$/ {print $1; exit}' <<< "$privacy_help")
+          if [[ -n "$face_service" ]]; then
+            xcrun simctl bootstatus "$device" -b
+            app="$RUNNER_TEMP/KuraDerivedData/Build/Products/Debug-iphonesimulator/Kura.app"
+            xcrun simctl install "$device" "$app"
+            bundle=$(plutil -extract CFBundleIdentifier raw -o - "$app/Info.plist")
+            if xcrun simctl privacy "$device" grant "$face_service" "$bundle"; then
+              echo "CoreSimulator granted Face ID consent"
+            else
+              echo "The UI test will answer the native Face ID consent prompt"
+            fi
+          else
+            echo "No Face ID privacy service listed; using the native consent prompt"
+          fi
           xcodebuild test-without-building -xctestrun "${runs[0]}" \
             -destination "platform=iOS Simulator,id=$device" -resultBundlePath "$RUNNER_TEMP/Kura.xcresult" \
             -parallel-testing-enabled NO
@@ -97,7 +114,7 @@ jobs:
           manifest = attachments / "manifest.json"
           if not manifest.exists():
               raise SystemExit(0)
-          names = ["lock-large-text", "wallet-portrait", "item-landscape", "wallet-large-text"]
+          names = ["lock-large-text", "wallet-portrait", "item-landscape", "wallet-large-text", "auth-prompt-failure"]
           for suite in json.loads(manifest.read_text()):
               identifier = suite.get("testIdentifier", "").split("/")
               if len(identifier) < 2 or identifier[-2].split(".")[-1] != "WalletUITests":

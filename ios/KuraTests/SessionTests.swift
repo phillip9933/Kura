@@ -13,9 +13,11 @@ final class SessionTests: XCTestCase {
         window.addSubview(anchor)
         let count = window.subviews.count
         anchor.update(from: .inactive)
-        let cover = try XCTUnwrap(window.subviews.first { $0.subviews.contains { $0.accessibilityIdentifier == "privacy.inactive" } })
+        XCTAssertEqual(window.subviews.count, count, "Foreground authentication must remain accessible")
+        anchor.update(from: .background)
+        let cover = try XCTUnwrap(window.subviews.first { $0.subviews.contains { $0.accessibilityIdentifier == "privacy.background" } })
         XCTAssertEqual(cover.frame, window.bounds)
-        anchor.update(from: .active)
+        anchor.update(from: .inactive)
         XCTAssertNil(cover.superview)
         anchor.update(from: .background)
         XCTAssertTrue(cover.superview === window)

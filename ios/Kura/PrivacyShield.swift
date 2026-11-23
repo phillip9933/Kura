@@ -12,7 +12,7 @@ struct PrivacyShield: UIViewRepresentable {
     final class ShieldAnchor: UIView {
         private let cover = UIView()
         private let label = UILabel()
-        private var inactive = false
+        private var backgrounded = false
         private var lastPhase: ScenePhase?
 
         override init(frame: CGRect) {
@@ -30,8 +30,8 @@ struct PrivacyShield: UIViewRepresentable {
                                          label.centerYAnchor.constraint(equalTo: cover.centerYAnchor)])
 
             let events = NotificationCenter.default
-            events.addObserver(self, selector: #selector(deactivate(_:)), name: UIScene.willDeactivateNotification, object: nil)
-            events.addObserver(self, selector: #selector(activate(_:)), name: UIScene.didActivateNotification, object: nil)
+            events.addObserver(self, selector: #selector(enterBackground(_:)), name: UIScene.didEnterBackgroundNotification, object: nil)
+            events.addObserver(self, selector: #selector(enterForeground(_:)), name: UIScene.willEnterForegroundNotification, object: nil)
             events.addObserver(self, selector: #selector(captureChanged(_:)), name: UIScreen.capturedDidChangeNotification, object: nil)
             if #available(iOS 18.4, *) {
                 registerForTraitChanges([UITraitSceneCaptureState.self], action: #selector(refresh))
@@ -41,27 +41,29 @@ struct PrivacyShield: UIViewRepresentable {
 
         override func didMoveToWindow() {
             super.didMoveToWindow()
-            inactive = window?.windowScene?.activationState != .foregroundActive
+            backgrounded = window?.windowScene?.activationState == .background
             refresh()
         }
 
         func update(from phase: ScenePhase) {
             if lastPhase != phase {
                 lastPhase = phase
-                inactive = phase != .active
+                backgrounded = phase == .background
             }
             refresh()
         }
 
-        @objc private func deactivate(_ event: Notification) {
+        // UIKit captures the switcher image after the background transition. Foreground
+        // inactivity also occurs while the device authentication prompt owns interaction.
+        @objc private func enterBackground(_ event: Notification) {
             guard let scene = window?.windowScene, event.object as? UIWindowScene === scene else { return }
-            inactive = true
+            backgrounded = true
             refresh()
         }
 
-        @objc private func activate(_ event: Notification) {
+        @objc private func enterForeground(_ event: Notification) {
             guard let scene = window?.windowScene, event.object as? UIWindowScene === scene else { return }
-            inactive = false
+            backgrounded = false
             refresh()
         }
 
@@ -74,8 +76,8 @@ struct PrivacyShield: UIViewRepresentable {
             let captured: Bool
             if #available(iOS 18.4, *) { captured = traitCollection.sceneCaptureState == .active }
             else { captured = window.screen.isCaptured }
-            guard inactive || captured else { removeCover(); return }
-            label.accessibilityIdentifier = captured ? "privacy.capture" : "privacy.inactive"
+            guard backgrounded || captured else { removeCover(); return }
+            label.accessibilityIdentifier = captured ? "privacy.capture" : "privacy.background"
             cover.isUserInteractionEnabled = captured
             cover.frame = window.bounds
             if cover.superview !== window { window.addSubview(cover) }
