@@ -35,7 +35,7 @@ The versioned wallet in Application Support uses CryptoKit AES-GCM with a fresh 
 
 The default 256-bit Keychain key is device-only, requires a device passcode and is gated by user presence. Optional phone-unlock-only mode uses a separately protected copy available while the device is unlocked. Switching access modes requires authentication. Removing the passcode can make the wallet unrecoverable without a password-encrypted export.
 
-An opaque window covers the app switcher and active screen recording or mirroring. Ordinary user screenshots of a visible wallet are possible. [Apple capture behavior](https://developer.apple.com/documentation/uikit/uiapplication/userdidtakescreenshotnotification)
+An opaque cover over the wallet window protects app-switcher snapshots and active screen recording or mirroring. Ordinary user screenshots of a visible wallet are possible. [Apple capture behavior](https://developer.apple.com/documentation/uikit/uiapplication/userdidtakescreenshotnotification)
 
 Locking drops the session's records and key and invalidates pending editors. A successful restore also discards older editors. Kura keeps a previous encrypted copy before replacing a readable vault. Recovery from damaged ciphertext preserves that file before replacement. Password-encrypted backups use PBKDF2-HMAC-SHA256 with a random salt and AES-GCM. Choose a Files destination appropriate for the backup, including an on-device location if you want it to stay local.
 

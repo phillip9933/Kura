@@ -179,10 +179,12 @@ final class WalletUITests: XCTestCase {
             if cards.waitForExistence(timeout: 0.5) { return }
         }
         let shield = app.staticTexts["Wallet hidden"].exists
+        let inactive = app.descendants(matching: .any)["privacy.inactive"].exists
+        let capture = app.descendants(matching: .any)["privacy.capture"].exists
         let locked = app.buttons["Unlock wallet"].exists
         let navigation = app.navigationBars.firstMatch
         let bar = navigation.exists ? navigation.label : "absent"
-        XCTFail("Wallet did not open. Shield visible: \(shield), lock visible: \(locked), navigation bar: \(bar), system alerts: \(springboard.alerts.count).")
+        XCTFail("Wallet did not open. Shield visible: \(shield) (inactive: \(inactive), captured: \(capture)), lock visible: \(locked), navigation bar: \(bar), system alerts: \(springboard.alerts.count).")
     }
 
     @MainActor
@@ -259,7 +261,8 @@ final class WalletUITests: XCTestCase {
     private func assertLocked(_ app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         let unlock = app.buttons["Unlock wallet"]
         XCTAssertTrue(unlock.waitForExistence(timeout: 10), file: file, line: line)
-        XCTAssertTrue(unlock.isHittable, file: file, line: line)
+        let available = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == YES"), object: unlock)
+        XCTAssertEqual(XCTWaiter.wait(for: [available], timeout: 5), .completed, file: file, line: line)
         XCTAssertTrue(app.staticTexts["Kura"].exists, file: file, line: line)
         XCTAssertFalse(app.navigationBars["Cards"].exists, file: file, line: line)
         XCTAssertFalse(app.buttons["Add item"].exists, file: file, line: line)

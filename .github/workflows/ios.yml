@@ -32,8 +32,35 @@ jobs:
           xcodebuild -project ios/Kura.xcodeproj -scheme Kura \
             -destination "platform=iOS Simulator,id=$device" \
             -derivedDataPath "$RUNNER_TEMP/KuraDerivedData" \
-            -resultBundlePath "$RUNNER_TEMP/Kura.xcresult" \
-            -parallel-testing-enabled NO test
+            -parallel-testing-enabled NO build-for-testing
+          # Keep the generated run file in place so __TESTROOT__ still resolves.
+          runs=("$RUNNER_TEMP/KuraDerivedData/Build/Products/"*.xctestrun)
+          test "${#runs[@]}" = 1 && test -f "${runs[0]}"
+          python3 - "${runs[0]}" <<'PYTHON'
+          import plistlib
+          import sys
+          from pathlib import Path
+
+          path = Path(sys.argv[1])
+          run = plistlib.loads(path.read_bytes())
+          configurations = run.get("TestConfigurations")
+          if configurations is None:
+              targets = [value for value in run.values() if isinstance(value, dict)]
+          else:
+              targets = [target for config in configurations for target in config["TestTargets"]]
+          ui_targets = [target for target in targets if target.get("IsUITestBundle")
+                        or target.get("TestBundlePath", "").endswith("/KuraUITests.xctest")]
+          if not ui_targets:
+              raise ValueError("Kura UI test target missing from generated XCTest run file")
+          for target in ui_targets:
+              prior = target.get("PreferredScreenCaptureFormat", "system default")
+              target["PreferredScreenCaptureFormat"] = "screenshots"
+              print(f"Kura UI test capture: {prior} -> screenshots")
+          path.write_bytes(plistlib.dumps(run))
+          PYTHON
+          xcodebuild test-without-building -xctestrun "${runs[0]}" \
+            -destination "platform=iOS Simulator,id=$device" -resultBundlePath "$RUNNER_TEMP/Kura.xcresult" \
+            -parallel-testing-enabled NO
 
       - name: Compile unsigned Release for arm64 iPhone
         run: |

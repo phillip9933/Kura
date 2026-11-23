@@ -9,7 +9,7 @@ struct KuraApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Group {
+            ZStack {
                 if wallet.phase == .recoveryRequired {
                     BackupRescueView(wallet: wallet)
                 } else if wallet.phase == .unlocked {
@@ -30,7 +30,7 @@ struct KuraApp: App {
                     .multilineTextAlignment(.center)
                 }
             }
-            .background(PrivacyShield())
+            .background(PrivacyShield(phase: scenePhase))
             .preferredColorScheme(wallet.snapshot.preferences.appearance == "Dark" ? .dark :
                                   wallet.snapshot.preferences.appearance == "Light" ? .light : nil)
             .onAppear {

@@ -2,9 +2,28 @@ import CryptoKit
 import LocalAuthentication
 import Security
 import XCTest
+import UIKit
 @testable import Kura
 
 final class SessionTests: XCTestCase {
+    @MainActor
+    func testPrivacyCoverFollowsPhaseAndDetachesFromExistingWindow() throws {
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
+        let anchor = PrivacyShield.ShieldAnchor(frame: .zero)
+        window.addSubview(anchor)
+        let count = window.subviews.count
+        anchor.update(from: .inactive)
+        let cover = try XCTUnwrap(window.subviews.first { $0.subviews.contains { $0.accessibilityIdentifier == "privacy.inactive" } })
+        XCTAssertEqual(cover.frame, window.bounds)
+        anchor.update(from: .active)
+        XCTAssertNil(cover.superview)
+        anchor.update(from: .background)
+        XCTAssertTrue(cover.superview === window)
+        anchor.removeFromSuperview()
+        XCTAssertNil(cover.superview)
+        XCTAssertLessThanOrEqual(window.subviews.count, count)
+    }
+
     @MainActor
     func testLockInvalidatesPendingUnlockAndRejectsWritesFromThatGeneration() async throws {
         let wallet = WalletSession()
