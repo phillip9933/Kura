@@ -103,17 +103,16 @@ final class WalletUITests: XCTestCase {
         favorite.tap()
         XCTAssertTrue(app.buttons["Remove from favorites"].waitForExistence(timeout: 5))
 
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        setWalletAppearance("Dark", in: app)
         app.terminate()
-        let previousAppearance = XCUIDevice.shared.appearance
-        defer { XCUIDevice.shared.appearance = previousAppearance }
-        XCUIDevice.shared.appearance = .dark
-        XCTAssertEqual(XCUIDevice.shared.appearance, .dark)
         app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXL"]
         app.launch()
         assertLocked(app)
         try unlockWithBiometrics(app)
         XCTAssertTrue(row.waitForExistence(timeout: 8))
-        capture("wallet-large-text", app)
+        XCTAssertTrue(row.isHittable)
+        capture("wallet-large-text", app, verifyDarkBackground: true)
         row.tap()
         reveal(app.buttons["Remove from favorites"], in: app)
 
@@ -126,6 +125,26 @@ final class WalletUITests: XCTestCase {
         else { app.alerts.buttons["Delete item"].tap() }
         XCTAssertTrue(app.navigationBars["Cards"].waitForExistence(timeout: 5))
         XCTAssertFalse(row.exists)
+        setWalletAppearance("System", in: app)
+    }
+
+    @MainActor
+    private func setWalletAppearance(_ choice: String, in app: XCUIApplication) {
+        let options = app.descendants(matching: .any).matching(identifier: "Options").firstMatch
+        XCTAssertTrue(options.waitForExistence(timeout: 5))
+        options.tap()
+        let settings = app.buttons["Settings"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 5))
+        settings.tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        let picker = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Appearance")).firstMatch
+        reveal(picker, in: app)
+        picker.tap()
+        let option = app.descendants(matching: .any).matching(identifier: choice).firstMatch
+        XCTAssertTrue(option.waitForExistence(timeout: 5))
+        option.tap()
+        app.navigationBars.buttons["Save"].tap()
+        XCTAssertTrue(app.navigationBars["Cards"].waitForExistence(timeout: 8))
     }
 
     @MainActor
@@ -200,7 +219,7 @@ final class WalletUITests: XCTestCase {
     }
 
     @MainActor
-    private func capture(_ name: String, _ app: XCUIApplication) {
+    private func capture(_ name: String, _ app: XCUIApplication, verifyDarkBackground: Bool = false) {
         var image = XCUIScreen.main.screenshot().image
         let landscape = app.frame.width > app.frame.height
         // On some simulators a full-device screenshot is returned in sensor coordinates.
@@ -216,6 +235,24 @@ final class WalletUITests: XCTestCase {
         attachment.name = "Kura-QA-" + name + ".png"
         attachment.lifetime = .keepAlways
         add(attachment)
+        if verifyDarkBackground, let png = UIImage(data: data)?.cgImage {
+            // Measure the same opaque full-screen PNG that CI exports. Wallet rows and the
+            // scroll background occupy most of this synthetic, single-item screen.
+            var samples = [UInt8](repeating: 255, count: 32 * 32)
+            let sampled = samples.withUnsafeMutableBytes { pixels -> Bool in
+                guard let context = CGContext(data: pixels.baseAddress, width: 32, height: 32, bitsPerComponent: 8,
+                                              bytesPerRow: 32, space: CGColorSpaceCreateDeviceGray(),
+                                              bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return false }
+                context.interpolationQuality = .high
+                context.draw(png, in: CGRect(x: 0, y: 0, width: 32, height: 32))
+                return true
+            }
+            XCTAssertTrue(sampled)
+            let ratio = Double(samples.filter { $0 < 80 }.count) / Double(samples.count)
+            XCTAssertGreaterThan(ratio, 0.65, "Expected dark wallet pixels in " + name)
+        } else if verifyDarkBackground {
+            XCTFail("Could not read the dark wallet screenshot")
+        }
     }
 
     @MainActor
