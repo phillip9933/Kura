@@ -1,5 +1,6 @@
 import CryptoKit
 import LocalAuthentication
+import Security
 import XCTest
 @testable import Kura
 
@@ -57,6 +58,25 @@ final class SessionTests: XCTestCase {
         context.interactionNotAllowed = true
         context.invalidate()
         XCTAssertThrowsError(try VaultKey.load(context: context, allowCreation: false))
+    }
+
+    func testKeychainDeletionIsExactAndSafeToRetry() throws {
+        let first = "unit-" + UUID().uuidString
+        let second = "unit-" + UUID().uuidString
+        defer {
+            try? VaultKey.remove(account: first, context: nil)
+            try? VaultKey.remove(account: second, context: nil)
+        }
+        for account in [first, second] {
+            var item = VaultKey.identity(for: account)
+            item[kSecAttrAccessible] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+            item[kSecValueData] = Data("temporary synthetic fixture".utf8)
+            XCTAssertEqual(SecItemAdd(item as CFDictionary, nil), errSecSuccess)
+        }
+        try VaultKey.remove(account: first, context: nil)
+        try VaultKey.remove(account: first, context: nil)
+        XCTAssertEqual(SecItemCopyMatching(VaultKey.identity(for: first) as CFDictionary, nil), errSecItemNotFound)
+        XCTAssertEqual(SecItemCopyMatching(VaultKey.identity(for: second) as CFDictionary, nil), errSecSuccess)
     }
 
     func testInvalidCandidateAndDamagedActiveVaultCannotEraseLastGoodCopy() throws {

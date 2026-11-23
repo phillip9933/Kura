@@ -27,6 +27,7 @@ struct BackupView: View {
     @State private var autoPassword = ""
     @State private var autoConfirmation = ""
     @State private var retention = 5
+    @State private var folderName: String?
     @State private var importPassword = ""
     @State private var pickedBackup: URL?
     @State private var pickerPurpose = PickerPurpose.restore
@@ -74,16 +75,17 @@ struct BackupView: View {
             }
             Section {
                 Text(automatic.status)
+                if let folderName { LabeledContent("Backup folder", value: folderName) }
                 SecureField("Automatic backup password", text: $autoPassword)
                 SecureField("Confirm automatic backup password", text: $autoConfirmation)
                 Stepper("Keep \(retention) backups", value: $retention, in: 1...1000)
-                Button("Choose folder and enable") {
+                Button(BackupAutomatic.configured ? "Change backup folder" : "Choose folder and enable") {
                     pickerPurpose = .automaticFolder
                     pickerGeneration = wallet.generation
                     showPicker = true
-                }.disabled(autoPassword.count < 8 || autoPassword != autoConfirmation || busy)
+                }.disabled((autoPassword.isEmpty ? !BackupAutomatic.configured : autoPassword.count < 8) || autoPassword != autoConfirmation || busy)
                 if BackupAutomatic.configured {
-                    Button("Update current folder settings") {
+                    Button(BackupAutomatic.paused ? "Resume automatic backups" : "Update current folder settings") {
                         guard viewGeneration == wallet.generation else { return }
                         do {
                             try wallet.updateAutomatic(password: autoPassword.isEmpty ? nil : autoPassword, retention: retention)
@@ -94,16 +96,18 @@ struct BackupView: View {
                         }
                     }
                     .disabled((!autoPassword.isEmpty && autoPassword.count < 8) || autoPassword != autoConfirmation || busy)
-                    Button("Turn off automatic backups") {
-                        guard viewGeneration == wallet.generation else { return }
-                        do { try wallet.disableAutomatic() }
-                        catch { status = "Kura could not disable automatic backups." }
+                    if !BackupAutomatic.paused {
+                        Button("Pause automatic backups") {
+                            guard viewGeneration == wallet.generation else { return }
+                            do { try wallet.disableAutomatic() }
+                            catch { status = "Kura could not pause automatic backups." }
+                        }
                     }
                 }
             } header: {
                 Text("Automatic backups")
             } footer: {
-                Text("Kura saves changes while your wallet is open. To change only retention, leave the password blank and update the current folder. Existing files keep their original passwords. Choosing a folder starts a new backup history.")
+                Text("Kura saves changes while your wallet is open. Leave the password blank to keep the current password. Changing folders starts a new backup history. Existing files keep their original passwords.")
             }
             Section {
                 if entries.isEmpty { Text("No recovery copies") }
@@ -134,8 +138,10 @@ struct BackupView: View {
             viewGeneration = wallet.generation
             refreshRecovery()
             if BackupAutomatic.configured {
-                do { retention = try wallet.automaticRetention() }
-                catch { status = "Kura could not read the automatic backup settings." }
+                do {
+                    retention = try wallet.automaticRetention()
+                    folderName = try wallet.automaticFolderName()
+                } catch { status = "Kura could not read the automatic backup settings." }
             }
         }
         .onDisappear { clearSensitiveState() }
@@ -152,6 +158,7 @@ struct BackupView: View {
             case .automaticFolder:
                 do {
                     try wallet.configureAutomatic(folder: url, password: autoPassword, retention: retention)
+                    folderName = url.lastPathComponent
                     autoPassword = ""
                     autoConfirmation = ""
                 } catch {
@@ -269,6 +276,7 @@ struct BackupView: View {
 
     private func clearSensitiveState() {
         job?.cancel()
+        folderName = nil
         job = nil
         busy = false
         discardPreview()

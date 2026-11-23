@@ -71,6 +71,7 @@ final class BackupTests: XCTestCase {
         let folder = directory.appendingPathComponent("External")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let ledger = directory.appendingPathComponent("Private/ledger")
+        try FileManager.default.createDirectory(at: ledger.deletingLastPathComponent(), withIntermediateDirectories: true)
         let foreign = folder.appendingPathComponent("Kura-" + UUID().uuidString + ".kurabackup")
         try Data("unrelated".utf8).write(to: foreign)
         let key = SymmetricKey(size: .bits256)
@@ -100,12 +101,68 @@ final class BackupTests: XCTestCase {
         XCTAssertEqual(try BackupCodec.decode(BackupFiles.read(active), password: password), latest)
     }
 
+    func testPauseAndResumePreserveEncryptedDestinationAndHistory() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let key = SymmetricKey(size: .bits256)
+        let encrypted = root.appendingPathComponent("destination")
+        let marker = root.appendingPathComponent("paused")
+        let destination = try AutomaticDestination.configure(folder: root, password: password, retention: 3, previous: nil)
+        try BackupSettingsFile.write(destination, to: encrypted, key: key)
+        let original = try Data(contentsOf: encrypted)
+        for paused in [true, true, false, false] {
+            try BackupSettingsFile.setPaused(paused, marker: marker)
+            XCTAssertEqual(FileManager.default.fileExists(atPath: marker.path), paused)
+            XCTAssertEqual(try Data(contentsOf: encrypted), original)
+        }
+        let restored = try BackupSettingsFile.read(AutomaticDestination.self, at: encrypted, key: key)
+        XCTAssertEqual(restored.id, destination.id)
+        XCTAssertEqual(restored.password, password)
+        XCTAssertThrowsError(try BackupSettingsFile.read(AutomaticDestination.self, at: encrypted, key: SymmetricKey(size: .bits256)))
+    }
+
+    func testChangingBackupFolderCarriesPasswordAndKeepsOnlyMatchingHistory() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let first = root.appendingPathComponent("First", isDirectory: true)
+        let second = root.appendingPathComponent("Second", isDirectory: true)
+        for folder in [first, second] { try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true) }
+        XCTAssertThrowsError(try AutomaticDestination.configure(folder: first, password: "", retention: 3, previous: nil))
+        let original = try AutomaticDestination.configure(folder: first, password: password, retention: 3, previous: nil)
+        let same = try AutomaticDestination.configure(folder: first, password: "", retention: 1, previous: original)
+        XCTAssertEqual(same.id, original.id)
+        XCTAssertEqual(same.passwordRevision, original.passwordRevision)
+        XCTAssertEqual(same.retention, 1)
+        let moved = try AutomaticDestination.configure(folder: second, password: "", retention: 5, previous: same)
+        XCTAssertEqual(try moved.folder().lastPathComponent, "Second")
+        XCTAssertNotEqual(moved.id, original.id)
+        XCTAssertEqual(moved.password, password)
+    }
+
+    func testAutomaticWriterDoesNotRecreateErasedPrivateDirectory() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let folder = root.appendingPathComponent("Export")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let ledger = root.appendingPathComponent("Erased/ledger")
+        do {
+            try await AutomaticWriter().write(snapshot: sample(), key: SymmetricKey(size: .bits256), folder: folder,
+                                              password: password, retention: 1, ledgerURL: ledger)
+            XCTFail("An erased backup configuration cannot publish another backup")
+        } catch {
+            XCTAssertFalse(FileManager.default.fileExists(atPath: ledger.deletingLastPathComponent().path))
+            XCTAssertTrue(try FileManager.default.contentsOfDirectory(atPath: folder.path).isEmpty)
+        }
+    }
+
     func testAutomaticPasswordChangeReencryptsUnchangedWalletInExistingHistory() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let folder = root.appendingPathComponent("Folder")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let ledger = root.appendingPathComponent("Private/ledger")
+        try FileManager.default.createDirectory(at: ledger.deletingLastPathComponent(), withIntermediateDirectories: true)
         let snapshot = try sample()
         let key = SymmetricKey(size: .bits256)
         let writer = AutomaticWriter()
@@ -137,6 +194,25 @@ final class BackupTests: XCTestCase {
         XCTAssertThrowsError(try BackupCodec.decode(bytes, password: password))
         XCTAssertThrowsError(try BackupTransferCodec.open(bytes, password: password))
         XCTAssertThrowsError(try BackupPassFile.decode(bytes, password: "incorrect"))
+    }
+
+    func testTransferExcludesPassArtworkAndFileKeepsIt() throws {
+        var source = try XCTUnwrap(sample().cards.first)
+        source.media = WalletMedia()
+        // Synthetic 8 × 8 blue PNG.
+        let artwork = try XCTUnwrap(Data(base64Encoded:
+            "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAEElEQVR4nGNgYPiPAw0pCQCpcD/BFMrqcwAAAABJRU5ErkJggg=="))
+        source.passStyle = PassAppearance(type: "generic", logoText: "Synthetic logo", organization: "Test",
+                                          transitType: "", serialNumber: "001", groups: [:], artwork: ["icon": artwork])
+        let file = try BackupPassFile.encode(source, password: password)
+        XCTAssertEqual(try BackupPassFile.decode(file, password: password).passStyle?.artwork["icon"], artwork)
+        var parts = BackupTransferCollection()
+        for code in try BackupTransferCodec.chunks(for: source, password: password) { try parts.append(code) }
+        let transferred = try BackupTransferCodec.open(parts.assembled(), password: password)
+        XCTAssertEqual(transferred.passStyle?.logoText, "Synthetic logo")
+        XCTAssertEqual(transferred.passStyle?.artwork.isEmpty, true)
+        let embedded = try BackupCodec.seal(JSONEncoder().encode(source), password: password, kind: .item)
+        XCTAssertThrowsError(try BackupTransferCodec.open(embedded, password: password))
     }
 
     func testTransferHandlesUnorderedDuplicateAndMixedCodesAndOmitsMedia() throws {

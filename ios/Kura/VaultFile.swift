@@ -15,16 +15,19 @@ struct VaultFile {
 
     private var pendingErase: URL { directory.appendingPathExtension("pending-erase") }
 
-    func finishPendingErase() throws {
-        do { try FileManager.default.removeItem(at: pendingErase) }
-        catch let error as CocoaError where error.code == .fileNoSuchFile { }
+    func finishPendingErase(removingKeys: () throws -> Void) throws {
+        do { _ = try pendingErase.resourceValues(forKeys: [.isDirectoryKey]) }
+        catch let error as CocoaError where [.fileNoSuchFile, .fileReadNoSuchFile].contains(error.code) { return }
+        try removingKeys()
+        try FileManager.default.removeItem(at: pendingErase)
     }
 
-    func erase() throws {
-        try finishPendingErase()
-        do { try FileManager.default.moveItem(at: directory, to: pendingErase) }
-        catch let error as CocoaError where error.code == .fileNoSuchFile || error.code == .fileReadNoSuchFile { return }
-        try finishPendingErase()
+    func erase(removingKeys: () throws -> Void) throws {
+        try finishPendingErase(removingKeys: removingKeys)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
+                                                attributes: [.protectionKey: FileProtectionType.complete])
+        try FileManager.default.moveItem(at: directory, to: pendingErase)
+        try finishPendingErase(removingKeys: removingKeys)
     }
 
     func readCiphertext() throws -> Data? {

@@ -2,12 +2,34 @@ import CryptoKit
 import Foundation
 import SwiftUI
 
-private struct AutomaticDestination: Codable {
+struct AutomaticDestination: Codable {
     let id: UUID
     let bookmark: Data
     let password: String
     let retention: Int
     var passwordRevision: UUID?
+
+    static func configure(folder: URL, password: String, retention: Int, previous: Self?) throws -> Self {
+        let secret = password.isEmpty ? previous?.password ?? "" : password
+        try BackupCodec.checkNewPassword(secret)
+        guard (1...1000).contains(retention) else { throw BackupError.invalid }
+        let scoped = folder.startAccessingSecurityScopedResource()
+        defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
+        guard try folder.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true else { throw BackupError.unavailable }
+        let bookmark = try folder.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
+        if let previous, (try? previous.folder().standardizedFileURL) == folder.standardizedFileURL {
+            return Self(id: previous.id, bookmark: bookmark, password: secret, retention: retention,
+                        passwordRevision: previous.password == secret ? previous.passwordRevision : UUID())
+        }
+        return Self(id: UUID(), bookmark: bookmark, password: secret, retention: retention, passwordRevision: UUID())
+    }
+
+    func folder() throws -> URL {
+        var stale = false
+        let url = try URL(resolvingBookmarkData: bookmark, options: [], relativeTo: nil, bookmarkDataIsStale: &stale)
+        guard !stale else { throw BackupError.unavailable }
+        return url
+    }
 }
 
 private struct BackupReceipt: Codable {
@@ -20,9 +42,19 @@ private struct BackupLedger: Codable {
     var files: [BackupReceipt] = []
 }
 
-private enum BackupSettingsFile {
+enum BackupSettingsFile {
     static let directory = BackupRecovery.walletDirectory.appendingPathComponent("Automatic", isDirectory: true)
     static let config = directory.appendingPathComponent("destination")
+    static let pauseMarker = directory.appendingPathComponent("paused")
+
+    static func setPaused(_ paused: Bool, marker: URL = pauseMarker) throws {
+        if paused {
+            try Data().write(to: marker, options: [.atomic, .completeFileProtection])
+        } else {
+            do { try FileManager.default.removeItem(at: marker) }
+            catch let error as CocoaError where [.fileReadNoSuchFile, .fileNoSuchFile].contains(error.code) { }
+        }
+    }
     static func ledger(_ id: UUID) -> URL {
         directory.appendingPathComponent(id.uuidString + ".ledger")
     }
@@ -34,14 +66,18 @@ private enum BackupSettingsFile {
         return try JSONDecoder().decode(type, from: data)
     }
 
-    static func write<Value: Encodable>(_ value: Value, to url: URL, key: SymmetricKey) throws {
-        let directory = url.deletingLastPathComponent()
+    static func prepareDirectory() throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
                                                attributes: [.protectionKey: FileProtectionType.complete])
         var folder = directory
         var properties = URLResourceValues()
         properties.isExcludedFromBackup = true
         try folder.setResourceValues(properties)
+    }
+
+    static func write<Value: Encodable>(_ value: Value, to url: URL, key: SymmetricKey) throws {
+        // Only explicit setup creates a directory. A cancelled writer must never recreate an erased wallet.
+        try Task.checkCancellation()
         var data = try JSONEncoder().encode(value)
         defer { data.resetBytes(in: 0..<data.count) }
         guard let sealed = try AES.GCM.seal(data, using: key).combined else { throw BackupError.unavailable }
@@ -53,10 +89,7 @@ actor AutomaticWriter {
     func run(snapshot: WalletSnapshot, key: SymmetricKey, access: BackupFileAccess) throws {
         try Task.checkCancellation()
         let config = try BackupSettingsFile.read(AutomaticDestination.self, at: BackupSettingsFile.config, key: key)
-        var stale = false
-        let folder = try URL(resolvingBookmarkData: config.bookmark, options: [],
-                             relativeTo: nil, bookmarkDataIsStale: &stale)
-        guard !stale else { throw BackupError.unavailable }
+        let folder = try config.folder()
         let scoped = folder.startAccessingSecurityScopedResource()
         defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
 
@@ -70,6 +103,8 @@ actor AutomaticWriter {
                access: BackupFileAccess = BackupFileAccess()) throws {
         try Task.checkCancellation()
         guard (1...1000).contains(retention) else { throw BackupError.invalid }
+        let directory = ledgerURL.deletingLastPathComponent()
+        guard try directory.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true else { throw BackupError.unavailable }
         var ledger: BackupLedger
         do { ledger = try BackupSettingsFile.read(BackupLedger.self, at: ledgerURL, key: key) }
         catch let error as CocoaError where error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile { ledger = BackupLedger() }
@@ -160,19 +195,22 @@ final class BackupAutomatic: ObservableObject {
     private var job: Task<Void, Never>?
     @Published private(set) var status = "Automatic backups are off."
     static var configured: Bool { FileManager.default.fileExists(atPath: BackupSettingsFile.config.path) }
+    static var paused: Bool { FileManager.default.fileExists(atPath: BackupSettingsFile.pauseMarker.path) }
 
     static func configure(folder: URL, password: String, retention: Int, key: SymmetricKey) throws {
-        try BackupCodec.checkNewPassword(password)
-        guard (1...1000).contains(retention) else { throw BackupError.invalid }
-        let scoped = folder.startAccessingSecurityScopedResource()
-        defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
-        guard try folder.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true else { throw BackupError.unavailable }
-        let bookmark = try folder.bookmarkData(options: .minimalBookmark,
-            includingResourceValuesForKeys: nil, relativeTo: nil)
+        let previous: AutomaticDestination?
+        do { previous = try BackupSettingsFile.read(AutomaticDestination.self, at: BackupSettingsFile.config, key: key) }
+        catch let error as CocoaError where [.fileReadNoSuchFile, .fileNoSuchFile].contains(error.code) { previous = nil }
+        let config = try AutomaticDestination.configure(folder: folder, password: password, retention: retention, previous: previous)
         cancel()
-        let config = AutomaticDestination(id: UUID(), bookmark: bookmark, password: password, retention: retention, passwordRevision: UUID())
+        try BackupSettingsFile.prepareDirectory()
         try BackupSettingsFile.write(config, to: BackupSettingsFile.config, key: key)
+        try BackupSettingsFile.setPaused(false)
         shared.status = "Automatic backups are enabled."
+    }
+
+    static func folderName(key: SymmetricKey) throws -> String {
+        try BackupSettingsFile.read(AutomaticDestination.self, at: BackupSettingsFile.config, key: key).folder().lastPathComponent
     }
 
     static func retention(key: SymmetricKey) throws -> Int {
@@ -188,13 +226,14 @@ final class BackupAutomatic: ObservableObject {
                                            retention: retention, passwordRevision: revision)
         cancel()
         try BackupSettingsFile.write(updated, to: BackupSettingsFile.config, key: key)
+        try BackupSettingsFile.setPaused(false)
         shared.status = "Automatic backup settings saved."
     }
 
     static func disable() throws {
         cancel()
-        if configured { try FileManager.default.removeItem(at: BackupSettingsFile.config) }
-        shared.status = "Automatic backups are off."
+        if configured { try BackupSettingsFile.setPaused(true) }
+        shared.status = "Automatic backups are paused."
     }
 
     static func cancel() {
@@ -204,7 +243,14 @@ final class BackupAutomatic: ObservableObject {
 
     static func schedule(snapshot: WalletSnapshot, key: SymmetricKey) {
         cancel()
-        guard configured else { return }
+        guard configured else {
+            shared.status = "Automatic backups are off."
+            return
+        }
+        guard !paused else {
+            shared.status = "Automatic backups are paused."
+            return
+        }
         shared.job = Task {
             do {
                 try await Task.sleep(nanoseconds: 700_000_000)

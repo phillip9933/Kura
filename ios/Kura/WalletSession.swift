@@ -10,19 +10,25 @@ private actor VaultStorage {
 
     func open(context: LAContext, phoneOnly: Bool, passcodeOnly: Bool) throws -> (SymmetricKey, WalletSnapshot?) {
         try Task.checkCancellation()
-        try file.finishPendingErase()
+        try file.finishPendingErase { try VaultKey.eraseAll(context: context) }
         let read = Result { try file.readCiphertext() }
         let isNew: Bool
         if case .success(nil) = read { isNew = true } else { isNew = false }
         let key: SymmetricKey
         if phoneOnly { key = try PhoneUnlock.read() }
-        else if passcodeOnly { key = try PasscodeUnlock.read(context: context) }
+        else if passcodeOnly {
+            _ = try PasscodeUnlock.read(context: context)
+            key = try VaultKey.load(context: context, allowCreation: false)
+        }
         else { key = try VaultKey.load(context: context, allowCreation: isNew) }
         try Task.checkCancellation()
         do {
             guard let data = try read.get() else { return (key, WalletSnapshot()) }
             return (key, try file.decodeSnapshot(data, key: key))
-        } catch { return (key, nil) }
+        } catch {
+            guard !phoneOnly else { throw WalletError.keyUnavailable }
+            return (key, nil)
+        }
     }
 
     func write(_ snapshot: WalletSnapshot, key: SymmetricKey, retainPrevious: Bool, damaged: Bool) throws {
@@ -34,7 +40,10 @@ private actor VaultStorage {
         try file.write(snapshot, key: key)
     }
 
-    func erase() throws { try Task.checkCancellation(); try file.erase() }
+    func erase(context: LAContext) throws {
+        try Task.checkCancellation()
+        try file.erase { try VaultKey.eraseAll(context: context) }
+    }
 
     func recovery(_ id: UUID, key: SymmetricKey) throws -> WalletSnapshot {
         try Task.checkCancellation()
@@ -62,7 +71,7 @@ final class WalletSession: ObservableObject {
     func unlock(requirePrompt: Bool = false) {
         guard phase == .locked else { return }
         let phoneOnly = PhoneUnlock.enabled && !requirePrompt
-        let passcodeOnly = PasscodeUnlock.enabled && !phoneOnly && !requirePrompt
+        let passcodeOnly = PasscodeUnlock.enabled && !phoneOnly
         let auth = LAContext()
         context = auth
         let attempt = generation
@@ -120,7 +129,7 @@ final class WalletSession: ObservableObject {
         guard generation == token, phase == .unlocked, try VaultKey.load(context: auth, allowCreation: false) == key else {
             throw WalletError.keyUnavailable
         }
-        try PasscodeUnlock.configure(enabled, verifiedKey: key)
+        try PasscodeUnlock.configure(enabled, verifiedKey: key, context: auth)
         objectWillChange.send()
     }
 
@@ -180,6 +189,13 @@ final class WalletSession: ObservableObject {
         try await commit(next, generation: token)
     }
 
+    func deleteArchived(_ selected: [WalletCard], generation token: UUID) async throws {
+        guard selected == cards.filter(\.archived) else { throw WalletError.recordChanged }
+        var next = snapshot
+        next.cards.removeAll(where: \.archived)
+        try await commit(next, generation: token)
+    }
+
     func importCards(_ items: [WalletCard], generation token: UUID) async throws {
         var next = snapshot
         next.cards.append(contentsOf: items)
@@ -232,12 +248,15 @@ final class WalletSession: ObservableObject {
         guard verified == key else { throw WalletError.keyUnavailable }
         saving = true
         defer { if generation == token { lock() } }
-        try PasscodeUnlock.configure(false, verifiedKey: verified)
-        try PhoneUnlock.setEnabled(false, verifiedKey: verified)
         BackupAutomatic.cancel()
-        let job = Task { try await storage.erase() }
+        let job = Task { try await storage.erase(context: auth) }
         writing = job
         try await job.value
+    }
+
+    func automaticFolderName() throws -> String {
+        guard phase == .unlocked, let key else { throw CancellationError() }
+        return try BackupAutomatic.folderName(key: key)
     }
 
     func automaticRetention() throws -> Int {
