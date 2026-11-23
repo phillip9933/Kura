@@ -222,7 +222,7 @@ private struct SectionSettings: View {
 private struct LicenseView: View {
     var body: some View {
         ScrollView {
-            Text(verbatim: ["Notices", "LICENSE-ZIPFoundation"].compactMap { name in
+            Text(verbatim: ["Notices", "LICENSE-ZIPFoundation", "LICENSE-ZXingCpp"].compactMap { name in
                 Bundle.main.url(forResource: name, withExtension: "txt").flatMap { try? String(contentsOf: $0, encoding: .utf8) }
             }.joined(separator: "\n\n"))
                 .frame(maxWidth: .infinity, alignment: .leading).padding()

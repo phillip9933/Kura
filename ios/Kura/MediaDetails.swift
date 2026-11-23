@@ -53,7 +53,7 @@ struct MediaDetails: View {
                 }
             }
         }
-        .sheet(item: $viewingImage) { slot in
+        .fullScreenCover(item: $viewingImage) { slot in
             NavigationStack {
                 if let bytes = media[slot] {
                     MediaImageViewer(bytes: bytes, label: slot.title + " image")
@@ -199,7 +199,7 @@ private struct ItemMediaDraft: View {
     }
 }
 
-private struct MediaImageViewer: View {
+struct MediaImageViewer: View {
     let bytes: Data
     let label: String
     @State private var image: CGImage?

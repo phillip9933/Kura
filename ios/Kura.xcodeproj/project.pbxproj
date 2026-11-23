@@ -589,6 +589,26 @@
       isa = PBXBuildFile;
       fileRef = 1FDD75A30AD45C476434927E;
     };
+    E08731CCB53BE7AC1DE7BDED = {
+      isa = PBXFileReference;
+      lastKnownFileType = text;
+      path = "Kura/LICENSE-ZXingCpp.txt";
+      sourceTree = SOURCE_ROOT;
+    };
+    F7E96ABB5B198BC6EABFA420 = {
+      isa = PBXBuildFile;
+      fileRef = E08731CCB53BE7AC1DE7BDED;
+    };
+    0CD01F43D6AA4984EEDE731B = {
+      isa = PBXFileReference;
+      lastKnownFileType = text.xml;
+      path = "Kura/PrivacyInfo.xcprivacy";
+      sourceTree = SOURCE_ROOT;
+    };
+    E731674818B6A3ABF27EED7C = {
+      isa = PBXBuildFile;
+      fileRef = 0CD01F43D6AA4984EEDE731B;
+    };
     CAF85B0888D78F1F83771A07 = {
       isa = PBXGroup;
       children = (
@@ -598,6 +618,8 @@
         B525ACF5742866EE9F2C92CE,
         55701A53403CC5A57D7D4172,
         1FDD75A30AD45C476434927E,
+        E08731CCB53BE7AC1DE7BDED,
+        0CD01F43D6AA4984EEDE731B,
         4EDC8BFAFC6BD936B849F38C
       );
       sourceTree = "<group>";
@@ -789,7 +811,8 @@
       buildActionMask = 2147483647;
       files = (
         778B3A181F65B71AEB90D702,
-        BA5F23F579C230E0D4C8F2F5
+        BA5F23F579C230E0D4C8F2F5,
+        C86CF2F31B193CC8B3F3E246
       );
       runOnlyForDeploymentPostprocessing = 0;
     };
@@ -799,6 +822,8 @@
       files = (
         9814E13B80D73E1CD60418D3,
         1256C4D484242DF9BA011A6C,
+        F7E96ABB5B198BC6EABFA420,
+        E731674818B6A3ABF27EED7C,
         EAA2301FC3CF34A5AEB786D6
       );
       runOnlyForDeploymentPostprocessing = 0;
@@ -819,7 +844,8 @@
       dependencies = ();
       packageProductDependencies = (
         8D8B738196EB3DB5664A60CD,
-        8CE9F912F1C167589F9FC754
+        8CE9F912F1C167589F9FC754,
+        7DD65F99542B2691297B6EC3
       );
     };
     EF1312D48C739F00FD1166D5 = {
@@ -1014,7 +1040,8 @@
       );
       packageReferences = (
         1A5327FC98A945C8D78C5A21,
-        EA52FC7080B2B46330A64D70
+        EA52FC7080B2B46330A64D70,
+        5E0AFBE791E62AADCEBA23E6
       );
     };
     1A5327FC98A945C8D78C5A21 = {
@@ -1023,6 +1050,14 @@
       requirement = {
         kind = revision;
         revision = 22787ffb59de99e5dc1fbfe80b19c97a904ad48d;
+      };
+    };
+    5E0AFBE791E62AADCEBA23E6 = {
+      isa = XCRemoteSwiftPackageReference;
+      repositoryURL = "https://github.com/zxing-cpp/zxing-cpp.git";
+      requirement = {
+        kind = revision;
+        revision = 287c85df6f961c8efbfb5ffd736cd9457b8b890e;
       };
     };
     EA52FC7080B2B46330A64D70 = {
@@ -1046,6 +1081,15 @@
     BA5F23F579C230E0D4C8F2F5 = {
       isa = PBXBuildFile;
       productRef = 8CE9F912F1C167589F9FC754;
+    };
+    7DD65F99542B2691297B6EC3 = {
+      isa = XCSwiftPackageProductDependency;
+      package = 5E0AFBE791E62AADCEBA23E6;
+      productName = ZXingCpp;
+    };
+    C86CF2F31B193CC8B3F3E246 = {
+      isa = PBXBuildFile;
+      productRef = 7DD65F99542B2691297B6EC3;
     };
   };
   rootObject = 244210E48437B6556980A702;

@@ -33,15 +33,18 @@ final class BarcodeTests: XCTestCase {
         XCTAssertEqual(ScannedBarcode(payload: " 0042 ", format: .code128)?.payload, " 0042 ")
     }
 
-    func testAppleVisionReadsCommonPassFormats() async throws {
-        let payload = "KURA-00001842"
-        for (format, type) in [(BarcodeFormat.aztec, VNBarcodeSymbology.aztec),
-                               (.pdf417, .pdf417), (.code128, .code128), (.dataMatrix, .dataMatrix)] {
+    func testPhotoReaderDecodesRenderedPassesAndExactText() async throws {
+        let samples: [(BarcodeFormat, String)] = [
+            (.aztec, "KURA-00001842"), (.pdf417, "KURA-00001842"), (.code128, "KURA-00001842"),
+            (.dataMatrix, "KURA-00001842"), (.telepen, "KURA42"), (.qr, " 会員番号 0042 "),
+            (.gs1128, "(01)09501101530003")
+        ]
+        for (format, payload) in samples {
             let rendered = await CardQR.shared.image(for: payload, format: format)
             let image = try XCTUnwrap(rendered)
-            let found = try BarcodePhoto.observations(in: image, symbologies: [type])
-            XCTAssertEqual(found.first?.payloadStringValue, payload, format.rawValue)
-            XCTAssertEqual(found.first.flatMap { BarcodeFormat(vision: $0.symbology) }, format, format.rawValue)
+            let found = try BarcodePhoto.codes(in: image)
+            XCTAssertEqual(found.first?.payload, payload, format.rawValue)
+            XCTAssertEqual(found.first?.format, format, format.rawValue)
         }
     }
 

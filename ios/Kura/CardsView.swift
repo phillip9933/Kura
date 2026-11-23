@@ -121,6 +121,7 @@ struct CardsView: View {
                         Button("Import encrypted item") { path.append(.importEncrypted) }
                         Button("Receive secure transfer") { path.append(.receive) }
                     } label: { Label("Add", systemImage: "plus") }
+                    .accessibilityIdentifier("wallet.addMenu")
                     Menu {
                         if !layout.showSectionBar {
                             Picker("Section", selection: $section) { ForEach(layout.visible) { Text($0.rawValue).tag($0) } }

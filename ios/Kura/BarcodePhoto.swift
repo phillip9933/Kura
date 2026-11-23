@@ -4,6 +4,7 @@ import Foundation
 import ImageIO
 import UniformTypeIdentifiers
 import Vision
+import ZXingCpp
 
 enum BarcodePhotoError: Error { case invalid, tooLarge }
 
@@ -31,43 +32,64 @@ struct BarcodePhoto: Transferable {
             ] as CFDictionary
             guard let image = CGImageSourceCreateThumbnailAtIndex(input, 0, thumbnail)
             else { throw BarcodePhotoError.invalid }
-            let found = try observations(in: image)
-            try Task.checkCancellation()
-            var seen = Set<ScannedBarcode>()
-            let codes = found.compactMap { observation -> ScannedBarcode? in
-                guard let code = ScannedBarcode(payload: observation.payloadStringValue,
-                                                format: BarcodeFormat(vision: observation.symbology)),
-                      seen.insert(code).inserted else { return nil }
-                return code
-            }
-            return BarcodePhoto(codes: codes)
+            return BarcodePhoto(codes: try codes(in: image))
         }
     }
 
-    // Small standalone barcode images can fill the entire frame. Vision also accepts a
-    // camera-sized frame with background around the symbol, as in a photograph of a card.
-    static func observations(in image: CGImage, symbologies: [VNBarcodeSymbology]? = nil) throws -> [VNBarcodeObservation] {
-        func detect(_ input: CGImage) throws -> [VNBarcodeObservation] {
-            try Task.checkCancellation()
-            let request = VNDetectBarcodesRequest()
-            if let symbologies { request.symbologies = symbologies }
-            try VNImageRequestHandler(cgImage: input, options: [:]).perform([request])
-            return request.results ?? []
+    static func codes(in image: CGImage) throws -> [ScannedBarcode] {
+        try Task.checkCancellation()
+        let reader = ZXIBarcodeReader()
+        reader.options.maxNumberOfSymbols = 16
+        let decoded = (try? reader.read(image)) ?? []
+        let offline = decoded.compactMap { reading in
+            ScannedBarcode(payload: reading.text, format: format(of: reading))
         }
-        let original = try detect(image)
-        guard original.isEmpty else { return original }
-        let width = 1024, height = 768
-        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
-                                      space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)
-        else { return original }
-        let fit = min(CGFloat(width - 160) / CGFloat(image.width), CGFloat(height - 160) / CGFloat(image.height))
-        let scale = fit >= 1 ? floor(fit) : fit
-        let w = (CGFloat(image.width) * scale).rounded(), h = (CGFloat(image.height) * scale).rounded()
-        context.setFillColor(gray: 1, alpha: 1)
-        context.fill(CGRect(x: 0, y: 0, width: CGFloat(width), height: CGFloat(height)))
-        context.interpolationQuality = .none
-        context.draw(image, in: CGRect(x: floor((CGFloat(width) - w) / 2), y: floor((CGFloat(height) - h) / 2), width: w, height: h))
-        guard let framed = context.makeImage() else { return original }
-        return try detect(framed)
+        try Task.checkCancellation()
+        var seen = Set<ScannedBarcode>()
+        if !offline.isEmpty { return offline.filter { seen.insert($0).inserted } }
+
+        let request = VNDetectBarcodesRequest()
+        try VNImageRequestHandler(cgImage: image, options: [:]).perform([request])
+        try Task.checkCancellation()
+        return (request.results ?? []).compactMap { observation in
+            guard let code = ScannedBarcode(payload: observation.payloadStringValue,
+                                            format: BarcodeFormat(vision: observation.symbology)),
+                  seen.insert(code).inserted else { return nil }
+            return code
+        }
+    }
+
+    private static func format(of result: ZXIResult) -> BarcodeFormat? {
+        // ZXing exposes GS1 application identifiers in parenthesized, human-readable form.
+        if result.symbologyIdentifier == "]C1", result.text.hasPrefix("(") { return .gs1128 }
+        switch result.format {
+        case .QR_CODE, .MICRO_QR_CODE, .RMQR_CODE: return .qr
+        case .AZTEC: return .aztec
+        case .PDF_417: return .pdf417
+        case .DATA_MATRIX: return .dataMatrix
+        case .CODE_128: return .code128
+        case .CODE_39: return .code39
+        case .CODE_93: return .code93
+        case .CODABAR: return .codabar
+        case .EAN_8: return .ean8
+        case .EAN_13: return .ean13
+        case .UPC_E, .UPC_A:
+            // The reader can expand UPC-E into its 12/13-digit retail representation.
+            if result.text.count == 13 { return .ean13 }
+            return result.text.count == 12 ? .upca : .upce
+        case .ITF: return .itf
+        case .TELEPEN: return .telepen
+        default:
+            // The 3.1.1 Objective-C bridge reports NONE for some concrete variants
+            // (such as QR Model 2). The decoded AIM identifier still identifies the family.
+            switch result.symbologyIdentifier.prefix(2) {
+            case "]Q": return .qr
+            case "]z": return .aztec
+            case "]L": return .pdf417
+            case "]A": return .code39
+            case "]I": return result.text.count == 14 ? .itf14 : .itf
+            default: return nil
+            }
+        }
     }
 }

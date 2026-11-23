@@ -82,6 +82,7 @@ struct PassImportView: View {
 
 struct PassAppearanceView: View {
     let card: WalletCard
+    @State private var displayedArtwork: DisplayedPassArtwork?
 
     var body: some View {
         if let style = card.passStyle {
@@ -89,10 +90,8 @@ struct PassAppearanceView: View {
             VStack(alignment: .leading, spacing: 12) {
                 if !style.organization.isEmpty && style.organization != card.name { Text(style.organization).font(.headline) }
                 if !style.logoText.isEmpty { Text(style.logoText).font(.title3.bold()) }
-                if let art = style.artwork["strip"] ?? style.artwork["thumbnail"] {
-                    MediaThumbnail(data: art, maximumPixels: 800).frame(maxHeight: 160)
-                        .accessibilityHidden(true)
-                }
+                if let art = style.artwork["strip"] { artwork(art, name: "Strip image", height: 160) }
+                if let art = style.artwork["thumbnail"] { artwork(art, name: "Pass portrait", height: 145) }
                 ForEach(PassAppearance.groupNames, id: \.self) { group in
                     if group == "backFields", let fields = style.groups[group], !fields.isEmpty {
                         DisclosureGroup("Terms and additional information") {
@@ -108,16 +107,35 @@ struct PassAppearanceView: View {
                     }
                 }
                 if let art = style.artwork["footer"] {
-                    MediaThumbnail(data: art, maximumPixels: 800).frame(maxHeight: 80)
-                        .accessibilityHidden(true)
+                    artwork(art, name: "Footer image", height: 80)
                 }
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
             .foregroundStyle(palette.text)
             .background(palette.background, in: RoundedRectangle(cornerRadius: 12))
+            .fullScreenCover(item: $displayedArtwork) { item in
+                NavigationStack {
+                    MediaImageViewer(bytes: item.data, label: item.name)
+                        .navigationTitle(item.name)
+                        .toolbar { Button("Done") { displayedArtwork = nil } }
+                }
+            }
         }
     }
+
+    private struct DisplayedPassArtwork: Identifiable {
+        let id = UUID()
+        let data: Data
+        let name: String
+    }
+
+    private func artwork(_ bytes: Data, name: String, height: CGFloat) -> some View {
+        Button { displayedArtwork = DisplayedPassArtwork(data: bytes, name: name) } label: {
+            MediaThumbnail(data: bytes, maximumPixels: 800).frame(maxHeight: height)
+        }.buttonStyle(.plain).accessibilityLabel("View " + name.lowercased())
+    }
+
     private func passField(_ field: PassField, palette: PassPalette, primary: Bool) -> some View {
         VStack(alignment: .leading) {
             if !field.label.isEmpty { Text(field.label).font(.caption.bold()).foregroundStyle(palette.label) }

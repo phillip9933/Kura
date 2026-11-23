@@ -27,7 +27,7 @@ xcodebuild -project ios/Kura.xcodeproj -scheme Kura \
   -parallel-testing-enabled NO test
 ```
 
-Swift Package Manager resolves ZIPFoundation 0.9.20 at the revision in the project lockfile. [ZIPFoundation's license](Kura/LICENSE-ZIPFoundation.txt) and the [vendored Zint encoder notices](BarcodeKit/Notices.txt) ship with the app.
+Swift Package Manager resolves ZIPFoundation 0.9.20 and the ZXing-C++ 3.1.1 photo decoder at revisions pinned in the project lockfile. The app includes the licenses for [ZIPFoundation](Kura/LICENSE-ZIPFoundation.txt), [ZXing-C++](Kura/LICENSE-ZXingCpp.txt) and the [vendored Zint encoder](BarcodeKit/Notices.txt).
 
 ## Storage and authentication
 

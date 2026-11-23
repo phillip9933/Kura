@@ -61,8 +61,9 @@ final class WalletTests: XCTestCase {
             let card = try WalletCard(name: "Test card", payload: payload)
             let rendered = await CardQR.shared.image(for: card.payload)
             let image = try XCTUnwrap(rendered)
-            let found = try BarcodePhoto.observations(in: image, symbologies: [.qr])
-            XCTAssertEqual(found.first?.payloadStringValue, payload)
+            let found = try BarcodePhoto.codes(in: image)
+            XCTAssertEqual(found.first?.payload, payload)
+            XCTAssertEqual(found.first?.format, .qr)
         }
     }
 }

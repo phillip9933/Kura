@@ -65,8 +65,23 @@ final class WalletUITests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
         defer { XCUIDevice.shared.orientation = .portrait }
         let name = "Library " + String(UUID().uuidString.prefix(8))
-        app.navigationBars.buttons["Add"].tap()
-        app.buttons["Add item"].tap()
+        let addMenu = app.descendants(matching: .any).matching(identifier: "wallet.addMenu").firstMatch
+        XCTAssertTrue(addMenu.waitForExistence(timeout: 5))
+        addMenu.tap()
+        let scanCard = app.buttons["Scan card"]
+        XCTAssertTrue(scanCard.waitForExistence(timeout: 5))
+        scanCard.tap()
+        XCTAssertTrue(app.buttons["Take a front photo"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Choose a front photo"].exists)
+        XCTAssertFalse(app.navigationBars.buttons["Save"].isEnabled)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.navigationBars["Cards"].waitForExistence(timeout: 5))
+        let addItem = app.buttons["Add item"]
+        if !addItem.exists {
+            addMenu.tap()
+        }
+        XCTAssertTrue(addItem.waitForExistence(timeout: 5))
+        addItem.tap()
         let field = app.textFields["Name"]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
         field.tap()

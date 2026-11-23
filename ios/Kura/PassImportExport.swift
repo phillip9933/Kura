@@ -1,3 +1,4 @@
+import CoreTransferable
 import ImageIO
 import SwiftUI
 import UniformTypeIdentifiers

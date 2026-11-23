@@ -97,4 +97,18 @@ final class OrganizationTests: XCTestCase {
         try vault.finishPendingErase { XCTFail("Key cleanup should run only while an erase is pending") }
         XCTAssertEqual(attempts, 2)
     }
+
+    func testAppBundleIncludesDependencyNoticesAndPrivacyDeclarations() throws {
+        for name in ["Notices", "LICENSE-ZIPFoundation", "LICENSE-ZXingCpp"] {
+            let file = try XCTUnwrap(Bundle.main.url(forResource: name, withExtension: "txt"), name)
+            XCTAssertFalse(try String(contentsOf: file, encoding: .utf8).isEmpty)
+        }
+        let manifest = try XCTUnwrap(Bundle.main.url(forResource: "PrivacyInfo", withExtension: "xcprivacy"))
+        let plist = try PropertyListSerialization.propertyList(from: Data(contentsOf: manifest), format: nil)
+        let privacy = try XCTUnwrap(plist as? [String: Any])
+        XCTAssertEqual(privacy["NSPrivacyTracking"] as? Bool, false)
+        let uses = try XCTUnwrap(privacy["NSPrivacyAccessedAPITypes"] as? [[String: Any]])
+        let reasons = uses.flatMap { $0["NSPrivacyAccessedAPITypeReasons"] as? [String] ?? [] }
+        XCTAssertEqual(Set(reasons), ["CA92.1", "35F9.1", "C617.1"])
+    }
 }
