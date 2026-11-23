@@ -18,6 +18,9 @@ Resolve an absolute `APP_GUIDELINES_ROOT` supplied by the trusted launch environ
 
 ## Find the owner before changing code
 
+- `ios`: iPhone app, Xcode project, platform security and XCTest suites. Follow the [iPhone guide](ios/README.md).
+- `shared`: contracts exercised on both platforms, including the shared synthetic QR fixtures.
+
 - `ios/`: iPhone app, Xcode project, and XCTest targets. See the [iPhone guide](ios/README.md).
 - `shared/test-fixtures/`: synthetic inputs used by tests on both platforms.
 - `app`: Android host, activity results, authentication, session-owned orchestration.

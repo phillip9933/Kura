@@ -30,7 +30,7 @@ Making it public does not mean it is a polished production product or suitable f
 
 ## iPhone development
 
-The [iPhone app](ios/README.md) supports manual card entry and QR display in a local wallet. Use synthetic cards while device security and recovery are under development.
+The native iPhone app supports cards, passes and IDs, scanning, local media and encrypted backups. The [iPhone guide](ios/README.md) covers features, the Xcode project and device acceptance.
 
 ## Native Android
 

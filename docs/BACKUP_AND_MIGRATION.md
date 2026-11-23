@@ -1,5 +1,9 @@
 # Backup and migration
 
+## iPhone wallets
+
+The iPhone app can export and restore password-encrypted iPhone backups through Files. Restore shows a preview and preserves the previous encrypted wallet before replacement. Individual encrypted item files also carry media. Kura uses separate backup formats on Android and iPhone. Cross-platform migration is deferred. See the [iPhone guide](../ios/README.md) for recovery and acceptance checks.
+
 ## Move your existing data into Kura 2.0
 
 1. In the old app, create an encrypted `.wbk` backup and keep its password securely.

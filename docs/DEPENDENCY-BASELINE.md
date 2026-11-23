@@ -244,3 +244,8 @@ prompts; no unreviewed matches, errors or skipped rules. Its new hosted check
 remains pending. These source checks do not replace dependency/native scanning,
 publisher authentication or signing-recovery evidence. Earlier no-scan statements
 above retain their dated scope; platform-managed service state is still unverified.
+
+
+## iPhone runtime dependencies
+
+The iPhone project pins ZIPFoundation 0.9.20 at revision `22787ffb59de99e5dc1fbfe80b19c97a904ad48d` in its SwiftPM lockfile. It reads and writes pass archives. The local barcode package vendors Zint 2.16.0 at `55541e139e62b9209b71cd9b0ba9010cec28b1d9`. The app includes both licenses in Settings. On 23 November 2026 the OSV batch API returned zero indexed matches for each of those two commit IDs. The lookup included only the public IDs. The [barcode package record](../ios/BarcodeKit/README.md) also records the upstream archive digest and independent encoder checks.

@@ -4,7 +4,11 @@
 
 Kura is an offline Android wallet for cards, passes and identity documents. It has no account service, advertising, analytics or telemetry, and the default build does not request Android's INTERNET permission. The optional direct-update build uses networking only for app updates.
 
-## Local data and authentication
+## iPhone development app
+
+The iPhone app processes wallet data and image recognition on the device. It encrypts records, preferences, images and attachments in its private Application Support directory and excludes the wallet from device backup. iOS handles authentication and protects device-only Keychain items. Optional phone-unlock-only mode lets someone using the unlocked phone open Kura. Camera and photo pickers access images at your request. Choosing a Files provider or sharing an unsigned pass or an attachment can give the selected provider or recipient a copy. Password-encrypted exports and recovery copies may retain deleted items. The [iPhone guide](ios/README.md) explains how to export, restore and erase a wallet.
+
+## Android local data and authentication
 
 Records are stored in encrypted SQLCipher databases. New imported media and attachments are encrypted in the app's private storage. The Android operating system handles biometrics and device credentials; Kura does not receive raw biometric data or your device PIN. Android Keystore protects access to the vault key. App unlock is enabled by default. You can turn off Require app unlock in Data & Security to rely on your phone’s secure screen lock; anyone using the unlocked phone can then open Kura. The wallet remains encrypted, and this device-local choice is not included in exported backups.
 

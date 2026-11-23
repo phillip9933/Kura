@@ -1,10 +1,10 @@
 # Architecture
 
-The root Gradle build owns Android. The independent Xcode project in [ios/](../ios/README.md) owns iPhone. Both apps use the native mobile security profile. Android distribution and update tooling operate on the Gradle modules. The iPhone target is a local development build.
+The root Gradle build owns Android. The independent Xcode project in [ios/](../ios/README.md) owns iPhone. Both apps use the native mobile security profile. Android distribution and update tooling operate on the Gradle modules. The iPhone target has a separate development bundle ID and macOS simulator CI.
 
 Use `shared/` for code or contracts with a consumer on each platform. The first shared contract is [synthetic QR payloads](../shared/test-fixtures/qr-payloads.json). Both platform tests render and decode the same strings. Each app owns its UI, authentication, storage, and lifecycle. Android backup formats have no iPhone consumer.
 
-On iPhone, `WalletSession` owns unlocked state. `VaultKey` opens a Keychain item with device-owner authentication. `VaultFile` reads and writes the encrypted card file. `CardQR` renders QR codes with Core Image. The [iPhone guide](../ios/README.md) describes storage, failure handling, and device acceptance.
+On iPhone, `WalletSession` owns authentication, unlocked state and serialized writes. `VaultKey` accesses the protected Keychain item and `VaultFile` publishes the encrypted wallet. Native barcode, pass import, media and backup components own their format handling. The local Zint package renders barcodes, Apple frameworks handle scanning and recognition, and ZIPFoundation reads and writes pass archives. The [iPhone guide](../ios/README.md) describes storage, failure handling, and device acceptance.
 
 ## Android modules
 

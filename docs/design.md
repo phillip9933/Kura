@@ -8,7 +8,7 @@ design review and the verification gaps below remain explicit.
 
 ## iPhone card journey
 
-The iPhone app uses SwiftUI navigation, system colors, text styles, and labelled controls. Unlock opens the card list. Add card opens a draft. Back discards an unsaved draft. Save returns to the previous screen after the encrypted write succeeds. A write error keeps the draft available for retry. A card detail shows the exact QR text below its black-on-white code in both appearances. Locking removes the card and editor screens. The [iPhone guide](../ios/README.md) lists the physical-device and VoiceOver checks for this journey.
+The iPhone app uses SwiftUI navigation, system colors, text styles, and labelled controls. Unlock opens the configured wallet section. Add item opens a draft for a card, pass or identity. Back discards an unsaved draft. Save returns to the previous screen after the encrypted write succeeds. A write error keeps the draft available for retry. Item detail exposes the exact barcode text and opens a dedicated scanner-facing display. Imported passes retain their issuer presentation. The media editor previews cropping and OCR suggestions before save. Locking removes the card and editor screens. The [iPhone guide](../ios/README.md) lists the physical-device and VoiceOver checks for this journey.
 
 ## Product, audience and priorities
 
