@@ -27,6 +27,26 @@ final class SessionTests: XCTestCase {
     }
 
     @MainActor
+    func testLeavingRecognitionCancelsVisionAwayFromLockThreadAndDiscardsResult() async {
+        let started = expectation(description: "Vision operation started")
+        let releaseOperation = DispatchSemaphore(value: 0)
+        let task = Task {
+            try await MediaProcessor.withVisionCancellation(cancel: {
+                XCTAssertFalse(Thread.isMainThread)
+                releaseOperation.signal()
+            }) {
+                XCTAssertFalse(Thread.isMainThread)
+                started.fulfill()
+                XCTAssertEqual(releaseOperation.wait(timeout: .now() + 5), .success)
+            }
+        }
+
+        await fulfillment(of: [started], timeout: 5)
+        task.cancel()
+        await expectCancellation { try await task.value }
+    }
+
+    @MainActor
     func testLockInvalidatesPendingUnlockAndRejectsWritesFromThatGeneration() async throws {
         let wallet = WalletSession()
         let original = wallet.generation
@@ -55,8 +75,10 @@ final class SessionTests: XCTestCase {
         let card = try WalletCard(name: "Synthetic pass", payload: "0002")
         await expectCancellation { try await wallet.importCards([card], generation: token) }
         await expectCancellation { try await wallet.preferences(WalletPreferences(), generation: token) }
-        XCTAssertThrowsError(try wallet.configureAutomatic(folder: FileManager.default.temporaryDirectory,
-                                                            password: "synthetic-password", retention: 1))
+        XCTAssertThrowsError(try wallet.automaticBookmark(generation: token))
+        let folder = try await PreparedBackupFolder(url: FileManager.default.temporaryDirectory, previousBookmark: nil)
+        XCTAssertThrowsError(try wallet.configureAutomatic(folder: folder, password: "synthetic-password", retention: 1,
+                                                            generation: token))
         XCTAssertThrowsError(try wallet.disableAutomatic())
         XCTAssertEqual(wallet.snapshot, WalletSnapshot())
     }

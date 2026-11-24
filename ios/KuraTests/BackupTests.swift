@@ -45,6 +45,32 @@ final class BackupTests: XCTestCase {
         XCTAssertThrowsError(try BackupCodec.decode(data, password: password))
     }
 
+    func testRestoreChecksDepthOfUnknownFieldsBeforePreview() throws {
+        let snapshot = try sample(#"Library "{[member]}" \ branch"#)
+        let encoded = try JSONEncoder().encode(snapshot)
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        var field: Any = "fixture"
+        // The root object plus 31 arrays is exactly the supported 32 levels.
+        for _ in 0..<31 { field = [field] }
+        object["futureField"] = field
+        func backup() throws -> Data {
+            try BackupCodec.seal(JSONSerialization.data(withJSONObject: object), password: password, kind: .wallet)
+        }
+        XCTAssertEqual(try BackupCodec.decode(backup(), password: password), snapshot)
+        object["futureField"] = [field]
+        XCTAssertThrowsError(try BackupCodec.decode(backup(), password: password)) { error in
+            XCTAssertEqual(error as? BackupError, .invalid)
+        }
+        object["version"] = 2
+        let key = SymmetricKey(size: .bits256)
+        let json = try JSONSerialization.data(withJSONObject: object)
+        let ciphertext = try XCTUnwrap(AES.GCM.seal(json, using: key).combined)
+        let vault = VaultFile(directory: FileManager.default.temporaryDirectory)
+        XCTAssertThrowsError(try vault.decodeSnapshot(ciphertext, key: key)) { error in
+            XCTAssertEqual(error as? WalletError, .vaultUnavailable)
+        }
+    }
+
     func testRecoveryPreservesOriginalAndDeleteLeavesActiveWalletAlone() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -101,14 +127,15 @@ final class BackupTests: XCTestCase {
         XCTAssertEqual(try BackupCodec.decode(BackupFiles.read(active), password: password), latest)
     }
 
-    func testPauseAndResumePreserveEncryptedDestinationAndHistory() throws {
+    func testPauseAndResumePreserveEncryptedDestinationAndHistory() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let key = SymmetricKey(size: .bits256)
         let encrypted = root.appendingPathComponent("destination")
         let marker = root.appendingPathComponent("paused")
-        let destination = try AutomaticDestination.configure(folder: root, password: password, retention: 3, previous: nil)
+        let prepared = try await PreparedBackupFolder(url: root, previousBookmark: nil)
+        let destination = try AutomaticDestination.configure(folder: prepared, password: password, retention: 3, previous: nil)
         try BackupSettingsFile.write(destination, to: encrypted, key: key)
         let original = try Data(contentsOf: encrypted)
         for paused in [true, true, false, false] {
@@ -122,20 +149,26 @@ final class BackupTests: XCTestCase {
         XCTAssertThrowsError(try BackupSettingsFile.read(AutomaticDestination.self, at: encrypted, key: SymmetricKey(size: .bits256)))
     }
 
-    func testChangingBackupFolderCarriesPasswordAndKeepsOnlyMatchingHistory() throws {
+    func testChangingBackupFolderCarriesPasswordAndKeepsOnlyMatchingHistory() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
         let first = root.appendingPathComponent("First", isDirectory: true)
         let second = root.appendingPathComponent("Second", isDirectory: true)
         for folder in [first, second] { try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true) }
-        XCTAssertThrowsError(try AutomaticDestination.configure(folder: first, password: "", retention: 3, previous: nil))
-        let original = try AutomaticDestination.configure(folder: first, password: password, retention: 3, previous: nil)
-        let same = try AutomaticDestination.configure(folder: first, password: "", retention: 1, previous: original)
+        let initialSelection = try await PreparedBackupFolder(url: first, previousBookmark: nil)
+        XCTAssertThrowsError(try AutomaticDestination.configure(folder: initialSelection, password: "", retention: 3, previous: nil))
+        let original = try AutomaticDestination.configure(folder: initialSelection, password: password, retention: 3, previous: nil)
+        let reselected = try await PreparedBackupFolder(url: first, previousBookmark: original.bookmark)
+        let same = try AutomaticDestination.configure(folder: reselected, password: "", retention: 1, previous: original)
         XCTAssertEqual(same.id, original.id)
         XCTAssertEqual(same.passwordRevision, original.passwordRevision)
         XCTAssertEqual(same.retention, 1)
-        let moved = try AutomaticDestination.configure(folder: second, password: "", retention: 5, previous: same)
-        XCTAssertEqual(try moved.folder().lastPathComponent, "Second")
+        let newSelection = try await PreparedBackupFolder(url: second, previousBookmark: same.bookmark)
+        let moved = try AutomaticDestination.configure(folder: newSelection, password: "", retention: 5, previous: same)
+        let folderName = try await PreparedBackupFolder.name(for: moved.bookmark)
+        XCTAssertEqual(folderName, "Second")
+        // A result prepared before the destination changed cannot overwrite the new folder.
+        XCTAssertThrowsError(try AutomaticDestination.configure(folder: newSelection, password: "", retention: 5, previous: moved))
         XCTAssertNotEqual(moved.id, original.id)
         XCTAssertEqual(moved.password, password)
     }

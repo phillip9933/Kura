@@ -10,9 +10,7 @@ enum BackupPassFile {
     }
 
     static func decode(_ bytes: Data, password: String) throws -> WalletCard {
-        var plain = try BackupCodec.open(bytes, password: password, kind: .passFile)
-        defer { plain.resetBytes(in: 0..<plain.count) }
-        var card = try JSONDecoder().decode(WalletCard.self, from: plain)
+        var card = try BackupCodec.openJSON(WalletCard.self, from: bytes, password: password, kind: .passFile)
         try card.validate()
         card.id = UUID()
         card.created = Date()

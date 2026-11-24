@@ -9,22 +9,47 @@ struct AutomaticDestination: Codable {
     let retention: Int
     var passwordRevision: UUID?
 
-    static func configure(folder: URL, password: String, retention: Int, previous: Self?) throws -> Self {
+    static func configure(folder: PreparedBackupFolder, password: String, retention: Int, previous: Self?) throws -> Self {
+        guard folder.previousBookmark == previous?.bookmark else { throw BackupError.expired }
         let secret = password.isEmpty ? previous?.password ?? "" : password
         try BackupCodec.checkNewPassword(secret)
         guard (1...1000).contains(retention) else { throw BackupError.invalid }
-        let scoped = folder.startAccessingSecurityScopedResource()
-        defer { if scoped { folder.stopAccessingSecurityScopedResource() } }
-        guard try folder.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true else { throw BackupError.unavailable }
-        let bookmark = try folder.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
-        if let previous, (try? previous.folder().standardizedFileURL) == folder.standardizedFileURL {
-            return Self(id: previous.id, bookmark: bookmark, password: secret, retention: retention,
+        if let previous, folder.matchesPrevious {
+            return Self(id: previous.id, bookmark: folder.bookmark, password: secret, retention: retention,
                         passwordRevision: previous.password == secret ? previous.passwordRevision : UUID())
         }
-        return Self(id: UUID(), bookmark: bookmark, password: secret, retention: retention, passwordRevision: UUID())
+        return Self(id: UUID(), bookmark: folder.bookmark, password: secret, retention: retention, passwordRevision: UUID())
     }
 
     func folder() throws -> URL {
+        try PreparedBackupFolder.resolve(bookmark)
+    }
+}
+
+// The file provider gets only URLs and bookmark bytes while the wallet remains free to lock.
+struct PreparedBackupFolder {
+    let bookmark: Data
+    let previousBookmark: Data?
+    let matchesPrevious: Bool
+
+    init(url: URL, previousBookmark: Data?) async throws {
+        try Task.checkCancellation()
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        guard try url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true else { throw BackupError.unavailable }
+        bookmark = try url.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
+        self.previousBookmark = previousBookmark
+        let previousURL = previousBookmark.flatMap { try? Self.resolve($0) }
+        matchesPrevious = previousURL?.standardizedFileURL == url.standardizedFileURL
+        try Task.checkCancellation()
+    }
+
+    static func name(for bookmark: Data) async throws -> String {
+        try Task.checkCancellation()
+        return try resolve(bookmark).lastPathComponent
+    }
+
+    static func resolve(_ bookmark: Data) throws -> URL {
         var stale = false
         let url = try URL(resolvingBookmarkData: bookmark, options: [], relativeTo: nil, bookmarkDataIsStale: &stale)
         guard !stale else { throw BackupError.unavailable }
@@ -197,20 +222,19 @@ final class BackupAutomatic: ObservableObject {
     static var configured: Bool { FileManager.default.fileExists(atPath: BackupSettingsFile.config.path) }
     static var paused: Bool { FileManager.default.fileExists(atPath: BackupSettingsFile.pauseMarker.path) }
 
-    static func configure(folder: URL, password: String, retention: Int, key: SymmetricKey) throws {
-        let previous: AutomaticDestination?
-        do { previous = try BackupSettingsFile.read(AutomaticDestination.self, at: BackupSettingsFile.config, key: key) }
-        catch let error as CocoaError where [.fileReadNoSuchFile, .fileNoSuchFile].contains(error.code) { previous = nil }
+    static func destination(key: SymmetricKey) throws -> AutomaticDestination? {
+        do { return try BackupSettingsFile.read(AutomaticDestination.self, at: BackupSettingsFile.config, key: key) }
+        catch let error as CocoaError where [.fileReadNoSuchFile, .fileNoSuchFile].contains(error.code) { return nil }
+    }
+
+    static func configure(folder: PreparedBackupFolder, password: String, retention: Int, key: SymmetricKey) throws {
+        let previous = try destination(key: key)
         let config = try AutomaticDestination.configure(folder: folder, password: password, retention: retention, previous: previous)
         cancel()
         try BackupSettingsFile.prepareDirectory()
         try BackupSettingsFile.write(config, to: BackupSettingsFile.config, key: key)
         try BackupSettingsFile.setPaused(false)
         shared.status = "Automatic backups are enabled."
-    }
-
-    static func folderName(key: SymmetricKey) throws -> String {
-        try BackupSettingsFile.read(AutomaticDestination.self, at: BackupSettingsFile.config, key: key).folder().lastPathComponent
     }
 
     static func retention(key: SymmetricKey) throws -> Int {

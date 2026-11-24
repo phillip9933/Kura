@@ -20,9 +20,7 @@ enum BackupTransferCodec {
     }
 
     static func open(_ encrypted: Data, password: String) throws -> WalletCard {
-        var data = try BackupCodec.open(encrypted, password: password, kind: .item)
-        defer { data.resetBytes(in: 0..<data.count) }
-        var item = try JSONDecoder().decode(WalletCard.self, from: data)
+        var item = try BackupCodec.openJSON(WalletCard.self, from: encrypted, password: password, kind: .item)
         guard item.media == WalletMedia(), item.passStyle?.artwork.isEmpty != false else { throw BackupError.transfer }
         // A transfer creates a new item, even when the sender also owns this wallet.
         item.id = UUID()

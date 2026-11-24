@@ -52,8 +52,11 @@ struct VaultFile {
     }
 
     func decodeSnapshot(_ ciphertext: Data, key: SymmetricKey) throws -> WalletSnapshot {
+        guard ciphertext.count <= Self.maximumBytes else { throw WalletError.tooLarge }
         let box = try AES.GCM.SealedBox(combined: ciphertext)
-        let data = try AES.GCM.open(box, using: key)
+        var data = try AES.GCM.open(box, using: key)
+        defer { data.resetBytes(in: 0..<data.count) }
+        guard ImportedJSON.hasSupportedDepth(data) else { throw WalletError.vaultUnavailable }
         let contents = try JSONDecoder().decode(Contents.self, from: data)
         let prefs: WalletPreferences
         switch contents.version {

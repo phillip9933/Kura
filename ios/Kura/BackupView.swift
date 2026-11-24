@@ -140,8 +140,19 @@ struct BackupView: View {
             if BackupAutomatic.configured {
                 do {
                     retention = try wallet.automaticRetention()
-                    folderName = try wallet.automaticFolderName()
                 } catch { status = "Kura could not read the automatic backup settings." }
+            }
+        }
+        .task {
+            let generation = wallet.generation
+            do {
+                if let bookmark = try wallet.automaticBookmark(generation: generation) {
+                    let name = try await PreparedBackupFolder.name(for: bookmark)
+                    try check(generation)
+                    if folderName == nil { folderName = name }
+                }
+            } catch is CancellationError {} catch {
+                if generation == wallet.generation { status = "Kura could not read the automatic backup folder." }
             }
         }
         .onDisappear { clearSensitiveState() }
@@ -156,13 +167,14 @@ struct BackupView: View {
                 pickedBackup = url
                 status = "File selected. Enter its backup password."
             case .automaticFolder:
-                do {
-                    try wallet.configureAutomatic(folder: url, password: autoPassword, retention: retention)
+                perform { generation in
+                    let previous = try wallet.automaticBookmark(generation: generation)
+                    let folder = try await PreparedBackupFolder(url: url, previousBookmark: previous)
+                    try check(generation)
+                    try wallet.configureAutomatic(folder: folder, password: autoPassword, retention: retention, generation: generation)
                     folderName = url.lastPathComponent
                     autoPassword = ""
                     autoConfirmation = ""
-                } catch {
-                    status = (error as? BackupError)?.localizedDescription ?? "Kura could not configure the backup folder."
                 }
             }
         }

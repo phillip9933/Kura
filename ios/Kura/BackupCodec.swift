@@ -98,10 +98,15 @@ enum BackupCodec {
         return try seal(json, password: password, kind: .wallet)
     }
 
-    static func decode(_ data: Data, password: String) throws -> WalletSnapshot {
-        var json = try open(data, password: password, kind: .wallet)
+    static func openJSON<T: Decodable>(_ type: T.Type, from data: Data, password: String, kind: Kind) throws -> T {
+        var json = try open(data, password: password, kind: kind)
         defer { json.resetBytes(in: 0..<json.count) }
-        let snapshot = try JSONDecoder().decode(WalletSnapshot.self, from: json)
+        guard ImportedJSON.hasSupportedDepth(json) else { throw BackupError.invalid }
+        return try JSONDecoder().decode(type, from: json)
+    }
+
+    static func decode(_ data: Data, password: String) throws -> WalletSnapshot {
+        let snapshot = try openJSON(WalletSnapshot.self, from: data, password: password, kind: .wallet)
         try snapshot.validate()
         return snapshot
     }

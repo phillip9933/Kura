@@ -262,9 +262,10 @@ final class WalletSession: ObservableObject {
         try await job.value
     }
 
-    func automaticFolderName() throws -> String {
-        guard phase == .unlocked, let key else { throw CancellationError() }
-        return try BackupAutomatic.folderName(key: key)
+    func automaticBookmark(generation token: UUID) throws -> Data? {
+        try Task.checkCancellation()
+        guard generation == token, phase == .unlocked, let key else { throw CancellationError() }
+        return try BackupAutomatic.destination(key: key)?.bookmark
     }
 
     func automaticRetention() throws -> Int {
@@ -278,8 +279,9 @@ final class WalletSession: ObservableObject {
         BackupAutomatic.schedule(snapshot: snapshot, key: key)
     }
 
-    func configureAutomatic(folder: URL, password: String, retention: Int) throws {
-        guard phase == .unlocked, let key else { throw CancellationError() }
+    func configureAutomatic(folder: PreparedBackupFolder, password: String, retention: Int, generation token: UUID) throws {
+        try Task.checkCancellation()
+        guard generation == token, phase == .unlocked, let key else { throw CancellationError() }
         try BackupAutomatic.configure(folder: folder, password: password, retention: retention, key: key)
         BackupAutomatic.schedule(snapshot: snapshot, key: key)
     }

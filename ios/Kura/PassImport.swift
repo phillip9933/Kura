@@ -153,23 +153,8 @@ enum PassImport {
 
     private static func json(_ data: Data) throws -> [String: Any] {
         guard data.count <= PassArchive.jsonLimit else { throw WalletMediaError.size }
-        var depth = 0, quoted = false, escaped = false
-        for byte in data {
-            if quoted {
-                if escaped { escaped = false }
-                else if byte == 0x5c { escaped = true }
-                else if byte == 0x22 { quoted = false }
-            } else {
-                switch byte {
-                case 0x22: quoted = true
-                case 0x5b, 0x7b: depth += 1
-                case 0x5d, 0x7d: depth -= 1
-                default: break
-                }
-                guard (0...32).contains(depth) else { throw WalletMediaError.damagedPass }
-            }
-        }
-        guard depth == 0, !quoted, let value = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard ImportedJSON.hasSupportedDepth(data),
+              let value = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         else { throw WalletMediaError.damagedPass }
         return value
     }

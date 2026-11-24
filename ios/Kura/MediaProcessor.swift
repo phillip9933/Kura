@@ -77,7 +77,7 @@ enum MediaProcessor {
         request.minimumSize = 0.25
         request.maximumObservations = 1
         do {
-            try VNImageRequestHandler(cgImage: image, options: [:]).perform([request])
+            try await performVisionRequest(request, image: image)
         } catch {
             try Task.checkCancellation()
             return PreparedPhoto(original: image, aligned: nil)
@@ -131,10 +131,31 @@ enum MediaProcessor {
         request.recognitionLanguages = ["en-US", "ja-JP"].filter { supported.contains($0) }
         guard !request.recognitionLanguages.isEmpty else { throw WalletMediaError.unavailableOCR }
         try Task.checkCancellation()
-        try VNImageRequestHandler(cgImage: image, options: [:]).perform([request])
+        try await performVisionRequest(request, image: image)
         try Task.checkCancellation()
         let lines = (request.results ?? []).prefix(256).compactMap { $0.topCandidates(1).first?.string }
         return suggestions(lines: lines, fields: fields)
+    }
+
+    private static func performVisionRequest(_ request: VNRequest, image: CGImage) async throws {
+        try await withVisionCancellation(cancel: { request.cancel() }) {
+            try VNImageRequestHandler(cgImage: image, options: [:]).perform([request])
+        }
+    }
+
+    static func withVisionCancellation(cancel: @escaping @Sendable () -> Void, perform: () throws -> Void) async throws {
+        try await withTaskCancellationHandler {
+            try Task.checkCancellation()
+            do { try perform() }
+            catch {
+                try Task.checkCancellation()
+                throw error
+            }
+            try Task.checkCancellation()
+        } onCancel: {
+            // Cancelling a view task can run its handler on the wallet's lock thread.
+            DispatchQueue.global(qos: .userInitiated).async(execute: cancel)
+        }
     }
 
     static func suggestions(lines: [String], fields: [String: String]) -> [String: String] {

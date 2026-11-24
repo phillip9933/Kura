@@ -39,7 +39,7 @@ The default 256-bit Keychain key is device-only, requires a device passcode and 
 
 An opaque cover over the wallet window protects app-switcher snapshots and active screen recording or mirroring. Ordinary user screenshots of a visible wallet are possible. [Apple capture behavior](https://developer.apple.com/documentation/uikit/uiapplication/userdidtakescreenshotnotification)
 
-Locking drops the session's records and key and invalidates pending editors. A successful restore also discards older editors. Kura keeps a previous encrypted copy before replacing a readable vault. Recovery from damaged ciphertext preserves that file before replacement. Password-encrypted backups use PBKDF2-HMAC-SHA256 with a random salt and AES-GCM. Choose a Files destination appropriate for the backup, including an on-device location if you want it to stay local.
+Locking drops the session's records and key and invalidates pending editors. A successful restore also discards older editors. Kura keeps a previous encrypted copy before replacing a readable vault. Recovery from damaged ciphertext preserves that file before replacement. Password-encrypted backups use PBKDF2-HMAC-SHA256 with a random salt and AES-GCM. A new backup password must contain at least eight characters. Kura accepts up to 32 nested JSON containers in an imported pass, backup, or encrypted item. Choose a Files destination appropriate for the backup, including an on-device location if you want it to stay local.
 
 ## Acceptance on an iPhone
 
