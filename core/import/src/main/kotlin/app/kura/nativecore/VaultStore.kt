@@ -58,7 +58,7 @@ class VaultStore internal constructor(
         val file = File(vault.directory, "settings.json.enc")
         if(!file.isFile) return JSONObject()
         val bytes = EncryptedMediaStorage(vault.directory).read(file.name, vault.key)
-        try { return JSONObject(bytes.toString(Charsets.UTF_8)) } finally { bytes.fill(0) }
+        try { return ImportJson.objectFrom(bytes.toString(Charsets.UTF_8)) } finally { bytes.fill(0) }
     }
     private fun secretFile(directory:File,name:String):AtomicFile {
         require(name in setOf("auto-backup-password.enc","legacy-transfer-key.enc"))
@@ -152,6 +152,7 @@ class VaultStore internal constructor(
                         }
                         else -> cursor.getString(i)
                     }
+                    if (value is String && (name == "fields" || name == "customFields")) ImportJson.checked(value)
                     json.put(name, value)
                 }
                 rows.add(json)
@@ -161,6 +162,19 @@ class VaultStore internal constructor(
     }
     fun insert(vault: Opened, table: String, row: JSONObject) = write(vault, table, row, false)
     fun update(vault: Opened, table: String, row: JSONObject) = write(vault, table, row, true)
+    /** A failed editor write must leave the row and its draft media eligible for retry. */
+    fun saveRecord(vault: Opened, table: String, row: JSONObject, editId: Long?) {
+        if (editId != null) require(row.getLong("id") == editId)
+        val database = db(vault, table)
+        database.beginTransaction()
+        try {
+            write(vault, table, row, editId != null)
+            database.setTransactionSuccessful()
+        } finally {
+            database.endTransaction()
+        }
+    }
+
     private fun exactInteger(value: Any): Long {
         require(value is Number && value.toString().matches(Regex("-?[0-9]+"))) { "Invalid integer" }
         return value.toString().toLong()
@@ -182,8 +196,8 @@ class VaultStore internal constructor(
                     require(value is String) { "Record field must be text: " + name }
                     if (name == "fields" || name == "customFields") {
                         if (value.isNotEmpty()) require(value.trim().startsWith("{") || value.trim().startsWith("["))
-                        if (value.trim().startsWith("{")) JSONObject(value)
-                        if (value.trim().startsWith("[")) JSONArray(value)
+                        if (value.trim().startsWith("{")) ImportJson.objectFrom(value)
+                        if (value.trim().startsWith("[")) ImportJson.arrayFrom(value)
                     }
                     if (encrypted(table, name)) {
                         val bytes = value.toByteArray()
@@ -271,7 +285,7 @@ class VaultStore internal constructor(
         val settingsFile = File(vault.directory, "settings.json.enc")
         if (passId == null && settingsFile.isFile) {
             val settingsBytes = EncryptedMediaStorage(vault.directory).read(settingsFile.name, vault.key)
-            try { data.put("settings", JSONObject(settingsBytes.toString(Charsets.UTF_8))) } finally { settingsBytes.fill(0) }
+            try { data.put("settings", ImportJson.objectFrom(settingsBytes.toString(Charsets.UTF_8))) } finally { settingsBytes.fill(0) }
         }
         val currentSettings=settings(vault)
         val order=currentSettings.optJSONArray("nativeItemOrder")

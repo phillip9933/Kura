@@ -99,9 +99,6 @@ class MainActivity : FragmentActivity() {
     private var backupUri: Uri?
         get() = vm.pending.backupUri
         set(value) { vm.pending.backupUri = value }
-    private var exportFile: File?
-        get() = vm.pending.exportFile
-        set(value) { vm.pending.exportFile = value }
     private var restoreDirectory: File?
         get() = vm.pending.restoreDirectory
         set(value) { vm.pending.restoreDirectory = value; if (value == null) vm.pending.restoreMissingImages = 0 }
@@ -127,30 +124,13 @@ class MainActivity : FragmentActivity() {
                         android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
                             android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                     )
-                    val folderName = withContext(Dispatchers.IO) {
-                        try {
-                            val documentUri = android.provider.DocumentsContract.buildDocumentUriUsingTree(
-                                uri,
-                                android.provider.DocumentsContract.getTreeDocumentId(uri)
-                            )
-                            contentResolver.query(
-                                documentUri,
-                                arrayOf(android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME),
-                                null,
-                                null,
-                                null
-                            )?.use { cursor ->
-                                if (cursor.moveToFirst()) cursor.getString(0) else null
-                            }?.takeIf { it.isNotBlank() }
-                        } catch (cancelled: CancellationException) {
-                            throw cancelled
-                        } catch (_: Exception) {
-                            // A provider can grant access without returning a usable label.
-                            null
+                    val folderName = vm.work {
+                        FileWorker.files(applicationContext) { directory ->
+                            FileWorker.run(applicationContext, directory, documentJob("folder", uri))
                         }
                     }
                     vm.preference("autoBackupUri", uri.toString())
-                    vm.preference("autoBackupPath", folderName ?: "Selected folder")
+                    vm.preference("autoBackupPath", folderName.ifBlank { "Selected folder" })
                     vm.queueAutomaticBackup(true)
                 }
             } finally {
@@ -162,7 +142,7 @@ class MainActivity : FragmentActivity() {
         vm.launch {
             try {
                 if (uri != null) pendingStage = vm.work { opened ->
-                    PassStagingArea.create(File(cacheDir, "pass-staging"), contentResolver.openInputStream(uri)!!.use { stream -> PkpassParser.parse(stream, resources.configuration.locales[0].language) }, opened.key)
+                    PassStagingArea.create(File(cacheDir, "pass-staging"), readDocument(uri, 12 * 1024 * 1024) { stream, _ -> PkpassParser.parse(stream, resources.configuration.locales[0].language) }, opened.key)
                 }
             } finally { finishGuard() }
         }
@@ -181,7 +161,7 @@ class MainActivity : FragmentActivity() {
                     try {
                         vm.work {
                             check(request.isCurrent(vm.state.value, vm.pending)) { "Image import expired" }
-                            val raw = contentResolver.openInputStream(uri)!!.use { Envelope.readBounded(it, 10 * 1024 * 1024) }
+                            val raw = readDocument(uri, 10 * 1024 * 1024) { stream, _ -> Envelope.readBounded(stream, 10 * 1024 * 1024) }
                             owned = try { CapturedImageScanner.crop(raw, 1f, .5f, .5f) } finally { raw.fill(0) }
                         }
                         if (request.isCurrent(vm.state.value, vm.pending)) { cropBytes = owned; owned = null }
@@ -193,16 +173,20 @@ class MainActivity : FragmentActivity() {
     private val attachmentPicker=registerForActivityResult(ActivityResultContracts.OpenDocument()) {uri->
         val target=vm.pending.attachmentTarget;vm.pending.attachmentTarget=null
         vm.launch {try {if(uri!=null && target!=null) {
-            val data=withContext(Dispatchers.IO) {contentResolver.openInputStream(uri)!!.use {Envelope.readBounded(it,ItemMedia.MAX_FILE)}}
+            var data: ByteArray? = null
             try {
-                val name=contentResolver.query(uri,arrayOf(android.provider.OpenableColumns.DISPLAY_NAME),null,null,null)?.use {if(it.moveToFirst()) it.getString(0) else null} ?: "Attachment"
-                vm.attach(target,name,contentResolver.getType(uri) ?: "application/octet-stream",data)
-            } finally {data.fill(0)}
+                val info = vm.work {
+                    readDocument(uri, ItemMedia.MAX_FILE, attachment = true) { input, metadata ->
+                        data = Envelope.readBounded(input, ItemMedia.MAX_FILE)
+                        org.json.JSONArray(metadata)
+                    }
+                }
+                vm.attach(target, info.getString(0), info.getString(1), checkNotNull(data))
+            } finally { data?.fill(0) }
         }} finally {finishGuard()}}
     }
     private val attachmentExporter=registerForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) {uri->
-        val data=vm.pending.attachmentExport;vm.pending.attachmentExport=null
-        vm.launch {try {if(uri!=null && data!=null) vm.work {contentResolver.openOutputStream(uri,"wt")!!.use {it.write(data.second)}}} finally {data?.second?.fill(0);finishGuard()}}
+        completeExport(ExportKind.ATTACHMENT, uri)
     }
     private val attachmentViewer=registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {vm.launch {AttachmentContent.clear();finishGuard()}}
     private fun itemMediaAction(item:app.kura.feature.VaultItem,column:String,source:String) {
@@ -210,11 +194,12 @@ class MainActivity : FragmentActivity() {
             "addAttachment"->{vm.pending.attachmentTarget=item;external(ExternalOperation.PICKER) {attachmentPicker.launch(arrayOf("*/*"))}}
             "removeAttachment"->vm.launch {vm.removeAttachment(item,column)}
             "openAttachment","exportAttachment"->vm.launch {
+                val session = vm.state.value as? VaultState.Unlocked ?: return@launch
                 val (metadata,bytes)=vm.attachment(item,column)
                 if(source=="exportAttachment") {
-                    vm.pending.attachmentExport=metadata to bytes
-                    try {external(ExternalOperation.SAF_EXPORT) {attachmentExporter.launch(metadata.getString("name"))}}
-                    catch(e:Exception) {vm.pending.attachmentExport=null;bytes.fill(0);finishGuard();throw e}
+                    startExport(session, ExportKind.ATTACHMENT, ExportPayload(bytes = bytes)) {
+                        attachmentExporter.launch(metadata.getString("name"))
+                    }
                 } else {
                     val uri=AttachmentContent.publish(this@MainActivity,metadata.getString("name"),metadata.getString("mime"),bytes)
                     try {external(ExternalOperation.PICKER) {attachmentViewer.launch(android.content.Intent(android.content.Intent.ACTION_VIEW).setDataAndType(uri,metadata.getString("mime")).addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION))}}
@@ -245,18 +230,52 @@ class MainActivity : FragmentActivity() {
     }
     private val linkLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { vm.launch { finishGuard() } }
     private val pkpassExporter=registerForActivityResult(ActivityResultContracts.CreateDocument("application/vnd.apple.pkpass")) {uri->
-        val bytes=vm.pending.pkpassBytes;vm.pending.pkpassBytes=null
-        vm.launch {try {if(uri!=null && bytes!=null) vm.work {contentResolver.openOutputStream(uri,"wt")!!.use {it.write(bytes)}}}
-            finally {bytes?.fill(0);finishGuard()}}
+        completeExport(ExportKind.PASS, uri)
     }
     private val exporter = registerForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
-        vm.launch {
-            try {
-                val file = exportFile ?: return@launch
-                if (uri != null) vm.work { contentResolver.openOutputStream(uri, "wt")!!.use { output -> file.inputStream().use { it.copyTo(output) } } }
-            } finally { exportFile?.delete(); exportFile = null; finishGuard() }
+        completeExport(ExportKind.BACKUP, uri)
+    }
+
+    private fun startExport(session: VaultState.Unlocked, kind: ExportKind, payload: ExportPayload, launch: () -> Unit) {
+        if (vm.state.value != session || kind in vm.pending.exports.kinds) {
+            payload.clear()
+            vm.error.value = "Finish or cancel the previous export first."
+            return
+        }
+        if (!external(ExternalOperation.SAF_EXPORT) {
+            vm.pending.exports.reserve(kind, DocumentExport(session, checkNotNull(guard),
+                android.os.SystemClock.elapsedRealtime() + 120_000, payload))
+            launch()
+        }) {
+            vm.pending.exports.take(kind)
+            payload.clear()
         }
     }
+
+    private fun completeExport(kind: ExportKind, uri: Uri?) {
+        val request = vm.pending.exports.take(kind) ?: return
+        vm.launch {
+            try {
+                if (uri != null && request.current(vm.state.value, guard, android.os.SystemClock.elapsedRealtime())) vm.work {
+                    check(request.current(vm.state.value, guard, android.os.SystemClock.elapsedRealtime()))
+                    FileWorker.files(applicationContext) { directory ->
+                        withDocumentDescriptor(directory) { fd ->
+                            val args = documentJob("write", uri).apply { putParcelable("stream", fd) }
+                            args.withDocumentKey {
+                                args.encryptedOutput(android.os.ParcelFileDescriptor.AutoCloseOutputStream(fd.dup())).use(request.payload::stage)
+                                android.system.Os.lseek(fd.fileDescriptor, 0, android.system.OsConstants.SEEK_SET)
+                                FileWorker.run(applicationContext, directory, args)
+                            }
+                        }
+                    }
+                }
+            } finally {
+                request.payload.clear()
+                finishGuard(request.guard)
+            }
+        }
+    }
+
     private val camera = registerForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
         val request = vm.pending.cameraRequest
         vm.pending.cameraRequest = null
@@ -402,8 +421,17 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putStringArray("outstandingExports", vm.pending.exports.kinds.map { it.name }.toTypedArray())
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        savedInstanceState?.getStringArray("outstandingExports")?.forEach { name ->
+            val kind = ExportKind.valueOf(name)
+            vm.pending.exports.restore(kind)
+        }
         enableEdgeToEdge()
         biometricPrompt = createBiometricPrompt()
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
@@ -464,7 +492,7 @@ class MainActivity : FragmentActivity() {
                             theme = presentation.theme, initialTable = presentation.initialTable, visibleTables = presentation.visibleTables,
                             onTheme = { vm.launch { vm.theme(it) } },
                             onRecovery = { vm.launch { recovery = vm.work { vm.store.generations() } } },
-                            onLiveScan = { vm.pending.imageTarget=null;requestCamera("live") }, onEdit = { item, json -> val images=vm.pending.takeDraft();vm.launch { vm.edit(item, json,images) } },
+                            onLiveScan = { vm.pending.imageTarget=null;requestCamera("live") }, onEdit = { item, json -> vm.launch { vm.saveDraft(item.table, item, json) } },
                             onDelete = { item -> vm.launch { vm.deletePass(item) } },
                             onDeleteArchived={items->vm.launch {vm.deleteArchived(items)}},
                             onExportPass = { item -> vm.pending.exportPassId=item.id; passwordAction="export" },
@@ -478,11 +506,11 @@ class MainActivity : FragmentActivity() {
                             },
                             loadImage = { vm.image(it) }, preferences=presentation.preferences, autoLock=autoLockPreference,
                             onPreference={key,value->vm.launch {vm.preference(key,value)}},
-                            onSaveRecord={table,json->val images=vm.pending.takeDraft();vm.launch {vm.saveRecord(table,json,images)}},
+                            onSaveRecord={table,json->vm.launch {vm.saveDraft(table, null, json)}},
                             draftImages=vm.pending.draftImages.mapValues {it.value.name},onDiscardDraft={vm.pending.discardDraft()},
                             onSaveOrder={section,keys->try {vm.saveOrder(section,keys);true} catch(e:kotlinx.coroutines.CancellationException) {throw e} catch(e:Exception) {vm.error.value=e.message ?: "Unable to save order";false}},onFavorite={item->vm.launch {vm.favorite(item)}},
                             onImage=::itemMediaAction,
-                            onRemoveImage={item,column->if(item.id==-1L) {val file=vm.pending.draftImages.remove(column);vm.launch {withContext(Dispatchers.IO) {file?.delete()}}} else vm.launch {vm.imageChange(ImageTarget(item.table,item.id,column),null)}},
+                            onRemoveImage={item,column->vm.launch {vm.imageChange(ImageTarget(item.table,item.id,column),null)}},
                             backupPasswordReady=backupPasswordReady,uiMemory=vm.pending.uiMemory,onPkpass={vm.pending.pkpassTarget=it},onShare={vm.pending.shareTarget=it},backupStatus=backupStatus,
                             onBackupFolder={external(ExternalOperation.SAF_EXPORT) {backupFolderPicker.launch(android.provider.DocumentsContract.buildDocumentUri("com.android.externalstorage.documents","primary:Documents"))}},
                             onBackupPassword={vm.pending.autoPassword=true},onBackupNow={vm.launch {vm.automaticBackupNow()}},
@@ -698,7 +726,7 @@ class MainActivity : FragmentActivity() {
     }
     private suspend fun finishGuard(expected: ExternalOperationRegistry.Guard? = guard) {
         if (expected == null) return
-        if (guard === expected) { vm.lifecycle.complete(expected); guard = null }
+        if (guard === expected) { guard = null; vm.lifecycle.complete(expected) }
         else expected.close()
     }
     private fun captureImage() {
@@ -731,7 +759,10 @@ class MainActivity : FragmentActivity() {
         val pending=vm.pending
         pending.pkpassTarget?.let {item->AlertDialog(onDismissRequest={pending.pkpassTarget=null},title={Text("Export as .pkpass?")},
             text={Text("This file is unencrypted and unsigned. It includes the pass details and artwork. Anyone with the file can read it.")},
-            confirmButton={TextButton(onClick={pending.pkpassTarget=null;vm.launch {pending.pkpassBytes=vm.pkpass(item);external(ExternalOperation.SAF_EXPORT) {pkpassExporter.launch("Kura-pass.pkpass")}}}) {Text("Export file")}},
+            confirmButton={TextButton(onClick={pending.pkpassTarget=null;vm.launch {
+                val session = vm.state.value as? VaultState.Unlocked ?: return@launch
+                startExport(session, ExportKind.PASS, ExportPayload(bytes = vm.pkpass(item))) { pkpassExporter.launch("Kura-pass.pkpass") }
+            }}) {Text("Export file")}},
             dismissButton={TextButton(onClick={pending.pkpassTarget=null}) {Text("Cancel")}})}
         pending.sharedChunks?.let {chunks->app.kura.feature.SecureTransferScreen(chunks) {pending.sharedChunks=null;pending.shareTarget=null}}
         if(pending.transferProgress.isNotEmpty() && !pending.liveScan) AlertDialog(
@@ -807,27 +838,28 @@ class MainActivity : FragmentActivity() {
         val passId = vm.pending.exportPassId
         var password by remember(action,passId) { mutableStateOf("") }
         AlertDialog(onDismissRequest = { passwordAction = null; password = "" }, title = { Text(if(action == "export") { if(passId!=null) "Encrypt pass" else "Encrypt backup" } else "Decrypt backup") },
-            text = { OutlinedTextField(password, { password = it }, label = { Text("Backup password") }, visualTransformation = PasswordVisualTransformation(), singleLine = true) },
-            confirmButton = { TextButton(enabled = password.isNotEmpty(), onClick = {
+            text = { OutlinedTextField(password, { password = it }, label = { Text("Backup password") }, supportingText = { if (action == "export") Text("At least ${BackupCodec.MIN_PASSWORD_LENGTH} characters") }, visualTransformation = PasswordVisualTransformation(), singleLine = true) },
+            confirmButton = { TextButton(enabled = if (action == "export") password.length >= BackupCodec.MIN_PASSWORD_LENGTH else password.isNotEmpty(), onClick = {
                 val chars = password.toCharArray(); password = ""; passwordAction = null
                 vm.launch {
                     try {
                         if(action == "export") {
-                            exportFile = vm.work { opened ->
+                            val session = vm.state.value as? VaultState.Unlocked ?: return@launch
+                            val file = vm.work { opened ->
                                 val file = File.createTempFile("backup-", ".wbk", cacheDir)
                                 try {
                                     vm.store.export(opened,passId).use { payload -> file.outputStream().use { StreamingBackup.write(payload, it, chars) } }
                                     file
                                 } catch(e: Throwable) { file.delete(); throw e }
                             }
-                            external(ExternalOperation.SAF_EXPORT) { exporter.launch(if(passId!=null) "Kura-pass.wbk" else "Kura.wbk") }
+                            startExport(session, ExportKind.BACKUP, ExportPayload(file = file)) { exporter.launch(if(passId!=null) "Kura-pass.wbk" else "Kura.wbk") }
                         } else {
                             val uri = backupUri ?: error("Select a backup")
                             var stagedPass: PassStagingArea? = null
                             var missingImages = 0
                             try {
                                 val directory = vm.work { opened ->
-                                    contentResolver.openInputStream(uri)!!.use { StreamingBackup.read(it, chars, File(cacheDir, "backup-staging")) }.use { payload ->
+                                    readDocument(uri, 150 * 1024 * 1024) { stream, _ -> StreamingBackup.read(stream, chars, File(cacheDir, "backup-staging")) }.use { payload ->
                                         if(payload.data.optString("scope")=="single-pass") {
                                             stagedPass=PassStagingArea.fromExport(File(cacheDir,"pass-staging"),payload,opened.key)
                                             null

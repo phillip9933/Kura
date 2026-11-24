@@ -17,7 +17,14 @@ The separate debug installation cannot read the production app's private storage
 
 ## Format and safety
 
+A backup can contain up to 4,095 media files plus its record data. If a wallet
+exceeds this limit, export stops before it replaces an earlier automatic backup.
+Automatic retention applies only to numbered backup files. Folders with similar
+names and the files inside them are preserved.
+
 New v4 `.wbk` files use Argon2id v19 (128 MiB, 3 iterations, parallelism 4) and AES-256-GCM. Readers retain older PBKDF2 and CBC compatibility; CBC archives lack authenticated integrity. Use backups from a trusted source and replace old backups with newly created v4 files after verifying restore.
+
+New full, single-pass, and automatic backups require a password of at least eight characters. Restore accepts the original password for older backups. Import accepts up to 64 nested JSON containers.
 
 The app bounds encoded input to 150 MiB, expanded contents to 100 MiB, JSON to 8 MiB, and an individual media/attachment file to 10 MiB. Low-memory devices can reject Argon2 processing without weakening the KDF. Validation precedes activation; wrong passwords, corrupt archives, invalid images, missing attachments and unsupported records block restoration and leave the current vault active.
 

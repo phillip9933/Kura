@@ -14,7 +14,7 @@ class PassStagingArea private constructor(private val directory: File, private v
         try {
             repeat(count) { index ->
                 val encoded = media.read(index.toString() + ".json.enc", key)
-                val document = try { JSONObject(encoded.toString(Charsets.UTF_8)) } finally { encoded.fill(0) }
+                val document = try { ImportJson.objectFrom(encoded.toString(Charsets.UTF_8)) } finally { encoded.fill(0) }
                 val assets = linkedMapOf<String, ByteArray>()
                 try {
                     for (column in document.getJSONObject("assets").keys()) assets[column] = media.read(index.toString() + "-" + column + ".enc", key)

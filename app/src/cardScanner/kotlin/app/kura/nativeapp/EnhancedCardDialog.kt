@@ -106,10 +106,7 @@ private enum class CardStep { CROP, OFFER, REVIEW }
                 vm.imageChange(target, image)
                 if (apply && currentForm()) {
                     val current = recognitionFields(target.table, form, vm.presentation.value.preferences).associate { it.key to it.current }
-                    CardAutofill.applicable(chosen, current).forEach { (key, value) ->
-                        if (key.startsWith("custom:")) form.customValues[key.removePrefix("custom:")] = value
-                        else form.values[key] = value
-                    }
+                    applyCardSuggestions(form, CardAutofill.applicable(chosen, current))
                 }
                 dismiss()
             } catch (cancelled: CancellationException) { throw cancelled }
@@ -233,9 +230,39 @@ internal fun recognitionFields(table: String, form: FormMemory, preferences: Vau
     val category = if (table == "passes") form.category.value else form.values[if (table == "wallets") "category" else "cardType"].orEmpty()
     val basic = basicFormFields(table, form.section.value, category).filter { it !in setOf("category", "cardType", "network", "barcodeValue", "barcodeFormat", "relevantDate") }
     val custom = (preferences.customFields(form.section.value) + suggestedFields(form.section.value, category)).distinctBy { it.name }
-    val original = form.customValues.keys
+    val legacy = form.legacyOcrEntries()
+    val names = (custom.map { it.name } + form.customValues.keys + legacy.keys).distinct()
     return basic.mapNotNull { key -> recordFields(table)[key]?.let { CardField(key, it, form.values[key].orEmpty()) } } +
-        (custom.map { it.name } + original).distinct().map { CardField("custom:$it", it, form.customValues[it].orEmpty()) }
+        names.filter { it != ItemMedia.KEY }.mapNotNull { name ->
+            val entries = legacy[name]
+            if (entries == null) CardField("custom:$name", name, form.customValues[name].orEmpty())
+            else entries.singleOrNull()?.let { entry ->
+                val label = entry.optString("label").ifBlank { name }
+                CardField("custom:$name", label, if (entry.isNull("value")) "" else entry.get("value").toString())
+            }
+        }
+}
+
+private fun FormMemory.legacyOcrEntries(): Map<String, List<org.json.JSONObject>> {
+    val array = customArray ?: return emptyMap()
+    return (0 until array.length()).mapNotNull(array::optJSONObject)
+        .groupBy { it.optString("key").ifBlank { it.optString("name").ifBlank { it.optString("label") } } }
+        .filterKeys { it.isNotBlank() }
+}
+
+internal fun applyCardSuggestions(form: FormMemory, applicable: Map<String, String>) {
+    val legacy = form.legacyOcrEntries()
+    for ((key, value) in applicable) {
+        if (key.startsWith("custom:")) {
+            val name = key.removePrefix("custom:")
+            legacy[name]?.let { entries ->
+                val entry = entries.single()
+                entry.put("value", value)
+                form.revision.intValue++
+            }
+            form.customValues[name] = value
+        } else form.values[key] = value
+    }
 }
 
 private fun validSuggestion(table: String, form: FormMemory, preferences: VaultPreferences, key: String, value: String): Boolean {

@@ -33,6 +33,8 @@ Vaults are separate UUID generations in the app's no-backup directory. A small a
 
 New media uses AES-256-GCM with random nonces. Temporary imported pass/backup content is encrypted before being written to staging disk. Camera capture is the documented plaintext-cache exception. Room schemas are committed under `core/database/schemas/`; destructive migration fallback is not enabled.
 
+Document provider operations and native OCR run in a private Android service process. The vault process owns each request, its deadline, and its temporary files. Lock cancels the request and unbinds the service. The service can stop its process while native code or a provider call is blocked. Document transfers use encrypted temporary data and a per-request key. Android export results are bound to the initiating vault session and picker.
+
 ## Trust boundaries
 
 Untrusted files enter through explicitly launched system document pickers or camera/scanner input. Import code bounds compressed/expanded sizes, path names, entry counts and nesting. SQL table/column identifiers are allowlisted; record values are bound. The default release has no network permission. The optional direct-update build has an application-owned updater facade with no vault/controller references; it uses pinned standalone library artifacts. See [App updates](APP-UPDATES.md). Links and file viewing require user actions and leave the app via Android intents; plaintext recipients can retain copies.

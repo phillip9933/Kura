@@ -1,0 +1,197 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "dev.offlinescan",
+    "module": "scanner-ui-compose",
+    "version": "1.1.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "dev.offlinescan",
+          "module": "scanner-core",
+          "version": {
+            "requires": "1.1.0"
+          }
+        },
+        {
+          "group": "androidx.compose",
+          "module": "compose-bom",
+          "version": {
+            "requires": "2025.04.01"
+          },
+          "attributes": {
+            "org.gradle.category": "platform"
+          },
+          "endorseStrictVersions": true
+        },
+        {
+          "group": "androidx.compose.material3",
+          "module": "material3"
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "scanner-ui-compose-1.1.0.aar",
+          "url": "scanner-ui-compose-1.1.0.aar",
+          "size": 369969,
+          "sha512": "24e480e96beb56d2e7068b7d759f55aca3a7c819506eda8703c16f1eea56fcfa5359560574f85abbd005abafe1de0c08fa782f64299a1bbcfd9021862a234795",
+          "sha256": "dd58afc7a9d7b2c6c96d2f9387e19f84ba237c7269b913a2e86e9371e27714b8",
+          "sha1": "6f6a80efc487767b9add98729861f386ccc61aff",
+          "md5": "8060f90f12b33204c305bfd02239b59d"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "dev.offlinescan",
+          "module": "scanner-processing-opencv",
+          "version": {
+            "requires": "1.1.0"
+          }
+        },
+        {
+          "group": "dev.offlinescan",
+          "module": "scanner-camera",
+          "version": {
+            "requires": "1.1.0"
+          }
+        },
+        {
+          "group": "dev.offlinescan",
+          "module": "scanner-export",
+          "version": {
+            "requires": "1.1.0"
+          }
+        },
+        {
+          "group": "androidx.compose.ui",
+          "module": "ui"
+        },
+        {
+          "group": "androidx.compose.foundation",
+          "module": "foundation"
+        },
+        {
+          "group": "androidx.activity",
+          "module": "activity-compose",
+          "version": {
+            "requires": "1.10.1"
+          }
+        },
+        {
+          "group": "androidx.lifecycle",
+          "module": "lifecycle-runtime-compose",
+          "version": {
+            "requires": "2.8.7"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-android",
+          "version": {
+            "requires": "1.10.1"
+          }
+        },
+        {
+          "group": "androidx.exifinterface",
+          "module": "exifinterface",
+          "version": {
+            "requires": "1.4.1"
+          }
+        },
+        {
+          "group": "dev.offlinescan",
+          "module": "scanner-core",
+          "version": {
+            "requires": "1.1.0"
+          }
+        },
+        {
+          "group": "androidx.compose",
+          "module": "compose-bom",
+          "version": {
+            "requires": "2025.04.01"
+          },
+          "attributes": {
+            "org.gradle.category": "platform"
+          },
+          "endorseStrictVersions": true
+        },
+        {
+          "group": "androidx.compose.material3",
+          "module": "material3"
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "scanner-ui-compose-1.1.0.aar",
+          "url": "scanner-ui-compose-1.1.0.aar",
+          "size": 369969,
+          "sha512": "24e480e96beb56d2e7068b7d759f55aca3a7c819506eda8703c16f1eea56fcfa5359560574f85abbd005abafe1de0c08fa782f64299a1bbcfd9021862a234795",
+          "sha256": "dd58afc7a9d7b2c6c96d2f9387e19f84ba237c7269b913a2e86e9371e27714b8",
+          "sha1": "6f6a80efc487767b9add98729861f386ccc61aff",
+          "md5": "8060f90f12b33204c305bfd02239b59d"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "scanner-ui-compose-1.1.0-sources.jar",
+          "url": "scanner-ui-compose-1.1.0-sources.jar",
+          "size": 29838,
+          "sha512": "ba5ca5399e06fb067cbe0638ec8be05b9e960afb5e8ab8c33dfba8e78a6aeda2e7a85cf862ce3963eb4b4e97b6fd5140a5615827c9462408c1ef178e02ed4d42",
+          "sha256": "b45a7608627bcb5af92154d2c2e0cf38d6c606875874ea96e6112b02835dd86a",
+          "sha1": "59ea036fbc9c6db55dde11b85d8725dd3249df0a",
+          "md5": "171e4a033e597f007bc335760f3580df"
+        }
+      ]
+    }
+  ]
+}

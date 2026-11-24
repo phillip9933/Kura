@@ -12,8 +12,8 @@ class PendingOperations {
     val draftImages=mutableStateMapOf<String,File>()
     fun discardDraft() {draftImages.values.forEach {it.delete()};draftImages.clear()}
     fun takeDraft():Map<String,File> = draftImages.toMap().also {draftImages.clear()}
+    internal val exports = ExportRequests()
     var attachmentTarget: app.kura.feature.VaultItem? = null
-    var attachmentExport: Pair<org.json.JSONObject,ByteArray>? = null
     var imageTarget: ImageTarget? = null
     // Keep invalidated metadata until its Android result returns. Reusing a launcher
     // earlier would make an old result indistinguishable from a new request.
@@ -24,7 +24,6 @@ class PendingOperations {
     var credential: kotlinx.coroutines.CancellableContinuation<Boolean>? = null
     var shareTarget by mutableStateOf<app.kura.feature.VaultItem?>(null)
     var pkpassTarget by mutableStateOf<app.kura.feature.VaultItem?>(null)
-    var pkpassBytes:ByteArray?=null
     var sharedChunks by mutableStateOf<List<String>?>(null)
     var transferRecord by mutableStateOf<TransferRecord?>(null)
     var transferInput by mutableStateOf<List<String>?>(null)
@@ -39,7 +38,6 @@ class PendingOperations {
     var passwordAction by mutableStateOf<String?>(null)
     var backupUri: Uri? = null
     var exportPassId: Long? = null
-    var exportFile: File? = null
     var restoreMissingImages by mutableIntStateOf(0)
     var restoreDirectory by mutableStateOf<File?>(null)
     var capture: File? = null
@@ -47,13 +45,13 @@ class PendingOperations {
     /** Clears decrypted session content without cancelling an in-flight authentication prompt. */
     fun clearVaultContent() {
         if (guard?.operation != ExternalOperation.AUTHENTICATION) { guard?.close(); guard = null }
-        discardDraft();uiMemory.clear();attachmentTarget=null;attachmentExport?.second?.fill(0);attachmentExport=null;AttachmentContent.clear()
+        discardDraft();uiMemory.clear();attachmentTarget=null;AttachmentContent.clear()
+        exports.invalidate()
         liveScan = false; imageTarget = null
         cameraRequest?.invalidate(); imagePickerRequest?.invalidate(); cameraPermissionRequest?.first?.invalidate()
-        pkpassTarget=null;pkpassBytes?.fill(0);pkpassBytes=null
+        pkpassTarget=null
         shareTarget=null;sharedChunks=null;transferRecord=null;transferInput=null;transferCollector.close();transferProgress="";autoPassword=false;deleteConfirmation=false
         stage?.close(); stage = null
-        exportFile?.delete(); exportFile = null
         cropBytes?.fill(0); cropBytes = null
         capture?.delete(); capture = null
         exportPassId = null

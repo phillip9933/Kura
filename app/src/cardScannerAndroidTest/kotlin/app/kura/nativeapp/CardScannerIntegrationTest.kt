@@ -4,9 +4,12 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.RectF
 import android.os.Build
+import android.os.Bundle
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -44,6 +47,46 @@ class CardScannerIntegrationTest {
             return output.toByteArray()
         } finally { bitmap.eraseColor(0); bitmap.recycle(); output.close() }
     }
+    @Test fun importedTwoToneCardUsesAllFourOuterCorners() = runBlocking {
+        disposable()
+        val width = 900
+        val height = 800
+        val corners = floatArrayOf(155f, 239f, 786f, 316f, 719f, 578f, 221f, 518f)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val jpeg = try {
+            val canvas = Canvas(bitmap)
+            canvas.drawColor(Color.rgb(214, 216, 214))
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+            paint.color = Color.rgb(205, 207, 205)
+            canvas.drawRect(32f, 120f, 475f, 638f, paint)
+            val transform = Matrix()
+            check(transform.setPolyToPoly(floatArrayOf(0f, 0f, 1080f, 0f, 1080f, 680f, 0f, 680f), 0, corners, 0, 4))
+            canvas.concat(transform)
+            paint.color = Color.rgb(174, 202, 220)
+            canvas.drawRect(0f, 0f, 1080f, 680f, paint)
+            paint.color = Color.rgb(42, 86, 129)
+            canvas.drawRect(0f, 0f, 291f, 680f, paint)
+            paint.color = Color.BLACK
+            paint.textSize = 48f
+            canvas.drawText("MEMBER 001234", 340f, 450f, paint)
+            ByteArrayOutputStream().use { output ->
+                check(bitmap.compress(Bitmap.CompressFormat.JPEG, 95, output))
+                output.toByteArray()
+            }
+        } finally {
+            bitmap.recycle()
+        }
+        try {
+            val detected = CardScanEngine(context).detect(jpeg)
+            detected.points.forEachIndexed { i, point ->
+                val error = kotlin.math.hypot(point.x * width - corners[i * 2], point.y * height - corners[i * 2 + 1])
+                assertTrue("Outer corner $i missed by ${error}px", error < 12.0)
+            }
+        } finally {
+            jpeg.fill(0)
+        }
+    }
+
     @Test fun realEngineDetectsCardAndRecognizesExistingFieldsOffline() = runBlocking {
         disposable()
         val bytes = image()
@@ -126,7 +169,7 @@ class CardScannerIntegrationTest {
             }
         }
     }
-    @Test fun optionalAutofillReviewsExistingFieldsAndEncryptsOnlyAfterConfirmation() {
+    private fun openWallet(): VaultController {
         disposable()
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         // Android 15 with a hardware keyboard exposes a system PIN text field.
@@ -147,7 +190,40 @@ class CardScannerIntegrationTest {
             }
         }
         assertTrue(device.wait(Until.hasObject(By.desc("Settings")), 20_000))
-        val vm = controller()
+        return controller()
+    }
+
+    @Test fun legacyAutofillSurvivesSaveAndReopen() {
+        val vm = openWallet()
+        val title = "Legacy OCR " + java.util.UUID.randomUUID()
+        val raw = """[{"label":"Member number","value":"","issuer":"fixture"},{"label":"Tier","value":"Existing"},{"label":"Other","value":""},{"label":"Other","value":""}]"""
+        runBlocking {
+            vm.saveRecord("wallets", org.json.JSONObject().put("name", title).put("category", "Credit")
+                .put("number", "0042").put("customFields", raw).toString())
+        }
+        val record = vm.items.value.single { it.title == title }
+        try {
+            instrumentation.runOnMainSync { vm.pending.uiMemory.editing.value = record }
+            assertTrue(device.wait(Until.hasObject(By.text("Edit item")), 10000))
+            instrumentation.runOnMainSync {
+                val form = vm.pending.uiMemory.form
+                val fields = recognitionFields("wallets", form, vm.presentation.value.preferences)
+                val suggestions = app.kura.nativecore.CardAutofill.suggest("Member number: 00007\nTier: Changed\nOther: Ambiguous", fields)
+                assertEquals(listOf("custom:Member number"), suggestions.map { it.field.key })
+                applyCardSuggestions(form, app.kura.nativecore.CardAutofill.applicable(suggestions, fields.associate { it.key to it.current }))
+            }
+            click("Save")
+            assertTrue(device.wait(Until.gone(By.text("Edit item")), 10000))
+            val restored = runBlocking { vm.work { vm.store.rows(it, "wallets", record.id).single() } }
+            assertEquals("0042", restored.getString("number"))
+            val expected = org.json.JSONArray(raw)
+            expected.getJSONObject(0).put("value", "00007")
+            assertEquals(expected.toString(), org.json.JSONArray(restored.getString("customFields")).toString())
+        } finally { runBlocking { vm.deletePass(record) } }
+    }
+
+    @Test fun optionalAutofillReviewsExistingFieldsAndEncryptsOnlyAfterConfirmation() {
+        val vm = openWallet()
         val beforeIds = runBlocking { vm.work { vm.store.rows(it, "passes").map { row -> row.getLong("id") }.toSet() } }
         val before = beforeIds.size
         lateinit var form: FormMemory
@@ -177,11 +253,23 @@ class CardScannerIntegrationTest {
         captureCropPreview("rotated-crop")
         clickJourneyControl(device, "270°")
         assertNotNull(device.wait(Until.findObject(By.checkable(true).checked(true).hasDescendant(By.text("270°"))), 5000))
-        val angleSlider = device.findObject(By.desc("Photo rotation angle"))
-        assertNotNull(angleSlider)
-        val sliderBounds = angleSlider.visibleBounds
-        device.swipe(sliderBounds.centerX(), sliderBounds.centerY(), sliderBounds.left + sliderBounds.width() * 2 / 3, sliderBounds.centerY(), 20)
-        assertTrue("Custom slider changes the live crop", device.wait(Until.gone(By.text("Fine rotation: 0.0°")), 5000))
+        assertNotNull(findJourneyNode(device, By.desc("Photo rotation angle")))
+        val root = requireNotNull(instrumentation.uiAutomation.rootInActiveWindow)
+        // Compose can expose the slider's range action on a child of its labelled container.
+        fun progressControls(node: AccessibilityNodeInfo): Sequence<AccessibilityNodeInfo> = sequence {
+            if (node.isVisibleToUser && AccessibilityNodeInfo.AccessibilityAction.ACTION_SET_PROGRESS in node.actionList) {
+                yield(node)
+            }
+            for (index in 0 until node.childCount) {
+                node.getChild(index)?.let { yieldAll(progressControls(it)) }
+            }
+        }
+        val slider = progressControls(root).single()
+        val progress = Bundle().apply {
+            putFloat(AccessibilityNodeInfo.ACTION_ARGUMENT_PROGRESS_VALUE, 15f)
+        }
+        assertTrue(slider.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SET_PROGRESS.id, progress))
+        assertNotNull("Custom slider sets the live crop angle", findJourneyNode(device, By.text("Fine rotation: 15.0°")))
         captureCropPreview("rotation-controls")
         clickJourneyControl(device, "0°")
         assertNotNull(device.wait(Until.findObject(By.checkable(true).checked(true).hasDescendant(By.text("0°"))), 5000))

@@ -4,7 +4,9 @@ import android.app.Application
 import androidx.test.platform.app.InstrumentationRegistry
 import app.kura.nativecore.VaultResources
 import kotlinx.coroutines.*
-import org.json.JSONObject
+import app.kura.nativecore.Generation
+import app.kura.nativecore.ExternalOperation
+import app.kura.nativecore.VaultState
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
@@ -61,7 +63,10 @@ class PendingSecurityTest {
             try {
                 vm.coordinator.unlock({ ByteArray(32) }, { VaultResources {} })
                 yield()
-                vm.pending.attachmentExport = JSONObject() to export
+                val session = vm.state.value as VaultState.Unlocked
+                val guard = vm.lifecycle.begin(ExternalOperation.SAF_EXPORT)
+                val request = DocumentExport(session, guard, Long.MAX_VALUE, ExportPayload(bytes = export))
+                vm.pending.exports.reserve(ExportKind.ATTACHMENT, request)
                 vm.pending.cropBytes = crop
                 capture.writeText("synthetic camera data")
                 vm.pending.capture = capture
@@ -72,7 +77,19 @@ class PendingSecurityTest {
                 assertTrue(export.all { it == 0.toByte() })
                 assertTrue(shared.all { it == 0.toByte() })
                 assertTrue(crop.all { it == 0.toByte() })
-                assertNull(vm.pending.attachmentExport)
+                assertTrue(ExportKind.ATTACHMENT in vm.pending.exports.kinds)
+                val replacementBytes = ByteArray(16) { 7 }
+                val replacement = DocumentExport(VaultState.Unlocked(Generation(session.token.value + 1)), guard,
+                    Long.MAX_VALUE, ExportPayload(bytes = replacementBytes))
+                assertThrows(IllegalStateException::class.java) { vm.pending.exports.reserve(ExportKind.ATTACHMENT, replacement) }
+                assertNull(vm.pending.exports.take(ExportKind.ATTACHMENT))
+                vm.pending.exports.reserve(ExportKind.ATTACHMENT, replacement)
+                assertSame(replacement, vm.pending.exports.take(ExportKind.ATTACHMENT))
+                assertTrue(replacementBytes.all { it == 7.toByte() })
+                replacement.payload.clear()
+                assertFalse(request.current(vm.state.value, guard, 0))
+                assertFalse(request.current(session, null, 0))
+                assertFalse(request.current(session, guard, Long.MAX_VALUE))
                 assertNull(vm.pending.capture)
                 assertFalse(capture.exists())
                 assertNull(app.contentResolver.getType(uri))

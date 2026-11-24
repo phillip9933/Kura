@@ -1,0 +1,124 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "dev.offlinescan",
+    "module": "scanner-processing-opencv",
+    "version": "1.1.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "dev.offlinescan",
+          "module": "scanner-core",
+          "version": {
+            "requires": "1.1.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "scanner-processing-opencv-1.1.0.aar",
+          "url": "scanner-processing-opencv-1.1.0.aar",
+          "size": 20672972,
+          "sha512": "ac112200b599f8fdb48bb3f966f24b6927d5473a2c8427e28b3bd63f4d8b2629c5c235fd03c49c9ce19746315c84fbf5c4977ae124f3eb752faa364efd8c3512",
+          "sha256": "7e7f1e4ca0bef87a5f55d90b4dcb8f98b4e05d0d60de0787fccb33e3cbeaa423",
+          "sha1": "1b426060143907f9676ae3d52be3894f45735f0b",
+          "md5": "3b97be722cadfbc48f316c3856b751ce"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "androidx.exifinterface",
+          "module": "exifinterface",
+          "version": {
+            "requires": "1.4.1"
+          }
+        },
+        {
+          "group": "com.microsoft.onnxruntime",
+          "module": "onnxruntime-android",
+          "version": {
+            "requires": "1.24.1"
+          }
+        },
+        {
+          "group": "dev.offlinescan",
+          "module": "scanner-core",
+          "version": {
+            "requires": "1.1.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "scanner-processing-opencv-1.1.0.aar",
+          "url": "scanner-processing-opencv-1.1.0.aar",
+          "size": 20672972,
+          "sha512": "ac112200b599f8fdb48bb3f966f24b6927d5473a2c8427e28b3bd63f4d8b2629c5c235fd03c49c9ce19746315c84fbf5c4977ae124f3eb752faa364efd8c3512",
+          "sha256": "7e7f1e4ca0bef87a5f55d90b4dcb8f98b4e05d0d60de0787fccb33e3cbeaa423",
+          "sha1": "1b426060143907f9676ae3d52be3894f45735f0b",
+          "md5": "3b97be722cadfbc48f316c3856b751ce"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "scanner-processing-opencv-1.1.0-sources.jar",
+          "url": "scanner-processing-opencv-1.1.0-sources.jar",
+          "size": 22656,
+          "sha512": "dcd7282627fd2a8e11e920b01cdf0eb74d9b286ef60c64308a80e8967e84f3a24da0363eaf42184517e6e4ba6cc2675d922aaab4138ac121b8f3b01d53b7cd9b",
+          "sha256": "2fccdd121bc6359a3cf387162d9531835dbc77f627aa8cadf01dae823c81bc3c",
+          "sha1": "d6fc7dc2323d558755e281022539eae4bf50fe87",
+          "md5": "af1be81d72e150bea64d18b493ad4451"
+        }
+      ]
+    }
+  ]
+}

@@ -43,7 +43,7 @@ fun recordFields(table:String)=when(table) {"wallets"->paymentFields;"passes"->p
 
 @OptIn(ExperimentalMaterial3Api::class,ExperimentalLayoutApi::class)
 @Composable
-fun RecordForm(table:String,item:VaultItem?,preferences:VaultPreferences,dismiss:()->Unit,initialSection:String=item?.section?.key ?: table,draftImages:Map<String,String> = emptyMap(),draftImage:(String,String)->Unit={_,_->},discardDraft:()->Unit={},memory:FormMemory?=null,loadImage:suspend(String)->ByteArray?={null},manualCategory:String?=null,changeKind:((String,String)->Unit)?=null,embedded:Boolean=false,removeDraftImage:(String)->Unit={},preference:(String,Any)->Unit={_,_->},save:(String)->Unit) {
+fun RecordForm(table:String,item:VaultItem?,preferences:VaultPreferences,dismiss:()->Unit,initialSection:String=item?.section?.key ?: table,draftImages:Map<String,String> = emptyMap(),draftImage:(String,String)->Unit={_,_->},discardDraft:()->Unit={},memory:FormMemory?=null,loadImage:suspend(String)->ByteArray?={null},manualCategory:String?=null,changeKind:((String,String)->Unit)?=null,embedded:Boolean=false,preference:(String,Any)->Unit={_,_->},save:(String)->Unit) {
     if(item!=null && isImportedPass(item)) return
     val retained=memory ?: remember {FormMemory()}
     retained.initialize(table,item,initialSection,preferences)
@@ -144,7 +144,7 @@ fun RecordForm(table:String,item:VaultItem?,preferences:VaultPreferences,dismiss
                     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         Box {
                             CardLogo(values[titleField].orEmpty(),app.kura.nativecore.ItemMedia.logo(table,preview),loadImage)
-                            MediaEditMenu("logo",app.kura.nativecore.ItemMedia.logo(table,preview).isNotBlank(),{draftImage("kuraLogo","picker")},{draftImage("kuraLogo","camera")},{retained.removedImages.add("kuraLogo");removeDraftImage("kuraLogo")},Modifier.align(Alignment.BottomEnd))
+                            MediaEditMenu("logo",app.kura.nativecore.ItemMedia.logo(table,preview).isNotBlank(),{draftImage("kuraLogo","picker")},{draftImage("kuraLogo","camera")},{retained.removedImages.add("kuraLogo")},Modifier.align(Alignment.BottomEnd))
                         }
                         OutlinedTextField(values[titleField].orEmpty(),{values[titleField]=it},label={Text(fields.getValue(titleField))},shape=RoundedCornerShape(14.dp),modifier=Modifier.weight(1f))
                     }
@@ -180,7 +180,7 @@ fun RecordForm(table:String,item:VaultItem?,preferences:VaultPreferences,dismiss
                     text={Column(Modifier.verticalScroll(rememberScrollState())) {CustomFieldSettings(preferences,formSection,preference)}},
                     confirmButton={TextButton(onClick={manageCustom=false}) {Text("Done")}})
                 val displayed=(item ?: VaultItem(table,-1,values[titleField].orEmpty(),"","",false,"{}")).copy(json=preview.toString())
-                ItemImages(displayed,loadImage,{_,column,source->draftImage(column,source)}, {_,column->retained.removedImages.add(column);removeDraftImage(column)},editable=true)
+                ItemImages(displayed,loadImage,{_,column,source->draftImage(column,source)}, {_,column->retained.removedImages.add(column)},editable=true)
                 if(retained.removedImages.isNotEmpty()) TextButton(onClick={retained.removedImages.clear()}) {Text("Undo image removals")}
 
             }

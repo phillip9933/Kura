@@ -8,6 +8,10 @@ Include the scanner modules in the host build (or consume the generated local Ma
 
 The UI library merges CAMERA permission and camera hardware is optional. Import uses Android's document provider; no broad media/storage permission is requested. A processing-only consumer has no CAMERA permission. OpenCloud/Kura should choose their supported min SDK, application theme, native ABIs and FileProvider. API 26/64-bit support is the SDK default; incompatible host requirements need an explicit compatibility decision.
 
+Keep the host's `ScanConfig` values stable while collecting pages. Changing a value starts a fresh scanner session and discards the previous session's unsaved pages. The mode picker inside the scanner changes how the next page is captured and keeps pages already collected.
+
+For AI-assisted page detection with a custom configuration, pass `ScanConfig(detectionMode = DetectionMode.AI)`. The ready-made flow uses AI when called without a configuration. An explicitly constructed `ScanConfig()` defaults to Standard. Custom capture UIs can use one `DocumentOutlineFallback` per analysis stream, pass monotonic milliseconds to `onFrame`, and use `refineStill` for a captured or imported document. The viewfinder checks edges on the first AI miss and skips one repeated check after an unsuccessful probe in the same scene. On still documents the ready-made flow uses the edge detector’s corners when both outlines cover the same page (at least 90% intersection-over-union). The existing `onStill` method runs the edge detector only after an AI miss. The low-level learned and OpenCV detectors remain independently callable.
+
 ## OpenCloud-shaped adapter
 
 ```kotlin

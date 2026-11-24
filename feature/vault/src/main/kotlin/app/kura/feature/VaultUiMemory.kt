@@ -19,6 +19,7 @@ class FormMemory {
  /** Identifies this draft lifetime even when the same mutable form/schema is reused. */
  var generation: Long = 0
   private set
+ var saving by mutableStateOf(false)
  var identity:String?=null
  var defaultClassification:String?=null
  var original=JSONObject()
@@ -32,6 +33,7 @@ class FormMemory {
  val customValues=mutableStateMapOf<String,String>()
  fun clear() {
   generation++
+  saving=false
   identity=null
   defaultClassification=null
   original=JSONObject()
