@@ -24,6 +24,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Verify tracked input coverage
+        run: python3 -m unittest discover -s tools/tests -p 'test_secret_scan.py' -v
       - name: Scan tracked tree with redacted private reports
         run: python3 tools/run-secret-scan.py --report-dir "$RUNNER_TEMP/kura-secret-scan-reports"
   kotlin-security:

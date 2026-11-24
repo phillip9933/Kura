@@ -71,29 +71,37 @@ internal class CardScanEngine(private val context: Context) {
     suspend fun recognize(bytes: ByteArray, fields: List<CardField>): List<CardSuggestion> =
         CardAutofill.suggest(recognizeText(bytes), fields)
 
-    internal suspend fun recognizeText(bytes: ByteArray): String = workspace(bytes) { directory, input, cancellation ->
-        val models = File(directory, "ocr/tessdata").apply { check(mkdirs()) }
-        val hashes = mapOf(
-            "eng" to "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2",
-            "jpn" to "1f5de9236d2e85f5fdf4b3c500f2d4926f8d9449f28f5394472d9e8d83b91b4d")
-        hashes.forEach { (language, expected) ->
-            cancellation.check()
-            val file = File(models, "$language.traineddata")
-            context.assets.open("card-ocr/$language.traineddata").use { source -> file.outputStream().use { source.copyTo(it) } }
-            check(file.length() <= 16L * 1024 * 1024)
-            val hash = file.inputStream().use { stream ->
-                val digest = MessageDigest.getInstance("SHA-256")
-                val buffer = ByteArray(8192)
-                try { while (true) { val count = stream.read(buffer); if (count < 0) break; digest.update(buffer, 0, count) }; digest.digest() }
-                finally { buffer.fill(0) }
-            }.joinToString("") { "%02x".format(it) }
-            check(hash == expected) { "Recognition model integrity check failed" }
-        }
-        val page = TesseractTextRecognizer(models.parentFile!!).recognize(input, "card",
-            OcrConfig(layout = OcrLayout.SPARSE, maxInputPixels = 4_000_000, maxInputBytes = 10L * 1024 * 1024,
-                maxInputDimension = 2048), cancellation)
-        cancellation.check()
-        check(page.text.length <= 64_000)
-        page.text
+    internal suspend fun recognizeText(bytes: ByteArray): String = FileWorker.files(context) { directory ->
+        require(bytes.size in 1..10 * 1024 * 1024)
+        File(directory, "input").writeBytes(bytes)
+        FileWorker.run(context, directory, android.os.Bundle().apply { putString("operation", "ocr") }, 30_000)
     }
+}
+
+internal fun recognizeWorkerFile(context: Context, directory: File, input: File): String {
+    val cancellation = Cancellation { }
+    val modelRoot = File(directory, "ocr").apply { check(mkdir()) }
+    val models = File(modelRoot, "tessdata").apply { check(mkdir()) }
+    val hashes = mapOf(
+        "eng" to "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2",
+        "jpn" to "1f5de9236d2e85f5fdf4b3c500f2d4926f8d9449f28f5394472d9e8d83b91b4d")
+    hashes.forEach { (language, expected) ->
+        cancellation.check()
+        val file = File(models, "$language.traineddata")
+        context.assets.open("card-ocr/$language.traineddata").use { source -> file.outputStream().use { source.copyTo(it) } }
+        check(file.length() <= 16L * 1024 * 1024)
+        val hash = file.inputStream().use { stream ->
+            val digest = MessageDigest.getInstance("SHA-256")
+            val buffer = ByteArray(8192)
+            try { while (true) { val count = stream.read(buffer); if (count < 0) break; digest.update(buffer, 0, count) }; digest.digest() }
+            finally { buffer.fill(0) }
+        }.joinToString("") { "%02x".format(it) }
+        check(hash == expected) { "Recognition model integrity check failed" }
+    }
+    val page = TesseractTextRecognizer(models.parentFile!!).recognize(input, "card",
+        OcrConfig(layout = OcrLayout.SPARSE, maxInputPixels = 4_000_000, maxInputBytes = 10L * 1024 * 1024,
+            maxInputDimension = 2048), cancellation)
+    cancellation.check()
+    check(page.text.length <= 64_000)
+    return page.text
 }

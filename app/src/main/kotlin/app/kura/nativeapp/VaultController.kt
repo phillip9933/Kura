@@ -130,7 +130,7 @@ class VaultController(app: Application) : AndroidViewModel(app) {
     }
     suspend fun setAutomaticBackupPassword(password:CharArray) {
         try {
-            require(password.size>=8) {"Use at least 8 characters"}
+            BackupCodec.requireNewPassword(password)
             work {opened->
                 val encoded=Charsets.UTF_8.encode(java.nio.CharBuffer.wrap(password))
                 val bytes=ByteArray(encoded.remaining()).also(encoded::get)
@@ -147,16 +147,25 @@ class VaultController(app: Application) : AndroidViewModel(app) {
         val name=try {work {opened->
             val settings=store.settings(opened)
             val tree=settings.optString("autoBackupUri").takeIf {it.startsWith("content://")} ?: error("Choose a backup folder")
-            val bytes=store.deviceSecret(opened,"auto-backup-password.enc") ?: error("Set an automatic-backup password")
-            val charsBuffer=Charsets.UTF_8.decode(java.nio.ByteBuffer.wrap(bytes))
-            val chars=CharArray(charsBuffer.remaining()).also(charsBuffer::get)
-            bytes.fill(0);if(charsBuffer.hasArray()) charsBuffer.array().fill('\u0000')
-            val context=currentCoroutineContext()
-            try {store.export(opened).use {payload->
-                AutomaticBackup(File(getApplication<Application>().cacheDir,"auto-backup")).write(payload,chars,
-                    settings.optInt("autoBackupRetentionCount",5).coerceIn(1,1000),
-                    SafBackupDestination(getApplication(),android.net.Uri.parse(tree))) {context.ensureActive()}
-            }} finally {chars.fill('\u0000')}
+            val app = getApplication<Application>()
+            FileWorker.files(app) { directory ->
+                val bytes = store.deviceSecret(opened, "auto-backup-password.enc") ?: error("Set an automatic-backup password")
+                val chars = try {
+                    val decoded = Charsets.UTF_8.decode(java.nio.ByteBuffer.wrap(bytes))
+                    try { CharArray(decoded.remaining()).also(decoded::get) }
+                    finally { if (decoded.hasArray()) decoded.array().fill('\u0000') }
+                } finally { bytes.fill(0) }
+                val job = currentCoroutineContext()
+                try {
+                    store.export(opened).use { payload ->
+                        AutomaticBackup.prepare(File(directory, "input"), payload, chars) { job.ensureActive() }
+                    }
+                } finally { chars.fill('\u0000') }
+                val request = documentJob("automatic", android.net.Uri.parse(tree)).apply {
+                    putInt("retention", settings.optInt("autoBackupRetentionCount", 5).coerceIn(1, 1000))
+                }
+                FileWorker.run(app, directory, request)
+            }
         }
         } catch(e:CancellationException) {autoBackupStatus.value="Backup paused until unlock";throw e}
         catch(e:Exception) {autoBackupStatus.value="Backup failed: "+(e.message ?: "Choose the folder again");throw e}
@@ -210,15 +219,9 @@ class VaultController(app: Application) : AndroidViewModel(app) {
         presentation.value=PresentationSettings()
         autoBackupStatus.value="Automatic backup is off"
     }
-    suspend fun edit(item: VaultItem, json: String,images:Map<String,File> = emptyMap()) {
-        var committed=false
-        try {work {opened->
-            require(!app.kura.feature.isImportedPass(item)) {"Imported passes are read-only"}
-            val row=JSONObject(json)
-            images.forEach {(column,file)->require(column in app.kura.feature.editableImageColumns);require(file.canonicalFile.parentFile==File(opened.directory,"media").canonicalFile && file.isFile);if(column=="kuraLogo") ItemMedia.put(item.table,row,ItemMedia.get(item.table,row).put("logo",file.name)) else row.put(column,file.name)}
-            store.update(opened,item.table,row);committed=true;store.forgetPresentation(opened,item.table,item.id)
-        };refresh()} finally {if(!committed) images.values.forEach {it.delete()}}
-    }
+    suspend fun edit(item: VaultItem, json: String, images: Map<String, File> = emptyMap()) =
+        saveDetachedRecord(item.table, item, json, images)
+
     suspend fun image(path: String): ByteArray = work { EncryptedMediaStorage(File(it.directory, "media")).read(File(path).name, it.key) }
     suspend fun attach(item:app.kura.feature.VaultItem,name:String,mime:String,bytes:ByteArray) {
         work {opened->
@@ -269,13 +272,81 @@ class VaultController(app: Application) : AndroidViewModel(app) {
         }
         queueAutomaticBackup(false)
     }
-    suspend fun saveRecord(table:String,json:String,images:Map<String,File> = emptyMap()) {
-        var committed=false
-        try {work {opened->
-            val row=JSONObject(json)
-            images.forEach { (column,file)->require(column in app.kura.feature.editableImageColumns);require(file.canonicalFile.parentFile==File(opened.directory,"media").canonicalFile && file.isFile);if(column=="kuraLogo") ItemMedia.put(table,row,ItemMedia.get(table,row).put("logo",file.name)) else row.put(column,file.name)}
-            store.insert(opened,table,row);committed=true
-        };refresh()} finally {if(!committed) images.values.forEach {it.delete()}}
+    suspend fun saveRecord(table: String, json: String, images: Map<String, File> = emptyMap()) =
+        saveDetachedRecord(table, null, json, images)
+
+    private fun writeRecord(opened: VaultStore.Opened, table: String, item: VaultItem?,
+                            json: String, images: Map<String, File>) {
+        require(item == null || !app.kura.feature.isImportedPass(item)) { "Imported passes are read-only" }
+        val row = JSONObject(json)
+        val media = File(opened.directory, "media").canonicalFile
+        for ((column, file) in images) {
+            require(column in app.kura.feature.editableImageColumns)
+            require(file.canonicalFile.parentFile == media && file.isFile)
+            if (column == "kuraLogo") ItemMedia.put(table, row, ItemMedia.get(table, row).put("logo", file.name))
+            else row.put(column, file.name)
+        }
+        store.saveRecord(opened, table, row, item?.id)
+    }
+
+    private suspend fun saveDetachedRecord(table: String, item: VaultItem?, json: String, images: Map<String, File>) {
+        var committed = false
+        try {
+            work { opened ->
+                writeRecord(opened, table, item, json, images)
+                committed = true
+                if (item != null) store.forgetPresentation(opened, table, item.id)
+            }
+            refresh()
+        } finally {
+            if (!committed) images.values.forEach(File::delete)
+        }
+    }
+
+    suspend fun saveDraft(table: String, item: VaultItem?, json: String) = withContext(Dispatchers.Main.immediate) {
+        val memory = pending.uiMemory
+        val form = memory.form
+        if (form.saving || form.identity != table + ":" + (item?.id ?: "new")) return@withContext
+        val generation = form.generation
+        val session = state.value as? VaultState.Unlocked ?: return@withContext
+        fun current() = state.value == session && memory.form === form && form.generation == generation
+        val removed = form.removedImages.toSet()
+        form.saving = true
+        try {
+            work { opened ->
+                var owned = emptyMap<String, File>()
+                var committed = false
+                try {
+                    // Detach files inside session work so lock can clear the UI at any time.
+                    withContext(Dispatchers.Main.immediate) {
+                        check(current()) { "Draft expired" }
+                        owned = pending.takeDraft()
+                    }
+                    writeRecord(opened, table, item, json, owned.filterKeys { it !in removed })
+                    committed = true
+                    if (item != null) store.forgetPresentation(opened, table, item.id)
+                } finally {
+                    withContext(NonCancellable + Dispatchers.Main.immediate) {
+                        val retry = !committed && current()
+                        if (retry) pending.draftImages.putAll(owned)
+                        if (committed && current()) {
+                            if (item == null) {
+                                memory.adding.value = false
+                                memory.addCardKind.value = null
+                                memory.clearManual()
+                            } else memory.editing.value = null
+                            if (form.generation == generation) form.clear()
+                        }
+                        if (!retry) withContext(Dispatchers.IO) {
+                            for ((column, file) in owned) if (!committed || column in removed) file.delete()
+                        }
+                    }
+                }
+            }
+            refresh()
+        } finally {
+            if (form.generation == generation) form.saving = false
+        }
     }
     suspend fun imageChange(target: ImageTarget, bytes: ByteArray?) {
         // Capture before waiting for session work: another draft can use the same schema/id.
@@ -299,11 +370,14 @@ class VaultController(app: Application) : AndroidViewModel(app) {
                     withContext(Dispatchers.Main.immediate) {
                         currentCoroutineContext().ensureActive()
                         if (state.value !is VaultState.Unlocked || form == null || identity == null ||
-                            pending.uiMemory.form !== form || form.identity != identity || form.generation != formGeneration) {
+                            pending.uiMemory.form !== form || form.saving || form.identity != identity || form.generation != formGeneration) {
                             throw CancellationException("Photo draft expired")
                         }
                         replaced = pending.draftImages.remove(target.column)
-                        created?.let { pending.draftImages[target.column] = it }
+                        created?.let {
+                            pending.draftImages[target.column] = it
+                            form.removedImages.removeAll { column -> column == target.column }
+                        }
                         adopted = true
                     }
                 } finally {

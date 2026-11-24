@@ -88,3 +88,25 @@ Two findings were reproduced and corrected. **Medium: malformed automatic-update
 The review also traced foreground notification dismissal, package/signer/version checks, FileProvider grants, unknown-source permission return, explicit install confirmation, offline isolation and phone-only retained-data recovery. A guarded opt-in instrumentation source set exercises the real updater dialogs with generated same-package APKs. Normal prototype entry still prohibits installation; the test host's eligibility override is internal and never supplied by the app entry point. Fault transport replaces only test HTTP responses; APK verification remains active. No vault, key, schema or backup-format change was required.
 
 Review and device evidence are distinct: [testing evidence](evidence/pr14-upgrade-installer-20261106.json) records prototype-only results and remaining production/physical gates. This AI-assisted source review cannot satisfy the repository's independent approving-review requirement. PR #14 stays open; no Kura merge, release or signing is performed in this task.
+
+## Backup and card editor fixes — 19 November 2026
+
+- Backup writers and readers share a 4,096-entry limit. The boundary test
+  restores 4,095 media files plus the record data. It also checks that one
+  extra file stops export and preserves the last automatic backup.
+- Automatic retention checks the document type. The Android folder test keeps
+  a directory named like an old backup, and its child, through two backups.
+- The editor keeps fields and staged photos until the database write commits.
+  The retry test forces both an insert and an update to fail and retries each
+  through the editor. The insert also saves a new front photo after Remove and Undo.
+- OCR applies an accepted legacy custom-field value to its original array
+  entry. The Android regression reads back the saved row and checks the leading
+  zeros, neighboring entries, existing card number, and issuer metadata.
+
+The offline and scanner/updater debug builds and their instrumentation APKs
+compiled. JVM verification passed 28 model tests, 35 import tests and one
+low-memory execution. Gradle reused the model result for the final build.
+Scanner/updater debug lint reported 0 errors and 30 warnings. Nine focused
+Android tests passed on a disposable API 37 emulator with 16 KiB pages. The
+rotation-slider gesture in the broader OCR journey needed one isolated rerun
+with the same APK. This review did not run the full device suite.

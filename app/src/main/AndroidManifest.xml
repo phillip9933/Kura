@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
  <uses-permission android:name="android.permission.CAMERA"/><uses-feature android:name="android.hardware.camera.any" android:required="false"/>
  <application android:label="Kura" android:theme="@style/Theme.Kura" android:allowBackup="false" android:fullBackupContent="@xml/backup_rules" android:dataExtractionRules="@xml/data_extraction_rules" android:icon="@mipmap/ic_launcher" android:supportsRtl="true" android:usesCleartextTraffic="false">
+  <service android:name=".KuraFileService" android:process=":file_worker" android:exported="false"/>
   <activity android:name=".MainActivity" android:exported="true">
    <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
   </activity>

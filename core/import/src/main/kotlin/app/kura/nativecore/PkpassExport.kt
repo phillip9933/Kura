@@ -17,7 +17,7 @@ object PkpassExport {
    val value=row.optString(key);if(value.isNotBlank() && value!="null") json.put(key,value)
   }
   row.optString("expiry_date").takeIf {it.isNotBlank() && it!="null"}?.let {json.put("expirationDate",it)}
-  val fields=runCatching {JSONObject(row.optString("fields","{}"))}.getOrDefault(JSONObject())
+  val fields=runCatching {ImportJson.objectFrom(row.optString("fields","{}"))}.getOrDefault(JSONObject())
   val custom=JSONObject()
   fields.optJSONObject("_kura")?.let {meta->for(key in listOf("section","category")) meta.optString(key).takeIf {it.isNotBlank()}?.let {custom.put(key,it)}}
   fields.optJSONObject("customFields")?.let {custom.put("customFields",it)}

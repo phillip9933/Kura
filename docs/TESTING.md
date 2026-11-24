@@ -1,5 +1,69 @@
 # Testing
 
+## Scanner 1.1.0 — 20 November 2026
+
+On a disposable API 37 emulator with 16 KiB pages, all 21 scanner cases passed (6 integration, 6 scan safety, 5 crop layout and 4 rotation). These include
+English and Japanese OCR, optional autofill and cleanup on vault lock. Two
+initial UI cases stopped at wallet unlock. A separate preflight process exited
+before reporting a result. After a verified foreground unlock, the same APKs
+passed all four classes without skips.
+
+A tilted two-tone JPEG exercises Kura's file import path. All four detected
+corners were within 12 pixels of the outer border in the 900 × 800 image.
+The same test also passed with scanner 1.0.0. This fixture checks the crop
+boundary. Handheld recognition accuracy was outside this run.
+
+The scanner-only and combined unsigned release APKs passed model, permission
+and 16 KiB packaging checks. The scanner-only APK has no internet permission.
+The combined debug and instrumentation APKs built, and debug lint reported
+0 errors and 30 warnings. Gradle reproduced all five dependency lock
+configurations. The full-app regression results below apply to scanner 1.0.0.
+
+
+## Backup and editor fixes with SDK 1.0.0 — 20 November 2026
+
+Fresh disposable Android API 37 emulators used x86_64, 16 KiB pages, a synthetic
+device credential and the prototype package. The app runs were split by test
+class. Every discovered method had a terminal result. The table reports unique
+cases after the same-APK rechecks below.
+
+| Suite | Passed | Failed | Opt-in skips |
+| --- | ---: | ---: | ---: |
+| Enhanced app with scanner, updater and installer harness | 96 | 0 | 5 |
+| Default offline app | 69 | 0 | 4 |
+| Core security / database / import and storage | 7 / 12 / 31 | 0 | 0 |
+| JVM model / import / low-memory | 28 / 35 / 1 | 0 | 0 |
+
+The four common opt-ins are phone-unlock cold-process acceptance, retained-version
+upgrade, store screenshots and empty-vault timing. The fifth enhanced opt-in is
+the installer harness. Ten explicit installer phases passed separately with
+synthetic APKs, including corrupted-cache recovery, rejection and cancellation,
+cold recovery, permission handling and offline behavior. A separate scanner
+test stopped the app during OCR and verified cleanup and the saved row count
+after restart. These are emulator results.
+
+The first Keystore run started with the emulator locked. All seven passed after
+unlock. The initial installer test ended before the SDK's asynchronous
+preferences reached disk. The seed test now waits for pending writes before
+the runner terminates the process. The coordinate swipe in the OCR journey
+also failed intermittently. The final test sets the slider through Android's
+accessibility action and checks the exact angle displayed. Its five-test class
+passed twice in isolation and again in the final enhanced suite.
+
+The final enhanced batches recorded 86 passes, 10 failures and 5 opt-in skips.
+All ten failures occurred in the organization class while entering the synthetic
+system PIN or waiting for the vault to open. An isolated instrumentation launch
+also terminated before reporting a test result. After a successful Android
+authentication preflight, all 12 organization cases passed on the same app and
+test APKs. The earlier enhanced and offline batches also passed this class.
+Interrupted runs are excluded from the table.
+
+Both variants assembled debug, instrumentation and unsigned release APKs. Debug
+lint found zero errors, with 30 warnings enhanced and 21 offline. Packaged
+manifests, 16 KiB alignment and selected OCR assets passed verification. The
+offline APK omitted the updater permissions. The local verification tools
+passed all 10 regression tests.
+
 ## Published stable production upgrades — 7 November 2026
 
 Release **2.2.0 / 123**, source `10f17a93c99b67cbe63b17417111b0e8a7ab34f1`,

@@ -19,7 +19,9 @@ object StreamingBackup {
     const val MAX_JSON = 8 * 1024 * 1024
     private const val MAX_CIPHER = 110L * 1024 * 1024
     fun write(payload: BackupPayload, output: OutputStream, password: CharArray) {
+        BackupCodec.requireNewPassword(password)
         BackupCodec.validate(payload.data)
+        BackupCodec.checkEntryCount(payload)
         val salt = ByteArray(16).also(SecureRandom()::nextBytes)
         val iv = ByteArray(12).also(SecureRandom()::nextBytes)
         val key = BackupCodec.derive(password, salt)
@@ -32,7 +34,7 @@ object StreamingBackup {
                         total += bytes.size; require(total <= MAX_EXPANSION)
                         zip.putNextEntry(ZipEntry(name)); zip.write(bytes); zip.closeEntry()
                     }
-                    val json = payload.data.toString().toByteArray()
+                    val json = ImportJson.checked(payload.data.toString()).toByteArray()
                     try { require(json.size <= MAX_JSON); entry("data.json", json) } finally { json.fill(0) }
                     for(name in payload.imageNames) {
                         BackupCodec.safeImageName(name)
@@ -118,7 +120,7 @@ object StreamingBackup {
                 sniff.unread(firstByte)
                 if(firstByte == 123) {
                     val json = Envelope.readBounded(sniff, MAX_JSON)
-                    try { return BackupPayload(JSONObject(json.toString(Charsets.UTF_8)), emptyMap()).also { BackupCodec.validate(it.data) } }
+                    try { return BackupPayload(ImportJson.objectFrom(json.toString(Charsets.UTF_8)), emptyMap()).also { BackupCodec.validate(it.data) } }
                     finally { json.fill(0) }
                 }
                 val zipSource = if(firstByte == 80) sniff else Base64Streams.decode(sniff)
@@ -128,7 +130,7 @@ object StreamingBackup {
                     val seen = hashSetOf<String>()
                     while(true) {
                         val entry = zip.nextEntry ?: break
-                        require(++count <= 4096)
+                        require(++count <= BackupCodec.MAX_ENTRIES)
                         val name = entry.name
                         require(name.length <= 512)
                         if(entry.isDirectory) {
@@ -146,8 +148,9 @@ object StreamingBackup {
                 }
             }
             val bytes = entries.getValue("data.json").open().use { Envelope.readBounded(it, MAX_JSON) }
-            val data = try { JSONObject(bytes.toString(Charsets.UTF_8)) } finally { bytes.fill(0) }
-            BackupCodec.validate(data)
+            val data = try { ImportJson.objectFrom(bytes.toString(Charsets.UTF_8)) } finally { bytes.fill(0) }
+            BackupCodec.requireNewPassword(password)
+        BackupCodec.validate(data)
             val names = entries.keys.filter { it != "data.json" }.map { it.removePrefix("images/") }.toSet()
             return BackupPayload(data, emptyMap(), names,
                 { name -> entries.getValue("images/" + name).open().use { Envelope.readBounded(it, 10 * 1024 * 1024) } },

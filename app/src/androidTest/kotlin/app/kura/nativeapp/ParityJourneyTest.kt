@@ -199,10 +199,64 @@ class ParityJourneyTest {
    runBlocking {vm.work {vm.store.saveSettings(it,JSONObject(saved))}}
   }
  }
+ @Test fun failedAddAndEditCanRetryWithTheOriginalPhoto() {
+  val vm = start()
+  val memory = vm.pending.uiMemory
+  val title = "Retry fixture " + java.util.UUID.randomUUID()
+  instrumentation.runOnMainSync {
+   memory.manualSection.value = "identities"
+   memory.manualCategory.value = "Passport"
+   memory.adding.value = true
+  }
+  assertTrue(device.wait(Until.hasObject(By.text("Manual Input")), 10000))
+  instrumentation.runOnMainSync { memory.form.values["name"] = title }
+  val bitmap = android.graphics.Bitmap.createBitmap(8, 5, android.graphics.Bitmap.Config.ARGB_8888)
+  val output = java.io.ByteArrayOutputStream()
+  bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, output)
+  bitmap.recycle()
+  val bytes = output.toByteArray()
+  try { runBlocking { vm.imageChange(ImageTarget("identities", -1, "frontImagePath"), bytes) } }
+  finally { bytes.fill(0) }
+  val file = requireNotNull(vm.pending.draftImages["frontImagePath"])
+  click("Edit Front image"); click("Remove image"); click("Remove")
+  click("Undo image removals")
+  fun sql(statement: String) = runBlocking { vm.work { it.rooms.identities.openHelper.writableDatabase.execSQL(statement) } }
+  fun failSaveThenRetry(operation: String) {
+   sql("CREATE TRIGGER fail_draft BEFORE $operation ON identities BEGIN SELECT RAISE(ABORT, 'fixture write failure'); END")
+   try {
+    click("Save")
+    assertTrue(device.wait(Until.hasObject(By.text("Could not complete operation")), 10000))
+    click("OK")
+    assertTrue(device.wait(Until.hasObject(By.text("Save")), 10000))
+    assertTrue(file.isFile)
+    assertEquals(title, memory.form.values["name"])
+   } finally { sql("DROP TRIGGER fail_draft") }
+   click("Save")
+   assertTrue(device.wait(Until.gone(By.text("Save")), 10000))
+   runBlocking { vm.refresh() }
+  }
+  try {
+   failSaveThenRetry("INSERT")
+   val record = vm.items.value.single { it.title == title }
+   assertEquals(file.name, JSONObject(record.json).getString("frontImagePath"))
+   instrumentation.runOnMainSync { memory.editing.value = record }
+   assertTrue(device.wait(Until.hasObject(By.text("Edit item")), 10000))
+   instrumentation.runOnMainSync { memory.form.values["value"] = "0007" }
+   failSaveThenRetry("UPDATE")
+   val edited = vm.items.value.single { it.title == title }
+   assertEquals("0007", JSONObject(edited.json).getString("value"))
+   assertEquals(file.name, JSONObject(edited.json).getString("frontImagePath"))
+  } finally {
+   runBlocking { vm.items.value.filter { it.title == title }.forEach { vm.deletePass(it) } }
+  }
+ }
  @Test fun realSafAutomaticBackupWritesAndRetainsVerifiedFiles() {
   val vm=start();val saved=runBlocking {vm.work {vm.store.settings(it).toString()}}
   val folder="Kura-Parity-"+java.util.UUID.randomUUID()
   device.executeShellCommand("mkdir -p /sdcard/Documents/"+folder)
+  val protectedDirectory = "/sdcard/Documents/$folder/Kura_autobackup_0000.wbk"
+  device.executeShellCommand("mkdir " + protectedDirectory)
+  device.executeShellCommand("touch " + protectedDirectory + "/child")
   var destination:SafBackupDestination?=null
   try {
    runBlocking {vm.preference("autoBackupEnabled",false);vm.preference("isExpiryNotificationEnabled",false)}
@@ -222,16 +276,19 @@ class ParityJourneyTest {
    assertTrue(vm.autoBackupStatus.value,vm.autoBackupStatus.value.startsWith("Saved "))
    val tree=android.net.Uri.parse(vm.presentation.value.preferences.text("autoBackupUri"))
    destination=SafBackupDestination(context,tree)
-   assertEquals(1,destination.list().size)
+   assertEquals(1,destination.list().count { it.isFile })
    runBlocking {vm.automaticBackupNow()}
-   val docs=destination.list();assertEquals(1,docs.size);assertTrue(docs.single().name.endsWith("0002.wbk"))
+   val docs=destination.list().filter { it.isFile };assertEquals(1,docs.size);assertTrue(docs.single().name.endsWith("0002.wbk"))
    destination.read(docs.single().id).use {input->BackupCodec.read(input,"Kura parity password".toCharArray()).use {assertEquals("4.0",it.data.getString("version"))}}
+   assertEquals("child", device.executeShellCommand("ls " + protectedDirectory).trim())
    assertTrue(vm.state.value is VaultState.Unlocked)
    snapshot("parity-automatic-backup")
    runBlocking {vm.preference("autoBackupEnabled",false)}
   } finally {
    runBlocking {vm.preference("autoBackupEnabled",false);vm.work {vm.store.saveSettings(it,JSONObject(saved))}}
-   destination?.list()?.forEach {destination.delete(it.id)}
+   device.executeShellCommand("rm -f " + protectedDirectory + "/child")
+   device.executeShellCommand("rmdir " + protectedDirectory)
+   destination?.list()?.filter { it.isFile }?.forEach {destination.delete(it.id)}
    device.executeShellCommand("rmdir /sdcard/Documents/"+folder)
   }
  }

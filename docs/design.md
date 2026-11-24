@@ -49,7 +49,10 @@ and the screen owners in its code map.
   independently, optionally review OCR, then explicitly Save. Recognized values
   are suggestions; preserve existing values, leading zeros and late corrections.
   Imported pass images remain read-only in details; manual empty slots stay
-  independently addable. Replacement/removal uses Edit card.
+  independently addable. Replacement/removal uses Edit card. Undo restores a
+  photo removed from the current draft, including a newly scanned photo.
+  If the record write fails, the editor keeps the fields and photos for retry.
+  Cancel or wallet lock discards the draft.
 - **Import:** launch Android's picker/camera only from an explicit action, return
   to the originating form/destination and show safe recovery after denial or
   invalid input. Scanner quality advisories offer manual/retake alternatives;
