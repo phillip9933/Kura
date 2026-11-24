@@ -143,7 +143,8 @@ enum MediaProcessor {
         }
     }
 
-    static func withVisionCancellation(cancel: @escaping @Sendable () -> Void, perform: () throws -> Void) async throws {
+    static func withVisionCancellation(cancel: @escaping @Sendable () -> Void,
+                                       perform: @Sendable () throws -> Void) async throws {
         try await withTaskCancellationHandler {
             try Task.checkCancellation()
             do { try perform() }
