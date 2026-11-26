@@ -35,6 +35,12 @@ APKs on a device with 16 KiB pages. Use synthetic cards to check vault unlock,
 card scanning, and backup and restore. Use **Settings → Privacy Policy** to
 open the public policy in your browser.
 
+With both apps installed, follow the [encrypted backup procedure](BACKUP_AND_MIGRATION.md#move-from-the-github-apk-to-the-play-app)
+using synthetic wallet data. Keep the manual encrypted full export outside
+both automatic-backup folders until you verify the restore. Choose a different
+automatic-backup folder in each app. Run an automatic backup and check that
+each app writes to its own folder without removing files from the other.
+
 ## Before upload
 
 Confirm that Play Console accepts `app.kura.wallet.play` for the new entry.

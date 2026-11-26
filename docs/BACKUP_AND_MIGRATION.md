@@ -17,15 +17,21 @@ The GitHub APK (`app.kura.wallet`) and Play app (`app.kura.wallet.play`) are
 separate installations. Each has its own private storage and Android Keystore
 entries. Installing the Play app does not copy data from the GitHub app.
 
-1. In the GitHub app, open **Settings → Backup & Storage**. Export an encrypted
-   full wallet backup (`.wbk`) to a location you can open from both apps.
+1. In the GitHub app, open **Settings → Backup & Storage → Create Backup**.
+   Save the encrypted full wallet backup (`.wbk`) where both apps can open it.
+   Give it a distinct name, such as `Kura-GitHub-transfer.wbk`, and save it
+   outside both automatic-backup folders.
 2. Keep its password. In the Play app, set up the vault and select
    **Settings → Backup & Storage → Restore Backup**.
 3. Select the file, enter its password, then review and confirm the restore.
    A full restore replaces the Play app's current vault.
-4. Check cards, passes, identity records, barcodes and media. Set up device
-   unlock and automatic backup again as needed. Keep the GitHub app and backup
-   until you have checked the restored data.
+4. Check cards, passes, identity records, barcodes and media. Keep the GitHub
+   app and the manual export until you have verified the restore.
+5. Set up device unlock again as needed. If you enable **Automatic Backup**
+   in both apps, use **Backup Location** to choose a different folder for each,
+   such as `Kura GitHub` and `Kura Play`. Do not select the same folder.
+   In a shared folder, either app can delete the other app's numbered
+   `Kura_autobackup_<n>.wbk` files when it removes old backups.
 
 ## Format and safety
 
