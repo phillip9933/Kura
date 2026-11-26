@@ -1,0 +1,52 @@
+name: Unsigned Google Play candidate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          cmdline-tools-version: '12266719'
+          packages: platform-tools
+      - name: Install Android build tools
+        run: |
+          sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
+          command -v apkanalyzer > /dev/null
+      - name: Run Play bundle verifier tests
+        run: python3 -m unittest discover -s tools/tests -p 'test_verify_play_bundle.py' -v
+      - name: Build unsigned enhanced-scanner bundle and companion APK
+        run: ./gradlew -PcardScanner=true -PdirectUpdates=false :app:lintDebug :app:assembleDebugAndroidTest :app:assembleRelease :app:bundleRelease --max-workers=2 --console=plain
+      - name: Verify native packaging and offline policy
+        run: |
+          curl --fail --location --silent --show-error --max-time 120 \
+            https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar \
+            --output "$RUNNER_TEMP/bundletool.jar"
+          printf '%s  %s\n' a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29 \
+            "$RUNNER_TEMP/bundletool.jar" | sha256sum --check --status
+          python3 tools/verify-native-packaging.py --card-scanner
+          python3 tools/verify-play-bundle.py --bundletool "$RUNNER_TEMP/bundletool.jar" \
+            --bundle app/build/outputs/bundle/release/app-release.aab
+          cd app/build/outputs/bundle/release
+          sha256sum app-release.aab > SHA256SUMS.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: kura-unsigned-play-candidate
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            app/build/outputs/bundle/release/app-release.aab
+            app/build/outputs/bundle/release/SHA256SUMS.txt

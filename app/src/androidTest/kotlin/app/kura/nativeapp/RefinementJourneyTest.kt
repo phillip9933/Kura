@@ -1,6 +1,8 @@
 package app.kura.nativeapp
 
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.PatternMatcher
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.*
 import app.kura.feature.*
@@ -155,6 +157,22 @@ class RefinementJourneyTest {
    val screenshot=instrumentation.uiAutomation.takeScreenshot()
    java.io.File(context.getExternalFilesDir(null),"refinement-secure-recents.png").outputStream().use {screenshot.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)};screenshot.recycle()
   } finally {finish(vm,saved,listOfNotNull(owned))}
+ }
+ @Test fun privacyPolicyOpensThePublicPage() {
+  start()
+  val filter = IntentFilter(Intent.ACTION_VIEW).apply {
+   addDataScheme("https")
+   addDataAuthority("github.com", null)
+   addDataPath("/phillip9933/Kura/blob/main/PRIVACY.MD", PatternMatcher.PATTERN_LITERAL)
+  }
+  val monitor = instrumentation.addMonitor(filter, null, true)
+  try {
+   click("Settings")
+   click("Privacy Policy")
+   assertEquals("Privacy Policy must send the public URL to the browser", 1, monitor.hits)
+  } finally {
+   instrumentation.removeMonitor(monitor)
+  }
  }
  @Test fun importedDetailsHideTechnicalSectionsAndImageEditing() {
   val vm=start();val saved=runBlocking {vm.work {vm.store.settings(it).toString()}}

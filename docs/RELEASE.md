@@ -157,7 +157,7 @@ The expected certificate above was verified against the existing public GitHub A
 
 - The [F-Droid guide](FDROID.md) identifies the native source tag, root build and required toolchain. Its external build-server/source-policy checks are not replaced by GitHub CI.
 - Store descriptions, release notes and five fictional-data screenshots are in `fastlane/metadata/android/en-US/`.
-- Google Play publishing is retired; no AAB or Play Console handoff is part of this release process.
+- GitHub releases remain APK-only. The separate [Google Play candidate process](PLAY_CANDIDATE.md) does not upload to Play Console.
 - Remaining hardware/platform validation limits are in [Testing](TESTING.md) and [Security review](SECURITY_REVIEW.md). No independent security certification or exhaustive physical-device coverage is claimed.
 
 GitHub APK/AAB publication and the 2.0 tag were explicitly authorized on September 29, 2026; the 2.1.0 optimization release was authorized on October 3. Store-console submission requires account access and a separate execution step. Pre-2.0 GitHub installer assets were withdrawn; historical tags and source archives remain.
