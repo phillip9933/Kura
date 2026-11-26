@@ -1,24 +1,12 @@
 # Kura
 
-## Roadmap and work
+Kura (蔵) stores cards, passes and identity documents in an encrypted, offline Android wallet.
 
-[Release roadmap](https://github.com/users/phillip9933/projects/2/views/2) · [Work board](https://github.com/users/phillip9933/projects/2/views/1) · [Issue conventions](CONTRIBUTING.md#public-roadmap-and-issue-management)
+<a href="https://github.com/phillip9933/Kura/releases/tag/v2.2.0"><img src="docs/badges/github-releases.svg" alt="Download Kura 2.2.0 for Android from GitHub Releases" height="40"></a>
 
-Follow release scope and maturity separately from individual work. Dates are estimates; unscheduled ideas have no release milestone.
+**Support:** [Buy me a coffee](https://buymeacoffee.com/phillip9933) · [GitHub Sponsors](https://github.com/sponsors/phillip9933)
 
-**Privacy first pass wallet.**
-
-Kura (蔵) keeps your cards, passes and identity documents in an encrypted, offline Android wallet. No accounts, advertising or telemetry. The default build has no Internet permission. An optional direct-update build can check GitHub for updates; see [app updates](docs/APP-UPDATES.md).
-
-[Stable download](https://github.com/phillip9933/Kura/releases/latest) · [2.2.0 release](https://github.com/phillip9933/Kura/releases/tag/v2.2.0) · [Changelog](CHANGELOG.md) · [Privacy](PRIVACY.MD)
-
-## About this project
-
-I build projects to solve problems I run into in my own life. I share them because I believe in open source and hope others can learn from them, adapt them or find them useful.
-
-Making it public does not mean it is a polished production product or suitable for every setup. Please read the documented limitations and decide whether it fits your needs. I'm happy to help where I can, but I can't promise a support schedule.
-
-## Your wallet, organized
+## Features
 
 - **Cards, Passes and Identity** — three separate, swipeable sections.
 - Import `.pkpass` files and `.pkpasses` bundles, scan barcodes or add items manually.
@@ -28,32 +16,40 @@ Making it public does not mean it is a polished production product or suitable f
 - Unlock with biometrics or your device credential, or choose phone-unlock-only access in Settings. Wallet data remains encrypted and sessions close on lock.
 - Keep password-encrypted backups, optionally saved automatically to a folder you choose.
 
-## Native Android
+## Screenshots
 
-Kura 2.0 is rebuilt in **Kotlin and Jetpack Compose**, using Material 3. The rewrite removes the Flutter engine and plugin bridges so startup, authentication and camera/file-picker handoffs can be managed directly through Android's lifecycle and security APIs.
+| Wallet | Boarding pass | Barcode |
+| --- | --- | --- |
+| ![Wallet with demo passes](fastlane/metadata/android/en-US/images/phoneScreenshots/1-passes-dark.jpg) | ![Demo boarding pass](fastlane/metadata/android/en-US/images/phoneScreenshots/2-boarding-pass.jpg) | ![Full-screen demo barcode](fastlane/metadata/android/en-US/images/phoneScreenshots/3-fullscreen-barcode.jpg) |
 
-The 2.2 APK with card scanning and direct updates requires **Android 8.0 / API 26 or later** and a 64-bit arm64-v8a or x86_64 device. The older 2.1 APK and default offline source build retain Android 7.0 / API 24 support. All builds require a secure device lock and supported hardware-backed key storage. Download the **APK** to install Kura. GitHub releases are APK-only; Google Play publication is no longer planned.
+## Install and use
 
-Kura stores card references and barcodes; it does not make NFC payments. Imported pass issuer signatures are not verified. Sharing files or opening links hands data to another app. Read the [security and privacy details](SECURITY.md).
+Download the Android APK from [Kura 2.2.0](https://github.com/phillip9933/Kura/releases/tag/v2.2.0). It requires Android 8.0 (API 26) or later and an arm64-v8a or x86_64 device. The older 2.1 APK and the default offline source build retain Android 7.0 (API 24) support. All builds require a secure device lock and supported hardware-backed key storage.
 
-## Contribute
+### Optional card scanning
 
-Start with [Contributing](CONTRIBUTING.md) for setup and checks. The [documentation index](docs/README.md) covers architecture, development and release tooling. Test and profiling helpers live in `tools/`.
+The enhanced-scanning build (`-PcardScanner=true`) detects card edges and offers optional offline English and Japanese OCR. Review the suggestions before you save them. See [card scanning](docs/CARD-RECOGNITION.md) for build options, controls and limitations.
 
-Kura originated as a fork of [Wallet by Sidhant](https://github.com/sidhant947/Wallet).
+## Privacy and security
 
-## AI usage
+Kura has no accounts, advertising or telemetry. The default source build has no Internet permission. The GitHub APK can check GitHub for updates; see [app updates](docs/APP-UPDATES.md).
 
-I use AI tools to help with development, including analysis, code, tests and documentation. I care about security, privacy and protecting people's data, and I try to reflect that in how I build these projects.
+Kura stores card references and barcodes. It does not make NFC payments or verify imported pass issuer signatures. Sharing files or opening links sends data to another app. Read the [privacy policy](PRIVACY.MD) and the [security policy](SECURITY.md) for details and reporting instructions.
 
-I document validation and known limitations so you can assess the evidence for yourself. Contributions should disclose material AI assistance and distinguish checks actually run from checks still needed.
+## Development and contributing
+
+Kura 2.0 uses Kotlin, Jetpack Compose and Material 3. Start with [Contributing](CONTRIBUTING.md) for setup and checks. The [documentation index](docs/README.md) covers architecture, development and release tooling. Test and profiling helpers live in `tools/`.
+
+[Changelog](CHANGELOG.md) · [Release roadmap](https://github.com/users/phillip9933/projects/2/views/2) · [Work board](https://github.com/users/phillip9933/projects/2/views/1) · [Issue conventions](CONTRIBUTING.md#public-roadmap-and-issue-management)
+
+Follow release scope and maturity separately from individual work. Dates are estimates. Unscheduled ideas have no release milestone. Check the documented limitations before you use Kura. There is no fixed support schedule.
 
 See [testing evidence](docs/TESTING.md), [security review](docs/SECURITY_REVIEW.md) and [contribution guidance](CONTRIBUTING.md#ai-usage).
 
 ## License
 
-Licensed under [AGPL-3.0](LICENSE).
+Licensed under [AGPL-3.0](LICENSE). Kura originated as a fork of [Wallet by Sidhant](https://github.com/sidhant947/Wallet).
 
-## Optional card scanning
+## AI usage
 
-The enhanced-scanning build (`-PcardScanner=true`) adds automatic card-edge cropping and optional offline English/Japanese OCR into existing empty form fields, with editable review before saving. It uses scanner 1.1.0 and requires Android API 26+ on 64-bit devices. The base build retains API 24 support. See [card scanning](docs/CARD-RECOGNITION.md) for controls, privacy, build flags and known limitations.
+I use AI tools for analysis, implementation, tests, and documentation. I decide what ships and take responsibility for maintaining it. Project-specific testing and known limitations are documented separately.
