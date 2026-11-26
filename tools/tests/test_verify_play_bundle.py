@@ -44,6 +44,11 @@ class PlayBundleVerifierTest(unittest.TestCase):
             with self.subTest(replacement=replacement), self.assertRaises(ValueError):
                 CHECKS["verify_manifest"](replacement)
 
+    def test_checks_an_expected_version_code(self):
+        CHECKS["verify_manifest"](MANIFEST, expected_version_code=123)
+        with self.assertRaisesRegex(ValueError, "Expected version code 124"):
+            CHECKS["verify_manifest"](MANIFEST, expected_version_code=124)
+
     def test_requires_16k_alignment(self):
         CHECKS["verify_alignment"]('{"alignment": "PAGE_ALIGNMENT_16K"}')
         with self.assertRaisesRegex(ValueError, "16 KiB"):

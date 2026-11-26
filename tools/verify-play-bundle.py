@@ -16,7 +16,7 @@ FORBIDDEN_PERMISSIONS = {
 SCANNER_ABIS = {"arm64-v8a", "x86_64"}
 
 
-def verify_manifest(xml):
+def verify_manifest(xml, expected_version_code=None):
     manifest = ET.fromstring(xml)
     if manifest.get("package") != "app.kura.wallet":
         raise ValueError("Unexpected Play application ID")
@@ -27,8 +27,11 @@ def verify_manifest(xml):
         or int(sdk.get(ANDROID + "targetSdkVersion", "0")) < 36
     ):
         raise ValueError("Expected minSdk 26 and targetSdk 36 or higher")
-    if int(manifest.get(ANDROID + "versionCode", "0")) < 1:
+    code = int(manifest.get(ANDROID + "versionCode", "0"))
+    if code < 1:
         raise ValueError("Missing Android version code")
+    if expected_version_code is not None and code != expected_version_code:
+        raise ValueError(f"Expected version code {expected_version_code}, got {code}")
     for item in manifest:
         if item.tag.startswith("uses-permission"):
             name = item.get(ANDROID + "name")
@@ -78,13 +81,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundletool", required=True, type=Path)
     parser.add_argument("--bundle", required=True, type=Path)
+    parser.add_argument("--expected-version-code", type=int)
     args = parser.parse_args()
     run = ["java", "-jar", str(args.bundletool)]
     bundle = f"--bundle={args.bundle}"
     subprocess.run([*run, "validate", bundle], check=True)
     verify_manifest(subprocess.check_output(
         [*run, "dump", "manifest", bundle, "--module=base"], text=True
-    ))
+    ), args.expected_version_code)
     verify_alignment(subprocess.check_output([*run, "dump", "config", bundle], text=True))
     verify_archive(args.bundle)
     print("Unsigned enhanced-scanner bundle and 16 KiB packaging request verified")

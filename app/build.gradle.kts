@@ -3,8 +3,20 @@ import java.io.File
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.plugin.compose") }
 val cardScanner = providers.gradleProperty("cardScanner").orNull == "true"
 val directUpdates = providers.gradleProperty("directUpdates").orNull == "true"
+val androidVersionCode = 123
+val playVersionCode = providers.gradleProperty("playVersionCode").orNull?.let { value ->
+    require(cardScanner && !directUpdates) {
+        "playVersionCode requires the offline scanner build (cardScanner=true, directUpdates=false)"
+    }
+    val code = value.toIntOrNull()
+    require(value.matches(Regex("[1-9][0-9]{0,9}")) && code != null &&
+        code in (androidVersionCode + 1)..2_100_000_000) {
+        "playVersionCode must be an integer above $androidVersionCode and at most 2100000000"
+    }
+    code
+}
 android { namespace = "app.kura.nativeapp"; compileSdk { version = release(37) { minorApiLevel = 0 } }
- defaultConfig { applicationId = "app.kura.wallet"; minSdk = if (directUpdates || cardScanner) 26 else 24; targetSdk = 36; versionCode = 123; versionName = "2.2.0"
+ defaultConfig { applicationId = "app.kura.wallet"; minSdk = if (directUpdates || cardScanner) 26 else 24; targetSdk = 36; versionCode = playVersionCode ?: androidVersionCode; versionName = "2.2.0"
 
  if (cardScanner) ndk { abiFilters += setOf("arm64-v8a", "x86_64") }
  testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }

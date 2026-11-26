@@ -123,7 +123,7 @@ Stable-readiness follow-up remains **Beta**. The protected SystemUI event-delive
 
 ## Kura 2.1
 
-Version **2.1.0**, code **119**, is the optimization release, originally published with a signed APK and Android App Bundle on [GitHub Releases](https://github.com/phillip9933/Kura/releases/tag/v2.1.0). The owner retired AAB downloads on 6 November 2026. Current and future GitHub releases provide APKs only; no Google Play submission is planned. Historical validation records are preserved.
+Version **2.1.0**, code **119**, is the optimization release, originally published with a signed APK and Android App Bundle on [GitHub Releases](https://github.com/phillip9933/Kura/releases/tag/v2.1.0). The owner retired AAB downloads on 6 November 2026. GitHub releases provide APKs only. At that time there was no separate Play candidate process. Historical validation records are preserved.
 
 Release identity is `app.kura.wallet`; debug is `app.kura.wallet.prototype`. Preserve the signing identity, native Keystore aliases and storage contracts. Historical backup support is documented in [Backup and migration](BACKUP_AND_MIGRATION.md), rather than in the public release notes.
 

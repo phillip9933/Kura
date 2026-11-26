@@ -1,7 +1,31 @@
 name: Unsigned Google Play candidate
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/play-candidate.yml'
+      - 'app/**'
+      - 'core/**'
+      - 'feature/vault/**'
+      - 'gradle/**'
+      - '*.gradle.kts'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'third_party/card-scanner/**'
+      - 'tools/verify-native-packaging.py'
+      - 'tools/verify-play-bundle.py'
+      - 'tools/tests/test_verify_play_bundle.py'
   workflow_dispatch:
+    inputs:
+      play-version-code:
+        description: Unused Play Console version code (leave empty for qualification)
+        required: false
+        type: string
+
+concurrency:
+  group: kura-play-candidate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -10,6 +34,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      PLAY_VERSION_CODE: ${{ inputs['play-version-code'] }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -29,7 +55,10 @@ jobs:
       - name: Run Play bundle verifier tests
         run: python3 -m unittest discover -s tools/tests -p 'test_verify_play_bundle.py' -v
       - name: Build unsigned enhanced-scanner bundle and companion APK
-        run: ./gradlew -PcardScanner=true -PdirectUpdates=false :app:lintDebug :app:assembleDebugAndroidTest :app:assembleRelease :app:bundleRelease --max-workers=2 --console=plain
+        run: |
+          args=()
+          if [ -n "$PLAY_VERSION_CODE" ]; then args+=("-PplayVersionCode=$PLAY_VERSION_CODE"); fi
+          ./gradlew -PcardScanner=true -PdirectUpdates=false :app:lintDebug :app:compileDebugAndroidTestKotlin :app:assembleRelease :app:bundleRelease --max-workers=2 --console=plain "${args[@]}"
       - name: Verify native packaging and offline policy
         run: |
           curl --fail --location --silent --show-error --max-time 120 \
@@ -38,8 +67,10 @@ jobs:
           printf '%s  %s\n' a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29 \
             "$RUNNER_TEMP/bundletool.jar" | sha256sum --check --status
           python3 tools/verify-native-packaging.py --card-scanner
+          args=()
+          if [ -n "$PLAY_VERSION_CODE" ]; then args+=(--expected-version-code "$PLAY_VERSION_CODE"); fi
           python3 tools/verify-play-bundle.py --bundletool "$RUNNER_TEMP/bundletool.jar" \
-            --bundle app/build/outputs/bundle/release/app-release.aab
+            --bundle app/build/outputs/bundle/release/app-release.aab "${args[@]}"
           cd app/build/outputs/bundle/release
           sha256sum app-release.aab > SHA256SUMS.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
