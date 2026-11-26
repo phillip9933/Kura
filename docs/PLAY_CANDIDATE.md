@@ -1,9 +1,14 @@
 # Google Play candidate
 
 The Play candidate includes offline card scanning. It does not include the
-GitHub APK updater. It uses application ID app.kura.wallet and supports Android
-8 (API 26) or later on 64-bit devices. GitHub releases use their separate APK
-workflow.
+GitHub APK updater. It uses application ID `app.kura.wallet.play` and supports
+Android 8 (API 26) or later on 64-bit devices. The GitHub APK keeps application
+ID `app.kura.wallet` and its existing signing requirements.
+
+The two packages install separately and cannot share private files or
+Android Keystore keys. To move a wallet, use the
+[encrypted backup procedure](BACKUP_AND_MIGRATION.md#move-from-the-github-apk-to-the-play-app).
+Do not uninstall the GitHub app to move to Play.
 
 ## Build and checks
 
@@ -18,9 +23,9 @@ Run these commands from the repository root. Get bundletool 1.18.3 from its
 Verify its checksum before you run it.
 
 ~~~sh
-./gradlew -PcardScanner=true -PdirectUpdates=false :app:lintDebug :app:compileDebugAndroidTestKotlin :app:assembleRelease :app:bundleRelease
+./gradlew -PplayDistribution=true -PcardScanner=true -PdirectUpdates=false :app:lintDebug :app:compileDebugAndroidTestKotlin :app:assembleRelease :app:bundleRelease
 python3 -m unittest discover -s tools/tests -p 'test_verify_play_bundle.py' -v
-python3 tools/verify-native-packaging.py --card-scanner
+python3 tools/verify-native-packaging.py --play --card-scanner
 python3 tools/verify-play-bundle.py --bundletool /path/to/bundletool-all-1.18.3.jar \
   --bundle app/build/outputs/bundle/release/app-release.aab
 ~~~
@@ -32,16 +37,18 @@ open the public policy in your browser.
 
 ## Before upload
 
-Use Kura's existing Play Console entry. Check the version codes in all tracks.
-Select an unused code above all prior Play uploads and the current GitHub APK
-code. Then enter it in the manual workflow's **play-version-code** input.
-For a local build, add the Gradle property playVersionCode with the same value.
-The automatic check keeps the source version code. The override works only with
-the offline scanner build and must be at most 2100000000.
+Confirm that Play Console accepts `app.kura.wallet.play` for the new entry.
+Do not use the old, deleted Play entry for `app.kura.wallet`. Check the new
+entry's code history. Use the source code if it is unused and higher than all
+previous codes for the new Play entry. If you need a higher code, enter it in
+the manual workflow's **play-version-code** input. For a local build, use the
+Gradle property `playVersionCode`. The override works only with
+`playDistribution=true` and must be at most 2100000000.
 
-Use the registered upload certificate to sign the AAB. The Play app signing certificate is separate. Compare it with the
-GitHub APK certificate before you try an in-place upgrade. Do not uninstall an
-existing wallet to fix a certificate mismatch.
+Use the registered upload certificate to sign the AAB. The Play app signing
+certificate is separate. Record the certificates for the new Play entry. Continue to verify the original release certificate for GitHub
+APK updates. The different package IDs do not support an in-place upgrade from
+the GitHub app to the Play app, even if they use the same certificate.
 
 Kura stores card references and passes. It does not process payments or require
 an account. For review, use an Android device with a secure screen lock and

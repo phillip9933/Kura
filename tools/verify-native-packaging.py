@@ -4,10 +4,14 @@ import xml.etree.ElementTree as ET
 root = pathlib.Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--apk", type=pathlib.Path, default=root / "app/build/outputs/apk/release/app-release-unsigned.apk")
+parser.add_argument("--play", action="store_true", help="Expect the separate Google Play application ID")
 parser.add_argument("--direct-updates", action="store_true", help="Expect opt-in GitHub updater permissions/provider")
 parser.add_argument("--card-scanner", action="store_true", help="Expect the optional API 26/64-bit offline scanner")
 parser.add_argument("--expected-certificate", help="Expected signed APK certificate SHA-256 (hex)")
 args = parser.parse_args()
+if args.play and args.direct_updates:
+    parser.error("The Google Play APK must not include direct updates")
+expected_package = "app.kura.wallet.play" if args.play else "app.kura.wallet"
 apk = args.apk
 
 sdk_home = os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
@@ -19,9 +23,9 @@ subprocess.run([str(sdk / ("zipalign" + exe)), "-c", "-P", "16", "4", str(apk)],
 badging = subprocess.check_output([str(sdk / ("aapt2" + exe)), "dump", "badging", str(apk)], text=True)
 for permission in ("INTERNET", "ACCESS_NETWORK_STATE", "REQUEST_INSTALL_PACKAGES"):
     assert ("android.permission." + permission in badging) == args.direct_updates, permission
-assert "package: name='app.kura.wallet'" in badging
-print("Release ID preserved; update permissions match selected distribution")
-assert ("minSdkVersion:'26'" in badging) == (args.direct_updates or args.card_scanner)
+assert f"package: name='{expected_package}'" in badging, expected_package
+print("Release ID and update permissions match the selected distribution")
+assert ("minSdkVersion:'26'" in badging) == (args.play or args.direct_updates or args.card_scanner)
 with zipfile.ZipFile(apk) as archive:
     models = ["assets/card-ocr/eng.traineddata", "assets/card-ocr/jpn.traineddata"]
     assert all((name in archive.namelist()) == args.card_scanner for name in models)
@@ -41,10 +45,18 @@ manifest_xml = subprocess.check_output([str(analyzer), "manifest", "print", str(
 manifest = ET.fromstring(manifest_xml)
 a = "{http://schemas.android.com/apk/res/android}"
 providers = manifest.findall("application/provider")
-update_providers = [p for p in providers if p.get(a + "authorities") == "app.kura.wallet.android-updates"]
+if args.play:
+    authorities = {p.get(a + "authorities") for p in providers}
+    assert {f"{expected_package}.files", f"{expected_package}.attachments"} <= authorities, authorities
+    assert all(authority and authority.startswith(f"{expected_package}.") for authority in authorities), authorities
+update_providers = [p for p in providers if (
+    p.get(a + "authorities", "").endswith(".android-updates")
+    or p.get(a + "name", "").endswith("UpdateFileProvider")
+)]
 assert len(update_providers) == int(args.direct_updates)
 if args.direct_updates:
     assert update_providers[0].get(a + "name") == "io.github.phillip9933.appupdater.UpdateFileProvider"
+    assert update_providers[0].get(a + "authorities") == f"{expected_package}.android-updates"
 application = manifest.find("application")
 assert application is not None
 assert application.get(a + "allowBackup") == "false"

@@ -58,7 +58,7 @@ jobs:
         run: |
           args=()
           if [ -n "$PLAY_VERSION_CODE" ]; then args+=("-PplayVersionCode=$PLAY_VERSION_CODE"); fi
-          ./gradlew -PcardScanner=true -PdirectUpdates=false :app:lintDebug :app:compileDebugAndroidTestKotlin :app:assembleRelease :app:bundleRelease --max-workers=2 --console=plain "${args[@]}"
+          ./gradlew -PplayDistribution=true -PcardScanner=true -PdirectUpdates=false :core:import:testDebugUnitTest :app:lintDebug :app:compileDebugAndroidTestKotlin :app:assembleRelease :app:bundleRelease --max-workers=2 --console=plain "${args[@]}"
       - name: Verify native packaging and offline policy
         run: |
           curl --fail --location --silent --show-error --max-time 120 \
@@ -66,7 +66,7 @@ jobs:
             --output "$RUNNER_TEMP/bundletool.jar"
           printf '%s  %s\n' a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29 \
             "$RUNNER_TEMP/bundletool.jar" | sha256sum --check --status
-          python3 tools/verify-native-packaging.py --card-scanner
+          python3 tools/verify-native-packaging.py --play --card-scanner
           args=()
           if [ -n "$PLAY_VERSION_CODE" ]; then args+=(--expected-version-code "$PLAY_VERSION_CODE"); fi
           python3 tools/verify-play-bundle.py --bundletool "$RUNNER_TEMP/bundletool.jar" \

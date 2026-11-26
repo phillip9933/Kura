@@ -11,6 +11,22 @@
 
 The separate debug installation cannot read the production app's private storage or Keystore. Importing a backup is the only supported transfer path. No personal backup was supplied or imported during repository consolidation; automated tests use synthetic data. Never put a backup password in chat, an issue or a commit.
 
+## Move from the GitHub APK to the Play app
+
+The GitHub APK (`app.kura.wallet`) and Play app (`app.kura.wallet.play`) are
+separate installations. Each has its own private storage and Android Keystore
+entries. Installing the Play app does not copy data from the GitHub app.
+
+1. In the GitHub app, open **Settings → Backup & Storage**. Export an encrypted
+   full wallet backup (`.wbk`) to a location you can open from both apps.
+2. Keep its password. In the Play app, set up the vault and select
+   **Settings → Backup & Storage → Restore Backup**.
+3. Select the file, enter its password, then review and confirm the restore.
+   A full restore replaces the Play app's current vault.
+4. Check cards, passes, identity records, barcodes and media. Set up device
+   unlock and automatic backup again as needed. Keep the GitHub app and backup
+   until you have checked the restored data.
+
 ## Format and safety
 
 A backup can contain up to 4,095 media files plus its record data. If a wallet

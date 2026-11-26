@@ -8,6 +8,7 @@ import zipfile
 from pathlib import Path
 
 ANDROID = "{http://schemas.android.com/apk/res/android}"
+PLAY_PACKAGE = "app.kura.wallet.play"
 FORBIDDEN_PERMISSIONS = {
     "android.permission.INTERNET",
     "android.permission.ACCESS_NETWORK_STATE",
@@ -18,7 +19,7 @@ SCANNER_ABIS = {"arm64-v8a", "x86_64"}
 
 def verify_manifest(xml, expected_version_code=None):
     manifest = ET.fromstring(xml)
-    if manifest.get("package") != "app.kura.wallet":
+    if manifest.get("package") != PLAY_PACKAGE:
         raise ValueError("Unexpected Play application ID")
     sdk = manifest.find("uses-sdk")
     if (
@@ -47,12 +48,16 @@ def verify_manifest(xml, expected_version_code=None):
         raise ValueError("Unexpected release application flags")
     if application.get(ANDROID + "name", "").endswith("KuraUpdateApplication"):
         raise ValueError("GitHub updater application is not allowed in the Play bundle")
+    authorities = set()
     for provider in application.findall("provider"):
-        if (
-            provider.get(ANDROID + "name", "").endswith("UpdateFileProvider")
-            or provider.get(ANDROID + "authorities") == "app.kura.wallet.android-updates"
-        ):
+        authority = provider.get(ANDROID + "authorities", "")
+        if provider.get(ANDROID + "name", "").endswith("UpdateFileProvider") or authority.endswith(".android-updates"):
             raise ValueError("GitHub updater provider is not allowed in the Play bundle")
+        if not authority.startswith(f"{PLAY_PACKAGE}.") or provider.get(ANDROID + "exported") != "false":
+            raise ValueError(f"Unexpected Play provider authority or access: {authority}")
+        authorities.add(authority)
+    if not {f"{PLAY_PACKAGE}.files", f"{PLAY_PACKAGE}.attachments"} <= authorities:
+        raise ValueError("Missing package-specific file or attachment provider")
     print(f"Offline release package verified, version code {manifest.get(ANDROID + 'versionCode')}")
 
 
