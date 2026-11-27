@@ -79,8 +79,13 @@ struct CardsView: View {
             }
         } label: {
             HStack {
-                Image(systemName: favorites ? "star.fill" : "tag")
-                Text(category ?? "All categories").lineLimit(1)
+                Image(systemName: favorites ? "star.fill" : "tag").font(.caption)
+                    .accessibilityHidden(true)
+                Text(category ?? "All categories")
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .layoutPriority(1)
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.down").font(.caption)
             }
