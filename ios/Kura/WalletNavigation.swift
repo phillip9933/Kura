@@ -3,7 +3,7 @@ import SwiftUI
 struct WalletNavigation: Codable, Equatable {
     var visible = WalletSection.allCases
     var showSectionBar = true
-    var controlsBelow = false
+    var controlsBelow = true
     var swipe = true
     var showSearch = true
     var searchButton = false

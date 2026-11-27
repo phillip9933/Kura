@@ -6,7 +6,6 @@ enum WalletRoute: Hashable {
 
 struct CardsView: View {
     @ObservedObject var wallet: WalletSession
-    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var path: [WalletRoute] = []
     @State private var section: WalletSection
     @State private var query = ""
@@ -37,22 +36,117 @@ struct CardsView: View {
 
     private var layout: WalletNavigation { wallet.snapshot.preferences.layout }
 
-    @ViewBuilder private var controls: some View {
-        if layout.showSectionBar {
-            if typeSize.isAccessibilitySize {
-                Menu {
-                    sectionPicker
-                } label: { Label("Choose section", systemImage: "rectangle.stack") }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
-            } else { sectionPicker.pickerStyle(.segmented).padding(.horizontal) }
+    private var sectionPicker: some View {
+        Picker("Wallet section", selection: $section) {
+            ForEach(layout.visible) { item in
+                Label(item.rawValue, systemImage: item.icon).tag(item)
+            }
         }
     }
 
-    private var sectionPicker: some View {
-        Picker("Wallet section", selection: $section) {
-            ForEach(layout.visible) { Text($0.rawValue).tag($0) }
+    @ViewBuilder private var sectionBar: some View {
+        if layout.showSectionBar && layout.visible.count > 1 {
+            Divider()
+            HStack(spacing: 0) {
+                ForEach(layout.visible) { item in
+                    Button { section = item } label: {
+                        VStack(spacing: 3) {
+                            Image(systemName: item.icon).font(.title3)
+                            Text(item.rawValue).font(.caption).multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(section == item ? Color.accentColor : Color.secondary)
+                    .accessibilityLabel(item.rawValue)
+                    .accessibilityAddTraits(section == item ? .isSelected : [])
+                    .accessibilityIdentifier("wallet.section.\(item.rawValue)")
+                }
+            }
+            .padding(.vertical, 3)
+            .background(.bar)
         }
+    }
+
+    private var categoryMenu: some View {
+        Menu {
+            Toggle("Favorites only", isOn: $favorites)
+            Picker("Category", selection: $category) {
+                Text("All categories").tag(nil as String?)
+                let names = Set(wallet.snapshot.preferences.categories(for: section) + wallet.cards.filter { $0.section == section }.map(\.category))
+                ForEach(names.filter { !$0.isEmpty }.sorted(), id: \.self) { Text($0).tag(Optional($0)) }
+            }
+        } label: {
+            HStack {
+                Image(systemName: favorites ? "star.fill" : "tag")
+                Text(category ?? "All categories").lineLimit(1)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.down").font(.caption)
+            }
+            .padding(.horizontal, 10)
+            .frame(minHeight: 44)
+            .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+        }
+        .accessibilityIdentifier("wallet.categories")
+    }
+
+    private var controls: some View {
+        HStack(spacing: 4) {
+            categoryMenu
+            if layout.showSearch && layout.searchButton {
+                Button {
+                    searchOpen.toggle()
+                    if !searchOpen { query = "" }
+                } label: { Label("Search", systemImage: "magnifyingglass").frame(minWidth: 44, minHeight: 44) }
+            }
+            options
+            Button { path.append(.settings) } label: {
+                Label("Settings", systemImage: "gearshape").frame(minWidth: 44, minHeight: 44)
+            }
+            .accessibilityIdentifier("wallet.settings")
+        }
+        .labelStyle(.iconOnly)
+        .padding(.horizontal)
+    }
+
+    private var hasFilters: Bool { archived || favorites || category != nil || upcoming }
+
+    private var options: some View {
+        Menu {
+            if !layout.showSectionBar { sectionPicker }
+            if layout.showUpcoming && section == .passes { Toggle("Upcoming passes", isOn: $upcoming) }
+            Toggle("Show archived", isOn: $archived)
+            if hasFilters { Button("Clear filters", action: clearFilters) }
+            Menu("Sort") {
+                ForEach(WalletSort.allCases, id: \.self) { sort in
+                    Button { setSort(sort) } label: {
+                        if (wallet.snapshot.preferences.sorting[section.rawValue] ?? .custom) == sort {
+                            Label(sort.rawValue, systemImage: "checkmark")
+                        } else { Text(sort.rawValue) }
+                    }
+                }
+                Button("Reorder items") { path.append(.reorder(section)) }
+            }
+        } label: { Label("Options", systemImage: hasFilters ? "line.3.horizontal.decrease.circle.fill" : "slider.horizontal.3").frame(minWidth: 44, minHeight: 44) }
+    }
+
+    private var addMenu: some View {
+        Menu {
+            Button { path.append(.add(section)) } label: { Label("Add item", systemImage: "pencil") }
+            Button { path.append(.scanCard) } label: { Label("Scan card", systemImage: "viewfinder") }
+            Button { path.append(.importPass) } label: { Label("Import passes", systemImage: "ticket") }
+            Button { path.append(.importEncrypted) } label: { Label("Import encrypted item", systemImage: "doc.badge.plus") }
+            Button { path.append(.receive) } label: { Label("Receive secure transfer", systemImage: "qrcode.viewfinder") }
+        } label: {
+            Image(systemName: "plus").font(.title2.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: 56, height: 56)
+                .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 16))
+                .shadow(color: .black.opacity(0.18), radius: 3, y: 2)
+        }
+        .accessibilityLabel("Add")
+        .accessibilityIdentifier("wallet.addMenu")
     }
 
     @ViewBuilder private var search: some View {
@@ -70,34 +164,13 @@ struct CardsView: View {
             VStack(spacing: 0) {
                 if !layout.controlsBelow { controls }
                 if !layout.searchBelow { search }
-                if archived || favorites || category != nil || upcoming {
-                    Button([archived ? "Archived" : nil, favorites ? "Favorites" : nil, upcoming ? "Upcoming" : nil, category, "Clear filters"]
-                        .compactMap { $0 }.joined(separator: " · ")) { clearFilters() }
-                        .padding(.vertical, 6)
-                }
-                if visible.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: section.icon).font(.largeTitle).accessibilityHidden(true)
-                        Text(query.isEmpty && !archived && !favorites && category == nil ? "No items yet" : "No matching items").font(.headline)
-                        Button("Add item") { path.append(.add(section)) }
-                    }.frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if wallet.snapshot.preferences.useGrid {
-                    ScrollView {
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: layout.columns(for: section)), alignment: .leading) {
-                            ForEach(visible) { card in
-                                NavigationLink(value: WalletRoute.item(card.id)) {
-                                    WalletTile(card: card, showFront: layout.frontImage[section.rawValue] ?? true, currency: wallet.snapshot.preferences.currency)
-                                }.buttonStyle(.plain)
-                            }
-                        }.padding()
+                walletItems
+                    .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) {
+                        addMenu.padding(.trailing, 16).padding(.vertical, 8)
                     }
-                } else {
-                    List(visible) { card in
-                        NavigationLink(value: WalletRoute.item(card.id)) { row(card) }
-                    }
-                }
                 if layout.searchBelow { search }
                 if layout.controlsBelow { controls }
+                sectionBar
             }
             .simultaneousGesture(DragGesture(minimumDistance: 65).onEnded { gesture in
                 guard layout.swipe, abs(gesture.translation.width) > abs(gesture.translation.height) * 2,
@@ -122,45 +195,6 @@ struct CardsView: View {
                 }
             }
             .onChange(of: section) { _ in clearFilters(); query = "" }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) { Button("Lock", action: wallet.lock) }
-                ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    Button { path.append(.settings) } label: { Label("Settings", systemImage: "gearshape") }
-                        .accessibilityIdentifier("wallet.settings")
-                    Menu {
-                        Button("Add item") { path.append(.add(section)) }
-                        Button("Scan card") { path.append(.scanCard) }
-                        Button("Import passes") { path.append(.importPass) }
-                        Button("Import encrypted item") { path.append(.importEncrypted) }
-                        Button("Receive secure transfer") { path.append(.receive) }
-                    } label: { Label("Add", systemImage: "plus") }
-                    .accessibilityIdentifier("wallet.addMenu")
-                    Menu {
-                        if !layout.showSectionBar {
-                            Picker("Section", selection: $section) { ForEach(layout.visible) { Text($0.rawValue).tag($0) } }
-                        }
-                        if layout.showSearch && layout.searchButton { Button("Search") { searchOpen.toggle(); if !searchOpen { query = "" } } }
-                        if layout.showUpcoming && section == .passes { Toggle("Upcoming passes", isOn: $upcoming) }
-                        Toggle("Show archived", isOn: $archived)
-                        Toggle("Favorites only", isOn: $favorites)
-                        Picker("Category", selection: $category) {
-                            Text("All categories").tag(nil as String?)
-                            let names = Set(wallet.snapshot.preferences.categories(for: section) + wallet.cards.filter { $0.section == section }.map(\.category))
-                            ForEach(names.filter { !$0.isEmpty }.sorted(), id: \.self) { Text($0).tag(Optional($0)) }
-                        }
-                        Menu("Sort") {
-                            ForEach(WalletSort.allCases, id: \.self) { sort in
-                                Button { setSort(sort) } label: {
-                                    if (wallet.snapshot.preferences.sorting[section.rawValue] ?? .custom) == sort {
-                                        Label(sort.rawValue, systemImage: "checkmark")
-                                    } else { Text(sort.rawValue) }
-                                }
-                            }
-                            Button("Reorder items") { path.append(.reorder(section)) }
-                        }
-                    } label: { Label("Options", systemImage: "ellipsis.circle") }
-                }
-            }
             .navigationDestination(for: WalletRoute.self) { route in
                 switch route {
                 case .scanCard: WalletEditor(wallet: wallet, section: .cards, original: nil, scanCard: true)
@@ -182,6 +216,29 @@ struct CardsView: View {
             .alert("Wallet", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
                 Button("OK") { message = nil }
             } message: { Text(message ?? "") }
+        }
+    }
+
+    @ViewBuilder private var walletItems: some View {
+        if visible.isEmpty {
+            VStack(spacing: 12) {
+                Image(systemName: section.icon).font(.largeTitle).accessibilityHidden(true)
+                Text(query.isEmpty && !hasFilters ? "No items yet" : "No matching items").font(.headline)
+            }.frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if wallet.snapshot.preferences.useGrid {
+            ScrollView {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: layout.columns(for: section)), alignment: .leading) {
+                    ForEach(visible) { card in
+                        NavigationLink(value: WalletRoute.item(card.id)) {
+                            WalletTile(card: card, showFront: layout.frontImage[section.rawValue] ?? true, currency: wallet.snapshot.preferences.currency)
+                        }.buttonStyle(.plain)
+                    }
+                }.padding()
+            }
+        } else {
+            List(visible) { card in
+                NavigationLink(value: WalletRoute.item(card.id)) { row(card) }
+            }
         }
     }
 

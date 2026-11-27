@@ -66,23 +66,21 @@ final class WalletUITests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
         defer { XCUIDevice.shared.orientation = .portrait }
         let name = "Library " + String(UUID().uuidString.prefix(8))
-        let addMenu = app.descendants(matching: .any).matching(identifier: "wallet.addMenu").firstMatch
-        XCTAssertTrue(addMenu.waitForExistence(timeout: 5))
+        verifyHomeNavigation(in: app)
+        let addMenu = app.buttons["wallet.addMenu"]
         addMenu.tap()
-        let scanCard = app.buttons["Scan card"]
-        XCTAssertTrue(scanCard.waitForExistence(timeout: 5))
-        scanCard.tap()
+        for option in ["Add item", "Scan card", "Import passes", "Import encrypted item", "Receive secure transfer"] {
+            XCTAssertTrue(app.buttons[option].waitForExistence(timeout: 5), "Missing Add menu option: " + option)
+        }
+        app.buttons["Scan card"].tap()
         XCTAssertTrue(app.buttons["Take a front photo"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Choose a front photo"].exists)
         XCTAssertFalse(app.navigationBars.buttons["Save"].isEnabled)
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.navigationBars["Cards"].waitForExistence(timeout: 5))
-        let addItem = app.buttons["Add item"]
-        if !addItem.exists {
-            addMenu.tap()
-        }
-        XCTAssertTrue(addItem.waitForExistence(timeout: 5))
-        addItem.tap()
+        addMenu.tap()
+        XCTAssertTrue(app.buttons["Scan card"].waitForExistence(timeout: 5))
+        app.buttons["Add item"].tap()
         let field = app.textFields["Name"]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
         field.tap()
@@ -126,6 +124,48 @@ final class WalletUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Cards"].waitForExistence(timeout: 5))
         XCTAssertFalse(row.exists)
         setWalletAppearance("System", in: app)
+    }
+
+    @MainActor
+    private func verifyHomeNavigation(in app: XCUIApplication) {
+        XCTAssertFalse(app.buttons["Lock"].exists)
+        let add = app.buttons["wallet.addMenu"]
+        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        XCTAssertTrue(add.isHittable)
+        XCTAssertGreaterThan(add.frame.midY, app.frame.midY)
+        for name in ["Cards", "Passes", "Identity"] {
+            let section = app.buttons["wallet.section." + name]
+            XCTAssertTrue(section.waitForExistence(timeout: 5), name)
+            XCTAssertTrue(section.isHittable, name)
+            XCTAssertEqual(section.label, name)
+            XCTAssertGreaterThan(section.frame.midY, app.frame.minY + 0.75 * app.frame.height, name)
+            XCTAssertLessThanOrEqual(add.frame.maxY, section.frame.minY, name)
+        }
+        for name in ["Passes", "Identity", "Cards"] {
+            app.buttons["wallet.section." + name].tap()
+            XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.buttons["wallet.section." + name].isSelected)
+        }
+
+        let categories = app.buttons["wallet.categories"]
+        XCTAssertTrue(categories.waitForExistence(timeout: 5))
+        for name in ["Library", "All categories"] {
+            categories.tap()
+            let option = app.buttons[name]
+            if !option.waitForExistence(timeout: 1) {
+                // Some OS versions present the picker choices in a Category submenu.
+                let picker = app.buttons["Category"]
+                XCTAssertTrue(picker.waitForExistence(timeout: 5))
+                picker.tap()
+            }
+            XCTAssertTrue(option.waitForExistence(timeout: 5))
+            option.tap()
+            let selection = XCTNSPredicateExpectation(
+                predicate: NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", name, name),
+                object: categories
+            )
+            XCTAssertEqual(XCTWaiter.wait(for: [selection], timeout: 5), .completed)
+        }
     }
 
     @MainActor

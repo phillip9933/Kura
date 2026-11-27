@@ -1,6 +1,10 @@
 # Kura for iPhone
 
-Kura is an offline SwiftUI wallet for iPhone running iOS 16 or later. A new wallet opens empty. Unlock it, choose Cards, Passes or Identity, then choose **Add item**. The app keeps wallet data on the device. The development bundle ID is `app.kura.iphone.development`.
+Kura is an offline SwiftUI wallet for iPhone running iOS 16 or later. The app keeps wallet data on the device. The development bundle ID is `app.kura.iphone.development`.
+
+A new wallet opens empty. After you unlock it, use the tabs at the bottom to switch between **Cards**, **Passes** and **Identity**. Tap the floating **+** to add an item, scan a card, import passes or an encrypted item, or receive a secure transfer. To filter the current section, choose a category in the wallet controls.
+
+When you leave Kura, the wallet locks after the delay you choose in Settings under **Lock after leaving Kura**. Locking the iPhone also protects the wallet.
 
 ## Wallet features
 
