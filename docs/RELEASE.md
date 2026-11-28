@@ -10,6 +10,8 @@ Record any missing or incomplete scan separately from test results.
 Review each open finding against the candidate source. For each confirmed issue,
 verify the fix with a regression test and record the tested revision. Repeat the
 affected checks after source changes. Keep finding details in the private record.
+Keep the security check pending while required scan coverage is missing or a
+release-blocking finding still needs a verified fix.
 
 Before publication, compare the build revision with the reviewed candidate.
 After publication, resolve the release tag and compare its commit with the build
