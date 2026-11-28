@@ -11,6 +11,15 @@ struct PassField: Codable, Equatable {
     var dateStyle: String?
     var timeStyle: String?
 
+    // Five groups of 100 fields with four 32-byte hints allow at most 64,000 formatting bytes per pass.
+    private static func fitsFormattingLimit(_ value: String?) -> Bool {
+        (value?.utf8.count ?? 0) <= 32
+    }
+
+    var hasBoundedFormatting: Bool {
+        [currencyCode, numberStyle, dateStyle, timeStyle].allSatisfy(Self.fitsFormattingLimit)
+    }
+
     var displayValue: String {
         if let currencyCode, let number = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")) {
             let formatter = NumberFormatter()
@@ -50,6 +59,20 @@ struct PassField: Codable, Equatable {
     }
 }
 
+extension PassField {
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        // Older Kura files may have long optional hints. Preserve the field and the other formatting.
+        func hint(_ key: CodingKeys) throws -> String? {
+            let value = try values.decodeIfPresent(String.self, forKey: key)
+            return Self.fitsFormattingLimit(value) ? value : nil
+        }
+        try self.init(key: values.decode(String.self, forKey: .key), label: values.decode(String.self, forKey: .label),
+                      value: values.decode(String.self, forKey: .value), numberValue: values.decodeIfPresent(Bool.self, forKey: .numberValue),
+                      currencyCode: hint(.currencyCode), numberStyle: hint(.numberStyle), dateStyle: hint(.dateStyle), timeStyle: hint(.timeStyle))
+    }
+}
+
 struct PassAppearance: Codable, Equatable {
     var type: String
     var logoText: String
@@ -77,6 +100,7 @@ struct PassAppearance: Codable, Equatable {
               groups.values.allSatisfy({ $0.count <= 100 }),
               groups.values.joined().allSatisfy({ field in
                   field.key.utf8.count <= 160 && field.label.utf8.count <= 160 && field.value.utf8.count <= 8192
+                      && field.hasBoundedFormatting
               }),
               artwork.keys.allSatisfy(Self.artNames.contains),
               artwork.values.reduce(0, { $0 + $1.count }) <= PassArchive.expandedLimit

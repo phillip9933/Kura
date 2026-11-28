@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum WalletRoute: Hashable {
-    case item(UUID), edit(UUID), add(WalletSection), scanCard, settings, importPass, receive, importEncrypted, reorder(WalletSection)
+    case item(UUID), edit(UUID), add(WalletSection), scanCard, importPass, receive, importEncrypted, reorder(WalletSection)
 }
 
 struct CardsView: View {
@@ -15,6 +15,7 @@ struct CardsView: View {
     @State private var category: String?
     @State private var upcoming = false
     @State private var searchOpen = false
+    @State private var showingSettings = false
     @State private var message: String?
     @State private var checkedExpiry = false
     private let generation: UUID
@@ -47,7 +48,6 @@ struct CardsView: View {
 
     @ViewBuilder private var sectionBar: some View {
         if layout.showSectionBar && layout.visible.count > 1 {
-            Divider()
             HStack(spacing: 0) {
                 ForEach(layout.visible) { item in
                     Button { section = item } label: {
@@ -66,7 +66,6 @@ struct CardsView: View {
                 }
             }
             .padding(.vertical, 3)
-            .background(.bar)
         }
     }
 
@@ -92,15 +91,15 @@ struct CardsView: View {
             }
             .padding(.horizontal, 10)
             .frame(minHeight: 44)
-            .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
         }
         .accessibilityIdentifier("wallet.categories")
     }
 
     private var controls: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 8) {
             if typeSize.isAccessibilitySize { categoryMenu }
-            HStack(spacing: 4) {
+            HStack(spacing: 8) {
                 if typeSize.isAccessibilitySize { Spacer() } else { categoryMenu }
                 if layout.showSearch && layout.searchButton {
                     Button {
@@ -109,14 +108,15 @@ struct CardsView: View {
                     } label: { Label("Search", systemImage: "magnifyingglass").frame(minWidth: 44, minHeight: 44) }
                 }
                 options
-                Button { path.append(.settings) } label: {
+                Button { showingSettings = true } label: {
                     Label("Settings", systemImage: "gearshape").frame(minWidth: 44, minHeight: 44)
                 }
                 .accessibilityIdentifier("wallet.settings")
             }
         }
         .labelStyle(.iconOnly)
-        .padding(.horizontal)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 
     private var hasFilters: Bool { archived || favorites || category != nil || upcoming }
@@ -175,12 +175,16 @@ struct CardsView: View {
                 if !layout.searchBelow { search }
                 walletItems
                     .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) {
-                        addMenu.padding(.trailing, 16).padding(.vertical, 8)
+                        addMenu
+                            .padding(.trailing, 16)
+                            .padding(.top, 8)
+                            .padding(.bottom, 16)
                     }
                 if layout.searchBelow { search }
                 if layout.controlsBelow { controls }
                 sectionBar
             }
+            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             .simultaneousGesture(DragGesture(minimumDistance: 65).onEnded { gesture in
                 guard layout.swipe, abs(gesture.translation.width) > abs(gesture.translation.height) * 2,
                       let current = layout.visible.firstIndex(of: section) else { return }
@@ -193,6 +197,7 @@ struct CardsView: View {
                 if !updated.showUpcoming { upcoming = false }
             }
             .navigationTitle(section.rawValue)
+            .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 guard !checkedExpiry else { return }
                 checkedExpiry = true
@@ -211,7 +216,6 @@ struct CardsView: View {
                 case .edit(let id):
                     if let card = wallet.cards.first(where: { $0.id == id }) { WalletEditor(wallet: wallet, section: card.section, original: card) }
                 case .item(let id): WalletDetail(wallet: wallet, id: id) { path.append(.edit(id)) }
-                case .settings: WalletSettings(wallet: wallet)
                 case .reorder(let target): WalletOrderView(wallet: wallet, section: target)
                 case .importEncrypted: BackupPassImportView(wallet: wallet)
                 case .receive: BackupTransferReceiveView(wallet: wallet)
@@ -225,6 +229,9 @@ struct CardsView: View {
             .alert("Wallet", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
                 Button("OK") { message = nil }
             } message: { Text(message ?? "") }
+        }
+        .fullScreenCover(isPresented: $showingSettings) {
+            WalletSettings(wallet: wallet)
         }
     }
 
@@ -248,6 +255,7 @@ struct CardsView: View {
             List(visible) { card in
                 NavigationLink(value: WalletRoute.item(card.id)) { row(card) }
             }
+            .scrollContentBackground(.hidden)
         }
     }
 

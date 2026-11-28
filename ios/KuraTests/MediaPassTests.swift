@@ -185,6 +185,22 @@ final class MediaPassTests: XCTestCase {
         XCTAssertNoThrow(try style.validate())
     }
 
+    func testIssuerFormattingHintsUseUTF8ByteLimits() throws {
+        let boundary = String(repeating: "é", count: 16)
+        for key in ["currencyCode", "numberStyle", "dateStyle", "timeStyle"] {
+            func parse(_ hint: String) throws -> PassField {
+                let field = ["key": "seat", "label": "Seat", "value": "12", key: hint]
+                let descriptor = try document("Train", additions: ["storeCard": ["primaryFields": [field]]])
+                let pass = try PassImport.parse(PassArchive.pack(["pass.json": descriptor]))
+                return try XCTUnwrap(pass.first?.appearance.groups["primaryFields"]?.first)
+            }
+            XCTAssertEqual(try parse(boundary).passJSON[key] as? String, boundary)
+            XCTAssertThrowsError(try parse(boundary + "x")) { error in
+                XCTAssertEqual(error as? WalletMediaError, .damagedPass)
+            }
+        }
+    }
+
     func testPassBackLinksOfferOnlyExplicitWebLinksAndTelephoneNumbers() {
         let text = "Visit https://example.org/track/123456789. Call +1 (415) 555-0123. " +
                    "See https://example.org/track/123456789 or mailto:a@example.org, custom://wallet or file:///tmp/test."

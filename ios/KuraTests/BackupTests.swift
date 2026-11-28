@@ -231,6 +231,47 @@ final class BackupTests: XCTestCase {
         XCTAssertThrowsError(try BackupPassFile.decode(bytes, password: "incorrect"))
     }
 
+    func testKuraFilesPreserveOlderItemsAndWriteOnlyBoundedFormatting() throws {
+        var legacy = try sample()
+        legacy.cards[0].created = Date(timeIntervalSinceReferenceDate: 700_000_000)
+        let field = PassField(key: "price", label: "Price", value: "12", currencyCode: String(repeating: "x", count: 33),
+                              numberStyle: "PKNumberStyleDecimal")
+        legacy.cards[0].passStyle = PassAppearance(type: "generic", logoText: "", organization: "Example",
+            transitType: "", serialNumber: "", groups: ["primaryFields": [field]], artwork: [:])
+        XCTAssertThrowsError(try BackupPassFile.encode(legacy.cards[0], password: password))
+        XCTAssertThrowsError(try BackupTransferCodec.chunks(for: legacy.cards[0], password: password))
+        XCTAssertThrowsError(try BackupCodec.encode(legacy, password: password))
+
+        var expected = legacy
+        expected.cards[0].passStyle?.groups["primaryFields"]?[0].currencyCode = nil
+        func checkNewItem(_ actual: WalletCard, from source: WalletCard) {
+            var copy = source
+            XCTAssertNotEqual(actual.id, source.id)
+            copy.id = actual.id
+            copy.created = actual.created
+            XCTAssertEqual(actual, copy)
+        }
+        let item = try BackupCodec.seal(JSONEncoder().encode(legacy.cards[0]), password: password, kind: .passFile)
+        checkNewItem(try BackupPassFile.decode(item, password: password), from: expected.cards[0])
+
+        var transferred = legacy.cards[0]
+        transferred.media = WalletMedia()
+        let transfer = try BackupCodec.seal(JSONEncoder().encode(transferred), password: password, kind: .item)
+        var expectedTransfer = expected.cards[0]
+        expectedTransfer.media = WalletMedia()
+        checkNewItem(try BackupTransferCodec.open(transfer, password: password), from: expectedTransfer)
+
+        let backup = try BackupCodec.seal(JSONEncoder().encode(legacy), password: password, kind: .wallet)
+        XCTAssertEqual(try BackupCodec.decode(backup, password: password), expected)
+
+        var saved = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(legacy)) as? [String: Any])
+        saved["version"] = 2
+        let key = SymmetricKey(size: .bits256)
+        let ciphertext = try XCTUnwrap(AES.GCM.seal(JSONSerialization.data(withJSONObject: saved), using: key).combined)
+        let file = VaultFile(directory: FileManager.default.temporaryDirectory)
+        XCTAssertEqual(try file.decodeSnapshot(ciphertext, key: key), expected)
+    }
+
     func testTransferExcludesPassArtworkAndFileKeepsIt() throws {
         var source = try XCTUnwrap(sample().cards.first)
         source.media = WalletMedia()
