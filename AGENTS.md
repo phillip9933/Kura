@@ -16,6 +16,11 @@ Resolve an absolute `APP_GUIDELINES_ROOT` supplied by the trusted launch environ
 - Never read or commit private signing material/personal backups to aid a code review. Use synthetic fixtures. Ignored files are not permission to delete them.
 - Device suites are destructive to test data. Use only a disposable emulator, never a personal phone or production package. The documented runner expects 16 KiB pages and a synthetic credential; see [Testing](docs/TESTING.md).
 
+## Project profile and entry points
+
+- **Tier and platform:** Public native mobile app for Android and iPhone. Read [Design](docs/design.md) before UI work.
+- **Checks:** Use the [change/test map](CONTRIBUTING.md#choose-tests-by-change), [Android verification](.github/workflows/test.yml) and [iPhone verification](.github/workflows/ios.yml). See [CI verification](docs/CI-VERIFICATION.md) for coverage and limits.
+
 ## Find the owner before changing code
 
 - `ios/`: iPhone app, Xcode project, and XCTest targets. See the [iPhone guide](ios/README.md).

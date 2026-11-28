@@ -80,6 +80,47 @@ and the screen owners in its code map.
   download/install. Distinguish offline/error, no update, progress, verification
   and installation states. Trust checks must not be weakened for convenience.
 
+## Android visual identity
+
+Kura should feel like a quiet, practical wallet. The card, pass or identity
+record gets the user's attention before the app controls. Use a neutral
+interface. Let each item supply its own artwork and accent color. Do not use
+color alone to show selection, an error or a warning.
+
+- **Theme and icons:** [LegacyAppearance.kt](../feature/vault/src/main/kotlin/app/kura/feature/LegacyAppearance.kt)
+  defines the black/white Material 3 color schemes and the small in-app icons.
+  [MainActivity.kt](../app/src/main/kotlin/app/kura/nativeapp/MainActivity.kt)
+  applies the color scheme. Use Material 3 type and component defaults unless
+  the screen has a documented reason to use a different style.
+- **App and store marks:** Keep the [Android launcher PNGs](../app/src/main/res/mipmap-mdpi/ic_launcher.png)
+  and [store icon](../fastlane/metadata/android/en-US/images/icon.png) in their
+  existing locations. Keep the launcher and store marks consistent. These assets define
+  the Android identity.
+- **Reference screenshots:** Use the
+  [dark pass list](../fastlane/metadata/android/en-US/images/phoneScreenshots/1-passes-dark.jpg),
+  [boarding pass](../fastlane/metadata/android/en-US/images/phoneScreenshots/2-boarding-pass.jpg),
+  [full-screen barcode](../fastlane/metadata/android/en-US/images/phoneScreenshots/3-fullscreen-barcode.jpg),
+  [dark cards](../fastlane/metadata/android/en-US/images/phoneScreenshots/4-cards-dark.jpg)
+  and [light cards](../fastlane/metadata/android/en-US/images/phoneScreenshots/5-cards-light.jpg)
+  as examples. The root README and Android listing use the same asset folder.
+
+On Windows, use JDK 21 and Android SDK 37.0. On a disposable 16 KiB emulator
+with the synthetic unlock setup in [Testing](TESTING.md), run the following
+commands from the repository root. Use the serial of the disposable emulator:
+
+~~~powershell
+.\gradlew.bat :app:assembleDebug :app:assembleDebugAndroidTest
+.\tools\capture-store-screenshots.ps1 -Serial emulator-5580
+~~~
+
+The [capture script](../tools/capture-store-screenshots.ps1) sets a 1080 × 1920
+viewport and replaces the five JPEGs. Review all five files and their Git diff
+before publication. Use only the synthetic records from the
+[capture test](../app/src/androidTest/kotlin/app/kura/nativeapp/StoreScreenshotsTest.kt).
+Do not turn off screenshot protection on a production app. These images show
+selected screens; they do not prove accessibility or cover every distribution,
+device, font scale or orientation. Use the checks below for that review.
+
 ## Shared visual and state rules
 
 Use Material 3 typography, colors, shapes, dialogs, sheets, switches and sliders.
