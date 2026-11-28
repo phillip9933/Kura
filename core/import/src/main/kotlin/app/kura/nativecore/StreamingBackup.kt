@@ -149,8 +149,7 @@ object StreamingBackup {
             }
             val bytes = entries.getValue("data.json").open().use { Envelope.readBounded(it, MAX_JSON) }
             val data = try { ImportJson.objectFrom(bytes.toString(Charsets.UTF_8)) } finally { bytes.fill(0) }
-            BackupCodec.requireNewPassword(password)
-        BackupCodec.validate(data)
+            BackupCodec.validate(data)
             val names = entries.keys.filter { it != "data.json" }.map { it.removePrefix("images/") }.toSet()
             return BackupPayload(data, emptyMap(), names,
                 { name -> entries.getValue("images/" + name).open().use { Envelope.readBounded(it, 10 * 1024 * 1024) } },

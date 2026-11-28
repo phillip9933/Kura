@@ -74,6 +74,36 @@ class ImportCodecTest {
         }
         try { BackupCodec.read(encrypted.inputStream(), "wrong password".toCharArray()); fail() } catch (_: javax.crypto.AEADBadTagException) {}
     }
+    @Test fun restoresPreviouslyWrittenZipWithShortPassword() {
+        val password = "a".toCharArray()
+        val salt = ByteArray(16) { it.toByte() }
+        val image = byteArrayOf(3, 4, 5)
+        val zipBytes = zip(
+            "data.json" to """{"version":"4.0","wallets":[{"name":"Fixture"}]}""".toByteArray(),
+            "images/front.png" to image
+        )
+        // Assemble the old v4 envelope independently of today's backup creation policy.
+        val key = BackupCodec.derive(password, salt)
+        val archive = try {
+            "argon2:" + Envelope.encode(salt) + ":" + Envelope.encrypt(zipBytes, key)
+        } finally {
+            key.fill(0)
+        }
+        val scratch = java.nio.file.Files.createTempDirectory("legacy-backup-test").toFile()
+        try {
+            StreamingBackup.read(archive.byteInputStream(), password, scratch).use { restored ->
+                assertEquals("Fixture", restored.data.getJSONArray("wallets").getJSONObject(0).getString("name"))
+                restored.consumeImage("front.png") { assertArrayEquals(image, it) }
+            }
+            assertThrows(java.io.IOException::class.java) {
+                StreamingBackup.read(archive.byteInputStream(), "b".toCharArray(), scratch).use { }
+            }
+            assertTrue(scratch.listFiles()!!.isEmpty())
+        } finally {
+            scratch.deleteRecursively()
+        }
+    }
+
     @Test fun matchesIndependentArgon2CffiVector() {
         val result = BackupCodec.derive("Kura fixture password".toCharArray(), ByteArray(16) { it.toByte() })
         assertEquals("07560990ff51b5d3f6da137ac43194489490efc859d01bbc33daf06b110bebb5", result.joinToString("") { "%02x".format(it) })
