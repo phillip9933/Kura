@@ -93,6 +93,7 @@ enum BackupCodec {
     }
 
     static func encode(_ snapshot: WalletSnapshot, password: String) throws -> Data {
+        try snapshot.validate()
         var json = try JSONEncoder().encode(snapshot)
         defer { json.resetBytes(in: 0..<json.count) }
         return try seal(json, password: password, kind: .wallet)

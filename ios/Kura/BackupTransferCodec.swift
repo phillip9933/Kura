@@ -8,6 +8,7 @@ enum BackupTransferCodec {
         var item = card
         item.media = WalletMedia()
         item.passStyle?.artwork = [:]
+        try item.validate()
         var data = try JSONEncoder().encode(item)
         defer { data.resetBytes(in: 0..<data.count) }
         let encrypted = try BackupCodec.seal(data, password: password, kind: .item)
