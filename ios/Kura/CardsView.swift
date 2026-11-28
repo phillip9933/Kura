@@ -6,6 +6,7 @@ enum WalletRoute: Hashable {
 
 struct CardsView: View {
     @ObservedObject var wallet: WalletSession
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var path: [WalletRoute] = []
     @State private var section: WalletSection
     @State private var query = ""
@@ -97,19 +98,22 @@ struct CardsView: View {
     }
 
     private var controls: some View {
-        HStack(spacing: 4) {
-            categoryMenu
-            if layout.showSearch && layout.searchButton {
-                Button {
-                    searchOpen.toggle()
-                    if !searchOpen { query = "" }
-                } label: { Label("Search", systemImage: "magnifyingglass").frame(minWidth: 44, minHeight: 44) }
+        VStack(spacing: 0) {
+            if typeSize.isAccessibilitySize { categoryMenu }
+            HStack(spacing: 4) {
+                if typeSize.isAccessibilitySize { Spacer() } else { categoryMenu }
+                if layout.showSearch && layout.searchButton {
+                    Button {
+                        searchOpen.toggle()
+                        if !searchOpen { query = "" }
+                    } label: { Label("Search", systemImage: "magnifyingglass").frame(minWidth: 44, minHeight: 44) }
+                }
+                options
+                Button { path.append(.settings) } label: {
+                    Label("Settings", systemImage: "gearshape").frame(minWidth: 44, minHeight: 44)
+                }
+                .accessibilityIdentifier("wallet.settings")
             }
-            options
-            Button { path.append(.settings) } label: {
-                Label("Settings", systemImage: "gearshape").frame(minWidth: 44, minHeight: 44)
-            }
-            .accessibilityIdentifier("wallet.settings")
         }
         .labelStyle(.iconOnly)
         .padding(.horizontal)
