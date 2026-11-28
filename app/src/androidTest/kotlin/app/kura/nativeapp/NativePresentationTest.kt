@@ -14,6 +14,24 @@ class NativePresentationTest {
             finally { luma.fill(0) }
         }
     }
+    @Test fun sharedQrPayloadsDecodeExactlyAsDisplayed() {
+        val assets = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().context.assets
+        val payloads = assets.open("qr-payloads.json").bufferedReader().use { org.json.JSONArray(it.readText()) }
+        assertTrue(payloads.length() > 0)
+        for (index in 0 until payloads.length()) {
+            val payload = payloads.getString(index)
+            val bitmap = requireNotNull(app.kura.feature.renderBarcode(payload, "QR Code"))
+            try {
+                val pixels = IntArray(bitmap.width * bitmap.height)
+                bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+                val luminance = ByteArray(pixels.size) { pixels[it].toByte() }
+                assertEquals(payload, NativeBarcodeDecoder.decode(luminance, bitmap.width, bitmap.height)?.text)
+            } finally {
+                bitmap.recycle()
+            }
+        }
+    }
+
     @Test fun restoredSettingsMapLegacyThemeAndTabsWithoutAuthenticationBypass() {
         val settings = PresentationSettings.parse(JSONObject("""{"themePreference":1,"defaultScreenIndex":2,"showPaymentsTab":false,"showIdentityTab":true,"showAuthenticationScreen":false}"""))
         assertEquals(1,settings.theme); assertEquals("identities",settings.initialTable); assertFalse("wallets" in settings.visibleTables)

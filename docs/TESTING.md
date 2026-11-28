@@ -1368,3 +1368,15 @@ screen-reader, production-package runtime or version-code upgrade qualification
 is claimed. No commit, push or release was performed. AI assisted implementation
 and verification. The owner's preceding crop-appearance acceptance is scoped to
 that local UI review, not stable-release/data-safety acceptance.
+
+## iPhone development and shared QR tests
+
+The [iPhone guide](../ios/README.md) covers the Xcode scheme, disposable simulator and physical-device checks. Hosted CI runs both unit and UI tests. Representative suites cover the original iPhone vault upgrade, organization, barcode generation and reading, scanned/imported passes, media, encrypted backups, damaged-wallet recovery, Keychain cleanup and locked/unlocked interaction. The iPhone and Android targets consume the same synthetic QR strings.
+
+On 23 November 2026 the Android prototype and instrumentation APKs built from the offline source set. `NativePresentationTest.sharedQrPayloadsDecodeExactlyAsDisplayed` passed on a new 16 KiB Android emulator (one test, three shared payloads).
+
+During development, macOS CI caught first-use file errors, a backup retention regression, barcode reader failures and a simulator interaction failure. On revision `09bded4` the backup suite passed 13/13, media and passes 16/16, organization 7/7, session 6/6 and tile tests 5/5. Two barcode-reading tests and one authenticated UI journey still failed on that revision. See the [intermediate simulator run](https://github.com/phillip9933/Kura/actions/runs/45087830438).
+
+Revision `6825cf3` passed all three simulator UI tests. The authenticated journey exercised the Scan card draft, cancellation, creation, favorites, termination, reauthentication, persistence and deletion. All three shared QR strings decoded exactly on iPhone. Of 57 unit tests, 56 passed and one barcode rendering case failed. The Android verification workflow passed all six jobs, including the redacted secret scan and all four build configurations. The pull request checks record simulator, unsigned arm64 build and screenshot results for subsequent revisions. [Simulator run](https://github.com/phillip9933/Kura/actions/runs/45088677522) · [Android verification](https://github.com/phillip9933/Kura/actions/runs/45088677515) · [PR checks](https://github.com/phillip9933/Kura/pull/35/checks)
+
+On `29ca787`, Xcode 16.4 passed all 57 unit tests and all three UI tests. The same hosted Mac built the unsigned Release app for a generic arm64 iPhone and verified the binary's iOS platform. Four named screenshots were exported from synthetic tests. The landscape detail and large-text section controls were visually checked. [Passing iPhone tests and device build](https://github.com/phillip9933/Kura/actions/runs/45090520785)

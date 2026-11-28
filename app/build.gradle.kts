@@ -100,6 +100,7 @@ dependencies {
  androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
 }
 
+android.sourceSets.getByName("androidTest").assets.srcDir(rootProject.file("shared/test-fixtures"))
 android.sourceSets.getByName("main").kotlin.srcDir(if (directUpdates) "src/direct/kotlin" else "src/offline/kotlin")
 if (directUpdates) android.sourceSets.getByName("androidTest").kotlin.srcDir("src/directAndroidTest/kotlin")
 

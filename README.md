@@ -16,7 +16,11 @@ Kura (蔵) stores cards, passes and identity documents in an encrypted, offline 
 - Unlock with biometrics or your device credential, or choose phone-unlock-only access in Settings. Wallet data remains encrypted and sessions close on lock.
 - Keep password-encrypted backups, optionally saved automatically to a folder you choose.
 
-## Screenshots
+## iPhone development
+
+The native iPhone app supports cards, passes and IDs, scanning, local media and encrypted backups. The [iPhone guide](ios/README.md) covers features, the Xcode project and device acceptance.
+
+## Android screenshots
 
 | Wallet | Boarding pass | Barcode |
 | --- | --- | --- |

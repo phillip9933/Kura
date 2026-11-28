@@ -1,0 +1,143 @@
+name: iPhone tests
+on:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - 'shared/test-fixtures/**'
+      - '.github/workflows/ios.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: iphone-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  iphone:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Run Kura tests on an iPhone simulator
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          device=$(xcrun simctl list devices available --json | jq -er '
+            [.devices | to_entries[] | select(.key | contains(".iOS-")) | .value[]
+             | select(.name | startswith("iPhone"))][0].udid // empty')
+          xcodebuild -project ios/Kura.xcodeproj -scheme Kura \
+            -destination "platform=iOS Simulator,id=$device" \
+            -derivedDataPath "$RUNNER_TEMP/KuraDerivedData" \
+            -parallel-testing-enabled NO build-for-testing
+          # Keep the generated run file in place so __TESTROOT__ still resolves.
+          runs=("$RUNNER_TEMP/KuraDerivedData/Build/Products/"*.xctestrun)
+          test "${#runs[@]}" = 1 && test -f "${runs[0]}"
+          python3 - "${runs[0]}" <<'PYTHON'
+          import plistlib
+          import sys
+          from pathlib import Path
+
+          path = Path(sys.argv[1])
+          run = plistlib.loads(path.read_bytes())
+          configurations = run.get("TestConfigurations")
+          if configurations is None:
+              targets = [value for value in run.values() if isinstance(value, dict)]
+          else:
+              targets = [target for config in configurations for target in config["TestTargets"]]
+          ui_targets = [target for target in targets if target.get("IsUITestBundle")
+                        or target.get("TestBundlePath", "").endswith("/KuraUITests.xctest")]
+          if not ui_targets:
+              raise ValueError("Kura UI test target missing from generated XCTest run file")
+          for target in ui_targets:
+              prior = target.get("PreferredScreenCaptureFormat", "system default")
+              target["PreferredScreenCaptureFormat"] = "screenshots"
+              print(f"Kura UI test capture: {prior} -> screenshots")
+          path.write_bytes(plistlib.dumps(run))
+          PYTHON
+          # CoreSimulator's permission service list varies by Xcode. Grant only Face ID
+          # when the installed CLI lists it, otherwise XCTest answers the native consent UI.
+          privacy_help=$(xcrun simctl help privacy 2>&1 || true)
+          face_service=$(awk 'tolower($1) ~ /^face[-_]?id$/ {print $1; exit}' <<< "$privacy_help")
+          if [[ -n "$face_service" ]]; then
+            xcrun simctl bootstatus "$device" -b
+            app="$RUNNER_TEMP/KuraDerivedData/Build/Products/Debug-iphonesimulator/Kura.app"
+            xcrun simctl install "$device" "$app"
+            bundle=$(plutil -extract CFBundleIdentifier raw -o - "$app/Info.plist")
+            if xcrun simctl privacy "$device" grant "$face_service" "$bundle"; then
+              echo "CoreSimulator granted Face ID consent"
+            else
+              echo "The UI test will answer the native Face ID consent prompt"
+            fi
+          else
+            echo "No Face ID privacy service listed; using the native consent prompt"
+          fi
+          xcodebuild test-without-building -xctestrun "${runs[0]}" \
+            -destination "platform=iOS Simulator,id=$device" -resultBundlePath "$RUNNER_TEMP/Kura.xcresult" \
+            -parallel-testing-enabled NO
+
+      - name: Compile unsigned Release for arm64 iPhone
+        run: |
+          set -euo pipefail
+          xcodebuild -project ios/Kura.xcodeproj -scheme Kura -configuration Release \
+            -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/KuraDerivedData" \
+            -disableAutomaticPackageResolution CODE_SIGNING_ALLOWED=NO build
+          app="$RUNNER_TEMP/KuraDerivedData/Build/Products/Release-iphoneos/Kura.app"
+          executable=$(plutil -extract CFBundleExecutable raw -o - "$app/Info.plist")
+          binary="$app/$executable"
+          test "$(lipo -archs "$binary")" = arm64
+          xcrun vtool -show-build "$binary" | grep -E 'platform[[:space:]]+IOS$'
+          if grep -aFq 'com.apple.BiometricKit_Sim.' "$binary"; then
+            echo "Simulator biometric controls found in the device executable" >&2
+            exit 1
+          fi
+      - name: Collect named simulator screenshots
+        if: always() && !cancelled()
+        run: |
+          set -euo pipefail
+          results="$RUNNER_TEMP/Kura.xcresult"
+          if [[ ! -d "$results" ]]; then exit 0; fi
+          xcrun xcresulttool export attachments --path "$results" --output-path "$RUNNER_TEMP/kura-attachments"
+          python3 - <<'PYTHON'
+          import json
+          import os
+          from pathlib import Path
+          from shutil import copyfile
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          attachments = temp / "kura-attachments"
+          output = temp / "kura-visual-checks"
+          output.mkdir(exist_ok=True)
+          manifest = attachments / "manifest.json"
+          if not manifest.exists():
+              raise SystemExit(0)
+          names = ["lock-large-text", "wallet-portrait", "item-landscape", "wallet-large-text", "auth-prompt-failure"]
+          for suite in json.loads(manifest.read_text()):
+              identifier = suite.get("testIdentifier", "").split("/")
+              if len(identifier) < 2 or identifier[-2].split(".")[-1] != "WalletUITests":
+                  continue
+              for entry in suite["attachments"]:
+                  title = entry.get("suggestedHumanReadableName", "")
+                  for name in names:
+                      prefix = "Kura-QA-" + name
+                      if not (title == prefix or title.startswith(prefix + ".") or title.startswith(prefix + "_")):
+                          continue
+                      path = attachments / Path(entry["exportedFileName"]).name
+                      if not (0 < path.stat().st_size <= 8 * 1024 * 1024):
+                          raise ValueError("Unexpected screenshot size")
+                      with path.open("rb") as stream:
+                          if stream.read(8) != bytes.fromhex("89504e470d0a1a0a"):
+                              raise ValueError("Expected a PNG screenshot")
+                      copyfile(path, output / (name + ".png"))
+          PYTHON
+      - name: Upload iPhone visual checks
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: iphone-simulator-visual-checks
+          path: ${{ runner.temp }}/kura-visual-checks/*.png
+          if-no-files-found: error
+          retention-days: 7
