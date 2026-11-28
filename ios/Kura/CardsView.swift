@@ -47,7 +47,6 @@ struct CardsView: View {
 
     @ViewBuilder private var sectionBar: some View {
         if layout.showSectionBar && layout.visible.count > 1 {
-            Divider()
             HStack(spacing: 0) {
                 ForEach(layout.visible) { item in
                     Button { section = item } label: {
@@ -66,7 +65,6 @@ struct CardsView: View {
                 }
             }
             .padding(.vertical, 3)
-            .background(.bar)
         }
     }
 
@@ -92,15 +90,15 @@ struct CardsView: View {
             }
             .padding(.horizontal, 10)
             .frame(minHeight: 44)
-            .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
         }
         .accessibilityIdentifier("wallet.categories")
     }
 
     private var controls: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 8) {
             if typeSize.isAccessibilitySize { categoryMenu }
-            HStack(spacing: 4) {
+            HStack(spacing: 8) {
                 if typeSize.isAccessibilitySize { Spacer() } else { categoryMenu }
                 if layout.showSearch && layout.searchButton {
                     Button {
@@ -116,7 +114,8 @@ struct CardsView: View {
             }
         }
         .labelStyle(.iconOnly)
-        .padding(.horizontal)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 
     private var hasFilters: Bool { archived || favorites || category != nil || upcoming }
@@ -175,12 +174,16 @@ struct CardsView: View {
                 if !layout.searchBelow { search }
                 walletItems
                     .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) {
-                        addMenu.padding(.trailing, 16).padding(.vertical, 8)
+                        addMenu
+                            .padding(.trailing, 16)
+                            .padding(.top, 8)
+                            .padding(.bottom, 16)
                     }
                 if layout.searchBelow { search }
                 if layout.controlsBelow { controls }
                 sectionBar
             }
+            .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             .simultaneousGesture(DragGesture(minimumDistance: 65).onEnded { gesture in
                 guard layout.swipe, abs(gesture.translation.width) > abs(gesture.translation.height) * 2,
                       let current = layout.visible.firstIndex(of: section) else { return }
@@ -193,6 +196,7 @@ struct CardsView: View {
                 if !updated.showUpcoming { upcoming = false }
             }
             .navigationTitle(section.rawValue)
+            .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 guard !checkedExpiry else { return }
                 checkedExpiry = true
@@ -248,6 +252,7 @@ struct CardsView: View {
             List(visible) { card in
                 NavigationLink(value: WalletRoute.item(card.id)) { row(card) }
             }
+            .scrollContentBackground(.hidden)
         }
     }
 

@@ -149,6 +149,9 @@ final class WalletUITests: XCTestCase {
 
         let categories = app.buttons["wallet.categories"]
         XCTAssertTrue(categories.waitForExistence(timeout: 5))
+        let sectionButton = app.buttons["wallet.section.Cards"]
+        XCTAssertGreaterThanOrEqual(categories.frame.minY - add.frame.maxY, 16)
+        XCTAssertGreaterThanOrEqual(sectionButton.frame.minY - categories.frame.maxY, 8)
         for name in ["Library", "All categories"] {
             categories.tap()
             let option = app.buttons[name]

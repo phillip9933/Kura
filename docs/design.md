@@ -10,6 +10,8 @@ design review and the verification gaps below remain explicit.
 
 Unlock opens the configured wallet section. The bottom bar shows an icon and a text label for each visible section (**Cards**, **Passes** or **Identity**). The category filter sits with the other wallet controls and applies to the selected section. The floating **+** opens the choices to add an item, scan a card, import passes or an encrypted item, or receive a secure transfer.
 
+The home screen uses a compact navigation title. The wallet, category controls, section bar and bottom safe area share the system grouped background. The floating **+** sits above the controls with space below it. At larger accessibility text sizes, the category filter has its own row above the action icons.
+
 **Add item** opens a draft in the current section. Back discards the draft. Save returns to the previous screen after the encrypted write succeeds. A write error keeps the draft available for retry. Item detail shows the exact barcode text and opens a full-screen barcode. Imported passes retain their issuer presentation. The media editor previews cropping and text recognition suggestions before save.
 
 The iPhone home screen uses automatic locking. When Kura enters the background, the configured lock delay applies. Kura also locks when iOS withdraws access to protected data. Locking closes item details and editors. The iPhone app uses SwiftUI navigation, system colors, text styles, and labelled controls. The [iPhone guide](../ios/README.md) lists physical-device and VoiceOver checks.
