@@ -62,7 +62,7 @@ final class WalletUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
         app.launch()
-        try unlockWithBiometrics(app)
+        try unlockSimulatorWallet(app)
         XCUIDevice.shared.orientation = .portrait
         defer { XCUIDevice.shared.orientation = .portrait }
         let name = "Library " + String(UUID().uuidString.prefix(8))
@@ -108,7 +108,7 @@ final class WalletUITests: XCTestCase {
         app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXL"]
         app.launch()
         assertLocked(app)
-        try unlockWithBiometrics(app)
+        try unlockSimulatorWallet(app)
         XCTAssertTrue(row.waitForExistence(timeout: 8))
         XCTAssertTrue(row.isHittable)
         capture("wallet-large-text", app, verifyDarkBackground: true)
@@ -188,6 +188,7 @@ final class WalletUITests: XCTestCase {
         let keep = app.buttons["Keep Editing"]
         XCTAssertTrue(keep.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Save your changes to apply them."].exists)
+        capture("settings-unsaved", app)
         keep.tap()
         XCTAssertNotEqual(grid.value as? String, original)
 
@@ -231,19 +232,24 @@ final class WalletUITests: XCTestCase {
     }
 
     @MainActor
-    private func unlockWithBiometrics(_ app: XCUIApplication) throws {
+    private func unlockSimulatorWallet(_ app: XCUIApplication) throws {
         let unlock = app.buttons["Unlock wallet"]
         XCTAssertTrue(unlock.waitForExistence(timeout: 5))
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         let coreAuth = XCUIApplication(bundleIdentifier: "com.apple.CoreAuthUI")
         let hosts = [app, springboard, coreAuth]
         unlock.tap()
+        var enteredPasscode = false
         let deadline = Date().addingTimeInterval(35)
         let cards = app.navigationBars["Cards"]
         let opening = app.descendants(matching: .any).matching(identifier: "Unlocking wallet").firstMatch
         while Date() < deadline {
             if cards.exists { return }
             if approveFaceID(in: hosts, coreAuth: coreAuth) { continue }
+            if !enteredPasscode && enterSimulatorPasscodeIfRequested(in: coreAuth) {
+                enteredPasscode = true
+                continue
+            }
             if app.staticTexts["Set a device passcode in Settings to use Kura."].exists {
                 throw XCTSkip("This simulator reports LAError.passcodeNotSet. The unlocked journey requires device-owner authentication and a passcode-protected Keychain.")
             }
@@ -261,6 +267,19 @@ final class WalletUITests: XCTestCase {
         let bar = app.navigationBars.firstMatch
         capture("auth-prompt-failure", app)
         XCTFail("Wallet did not open. Shield: \(shielded) (background: \(background), captured: \(captured)), lock: \(unlock.exists), opening: \(opening.exists), navigation: \(bar.exists ? bar.label : "absent"), Kura state: \(app.state.rawValue), CoreAuthUI state: \(coreAuth.state.rawValue), SpringBoard alerts: \(springboard.alerts.count).")
+    }
+
+    @MainActor
+    private func enterSimulatorPasscodeIfRequested(in coreAuth: XCUIApplication) -> Bool {
+        // Some simulator runtimes present the native device-owner passcode field instead of Face ID.
+        guard coreAuth.state == .runningForeground else { return false }
+        let title = NSPredicate(format: "label CONTAINS[c] %@ AND label CONTAINS[c] %@", "iPhone Passcode", "Kura")
+        guard coreAuth.staticTexts.matching(title).firstMatch.exists else { return false }
+        let passcode = coreAuth.secureTextFields.firstMatch
+        guard passcode.exists, passcode.isHittable else { return false }
+        passcode.tap()
+        passcode.typeText("482619\n")
+        return true
     }
 
     @MainActor
