@@ -1,5 +1,21 @@
 # Release tooling
 
+## Security check for a release candidate
+
+Record the full commit ID and Git tree ID for the candidate. Check the Daybreak
+scan history for that revision and record the scan type, scope and result in the
+private release record. A scan of changes in one commit covers only those changes.
+Record any missing or incomplete scan separately from test results.
+
+Review each open finding against the candidate source. For each confirmed issue,
+verify the fix with a regression test and record the tested revision. Repeat the
+affected checks after source changes. Keep finding details in the private record.
+
+Before publication, compare the build revision with the reviewed candidate.
+After publication, resolve the release tag and compare its commit with the build
+and review records. If they differ, identify the changes and repeat verification
+for the published revision before marking the check complete.
+
 ## Android 2.2.0 / 123 — published 7 November 2026
 
 [Kura 2.2.0](https://github.com/phillip9933/Kura/releases/tag/v2.2.0) is the
