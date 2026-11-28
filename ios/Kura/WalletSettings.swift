@@ -91,9 +91,9 @@ struct WalletSettings: View {
             } catch is CancellationError {
                 // Locking or replacing the wallet already removes the settings screen.
             } catch WalletError.recordChanged {
-                error = "The saved settings changed while you were editing. Reopen Settings to use the latest values."
+                self.error = "The saved settings changed while you were editing. Reopen Settings to use the latest values."
             } catch {
-                error = "Couldn’t save your changes. Check your settings and try again."
+                self.error = "Couldn’t save your changes. Check your settings and try again."
             }
         }
     }
