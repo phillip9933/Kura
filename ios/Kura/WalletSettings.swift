@@ -3,7 +3,11 @@ import SwiftUI
 struct WalletSettings: View {
     @ObservedObject var wallet: WalletSession
     @Environment(\.dismiss) private var dismiss
+    @State private var original: WalletPreferences
     @State private var prefs: WalletPreferences
+    @Environment(\.layoutDirection) private var layoutDirection
+    @State private var confirmExit = false
+    @State private var submitting = false
     @State private var confirmPhone = false
     @State private var confirmErase = false
     @State private var renames: [CategoryChange] = []
@@ -14,10 +18,87 @@ struct WalletSettings: View {
     init(wallet: WalletSession) {
         self.wallet = wallet
         token = wallet.generation
+        _original = State(initialValue: wallet.snapshot.preferences)
         _prefs = State(initialValue: wallet.snapshot.preferences)
     }
 
+    private var hasChanges: Bool { !prefs.hasSameSettings(as: original) || !renames.isEmpty }
+    private var busy: Bool { submitting || wallet.saving || authenticating }
+
     var body: some View {
+        // Subpage Back menus stay inside Settings. Only the root can close a pending draft.
+        NavigationStack {
+            if wallet.phase == .unlocked && wallet.generation == token {
+                settingsRoot
+            }
+        }
+        .interactiveDismissDisabled()
+    }
+
+    private var settingsRoot: some View {
+        GeometryReader { geometry in
+            settingsForm
+                .simultaneousGesture(DragGesture(minimumDistance: 24).onEnded { drag in
+                    let fromLeading = layoutDirection == .leftToRight ? drag.startLocation.x : geometry.size.width - drag.startLocation.x
+                    let inward = layoutDirection == .leftToRight ? drag.translation.width : -drag.translation.width
+                    if fromLeading <= 24 && inward > 48 && inward > abs(drag.translation.height) * 2 {
+                        requestExit()
+                    }
+                })
+        }
+        .navigationTitle("Settings")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: requestExit) { Label("Back", systemImage: "chevron.backward") }
+                    .accessibilityIdentifier("wallet.settings.back")
+                    .disabled(busy)
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Save", action: saveAndLeave)
+                    .accessibilityIdentifier("wallet.settings.save")
+                    .disabled(busy)
+            }
+        }
+        .accessibilityAction(.escape) { requestExit() }
+        .alert("Unsaved changes", isPresented: $confirmExit) {
+            Button("Save and Leave", action: saveAndLeave)
+            Button("Discard Changes", role: .destructive) { dismiss() }
+            Button("Keep Editing", role: .cancel) {}
+        } message: { Text("Save your changes to apply them.") }
+        .alert("Settings", isPresented: Binding(get: { error != nil }, set: { if !$0 { error = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(error ?? "") }
+    }
+
+    private func requestExit() {
+        guard !busy, !confirmExit else { return }
+        if hasChanges { confirmExit = true } else { dismiss() }
+    }
+
+    private func saveAndLeave() {
+        guard !busy else { return }
+        guard hasChanges else { dismiss(); return }
+        var updated = prefs
+        updated.currency = updated.currency.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        submitting = true
+        Task { @MainActor in
+            defer { submitting = false }
+            do {
+                try updated.validate()
+                try await wallet.preferences(updated, generation: token, renames: renames, replacing: original)
+                guard wallet.generation == token, wallet.phase == .unlocked else { return }
+                dismiss()
+            } catch is CancellationError {
+                // Locking or replacing the wallet already removes the settings screen.
+            } catch WalletError.recordChanged {
+                error = "The saved settings changed while you were editing. Reopen Settings to use the latest values."
+            } catch {
+                error = "Couldn’t save your changes. Check your settings and try again."
+            }
+        }
+    }
+
+    private var settingsForm: some View {
         Form {
             Section("Data and security") {
                 NavigationLink("Archive") { WalletArchive(wallet: wallet) }
@@ -75,20 +156,7 @@ struct WalletSettings: View {
             Section {
                 Button("Erase local wallet", role: .destructive) { confirmErase = true }
             }
-            if let error { Text(error) }
-        }.navigationTitle("Settings").disabled(wallet.saving)
-        .toolbar {
-            Button("Save") {
-                Task {
-                    do {
-                        prefs.currency = prefs.currency.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-                        try prefs.validate()
-                        try await wallet.preferences(prefs, generation: token, renames: renames)
-                        dismiss()
-                    } catch is CancellationError {} catch { self.error = "Check your settings and try again." }
-                }
-            }.accessibilityIdentifier("wallet.settings.save")
-        }
+        }.disabled(busy)
         .alert("Erase this wallet and its local recovery copies?", isPresented: $confirmErase) {
             Button("Cancel", role: .cancel) {}
             Button("Erase wallet", role: .destructive) { Task {

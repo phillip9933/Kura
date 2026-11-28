@@ -210,7 +210,9 @@ final class WalletSession: ObservableObject {
         try await commit(next, generation: token)
     }
 
-    func preferences(_ value: WalletPreferences, generation token: UUID, renames: [CategoryChange] = []) async throws {
+    func preferences(_ value: WalletPreferences, generation token: UUID, renames: [CategoryChange] = [],
+                     replacing original: WalletPreferences? = nil) async throws {
+        if let original, !snapshot.preferences.hasSameSettings(as: original) { throw WalletError.recordChanged }
         var next = snapshot
         next.preferences = value
         for change in renames {

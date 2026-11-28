@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum WalletRoute: Hashable {
-    case item(UUID), edit(UUID), add(WalletSection), scanCard, settings, importPass, receive, importEncrypted, reorder(WalletSection)
+    case item(UUID), edit(UUID), add(WalletSection), scanCard, importPass, receive, importEncrypted, reorder(WalletSection)
 }
 
 struct CardsView: View {
@@ -15,6 +15,7 @@ struct CardsView: View {
     @State private var category: String?
     @State private var upcoming = false
     @State private var searchOpen = false
+    @State private var showingSettings = false
     @State private var message: String?
     @State private var checkedExpiry = false
     private let generation: UUID
@@ -107,7 +108,7 @@ struct CardsView: View {
                     } label: { Label("Search", systemImage: "magnifyingglass").frame(minWidth: 44, minHeight: 44) }
                 }
                 options
-                Button { path.append(.settings) } label: {
+                Button { showingSettings = true } label: {
                     Label("Settings", systemImage: "gearshape").frame(minWidth: 44, minHeight: 44)
                 }
                 .accessibilityIdentifier("wallet.settings")
@@ -215,7 +216,6 @@ struct CardsView: View {
                 case .edit(let id):
                     if let card = wallet.cards.first(where: { $0.id == id }) { WalletEditor(wallet: wallet, section: card.section, original: card) }
                 case .item(let id): WalletDetail(wallet: wallet, id: id) { path.append(.edit(id)) }
-                case .settings: WalletSettings(wallet: wallet)
                 case .reorder(let target): WalletOrderView(wallet: wallet, section: target)
                 case .importEncrypted: BackupPassImportView(wallet: wallet)
                 case .receive: BackupTransferReceiveView(wallet: wallet)
@@ -229,6 +229,9 @@ struct CardsView: View {
             .alert("Wallet", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
                 Button("OK") { message = nil }
             } message: { Text(message ?? "") }
+        }
+        .fullScreenCover(isPresented: $showingSettings) {
+            WalletSettings(wallet: wallet)
         }
     }
 

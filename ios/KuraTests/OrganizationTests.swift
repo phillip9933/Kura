@@ -69,6 +69,19 @@ final class OrganizationTests: XCTestCase {
         XCTAssertEqual(WalletDateFormat.iso.formatter.string(from: MonthSelection.lastDay(of: february)), "2024-02-29")
     }
 
+    func testRestoringNavigationDefaultsLeavesNoSettingsChanges() throws {
+        let saved = WalletPreferences()
+        var draft = saved
+        draft.layout.controlsBelow.toggle()
+        XCTAssertFalse(draft.hasSameSettings(as: saved))
+        draft.layout.controlsBelow.toggle()
+        let reopened = try JSONDecoder().decode(WalletPreferences.self, from: JSONEncoder().encode(draft))
+        XCTAssertTrue(saved.hasSameSettings(as: reopened))
+        XCTAssertTrue(reopened.hasSameSettings(as: saved))
+        draft.useGrid.toggle()
+        XCTAssertFalse(draft.hasSameSettings(as: saved))
+    }
+
     func testLayoutKeepsAccessibleSectionsAndValidGridColumns() throws {
         var prefs = WalletPreferences()
         prefs.layout.visible = [.passes]

@@ -67,6 +67,7 @@ final class WalletUITests: XCTestCase {
         defer { XCUIDevice.shared.orientation = .portrait }
         let name = "Library " + String(UUID().uuidString.prefix(8))
         verifyHomeNavigation(in: app)
+        verifyDiscardingSettings(in: app)
         let addMenu = app.buttons["wallet.addMenu"]
         addMenu.tap()
         for option in ["Add item", "Scan card", "Import passes", "Import encrypted item", "Receive secure transfer"] {
@@ -102,7 +103,7 @@ final class WalletUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Remove from favorites"].waitForExistence(timeout: 5))
 
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        setWalletAppearance("Dark", in: app)
+        setWalletAppearance("Dark", saveOnExit: true, in: app)
         app.terminate()
         app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXL"]
         app.launch()
@@ -172,7 +173,40 @@ final class WalletUITests: XCTestCase {
     }
 
     @MainActor
-    private func setWalletAppearance(_ choice: String, in app: XCUIApplication) {
+    private func verifyDiscardingSettings(in app: XCUIApplication) {
+        let settings = app.buttons["wallet.settings"]
+        settings.tap()
+        let grid = app.switches["Grid view"]
+        reveal(grid, in: app)
+        let original = grid.value as? String
+        XCTAssertNotNil(original)
+        grid.tap()
+
+        let back = app.buttons["wallet.settings.back"]
+        XCTAssertTrue(back.waitForExistence(timeout: 5))
+        back.tap()
+        let keep = app.buttons["Keep Editing"]
+        XCTAssertTrue(keep.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Save your changes to apply them."].exists)
+        keep.tap()
+        XCTAssertNotEqual(grid.value as? String, original)
+
+        let edge = app.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.5))
+        let center = app.coordinate(withNormalizedOffset: CGVector(dx: 0.55, dy: 0.5))
+        edge.press(forDuration: 0.1, thenDragTo: center)
+        let discard = app.buttons["Discard Changes"]
+        XCTAssertTrue(discard.waitForExistence(timeout: 5))
+        discard.tap()
+        XCTAssertTrue(app.navigationBars["Cards"].waitForExistence(timeout: 5))
+        settings.tap()
+        reveal(grid, in: app)
+        XCTAssertEqual(grid.value as? String, original)
+        app.buttons["wallet.settings.back"].tap()
+        XCTAssertTrue(app.navigationBars["Cards"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    private func setWalletAppearance(_ choice: String, saveOnExit: Bool = false, in app: XCUIApplication) {
         let settings = app.descendants(matching: .any).matching(identifier: "wallet.settings").firstMatch
         XCTAssertTrue(settings.waitForExistence(timeout: 5))
         settings.tap()
@@ -183,9 +217,16 @@ final class WalletUITests: XCTestCase {
         let option = app.descendants(matching: .any).matching(identifier: "wallet.appearance." + choice).firstMatch
         XCTAssertTrue(option.waitForExistence(timeout: 5))
         option.tap()
-        let save = app.descendants(matching: .any).matching(identifier: "wallet.settings.save").firstMatch
-        XCTAssertTrue(save.waitForExistence(timeout: 5))
-        save.tap()
+        if saveOnExit {
+            let back = app.buttons["wallet.settings.back"]
+            XCTAssertTrue(back.waitForExistence(timeout: 5))
+            back.tap()
+            let save = app.buttons["Save and Leave"]
+            XCTAssertTrue(save.waitForExistence(timeout: 5))
+            save.tap()
+        } else {
+            app.buttons["wallet.settings.save"].tap()
+        }
         XCTAssertTrue(app.navigationBars["Cards"].waitForExistence(timeout: 8))
     }
 

@@ -34,6 +34,15 @@ struct WalletPreferences: Codable, Equatable {
     var definitions: [String: [FieldDefinition]] = [:]
     var sorting: [String: WalletSort] = [:]
 
+    func hasSameSettings(as other: Self) -> Bool {
+        // Older wallets omit the default navigation settings.
+        var lhs = self
+        var rhs = other
+        lhs.navigation = layout
+        rhs.navigation = other.layout
+        return lhs == rhs
+    }
+
     func categories(for section: WalletSection) -> [String] { categories[section.rawValue] ?? section.categories }
     func definitions(for section: WalletSection) -> [FieldDefinition] { definitions[section.rawValue] ?? [] }
 
