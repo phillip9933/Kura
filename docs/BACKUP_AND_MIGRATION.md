@@ -15,6 +15,28 @@ The iPhone app can export and restore password-encrypted iPhone backups through 
 
 The separate debug installation cannot read the production app's private storage or Keystore. Importing a backup is the only supported transfer path. No personal backup was supplied or imported during repository consolidation; automated tests use synthetic data. Never put a backup password in chat, an issue or a commit.
 
+## Move from the GitHub APK to the Play app
+
+The GitHub APK (`app.kura.wallet`) and Play app (`app.kura.wallet.play`) are
+separate installations. Each has its own private storage and Android Keystore
+entries. Installing the Play app does not copy data from the GitHub app.
+
+1. In the GitHub app, open **Settings → Backup & Storage → Create Backup**.
+   Save the encrypted full wallet backup (`.wbk`) where both apps can open it.
+   Give it a distinct name, such as `Kura-GitHub-transfer.wbk`, and save it
+   outside both automatic-backup folders.
+2. Keep its password. In the Play app, set up the vault and select
+   **Settings → Backup & Storage → Restore Backup**.
+3. Select the file, enter its password, then review and confirm the restore.
+   A full restore replaces the Play app's current vault.
+4. Check cards, passes, identity records, barcodes and media. Keep the GitHub
+   app and the manual export until you have verified the restore.
+5. Set up device unlock again as needed. If you enable **Automatic Backup**
+   in both apps, use **Backup Location** to choose a different folder for each,
+   such as `Kura GitHub` and `Kura Play`. Do not select the same folder.
+   In a shared folder, either app can delete the other app's numbered
+   `Kura_autobackup_<n>.wbk` files when it removes old backups.
+
 ## Format and safety
 
 A backup can contain up to 4,095 media files plus its record data. If a wallet

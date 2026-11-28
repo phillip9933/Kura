@@ -143,7 +143,8 @@ can retain copies. Accessibility services are a platform/user trust decision;
 do not promise that decrypted on-screen content is invisible to them.
 
 Users can choose presentation settings, backup location/password/retention,
-biometric versus credential prompts, and the explicit phone-only option. Build
+biometric versus credential prompts, and the explicit phone-only option. **Settings → Privacy Policy** opens the public policy in an
+external browser. Kura does not send wallet data with this link. Build
 switches independently select scanner/updater capability; they are not an
 undisclosed runtime provider fallback. The offline build has no INTERNET
 permission; the optional updater contacts GitHub only. A secure device lock and

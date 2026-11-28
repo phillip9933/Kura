@@ -15,6 +15,7 @@ Start with the root [README](../README.md) to build the app and [Contributing](.
 | [Code review](CODE_REVIEW.md) | Cleanup decisions and maintainability follow-ups |
 | [App updates](APP-UPDATES.md) | Optional direct-update distribution, permissions and acceptance |
 | [Release preparation](RELEASE.md) | Signing continuity, packaging and store gates |
+| [Google Play candidate](PLAY_CANDIDATE.md) | Offline bundle build and pre-upload checks |
 | [F-Droid handoff](FDROID.md) | Proposed root-build recipe and external maintainer checks |
 | [AGENTS.md](../AGENTS.md) | Concise instructions for coding agents |
 | [Changelog](../CHANGELOG.md) | User-facing changes |

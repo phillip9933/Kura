@@ -111,6 +111,12 @@ fun SettingsScreen(preferences: VaultPreferences, theme: Int, visibleTables: Set
                     SettingsGroup("About") {
                         updateSettings()
                         SettingsRow("App Version & Trademark","Kura "+appVersionLabel(),Icons.Outlined.Info,{information="Kura is an offline, privacy first pass wallet. All product names, logos, and brands belong to their respective owners."})
+                        SettingsRow(
+                            title = "Privacy Policy",
+                            subtitle = "Open in your browser",
+                            icon = Icons.Outlined.Info,
+                            action = { openLink("https://github.com/phillip9933/Kura/blob/main/PRIVACY.MD") },
+                        )
                         SettingsRow("GitHub & Issue Tracker","View source or report an issue",Icons.Default.Code,{openLink("https://github.com/phillip9933/Kura")})
                     }
                     fixture?.let { SettingsGroup("Testing") {SettingsRow("Load synthetic fixtures","Add sample records for testing",Icons.Outlined.Science,{it();close()})} }

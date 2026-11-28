@@ -30,6 +30,50 @@ class StreamingBackupTest {
         }
         assertTrue(root.listFiles()!!.isEmpty()); root.delete()
     }
+    @Test fun fullBackupCanMoveBetweenPackageDirectories() {
+        val root = scratch()
+        val github = File(root, "app.kura.wallet").apply { mkdir() }
+        val play = File(root, "app.kura.wallet.play").apply { mkdir() }
+        val archive = File(github, "wallet.wbk")
+        val destination = File(play, "wallet.wbk")
+        val scratchFiles = File(play, "import")
+        val front = byteArrayOf(10, 20, 30)
+        val back = byteArrayOf(35, 45, 55)
+        val record = JSONObject().put("name", "Synthetic library card")
+            .put("number", "000123456789")
+            .put("frontImagePath", "front.png")
+            .put("backImagePath", "back.png")
+        val pass = JSONObject().put("description", "Synthetic pass")
+            .put("barcodeValue", "000654321")
+        val data = JSONObject().put("version", "4.0")
+            .put("settings", JSONObject().put("themePreference", 2))
+            .put("wallets", org.json.JSONArray().put(record))
+            .put("passes", org.json.JSONArray().put(pass))
+            .put("identities", org.json.JSONArray())
+        try {
+            BackupPayload(data, mapOf("front.png" to front.copyOf(), "back.png" to back.copyOf())).use { payload ->
+                archive.outputStream().use { StreamingBackup.write(payload, it, "synthetic wallet password".toCharArray()) }
+            }
+            archive.copyTo(destination)
+            assertTrue(github.deleteRecursively())
+            StreamingBackup.read(destination.inputStream(), "synthetic wallet password".toCharArray(), scratchFiles).use { restored ->
+                BackupCodec.validate(restored.data)
+                val card = restored.data.getJSONArray("wallets").getJSONObject(0)
+                assertEquals(2, restored.data.getJSONObject("settings").getInt("themePreference"))
+                assertEquals("000654321", restored.data.getJSONArray("passes").getJSONObject(0).getString("barcodeValue"))
+                assertEquals("Synthetic library card", card.getString("name"))
+                assertEquals("000123456789", card.getString("number"))
+                for ((field, bytes) in listOf("frontImagePath" to front, "backImagePath" to back)) {
+                    val itemName = restored.imageEntry(card.getString(field))
+                    assertNotNull(itemName)
+                    restored.consumeImage(itemName!!) { assertArrayEquals(bytes, it) }
+                }
+            }
+            assertTrue(scratchFiles.listFiles().orEmpty().isEmpty())
+        } finally {
+            root.deleteRecursively()
+        }
+    }
     @Test fun tamperNeverReturnsPayloadAndDeletesEncryptedScratch() {
         val root = scratch()
         val payload = BackupPayload(JSONObject("""{"version":"4.0","wallets":[]}"""), emptyMap())
