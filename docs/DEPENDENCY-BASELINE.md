@@ -1,5 +1,18 @@
 # Dependency and security baseline — 6 November 2026
 
+## Reviewing dependency updates
+
+The [Dependabot configuration](../.github/dependabot.yml) schedules weekly
+checks for Gradle dependencies and GitHub Actions. Each ecosystem can open
+up to two version-update pull requests at a time. Review each proposed change
+and its CI results before merging. Keep workflow actions pinned to full commit
+IDs. For Android dependency changes, review the resolved versions and all five
+[app lock configurations](../app/gradle/dependency-locks/).
+
+Update the vendored card scanner and updater through their bundle import
+procedures. Check the bundle contents, checksums, model pins where applicable,
+and lockfiles together. See the provenance links below.
+
 ## Optional Android SDKs — 20 November 2026
 
 Kura now pins scanner 1.1.0 and updater 1.0.0. The published Maven bundles,

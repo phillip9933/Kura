@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 2
+    # Upgrade these SDKs with their vendored Maven bundles, checksums and locks.
+    ignore:
+      - dependency-name: "dev.offlinescan:*"
+      - dependency-name: "io.github.phillip9933:android-updater"
