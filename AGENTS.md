@@ -46,7 +46,7 @@ Use no secret or personal-data fixtures in agent prompts, screenshots, committed
 
 ## Project workspace layout
 
-Before working, read the [project guidance](../AGENTS.md) and [shared guidance](../../AGENTS.md) when accessible. If either is unavailable in your environment, report that limitation and follow the local rules below. Preserve this repository's existing instructions and any applicable nested instructions; historical release permissions are not current task authorization.
+In the primary checkout, read the project guidance at `../AGENTS.md` and the shared guidance at `../../AGENTS.md`. In a linked checkout under `worktrees/`, use `../../AGENTS.md` and `../../../AGENTS.md`, respectively. If either is unavailable in your environment, report that limitation and follow the local rules below. Preserve this repository's existing instructions and any applicable nested instructions; historical release permissions are not current task authorization.
 
 This file's directory (`.`) is the authoritative working root, `<project>/repo/`. Run source commands here. Keep versioned documentation in `docs/` when consistent with existing conventions. Put task deliverables in `../outputs/`; consult `../reference/` for supporting material and `../archive/` for recovery material. Use `../worktrees/` only for real linked worktrees. Create these directories only when needed, and retain conventional build-output paths required by tools. Global caches and app configuration remain global.
 
